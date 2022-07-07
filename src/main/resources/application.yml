@@ -1,0 +1,72 @@
+spring:
+  application:
+    name: idpay-admissibility-assessor
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    stream:
+      function:
+        definition: admissibilityProcessor
+      bindings:
+        admissibilityProcessor-in-0:
+          destination: ${KAFKA_TOPIC_ONBOARDING_REQUEST:}
+          group: ${KAFKA_IDPAY_GROUP:}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-onboarding-request
+        admissibilityProcessor-out-0:
+          destination: ${KAFKA_TOPIC_ONBOARDING_OUTCOME:}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-onboarding-outcome
+      #        trxConsumerReward-in-0:
+      #          destination: ${KAFKA_REWARD_TOPIC_REWARD_TRX:}
+      #          group: ${KAFKA_IDPAY_GROUP:}
+      #          content-type: ${KAFKA_CONTENT_TYPE:}
+      #          binder: ${KAFKA_BINDER:}
+      #        trxProducer-out-0:
+      #          destination: ${KAFKA_REWARD_TOPIC_RTD_TRX:}
+      #          content-type: ${KAFKA_CONTENT_TYPE:}
+      #          binder: ${KAFKA_BINDER:}
+      binders:
+        kafka-onboarding-request:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_ONBOARDING_REQUEST:}
+                      configuration.sasl.jaas.config: ${EVH_CONNECTION_ONBOARDING_REQUEST:}
+        kafka-onboarding-outcome:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_ONBOARDING_OUTCOME:}
+                      configuration.sasl.jaas.config: ${EVH_CONNECTION_ONBOARDING_OUTCOME:}
+      kafka:
+        binder:
+          auto-create-topics: ${KAFKA_TRANSACTIONS_BINDER_AUTO_CREATE_TOPIC:false}
+          configuration:
+            heartbeat.interval.ms: ${KAFKA_TRANSACTIONS_BINDER_CONFIGURATION_HEARTBEAT_INTERVAL_MS:30000}
+            session.timeout.ms: ${KAFKA_TRANSACTIONS_BINDER_CONFIGURATION_SESSION_TIMEOUT_MS:60000}
+            sasl:
+              mechanism: ${KAFKA_TRANSACTIONS_SASL_MECHANISM:PLAIN}
+            security:
+              protocol: ${KAFKA_TRANSACTIONS_SECURITY_PROTOCOL:SASL_SSL}
+          consumerProperties:
+            socket:
+              connection:
+                setup:
+                  timeout:
+                    max:
+                      ms: ${KAFKA_TRANSACTIONS_CONNECTION_TIMEOUT_MAX_MS:200000}
+                    ms: ${KAFKA_TRANSACTIONS_CONNECTION_TIMEOUT_MS:100000}
+            connections:
+              max:
+                idle:
+                  ms: ${KAFKA_TRANSACTIONS_CONNECTIONS_MAX_IDLE_MS:300000}
