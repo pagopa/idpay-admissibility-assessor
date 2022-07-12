@@ -1,10 +1,11 @@
-package it.gov.pagopa.dto;
+package it.gov.pagopa.dto.onboarding;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -15,19 +16,15 @@ import java.util.Map;
 public class OnboardingDTO {
 
     String userId;
-
     String initiativeId;
-
     boolean tc;
-
     String status;
-
     Boolean pdndAccept;
-
     Map<String, Boolean> selfDeclarationList;
-
     LocalDateTime tcAcceptTimestamp;
-
     LocalDateTime criteriaConsensusTimestamp;
+
+    // Authorities data fetched if the initiative requires them
+    BigDecimal isee;
 
 }

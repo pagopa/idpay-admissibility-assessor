@@ -1,7 +1,7 @@
-package it.gov.pagopa.service;
+package it.gov.pagopa.service.onboarding;
 
-import it.gov.pagopa.dto.EvaluationDTO;
-import it.gov.pagopa.dto.OnboardingDTO;
+import it.gov.pagopa.dto.onboarding.EvaluationDTO;
+import it.gov.pagopa.dto.onboarding.OnboardingDTO;
 import reactor.core.publisher.Flux;
 
 public interface AdmissibilityMediatorService {

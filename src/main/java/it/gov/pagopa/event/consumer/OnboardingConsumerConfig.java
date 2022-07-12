@@ -1,6 +1,6 @@
 package it.gov.pagopa.event.consumer;
 
-import it.gov.pagopa.dto.OnboardingDTO;
+import it.gov.pagopa.dto.onboarding.OnboardingDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
