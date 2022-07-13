@@ -16,18 +16,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     @Override
-    public boolean retrieve(OnboardingDTO onboardingDTO) {
-        InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingDTO.getInitiativeId());
-        if(initiativeConfig == null){
-            log.error("cannot find the initiative id %s to which the user %s is asking to onboard".formatted(onboardingDTO.getInitiativeId(), onboardingDTO.getUserId()));
-            return false;
-        }
+    public boolean retrieve(OnboardingDTO onboardingDTO, InitiativeConfig initiativeConfig) {
+
         /* TODO
         * for each initiativeConfig.automatedCriteriaCode,
         *       retrieve the associated authority and field from the Config map (reading using spring cloud kubernetes),
         *       if the OnboardingDTO field's value is null
         *           call the PDND service giving it the token and authority and store the value into the OnboardingDTO relative field
-        *           if the call gave threshold error return false
+        *           if the call gave threshold error return false and short circuit for the other invocation for the current date
         * if all the calls were successful, return true
         */
         return true;    // TODO

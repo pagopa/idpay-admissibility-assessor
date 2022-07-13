@@ -1,11 +1,18 @@
 package it.gov.pagopa.admissibility.rest.initiative.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import lombok.Data;
+import lombok.*;
 
 @Data
-public class InitiativeDTO { //TODO
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
+@ToString
+@Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class InitiativeDTO {
     @JsonProperty("initiativeId")
     private String initiativeId;
 

@@ -12,6 +12,7 @@ import org.kie.api.runtime.KieContainer;
 import org.kie.internal.io.ResourceFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.Map;
@@ -52,13 +53,13 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     // TODO read from cache
     private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
-        InitiativeDTO initiative = initiativeRestService.findById(initiativeId);
+        InitiativeDTO initiative = initiativeRestService.findById(Mono.just(initiativeId)).block();
         if (initiative==null){
             log.error("cannot find initiative having id %s".formatted(initiativeId));
             return null;
         }
         InitiativeConfig out = new InitiativeConfig();
-        //TODO fill the out variable using initiative
+        //TODO call the mapper
 
         //TODO remove these static setters
         out.setInitiativeId(initiativeId);

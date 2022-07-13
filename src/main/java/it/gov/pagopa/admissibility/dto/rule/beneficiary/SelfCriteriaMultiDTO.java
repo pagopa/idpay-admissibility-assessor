@@ -17,7 +17,7 @@ import lombok.*;
 public class SelfCriteriaMultiDTO  implements AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems {
 
     @JsonProperty("_type")
-    private TypeEnum _type;
+    private FieldEnumOnboardingDTO _type;
 
     @JsonProperty("description")
     private String description;

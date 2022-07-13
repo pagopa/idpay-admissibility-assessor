@@ -1,10 +1,11 @@
 package it.gov.pagopa.admissibility.rest.initiative;
 
 import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeDTO;
+import reactor.core.publisher.Mono;
 
 /**
  * This component will communicate with the initiative microservice
  * */
 public interface InitiativeRestService {
-    InitiativeDTO findById(String initiativeId);
+    Mono<InitiativeDTO> findById(Mono<String> initiativeId);
 }
