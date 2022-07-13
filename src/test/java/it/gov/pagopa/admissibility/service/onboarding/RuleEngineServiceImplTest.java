@@ -38,7 +38,7 @@ class RuleEngineServiceImplTest {
         Mockito.when(kieContainer.newStatelessKieSession()).thenReturn(statelessKieSession);
 
         EvaluationDTO evaluationDTO = Mockito.mock(EvaluationDTO.class);
-        Mockito.when(onboarding2EvaluationMapper.apply(Mockito.same(onboardingDTO), Mockito.any())).thenReturn(evaluationDTO);
+        Mockito.lenient().when(onboarding2EvaluationMapper.apply(Mockito.same(onboardingDTO), Mockito.any())).thenReturn(evaluationDTO);
 
         // When
         ruleEngineService.applyRules(onboardingDTO);
@@ -47,6 +47,6 @@ class RuleEngineServiceImplTest {
         Mockito.verify(onboarding2OnboardingDroolsMapper).apply(Mockito.same(onboardingDTO));
         Mockito.verify(onboardingContextHolderService).getKieContainer();
         Mockito.verify(statelessKieSession).execute(Mockito.any(Command.class));
-        Mockito.verify(onboarding2EvaluationMapper).apply(Mockito.same(onboardingDroolsDTO), );
+        Mockito.verify(onboarding2EvaluationMapper).apply(Mockito.same(onboardingDroolsDTO), Mockito.any());
     }
 }
