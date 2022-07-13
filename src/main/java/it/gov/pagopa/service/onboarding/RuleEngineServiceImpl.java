@@ -41,9 +41,9 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         cmds.add(new AgendaGroupSetFocusCommand(onboardingDTO.getInitiativeId()));
 
-        Instant before=Instant.now();
+        Instant before = Instant.now();
         statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
-        Instant after=Instant.now();
+        Instant after = Instant.now();
         log.info("Time between before and after fireAllRules: {} ms", Duration.between(before, after).toMillis());
 
         log.info("Send message prepared: {}", onboardingDTO);

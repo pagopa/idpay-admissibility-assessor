@@ -7,7 +7,7 @@ spring:
   cloud:
     stream:
       function:
-        definition: admissibilityProcessor
+        definition: admissibilityProcessor;beneficiaryRuleConsumer
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_TOPIC_ONBOARDING_REQUEST:}
@@ -18,15 +18,11 @@ spring:
           destination: ${KAFKA_TOPIC_ONBOARDING_OUTCOME:}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
-      #        trxConsumerReward-in-0:
-      #          destination: ${KAFKA_REWARD_TOPIC_REWARD_TRX:}
-      #          group: ${KAFKA_IDPAY_GROUP:}
-      #          content-type: ${KAFKA_CONTENT_TYPE:}
-      #          binder: ${KAFKA_BINDER:}
-      #        trxProducer-out-0:
-      #          destination: ${KAFKA_REWARD_TOPIC_RTD_TRX:}
-      #          content-type: ${KAFKA_CONTENT_TYPE:}
-      #          binder: ${KAFKA_BINDER:}
+        beneficiaryRuleConsumer-in-0:
+          destination: ${KAFKA_TOPIC_BENEFICIARY_RULE_REQUEST:}
+          group: ${KAFKA_IDPAY_GROUP:}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-beneficiary-rule
       binders:
         kafka-onboarding-request:
           type: kafka
@@ -48,6 +44,16 @@ spring:
                     binder:
                       brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_ONBOARDING_OUTCOME:}
                       configuration.sasl.jaas.config: ${EVH_CONNECTION_ONBOARDING_OUTCOME:}
+        kafka-beneficiary-rule:
+          type: kafka
+          environment:
+            spring:
+              cloud:
+                stream:
+                  kafka:
+                    binder:
+                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_BENEFICIARY_RULE_REQUEST:}
+                      configuration.sasl.jaas.config: ${EVH_CONNECTION_BENEFICIARY_RULE_REQUEST:}
       kafka:
         binder:
           auto-create-topics: ${KAFKA_TRANSACTIONS_BINDER_AUTO_CREATE_TOPIC:false}

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 @Service
-public class Onboarding2EvaluationMapper implements BiFunction<OnboardingDTO, List<String>,EvaluationDTO> {
+public class Onboarding2EvaluationMapper implements BiFunction<OnboardingDTO, List<String>, EvaluationDTO> {
 
     @Override
     public EvaluationDTO apply(OnboardingDTO onboardingDTO, List<String> rejectionReasons) {
