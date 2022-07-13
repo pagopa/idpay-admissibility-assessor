@@ -31,16 +31,16 @@ class OnboardingCheckServiceImplTest {
         OnboardingDTO trx = Mockito.mock(OnboardingDTO.class);
 
         // When
-        String result = OnboardingCheckService.check(trx);
+        String result = OnboardingCheckService.check(trx, null);
 
         // Then
         Assertions.assertEquals("Failing mock 3", result);
 
-        Mockito.verify(checkMock1).apply(Mockito.same(trx));
-        Mockito.verify(checkMock2).apply(Mockito.same(trx));
-        Mockito.verify(checkMock3).apply(Mockito.same(trx));
+        Mockito.verify(checkMock1).apply(Mockito.same(trx), Mockito.any());
+        Mockito.verify(checkMock2).apply(Mockito.same(trx), Mockito.any());
+        Mockito.verify(checkMock3).apply(Mockito.same(trx), Mockito.any());
 
-        Mockito.verify(checkMock4,Mockito.never()).apply(Mockito.any());
+        Mockito.verify(checkMock4,Mockito.never()).apply(Mockito.any(), Mockito.any());
 
         Mockito.verifyNoMoreInteractions(checkMock1, checkMock2, checkMock3, checkMock4);
 
@@ -60,15 +60,15 @@ class OnboardingCheckServiceImplTest {
         OnboardingDTO trx = Mockito.mock(OnboardingDTO.class);
 
         // When
-        String result = OnboardingCheckService.check(trx);
+        String result = OnboardingCheckService.check(trx, null);
 
         // Then
         Assertions.assertNull(result);
 
-        Mockito.verify(checkMock1).apply(Mockito.same(trx));
-        Mockito.verify(checkMock2).apply(Mockito.same(trx));
-        Mockito.verify(checkMock3).apply(Mockito.same(trx));
-        Mockito.verify(checkMock4).apply(Mockito.same(trx));
+        Mockito.verify(checkMock1).apply(Mockito.same(trx), Mockito.any());
+        Mockito.verify(checkMock2).apply(Mockito.same(trx), Mockito.any());
+        Mockito.verify(checkMock3).apply(Mockito.same(trx), Mockito.any());
+        Mockito.verify(checkMock4).apply(Mockito.same(trx), Mockito.any());
 
         Mockito.verifyNoMoreInteractions(checkMock1, checkMock2, checkMock3, checkMock4);
 
@@ -76,7 +76,7 @@ class OnboardingCheckServiceImplTest {
 
     private OnboardingCheck configureOnboardingCheckMock(String expectedRejection) {
         OnboardingCheck checkMock = Mockito.mock(OnboardingCheck.class);
-        Mockito.when(checkMock.apply(Mockito.any())).thenReturn(expectedRejection);
+        Mockito.when(checkMock.apply(Mockito.any(), Mockito.any())).thenReturn(expectedRejection);
         return checkMock;
     }
 }

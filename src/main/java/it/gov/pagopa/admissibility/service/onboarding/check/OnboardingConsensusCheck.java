@@ -19,9 +19,9 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
             return "CONSENSUS_CHECK_PDND_FAIL";
         }
 
-        if(onboardingDTO.getSelfDeclarationList().size() != 0 || onboardingDTO.getSelfDeclarationList()!= null){
+        if(onboardingDTO.getSelfDeclarationList().size() != 0 || onboardingDTO.getSelfDeclarationList() != null){
             String declarations = selfDeclarationListCheck(onboardingDTO.getSelfDeclarationList());
-            if(declarations!=null){
+            if(declarations != null){
                 return declarations;
             }
         }
@@ -37,6 +37,4 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
         return null;
     }
 
-
-    
 }
