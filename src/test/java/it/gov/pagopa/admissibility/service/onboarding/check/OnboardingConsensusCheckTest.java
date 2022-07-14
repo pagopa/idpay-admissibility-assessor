@@ -15,13 +15,11 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 class OnboardingConsensusCheckTest {
 
     @Test
-    void testConsensusFalse() {
+    void testTcConsensusFalse() {
+
         // Given
         Map<String, Boolean> selfDeclarationListTrueMock = new HashMap<>();
         selfDeclarationListTrueMock.put("MAP", true);
-
-        Map<String, Boolean> selfDeclarationListFalseMock = new HashMap<>();
-        selfDeclarationListFalseMock.put("MAP", false);
 
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
@@ -36,6 +34,26 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100)
         );
+
+        OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
+
+        // When
+        String resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null);
+
+        // Then
+        assertEquals("CONSENSUS_CHECK_TC_FAIL", resultTcFalse);
+
+    }
+
+    @Test
+    void testPdndConsensusFalse() {
+
+        // Given
+        Map<String, Boolean> selfDeclarationListTrueMock = new HashMap<>();
+        selfDeclarationListTrueMock.put("MAP", true);
+
+        LocalDateTime localDateTimeMock = LocalDateTime.now();
+
         OnboardingDTO onboardingPdndFalseMock = new OnboardingDTO(
                 "1",
                 "1",
@@ -47,6 +65,26 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100)
         );
+
+        OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
+
+        // When
+        String resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null);
+
+        // Then
+        assertEquals("CONSENSUS_CHECK_PDND_FAIL", resultPdndFalse);
+
+    }
+
+    @Test
+    void testSelfDeclarationConsensusFalse() {
+
+        // Given
+        Map<String, Boolean> selfDeclarationListFalseMock = new HashMap<>();
+        selfDeclarationListFalseMock.put("MAP", false);
+
+        LocalDateTime localDateTimeMock = LocalDateTime.now();
+
         OnboardingDTO onboardingSelfDeclarationFalseMock = new OnboardingDTO(
                 "1",
                 "1",
@@ -62,13 +100,9 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        String resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null);
-        String resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null);
         String resultSelfDeclarationFalse = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_TC_FAIL", resultTcFalse);
-        assertEquals("CONSENSUS_CHECK_PDND_FAIL", resultPdndFalse);
         assertEquals("CONSENSUS_CHECK_SELF_DECLARATION_MAP_FAIL", resultSelfDeclarationFalse);
 
     }

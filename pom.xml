@@ -51,6 +51,11 @@
             <artifactId>drools-compiler</artifactId>
             <version>7.68.0.Final</version>
         </dependency>
+        <dependency>
+            <groupId>org.drools</groupId>
+            <artifactId>drools-templates</artifactId>
+            <version>7.68.0.Final</version>
+        </dependency>
 
         <!--3rd party library-->
         <dependency>

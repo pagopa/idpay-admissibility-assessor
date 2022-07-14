@@ -1,0 +1,18 @@
+template header
+name
+agenda
+condition
+consequence
+
+
+package templateRules;
+
+global java.util.Map output;
+
+template "genericRule"
+rule "@{name}"
+agenda-group "@{agenda}"
+when @{condition}
+then @{consequence}
+end
+end template
