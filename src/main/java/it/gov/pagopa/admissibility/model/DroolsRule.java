@@ -20,4 +20,5 @@ public class DroolsRule {
     private String agendaGroup;
     private String ruleCondition;
     private String ruleConsequence;
+    private String rule;
 }

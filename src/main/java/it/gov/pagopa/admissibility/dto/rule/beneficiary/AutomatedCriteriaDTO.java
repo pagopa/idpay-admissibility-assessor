@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.dto.rule.beneficiary;
 
+import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import lombok.*;
 
 /**
@@ -15,9 +16,9 @@ public class AutomatedCriteriaDTO   {
 
     private String code ;
 
-    private Boolean field;
+    private String field;
 
-    private String operator;
+    private FilterOperator operator;
 
     private String value;
 }

@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.drools.transformer.admissibility;
+package it.gov.pagopa.admissibility.service.build;
 
 
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
