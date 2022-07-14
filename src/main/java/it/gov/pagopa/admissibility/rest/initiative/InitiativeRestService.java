@@ -7,5 +7,5 @@ import reactor.core.publisher.Mono;
  * This component will communicate with the initiative microservice
  * */
 public interface InitiativeRestService {
-    Mono<InitiativeDTO> findById(Mono<String> initiativeId);
+    Mono<InitiativeDTO> findById(String initiativeId);
 }

@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.build;
 
 
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import reactor.core.publisher.Flux;
 
 /**
@@ -14,5 +14,5 @@ import reactor.core.publisher.Flux;
  * </ol>
  * */
 public interface BeneficiaryRuleMediatorService {
-    void execute(Flux<InitiativeBeneficiaryRuleDTO> initiativeBeneficiaryRuleDTOFlux);
+    void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux);
 }

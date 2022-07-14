@@ -31,7 +31,7 @@ class KieContainerBuilderServiceImplTest {
         DroolsRuleRepository droolsRuleRepository = Mockito.mock(DroolsRuleRepository.class);
         KieContainerBuilderService kieContainerBuilderService = new KieContainerBuilderServiceImpl(droolsRuleRepository);
 
-        Flux<DroolsRule> rulesFlux = Flux.just(new DroolsRule("InitiativeID","InitiativeID","Condition","Consequence"));
+        Flux<DroolsRule> rulesFlux = Flux.just(new DroolsRule("InitiativeID","InitiativeID","Condition","Consequence", null));
         Mockito.when(droolsRuleRepository.findAll()).thenReturn(rulesFlux);
         // When
         KieContainer result = kieContainerBuilderService.buildAll();

@@ -11,6 +11,7 @@ import org.kie.api.builder.KieModule;
 import org.kie.api.runtime.KieContainer;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +29,8 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
     }
 
     @Override
-    public KieContainer append(DroolsRule droolsRule) {
-        return null;
+    public Mono<KieContainer> append(DroolsRule droolsRule) {
+        return null; // TODO
     }
 
     @Override

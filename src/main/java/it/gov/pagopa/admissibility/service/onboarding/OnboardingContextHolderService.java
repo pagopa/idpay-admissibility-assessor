@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import org.kie.api.runtime.KieContainer;
 
 
@@ -10,8 +11,9 @@ import org.kie.api.runtime.KieContainer;
  * */
 public interface OnboardingContextHolderService {
     KieContainer getKieContainer();
+    void setKieContainer(KieContainer kieContainer);
 
     InitiativeConfig getInitiativeConfig(String initiativeId);
+    CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode);
 
-    void setKieContainer(KieContainer kieContainer);
 }
