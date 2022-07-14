@@ -1,12 +1,14 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -50,14 +52,14 @@ class OnboardingInitiativeCheckTest {
         assertEquals("INVALID_INITIATIVE_ID", result);
     }
 
-    /*@Test
-    void testTcDateFail() {
+    @Test
+    void testInitiativeTcDateFail() {
 
         // Given
         Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
         selfDeclarationListMock.put("MAP", true);
 
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        LocalDateTime localDateTimeMock = LocalDateTime.of(2022,1,1,0,0);
 
         OnboardingDTO onboardingMock = new OnboardingDTO(
                 "1",
@@ -75,6 +77,12 @@ class OnboardingInitiativeCheckTest {
         onboardingContext.put(null, null);
 
         OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
+
+        InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
+
+        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
 
@@ -86,13 +94,14 @@ class OnboardingInitiativeCheckTest {
     }
 
     @Test
-    void testCriteriaConsensusDateFail() {
+    void testInitiativeCriteriaConsensusDateFail() {
 
         // Given
         Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
         selfDeclarationListMock.put("MAP", true);
 
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        LocalDateTime localDateTimeMock1 = LocalDateTime.of(2021,7,14,0,0);
+        LocalDateTime localDateTimeMock2 = LocalDateTime.of(2022,1,1,0,0);
 
         OnboardingDTO onboardingMock = new OnboardingDTO(
                 "1",
@@ -101,8 +110,8 @@ class OnboardingInitiativeCheckTest {
                 "OK",
                 true,
                 selfDeclarationListMock,
-                localDateTimeMock,
-                localDateTimeMock,
+                localDateTimeMock1,
+                localDateTimeMock2,
                 new BigDecimal(100)
         );
 
@@ -111,6 +120,12 @@ class OnboardingInitiativeCheckTest {
 
         OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
 
+        InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
+
+        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
+
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
 
         // When
@@ -118,7 +133,7 @@ class OnboardingInitiativeCheckTest {
 
         // Then
         assertEquals("CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL", result);
-    }*/
+    }
 
     @Test
     void testInitiativeCheckOk() {

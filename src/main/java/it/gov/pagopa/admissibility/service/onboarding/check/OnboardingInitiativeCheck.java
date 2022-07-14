@@ -16,7 +16,7 @@ import static it.gov.pagopa.admissibility.utils.Constants.ONBOARDING_CONTEXT_INI
 @Service
 @Slf4j
 @Order(1)
-public class OnboardingInitiativeCheck implements OnboardingCheck{ //TODO to test
+public class OnboardingInitiativeCheck implements OnboardingCheck{
     private final OnboardingContextHolderService onboardingContextHolderService;
 
     public OnboardingInitiativeCheck(OnboardingContextHolderService onboardingContextHolderService) {
@@ -43,7 +43,7 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{ //TODO to tes
     }
 
     private String dateCheck (LocalDateTime dateToCheck, LocalDate startDate, LocalDate endDate,String fieldToCheck){
-        if(dateToCheck.toLocalDate().isBefore(startDate) && dateToCheck.toLocalDate().isAfter(endDate)){
+        if(dateToCheck.toLocalDate().isBefore(startDate) || dateToCheck.toLocalDate().isAfter(endDate)){
             return fieldToCheck;
         }
         return null;
