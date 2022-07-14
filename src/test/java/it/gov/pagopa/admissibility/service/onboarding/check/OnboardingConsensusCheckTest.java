@@ -1,18 +1,15 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 
 class OnboardingConsensusCheckTest {
@@ -103,11 +100,6 @@ class OnboardingConsensusCheckTest {
 
         // Then
         assertNull(result);
-    }
-
-    @Test
-    void testSelfDeclarationCheck() {
-
     }
 
 }
