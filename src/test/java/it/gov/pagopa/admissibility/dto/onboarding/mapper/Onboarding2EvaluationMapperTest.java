@@ -2,6 +2,9 @@ package it.gov.pagopa.admissibility.dto.onboarding.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,8 +38,8 @@ class Onboarding2EvaluationMapperTest {
                 localDateTimeMock1,
                 localDateTimeMock1,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         List<String> rejectReasonsMock1 = new ArrayList<>();
@@ -51,6 +54,8 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals("1", result.getInitiativeId());
         Assertions.assertEquals("ONBOARDING_OK", result.getStatus());
         Assertions.assertTrue(CollectionUtils.isEmpty(result.getOnboardingRejectionReasons()));
+
+        TestUtils.checkNotNullFields(result);
     }
 
     @Test
@@ -64,7 +69,7 @@ class Onboarding2EvaluationMapperTest {
 
         OnboardingDTO objectMock1 = new OnboardingDTO(
                 "1",
-                null,
+                "ID",
                 true,
                 "OK",
                 true,
@@ -72,8 +77,8 @@ class Onboarding2EvaluationMapperTest {
                 localDateTimeMock1,
                 localDateTimeMock1,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         List<String> rejectReasonsMock1 = Collections.singletonList("InitiativeId NULL");
@@ -85,10 +90,10 @@ class Onboarding2EvaluationMapperTest {
 
         // THEN
         Assertions.assertEquals("1", result.getUserId());
-        Assertions.assertNull(result.getInitiativeId());
+        Assertions.assertEquals("ID", result.getInitiativeId());
         Assertions.assertEquals("ONBOARDING_KO", result.getStatus());
         Assertions.assertFalse(CollectionUtils.isEmpty(result.getOnboardingRejectionReasons()));
 
-        //TODO check not null fields
+        TestUtils.checkNotNullFields(result);
     }
 }

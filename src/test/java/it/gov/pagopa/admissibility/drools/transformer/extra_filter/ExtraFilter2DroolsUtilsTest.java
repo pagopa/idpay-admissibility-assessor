@@ -19,27 +19,19 @@ public class ExtraFilter2DroolsUtilsTest {
             "pdndAccept",
             "selfDeclarationList",
             "tcAcceptTimestamp",
-            "criteriaConsensusTimestamp",
-            "birthDate.chronology",
-            "birthDate.era",
-            "birthDate.prolepticMonth",
-            "birthDate.dayOfMonth.value",
-            "birthDate.dayOfWeek.value",
-            "birthDate.month.value",
-            "birthDate.monthValue",
-            "birthDate.leapYear"
-
+            "criteriaConsensusTimestamp"
     ));
 
     public static final List<String> expectedFields = List.of(
             "birthDate",
-            "birthDate.dayOfMonth",
-            "birthDate.dayOfWeek",
-            "birthDate.dayOfYear",
-            "birthDate.month",
-            "birthDate.year",
+            "birthDate.anno",
+            "birthDate.eta",
             "isee",
-            "residenza"
+            "residenza",
+            "residenza.cap",
+            "residenza.citta",
+            "residenza.nazione",
+            "residenza.regione"
     );
 
     @Test

@@ -1,10 +1,11 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,8 +35,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -67,8 +68,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -100,8 +101,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -132,8 +133,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                null,
-                LocalDate.of(2000,1,1)
+                new Residenza(),
+                new DataNascita()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();

@@ -1,12 +1,13 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
+import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -27,6 +28,6 @@ public class OnboardingDTO {
 
     // Authorities data fetched if the initiative requires them
     BigDecimal isee;
-    Object residenza; // TODO model
-    LocalDate birthDate;
+    Residenza residenza;
+    DataNascita birthDate;
 }

@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRul
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeDTO;
 import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -67,6 +68,8 @@ class InitiativeDTO2ConfigMapperTest {
         assertEquals(LocalDate.of(2022, 1, 1), result.getStartDate());
         assertEquals(LocalDate.of(2022, 12, 31), result.getEndDate());
         assertEquals(automatedCriteriaCodesMock, result.getAutomatedCriteriaCodes());
+
+        TestUtils.checkNotNullFields(result);
     }
 
     @Test

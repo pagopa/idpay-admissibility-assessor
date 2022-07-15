@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2D
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
@@ -24,7 +25,6 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +75,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
                                         
                 rule "ID-NAME-BIRTHDATE"
                 agenda-group "ID"
-                when $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(birthDate.year > new java.lang.Integer("2021")))
+                when $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(birthDate.anno > "2000"))
                 then $onboarding.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_BIRTHDATE_FAIL");
                 end
                                         
@@ -101,15 +101,17 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId(initiative.getInitiativeId());
+        onboardingDTO.setBirthDate(new DataNascita());
+
         if(expectedIseeFail){
             onboardingDTO.setIsee(BigDecimal.TEN);
         } else {
             onboardingDTO.setIsee(BigDecimal.ONE);
         }
         if(expectedBirthDateFail){
-            onboardingDTO.setBirthDate(LocalDate.of(1900, 1, 1));
+            onboardingDTO.getBirthDate().setAnno("2000");
         } else {
-            onboardingDTO.setBirthDate(LocalDate.now());
+            onboardingDTO.getBirthDate().setAnno("2021");
         }
 
         DroolsRule rule = beneficiaryRule2DroolsRule.apply(Flux.just(initiative)).blockFirst();
@@ -148,7 +150,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
         criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1"));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2021"));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "anno", FilterOperator.GT, "2000"));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         return dto;
