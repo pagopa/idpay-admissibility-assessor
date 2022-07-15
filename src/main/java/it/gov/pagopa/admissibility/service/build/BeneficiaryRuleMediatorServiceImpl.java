@@ -2,10 +2,10 @@ package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.drools.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediatorService {
@@ -26,7 +26,7 @@ public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediat
     public void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux) {
         beneficiaryRule2DroolsRule.apply(initiativeBeneficiaryRuleDTOFlux) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleMediatorService
                 .flatMap(droolsRuleRepository::save)
-                .flatMap(kieContainerBuilderService::append)
+                .flatMap(r -> kieContainerBuilderService.buildAll())
                 .subscribe(onboardingContextHolderService::setKieContainer);
     }
 }

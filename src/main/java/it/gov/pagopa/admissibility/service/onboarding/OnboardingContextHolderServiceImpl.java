@@ -6,7 +6,7 @@ import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.rest.initiative.InitiativeRestService;
 import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
-import it.gov.pagopa.admissibility.service.drools.KieContainerBuilderService;
+import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieContainer;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -51,8 +51,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     @Scheduled(fixedRateString = "${app.rules.cache.refresh-ms-rate}")
     public void refreshKieContainer(){
         log.trace("Refreshing KieContainer");
-        // TODO use the KieContainerBuilderService
-        kieContainer = kieContainerBuilderService.buildAll();
+        kieContainerBuilderService.buildAll().subscribe(this::setKieContainer);
     }
     //endregion
 

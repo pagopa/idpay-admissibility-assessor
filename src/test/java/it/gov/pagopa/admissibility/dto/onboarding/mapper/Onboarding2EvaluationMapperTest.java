@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -33,7 +34,9 @@ class Onboarding2EvaluationMapperTest {
                 selfDeclarationListMock1,
                 localDateTimeMock1,
                 localDateTimeMock1,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         List<String> rejectReasonsMock1 = new ArrayList<>();
@@ -68,7 +71,9 @@ class Onboarding2EvaluationMapperTest {
                 selfDeclarationListMock1,
                 localDateTimeMock1,
                 localDateTimeMock1,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         List<String> rejectReasonsMock1 = Collections.singletonList("InitiativeId NULL");
@@ -83,5 +88,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(result.getInitiativeId());
         Assertions.assertEquals("ONBOARDING_KO", result.getStatus());
         Assertions.assertFalse(CollectionUtils.isEmpty(result.getOnboardingRejectionReasons()));
+
+        //TODO check not null fields
     }
 }

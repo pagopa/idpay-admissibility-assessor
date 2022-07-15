@@ -1,52 +1,84 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl;
+import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
+import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.api.command.Command;
 import org.kie.api.runtime.KieContainer;
-import org.kie.api.runtime.StatelessKieSession;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
 class RuleEngineServiceImplTest {
 
+    @BeforeAll
+    public static void configDroolsLogLevel(){
+        KieContainerBuilderServiceImplTest.configDroolsLogs();
+    }
+
     @Test
     void applyRules() {
         // Given
         OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-        Onboarding2EvaluationMapper onboarding2EvaluationMapper = Mockito.mock(Onboarding2EvaluationMapper.class);
-        Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = Mockito.mock(Onboarding2OnboardingDroolsMapper.class);
+        Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
+        Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, onboarding2EvaluationMapper, onboarding2OnboardingDroolsMapper);
 
-        OnboardingDTO onboardingDTO = Mockito.mock(OnboardingDTO.class);
+        OnboardingDTO onboardingDTO = new OnboardingDTO();
+        onboardingDTO.setInitiativeId("INITIATIVEID");
 
-        OnboardingDroolsDTO onboardingDroolsDTO = new OnboardingDroolsDTO();
-        Mockito.when(onboarding2OnboardingDroolsMapper.apply(Mockito.same(onboardingDTO))).thenReturn(onboardingDroolsDTO);
-
-        KieContainer kieContainer = Mockito.mock(KieContainer.class);
-        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(kieContainer);
-        StatelessKieSession statelessKieSession = Mockito.mock(StatelessKieSession.class);
-        Mockito.when(kieContainer.newStatelessKieSession()).thenReturn(statelessKieSession);
-
-        EvaluationDTO evaluationDTO = Mockito.mock(EvaluationDTO.class);
-        Mockito.lenient().when(onboarding2EvaluationMapper.apply(Mockito.same(onboardingDTO), Mockito.any())).thenReturn(evaluationDTO);
+        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
-        ruleEngineService.applyRules(onboardingDTO);
+        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO);
 
         // Then
-        Mockito.verify(onboarding2OnboardingDroolsMapper).apply(Mockito.same(onboardingDTO));
         Mockito.verify(onboardingContextHolderService).getKieContainer();
-        Mockito.verify(statelessKieSession).execute(Mockito.any(Command.class));
-        Mockito.verify(onboarding2EvaluationMapper).apply(Mockito.same(onboardingDroolsDTO), Mockito.any());
+
+        Assertions.assertNotNull(result.getAdmissibilityCheckDate());
+        Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
+        Assertions.assertTrue(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now().minusMinutes(2)));
+
+        EvaluationDTO expected = new EvaluationDTO();
+        expected.setInitiativeId(onboardingDTO.getInitiativeId());
+        expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
+        expected.setStatus("ONBOARDING_KO");
+        expected.setOnboardingRejectionReasons(Collections.singletonList("REASON1"));
+
+        Assertions.assertEquals(expected, result);
+    }
+
+    private KieContainer buildContainer(String initiativeId) {
+        DroolsRule ignoredRule = new DroolsRule();
+        ignoredRule.setId("IGNORED");
+        ignoredRule.setName("IGNOREDRULE");
+        ignoredRule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
+
+        DroolsRule rule = new DroolsRule();
+        rule.setId(initiativeId);
+        rule.setName("RULE");
+        rule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(rule.getId(), rule.getName(),
+                "$onboarding: %s()".formatted(OnboardingDroolsDTO.class.getName()),
+                "$onboarding.getOnboardingRejectionReasons().add(\"REASON1\");"));
+
+        return new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -35,18 +36,20 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         StatelessKieSession statelessKieSession = onboardingContextHolderService.getKieContainer().newStatelessKieSession();
 
-        List<Command> cmds = new ArrayList<>();
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingDTO);
-        cmds.add(CommandFactory.newInsert(req));
 
-        cmds.add(new AgendaGroupSetFocusCommand(onboardingDTO.getInitiativeId()));
+        @SuppressWarnings("unchecked")
+        List<Command<?>> cmds = Arrays.asList(
+                CommandFactory.newInsert(req),
+                new AgendaGroupSetFocusCommand(req.getInitiativeId())
+        );
 
         Instant before = Instant.now();
         statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
         Instant after = Instant.now();
-        log.info("Time between before and after fireAllRules: {} ms", Duration.between(before, after).toMillis());
+        log.debug("Time between before and after fireAllRules: {} ms", Duration.between(before, after).toMillis());
 
-        log.info("Send message prepared: {}", onboardingDTO);
+        log.debug("Send message prepared: {}", req);
 
         return onboarding2EvaluationMapper.apply(req, req.getOnboardingRejectionReasons());
     }

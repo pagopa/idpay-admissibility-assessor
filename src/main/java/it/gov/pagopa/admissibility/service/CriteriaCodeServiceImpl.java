@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service;
 public class CriteriaCodeServiceImpl implements CriteriaCodeService {
 
     @Override
-    public CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode) {// TODO
+    public CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode) {// TODO actually we will read from ConfigMap, next using Spring cloud kubernetes?
         CriteriaCodeConfig mockedCriteriaCodeConfig = new CriteriaCodeConfig();
         mockedCriteriaCodeConfig.setAuthority("AUTHORITY1");
         mockedCriteriaCodeConfig.setOnboardingField("isee");

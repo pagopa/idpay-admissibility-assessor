@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,7 +31,9 @@ class Onboarding2OnboardingDroolsMapperTest {
                 selfDeclarationListMock1,
                 localDateTimeMock1,
                 localDateTimeMock1,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
@@ -69,7 +72,9 @@ class Onboarding2OnboardingDroolsMapperTest {
                 selfDeclarationListMock1,
                 localDateTimeMock1,
                 localDateTimeMock1,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
@@ -87,6 +92,8 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertEquals(localDateTimeMock1, result.getTcAcceptTimestamp());
         Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());
-        Assertions.assertNotNull(result.getOnboardingRejectionReasons());
+        Assertions.assertNotNull(result.getOnboardingRejectionReasons());;
+
+        //TODO check not null fields
     }
 }

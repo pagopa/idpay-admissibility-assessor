@@ -17,7 +17,7 @@ import java.util.Collections;
 class AdmissibilityMediatorServiceImplTest {
 
     @Test
-    void mediatorTest() {
+    void mediatorTest() { //TODO check this test, it print ERROR even if not shown
 
         // Given
         OnboardingCheckService onboardingCheckService = Mockito.mock(OnboardingCheckServiceImpl.class);

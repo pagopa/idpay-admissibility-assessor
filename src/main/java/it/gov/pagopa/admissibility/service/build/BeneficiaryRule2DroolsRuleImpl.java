@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
+import it.gov.pagopa.admissibility.drools.model.NotOperation;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformer;
@@ -23,10 +25,12 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
     private final CriteriaCodeService criteriaCodeService;
     private final ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer;
+    private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer) {
+    public BeneficiaryRule2DroolsRuleImpl(CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, KieContainerBuilderService builderService) {
         this.criteriaCodeService = criteriaCodeService;
         this.extraFilter2DroolsTransformer = extraFilter2DroolsTransformer;
+        this.builderService = builderService;
     }
 
     @Override
@@ -37,14 +41,18 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     private DroolsRule apply(Initiative2BuildDTO initiative) {
         try {
             DroolsRule out = new DroolsRule();
-            out.setName(String.format("%s - %s", initiative.getInitiativeId(), initiative.getInitiativeName()));
-            out.setAgendaGroup(initiative.getInitiativeId());
-            out.setRuleCondition(String.format("$rejectionReasons: new java.util.ArrayList();\n$onboarding: %s();\n%s\n$rejectionReason.size()>0"
-                    , OnboardingDroolsDTO.class.getName()
-                    , initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(this::automatedCriteriaBuild).collect(Collectors.joining("\n"))));
-            out.setRuleConsequence("$onboarding.getOnboardingRejectionReasons().addAll($rejectionReasons)");
+            out.setId(initiative.getInitiativeId());
+            out.setName(String.format("%s-%s", initiative.getInitiativeId(), initiative.getInitiativeName()));
 
-            // TODO test the compilation simulating ad invocation with a container with just this rule?
+            out.setRule("""
+                    package it.gov.pagopa.admissibility.drools.buildrules;
+                    
+                    %s
+                    """.formatted(
+                    initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
+            );
+
+            builderService.build(Flux.just(out)).block(); // TODO handle if it goes to exception due to error
 
             return out;
         } catch (RuntimeException e){
@@ -53,20 +61,29 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         }
     }
 
-    private String automatedCriteriaBuild(AutomatedCriteriaDTO automatedCriteriaDTO){
+    private String automatedCriteriaRuleBuild(String initiativeId, String ruleName, AutomatedCriteriaDTO automatedCriteriaDTO){
         CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(automatedCriteriaDTO.getCode());
         if(criteriaCodeConfig == null){
             throw new IllegalStateException("Invalid criteria code provided or not configured: %s".formatted(automatedCriteriaDTO.getCode()));
         }
-        return "eval(%s ? true : $rejectionReasons.add(\"AUTOMATED_CRITERIA_%s_FAIL\"))".formatted(
-                extraFilter2DroolsTransformer.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+        return """
+                rule "%s"
+                agenda-group "%s"
+                when $onboarding: %s(%s)
+                then $onboarding.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_%s_FAIL");
+                end
+                """.formatted(
+                        ruleName + "-" + automatedCriteriaDTO.getCode(),
+                        initiativeId,
+                        OnboardingDroolsDTO.class.getName(),
+                        extraFilter2DroolsTransformer.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
                 automatedCriteriaDTO.getCode()
         );
     }
 
-    private Filter automatedCriteria2ExtraFilter(AutomatedCriteriaDTO automatedCriteriaDTO, CriteriaCodeConfig criteriaCodeConfig) {
+    private ExtraFilter automatedCriteria2ExtraFilter(AutomatedCriteriaDTO automatedCriteriaDTO, CriteriaCodeConfig criteriaCodeConfig) {
         String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
         FilterOperator operator = automatedCriteriaDTO.getOperator();
-        return new Filter(field, operator, automatedCriteriaDTO.getValue());
+        return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue()));
     }
 }

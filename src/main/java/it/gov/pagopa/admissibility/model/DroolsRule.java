@@ -16,9 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "beneficiary_rule")
 public class DroolsRule {
     @Id
+    private String id;
     private String name;
-    private String agendaGroup;
-    private String ruleCondition;
-    private String ruleConsequence;
     private String rule;
 }

@@ -55,6 +55,12 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
             return Boolean.valueOf(value);
         } else if (Number.class.isAssignableFrom(fieldType)){
             return fieldType.getConstructor(String.class).newInstance(value);
+        } else if (int.class.isAssignableFrom(fieldType)){
+            return Integer.parseInt(value);
+        } else if (float.class.isAssignableFrom(fieldType)){
+            return Float.parseFloat(value);
+        } else if (double.class.isAssignableFrom(fieldType)){
+            return Double.parseDouble(value);
         } else if (LocalDateTime.class.isAssignableFrom(fieldType)){
             return LocalDateTime.parse(value, dateTimeFormatter);
         } else if (LocalDate.class.isAssignableFrom(fieldType)){

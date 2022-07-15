@@ -19,23 +19,41 @@ public class ExtraFilter2DroolsUtilsTest {
             "pdndAccept",
             "selfDeclarationList",
             "tcAcceptTimestamp",
-            "criteriaConsensusTimestamp"
+            "criteriaConsensusTimestamp",
+            "birthDate.chronology",
+            "birthDate.era",
+            "birthDate.prolepticMonth",
+            "birthDate.dayOfMonth.value",
+            "birthDate.dayOfWeek.value",
+            "birthDate.month.value",
+            "birthDate.monthValue",
+            "birthDate.leapYear"
+
     ));
 
-    public static final List<String> expectedFields = Collections.singletonList("isee");
+    public static final List<String> expectedFields = List.of(
+            "birthDate",
+            "birthDate.dayOfMonth",
+            "birthDate.dayOfWeek",
+            "birthDate.dayOfYear",
+            "birthDate.month",
+            "birthDate.year",
+            "isee",
+            "residenza"
+    );
 
     @Test
-    public void testBuildExtraFilterFields(){
+    public void testBuildExtraFilterFields() {
         System.out.println("Testing null parameters (only nullable)");
         List<ExtraFilterField> result = ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, null, ignoredPaths);
         Assertions.assertNotNull(result);
         Assertions.assertEquals(expectedFields, result.stream().map(ExtraFilterField::getField).sorted().collect(Collectors.toList()));
 
         System.out.println("Testing invalid subclass");
-        try{
+        try {
             ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, Collections.singletonMap(BigDecimal.class, Collections.singletonList(OnboardingDTO.class)), ignoredPaths);
             Assertions.fail("Subclass check failed");
-        } catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             //Nothing to do!
         }
 
@@ -52,12 +70,12 @@ public class ExtraFilter2DroolsUtilsTest {
         checkOnboardingDTOFields(result);
     }
 
-    private void checkOnboardingDTOFields(List<ExtraFilterField> result){
+    private void checkOnboardingDTOFields(List<ExtraFilterField> result) {
         Assertions.assertEquals(expectedFields, result.stream().map(ExtraFilterField::getField).sorted().collect(Collectors.toList()));
         for (ExtraFilterField field : result) {
-            if(field.getField().startsWith("(")){
+            if (field.getField().startsWith("(")) {
                 Assertions.assertNotNull(field.getCastPath());
-                Assertions.assertEquals("("+field.getCastPath().getName()+")paymentMethod."+ field.getName(), field.getField());
+                Assertions.assertEquals("(" + field.getCastPath().getName() + ")paymentMethod." + field.getName(), field.getField());
             } else if (field.getName().equals("paymentMethod")) {
                 Assertions.assertTrue(field.isToCast());
             }
@@ -65,7 +83,7 @@ public class ExtraFilter2DroolsUtilsTest {
 
         Map<String, Object> context = new HashMap<>();
         result.sort(Comparator.comparing(ExtraFilterField::getField));
-        result.forEach(f-> Filter2DroolsTranformerImpl.determineFieldType(f.getField(), OnboardingDTO.class, context));
+        result.forEach(f -> Filter2DroolsTranformerImpl.determineFieldType(f.getField(), OnboardingDTO.class, context));
     }
 }
 

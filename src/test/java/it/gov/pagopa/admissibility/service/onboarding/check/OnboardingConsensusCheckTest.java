@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +33,9 @@ class OnboardingConsensusCheckTest {
                 selfDeclarationListTrueMock,
                 localDateTimeMock,
                 localDateTimeMock,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -63,7 +66,9 @@ class OnboardingConsensusCheckTest {
                 selfDeclarationListTrueMock,
                 localDateTimeMock,
                 localDateTimeMock,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -94,7 +99,9 @@ class OnboardingConsensusCheckTest {
                 selfDeclarationListFalseMock,
                 localDateTimeMock,
                 localDateTimeMock,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -124,7 +131,9 @@ class OnboardingConsensusCheckTest {
                 selfDeclarationListMock,
                 localDateTimeMock,
                 localDateTimeMock,
-                new BigDecimal(100)
+                new BigDecimal(100),
+                null,
+                LocalDate.of(2000,1,1)
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
