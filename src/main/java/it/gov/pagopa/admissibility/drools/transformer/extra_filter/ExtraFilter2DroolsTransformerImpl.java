@@ -23,10 +23,10 @@ public class ExtraFilter2DroolsTransformerImpl implements ExtraFilter2DroolsTran
     private final Filter2DroolsTranformer filter2DroolsTranformer;
 
     @Autowired
-    public ExtraFilter2DroolsTransformerImpl(Aggregator2DroolsTransformer aggregator2DroolsTransformer, NotOperation2DroolsTransformer notOperation2DroolsTransformer, Filter2DroolsTranformer filter2DroolsTranformer) {
-        this.aggregator2DroolsTransformer = aggregator2DroolsTransformer;
-        this.notOperation2DroolsTransformer = notOperation2DroolsTransformer;
-        this.filter2DroolsTranformer = filter2DroolsTranformer;
+    public ExtraFilter2DroolsTransformerImpl() {
+        this.aggregator2DroolsTransformer = new Aggregator2DroolsTransformer();
+        this.notOperation2DroolsTransformer = new NotOperation2DroolsTransformer();
+        this.filter2DroolsTranformer = new Filter2DroolsTranformer();
     }
 
     /**

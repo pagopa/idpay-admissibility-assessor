@@ -1,15 +1,44 @@
 package it.gov.pagopa.admissibility.drools.transformer.extra_filter.aggregator;
 
 import it.gov.pagopa.admissibility.drools.model.aggregator.Aggregator;
+import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorAnd;
+import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorOr;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformer;
-import it.gov.pagopa.admissibility.model.DroolsRule;
+import org.springframework.util.CollectionUtils;
 
+import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-/** A service to validate and tranform an{@link Aggregator} into a {@link DroolsRule#getRuleCondition()} using as context entity the input <i>entityClass</i> */
-public interface Aggregator2DroolsTransformer {
+public class Aggregator2DroolsTransformer {
+
+    public String apply(ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, Aggregator aggregator, Class<?> entityClass, Map<String, Object> context) {
+        if (!CollectionUtils.isEmpty(aggregator.getOperands())) {
+            String aggregationOp = transcodeAggregatorOp(aggregator);
+            Map<String, Object> aggregatorContext;
+            if(aggregator instanceof AggregatorAnd){
+                aggregatorContext = new HashMap<>(context);
+            } else {
+                aggregatorContext = context;
+            }
+            return String.format("(%s)", aggregator.getOperands().stream()
+                    .map(o -> extraFilter2DroolsTransformer.apply(o, entityClass, (aggregator instanceof AggregatorOr)?new HashMap<>(context):aggregatorContext))
+                    .collect(Collectors.joining(aggregationOp)));
+        } else {
+            return "";
+        }
+    }
+
     /**
-     * @param context: Filters aggregated using AND will share the same context, Filters aggregated using OR will use separated context (inherited from parent)
-     * @see Aggregator2DroolsTransformer */
-    String apply(ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, Aggregator aggregator, Class<?> entityClass, Map<String, Object> context);
+     * It will determine the Drools aggregator operator starting from {@link Aggregator}
+     */
+    private String transcodeAggregatorOp(Aggregator aggregator) {
+        if (aggregator instanceof AggregatorAnd) {
+            return " && ";
+        } else if (aggregator instanceof AggregatorOr) {
+            return " || ";
+        } else {
+            throw new IllegalArgumentException(String.format("Unsupported Aggregator operator:%s", aggregator.getClass()));
+        }
+    }
 }

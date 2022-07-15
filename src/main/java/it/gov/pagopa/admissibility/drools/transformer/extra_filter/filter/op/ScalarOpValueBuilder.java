@@ -16,8 +16,8 @@ import java.util.*;
 @Service
 @Slf4j
 public class ScalarOpValueBuilder implements OperationValueBuilder{
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-dd-MM' 'HH:mm[:ss[.SSS]]");
-    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-dd-MM");
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm[:ss[.SSS]]");
+    private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm[:ss[.SSS]]");
 
     private static final Set<FilterOperator> scalarOperations= Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
@@ -49,7 +49,9 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
      * it will deserialize the input String
      */
     private Object deserializeValue(String value, Class<?> fieldType) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
-        if(String.class.isAssignableFrom(fieldType)){
+        if(value == null){
+            return null;
+        } else if(String.class.isAssignableFrom(fieldType)){
             return value;
         } else if(Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)){
             return Boolean.valueOf(value);

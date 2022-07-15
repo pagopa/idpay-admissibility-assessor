@@ -8,17 +8,12 @@ import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorAnd;
 import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorOr;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.aggregator.Aggregator2DroolsTransformerImpl;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTranformerImpl;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.InOpValueBuilder;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.InstanceOfOpValueBuilder;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.ScalarOpValueBuilder;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.not.NotOperation2DroolsTransformerImpl;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
+import lombok.Data;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,59 +26,138 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 public class ExtraFilter2DroolsTransformerImplTest {
-    private static final BigDecimal ISEE = BigDecimal.valueOf(123);
-    private static final OffsetDateTime ONBOARDING_DATE = OffsetDateTime.now();
-    private static final String STATUS = "STATUS";
-    private static final String USER_ID = "USERID";
-
-    private static final ScalarOpValueBuilder scalarOpValueBuilder = new ScalarOpValueBuilder();
+    public static final String STRINGVALUE = "STRINGVALUE";
+    private static final BigDecimal BIGDECIMALVALUE = BigDecimal.valueOf(123);
+    private static final LocalDate LOCALDATEOBJECT = LocalDate.of(2022, 7, 15);
+    private static final LocalTime LOCALTIMEOBJECT = LocalTime.of(5, 1, 59, 999000000);
+    private static final LocalDateTime LOCALDATETIMEOBJECT = LocalDateTime.of(LOCALDATEOBJECT, LOCALTIMEOBJECT);
+    private static final ZoneOffset ZONEOFFSETOBJECT = ZoneOffset.ofHours(0);
+    private static final ZoneId ZONEIDOBJECT = ZoneId.of(ZONEOFFSETOBJECT.toString());
+    private static final ZonedDateTime ZONEDDATETIMEOBJECT = ZonedDateTime.of(LOCALDATEOBJECT, LOCALTIMEOBJECT, ZONEIDOBJECT);
+    private static final OffsetDateTime OFFSETDATETIMEOBJECT = OffsetDateTime.of(LOCALDATEOBJECT, LOCALTIMEOBJECT, ZONEOFFSETOBJECT);
 
     public static ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer =
-            new ExtraFilter2DroolsTransformerImpl(
-                    new Aggregator2DroolsTransformerImpl()
-                    , new NotOperation2DroolsTransformerImpl()
-                    , new Filter2DroolsTranformerImpl(
-                    new InstanceOfOpValueBuilder(),
-                    scalarOpValueBuilder,
-                    new InOpValueBuilder(scalarOpValueBuilder)
-            ));
+            new ExtraFilter2DroolsTransformerImpl();
 
     @BeforeAll
     public static void configDroolsLogLevel() {
         KieContainerBuilderServiceImplTest.configDroolsLogs();
     }
 
+    @Data
+    public static class ExtraFilterTestModelSample {
+        private String stringObject;
+        private Number numberObject;
+        private DayOfWeek enumObject;
+        private Collection<String> collectionObject;
+        private LocalDate localDateObject;
+        private LocalTime localTimeObject;
+        private LocalDateTime localDateTimeObject;
+        private ZoneOffset zoneOffsetObject;
+        private ZoneId zoneIdObject;
+        private ZonedDateTime zonedDateTimeObject;
+        private OffsetDateTime offsetDateTimeObject;
+        private Boolean booleanObject;
+    }
+
     @Test
     public void testSuccessful() {
-        String dayOfWeek = ONBOARDING_DATE.plusDays(1).getDayOfWeek().name();
         ExtraFilter extraFilter = new AggregatorAnd(Arrays.asList(
-                new Filter("isee", FilterOperator.GT, ISEE.subtract(BigDecimal.TEN).toString()),
-                new Filter("isee", FilterOperator.GE, ISEE.subtract(BigDecimal.ONE).toString()),
-                new AggregatorOr(Arrays.asList(
+                new Filter("stringObject", FilterOperator.EQ, null),
+                new Filter("stringObject", FilterOperator.GE, STRINGVALUE),
+                new AggregatorOr(List.of(
                         new AggregatorAnd(Arrays.asList(
-                                new Filter("status", FilterOperator.INSTANCE_OF, String.class.getName()),
-                                new Filter("status", FilterOperator.EQ, STATUS)
+                                new Filter("numberObject", FilterOperator.INSTANCE_OF, BigDecimal.class.getName()),
+                                new Filter("numberObject", FilterOperator.LT, BIGDECIMALVALUE.toString()),
+                                new Filter("numberObject", FilterOperator.EQ, null)
                         )),
                         new AggregatorAnd(List.of(
-                                new Filter("userId", FilterOperator.IN, "(" + USER_ID + ",NOT_MATCH)")
+                                new Filter("enumObject", FilterOperator.IN, "(" + DayOfWeek.MONDAY + "," + DayOfWeek.FRIDAY + ")"),
+                                new Filter("enumObject", FilterOperator.EQ, null)
                         ))
                 )),
-                new Filter("isee", FilterOperator.LE, ISEE.add(BigDecimal.ONE).toString()),
-                new Filter("isee", FilterOperator.LT, ISEE.add(BigDecimal.TEN).toString()),
+                new AggregatorOr(List.of(
+
+                        new AggregatorAnd(List.of(
+                                new Filter("collectionObject", FilterOperator.INSTANCE_OF, HashSet.class.getName()),
+                                new Filter("collectionObject", FilterOperator.EQ, BIGDECIMALVALUE.add(BigDecimal.ONE).toString())
+                        )),
+                        new AggregatorAnd(List.of(
+                                new Filter("collectionObject", FilterOperator.INSTANCE_OF, ArrayList.class.getName()),
+                                new Filter("collectionObject", FilterOperator.EQ, null)
+                        ))
+                )),
+
+                new Filter("localDateObject", FilterOperator.GT, LOCALDATEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE)),
+                new Filter("localDateObject", FilterOperator.EQ, null),
                 new NotOperation(
-                        new Filter("criteriaConsensusTimestamp.dayOfWeek", FilterOperator.NOT_EQ, dayOfWeek)
-                )
+                        new Filter("localDateObject.dayOfWeek", FilterOperator.NOT_EQ, DayOfWeek.MONDAY.toString())
+                ),
+                new Filter("localTimeObject", FilterOperator.LE, LOCALTIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_TIME)),
+                new Filter("localTimeObject", FilterOperator.EQ, null),
+
+                new Filter("localDateTimeObject", FilterOperator.NOT_EQ, LOCALDATETIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
+                new Filter("localDateTimeObject", FilterOperator.EQ, null),
+
+                new Filter("localDateTimeObject", FilterOperator.EQ, LOCALDATETIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
+                new Filter("localDateTimeObject", FilterOperator.EQ, null),
+
+                new Filter("zoneOffsetObject", FilterOperator.EQ, ZONEOFFSETOBJECT.toString()),
+                new Filter("zoneOffsetObject", FilterOperator.EQ, null),
+
+                new Filter("zoneIdObject", FilterOperator.EQ, ZONEIDOBJECT.toString()),
+                new Filter("zoneIdObject", FilterOperator.EQ, null),
+
+                new Filter("zonedDateTimeObject", FilterOperator.EQ, ZONEDDATETIMEOBJECT.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+                new Filter("zonedDateTimeObject", FilterOperator.EQ, null),
+
+                new Filter("offsetDateTimeObject", FilterOperator.EQ, OFFSETDATETIMEOBJECT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
+                new Filter("offsetDateTimeObject", FilterOperator.EQ, null),
+
+                new Filter("booleanObject", FilterOperator.EQ, "true"),
+                new Filter("booleanObject", FilterOperator.EQ, null)
+
         ));
-        String result = extraFilter2DroolsTransformer.apply(extraFilter, OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("(isee > new java.math.BigDecimal(\"113\") && isee >= new java.math.BigDecimal(\"122\") && ((status instanceof " + String.class.getName() + " && status == \"STATUS\") || (userId in (\"USERID\",\"NOT_MATCH\"))) && isee <= new java.math.BigDecimal(\"124\") && isee < new java.math.BigDecimal(\"133\") && !(criteriaConsensusTimestamp.dayOfWeek != java.time.DayOfWeek.valueOf(\"" + dayOfWeek + "\")))", result);
+        String result = extraFilter2DroolsTransformer.apply(extraFilter, ExtraFilterTestModelSample.class, null);
+
+        String expected = "(" +
+                "stringObject == null && " +
+                "stringObject >= \"STRINGVALUE\" && " +
+                "(" +
+                "(numberObject instanceof java.math.BigDecimal && numberObject < new java.math.BigDecimal(\"123\") && numberObject == null) || " +
+                "(enumObject in (java.time.DayOfWeek.valueOf(\"MONDAY\"),java.time.DayOfWeek.valueOf(\"FRIDAY\")) && enumObject == null)" +
+                ") && " +
+                "(" +
+                "(collectionObject instanceof java.util.HashSet && collectionObject contains \"124\") || " +
+                "(collectionObject instanceof java.util.ArrayList && collectionObject == null)" +
+                ") && " +
+                "localDateObject > java.time.LocalDate.of(2022,7,15) && localDateObject == null && " +
+                "!(" +
+                "localDateObject.dayOfWeek != java.time.DayOfWeek.valueOf(\"MONDAY\")" +
+                ") && " +
+                "localTimeObject <= java.time.LocalTime.of(5,1,59,999000000) && localTimeObject == null && " +
+                "localDateTimeObject != java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && localDateTimeObject == null && " +
+                "localDateTimeObject == java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && localDateTimeObject == null && " +
+                "zoneOffsetObject == java.time.ZoneOffset.of(\"Z\") && zoneOffsetObject == null && zoneIdObject == java.time.ZoneOffset.of(\"Z\") && " +
+                "zoneIdObject == null && zonedDateTimeObject == java.time.ZonedDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneId.of(\"Z\")) && " +
+                "zonedDateTimeObject == null && offsetDateTimeObject.isEqual(java.time.OffsetDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneOffset.of(\"Z\"))) && " +
+                "offsetDateTimeObject.isEqual(null) && " +
+                "booleanObject == true && booleanObject == null)";
+        Assertions.assertEquals(expected, result);
+
+        DroolsRule rule = new DroolsRule();
+        rule.setId("ID");
+        rule.setName("NAME");
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(),
+                "$sample: %s(%s)".formatted(ExtraFilterTestModelSample.class.getName(), result),
+                ""
+        ));
+        new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule)).block();
     }
 
     @Test
@@ -96,16 +170,16 @@ public class ExtraFilter2DroolsTransformerImplTest {
             System.out.println("No such method error tested");
         }
 
-        String expectedClassLogginError="it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.ScalarOpValueBuilder";
+        String expectedClassLogginError = "it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.ScalarOpValueBuilder";
         try {
-            ((Logger)LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.OFF);
+            ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.OFF);
             extraFilter2DroolsTransformer.apply(new Filter("isee", FilterOperator.EQ, "abc"), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Unsupported value provided for the field isee: it is supposed to be a %s", BigDecimal.class), e.getMessage());
             System.out.println("Unsupported value tested");
         } finally {
-            ((Logger)LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.INFO);
+            ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.INFO);
         }
 
         try {
@@ -223,7 +297,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
     public static String applyRuleTemplate(String agendaGroup, String ruleName, String ruleCondition, String ruleConsequence) {
         return """
                 package dummy;
-                
+                                
                 rule "%s"
                 agenda-group "%s"
                 when %s

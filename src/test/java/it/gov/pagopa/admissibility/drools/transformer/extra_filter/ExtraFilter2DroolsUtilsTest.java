@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.drools.transformer.extra_filter;
 
 import it.gov.pagopa.admissibility.drools.model.ExtraFilterField;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTranformerImpl;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTranformer;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -75,7 +75,7 @@ public class ExtraFilter2DroolsUtilsTest {
 
         Map<String, Object> context = new HashMap<>();
         result.sort(Comparator.comparing(ExtraFilterField::getField));
-        result.forEach(f -> Filter2DroolsTranformerImpl.determineFieldType(f.getField(), OnboardingDTO.class, context));
+        result.forEach(f -> Filter2DroolsTranformer.determineFieldType(f.getField(), OnboardingDTO.class, context));
     }
 }
 
