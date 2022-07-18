@@ -34,7 +34,7 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
         KieServices kieServices = KieServices.Factory.get();
         KieFileSystem kieFileSystem = KieServices.get().newKieFileSystem();
 
-        return rules.map(r -> kieFileSystem.write(String.format("src/main/resources/templateRules/%s.drl", r.getName()), r.getRule()))
+        return rules.map(r -> kieFileSystem.write(String.format("src/main/resources/it/gov/pagopa/admissibility/drools/buildrules/%s.drl", r.getName()), r.getRule()))
                 .then(Mono.fromSupplier(() -> {
                     KieBuilder kieBuilder = kieServices.newKieBuilder(kieFileSystem);
                     kieBuilder.buildAll();
