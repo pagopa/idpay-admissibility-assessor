@@ -1,4 +1,65 @@
 package it.gov.pagopa.admissibility.service.build;
 
-public class BeneficiaryRuleMediatorServiceTest { // TODO
+import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.kie.api.runtime.KieContainer;
+import org.mockito.Mockito;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+public class BeneficiaryRuleMediatorServiceTest {
+
+    // mocks
+    private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRuleMock;
+    private final DroolsRuleRepository droolsRuleRepositoryMock;
+    private final KieContainerBuilderService kieContainerBuilderServiceMock;
+    private final OnboardingContextHolderService onboardingContextHolderServiceMock;
+
+    private final KieContainer newKieContainerBuiltmock = Mockito.mock(KieContainer.class);
+
+    // service
+    private final BeneficiaryRuleMediatorService service;
+
+    public BeneficiaryRuleMediatorServiceTest() {
+        this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
+        this.droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
+        this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
+        this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        service = new BeneficiaryRuleMediatorServiceImpl(beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock);
+    }
+
+    @BeforeEach
+    public void configureMocks(){
+        //noinspection unchecked
+        Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> ((Flux<Initiative2BuildDTO>)invocation.getArgument(0)).map(i->new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE")));
+        Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation-> Mono.just(invocation.getArgument(0)));
+        Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));
+    }
+
+    @Test
+    public void testSuccessful(){
+        // given
+        int N=10;
+        List<Initiative2BuildDTO> initiatives = IntStream.range(0,N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
+        Flux<Initiative2BuildDTO> inputFlux = Flux.fromIterable(initiatives);
+
+        // when
+        service.execute(inputFlux);
+
+        // then
+        Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(inputFlux));
+        initiatives.forEach(i-> Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId()))));
+        Mockito.verify(kieContainerBuilderServiceMock, Mockito.times(N)).buildAll();
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.times(N)).setKieContainer(Mockito.same(newKieContainerBuiltmock));
+    }
 }

@@ -10,7 +10,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMa
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -41,14 +41,9 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
     @BeforeEach
     public void configurMock(){
-        configureCriteriaMock("ISEE", "isee");
-        configureCriteriaMock("BIRTHDATE", "birthDate");
-    }
-
-    private void configureCriteriaMock(String code, String field){
-        CriteriaCodeConfig codeConfig = new CriteriaCodeConfig();
-        codeConfig.setOnboardingField(field);
-        Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(code)).thenReturn(codeConfig);
+        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c->{
+            Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c);
+        });
     }
 
     @Test

@@ -5,17 +5,16 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediatorService {
 
-    private final BeneficiaryRule2DroolsRuleImpl beneficiaryRule2DroolsRule;
+    private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final DroolsRuleRepository droolsRuleRepository;
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
-    public BeneficiaryRuleMediatorServiceImpl(BeneficiaryRule2DroolsRuleImpl beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
+    public BeneficiaryRuleMediatorServiceImpl(BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
         this.kieContainerBuilderService = kieContainerBuilderService;

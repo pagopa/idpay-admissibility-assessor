@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CriteriaCodeConfig {
+    private String code;
     private String authority;
     private String onboardingField;
 }
