@@ -35,7 +35,7 @@ public class BeneficiaryRuleMediatorServiceTest {
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        service = new BeneficiaryRuleMediatorServiceImpl(beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock);
+        service = new BeneficiaryRuleMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock);
     }
 
     @BeforeEach
@@ -59,7 +59,7 @@ public class BeneficiaryRuleMediatorServiceTest {
         // then
         Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(inputFlux));
         initiatives.forEach(i-> Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId()))));
-        Mockito.verify(kieContainerBuilderServiceMock, Mockito.times(N)).buildAll();
-        Mockito.verify(onboardingContextHolderServiceMock, Mockito.times(N)).setKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setKieContainer(Mockito.same(newKieContainerBuiltmock));
     }
 }

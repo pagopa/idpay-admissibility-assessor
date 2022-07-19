@@ -101,3 +101,10 @@ logging:
     org.kie: ${LOG_LEVEL_ORG_KIE:WARN}
     org.drools: ${LOG_LEVEL_ORG_DROOLS:WARN}
     org.mongodb.driver: ${LOG_LEVEL_MONGODB_DRIVER:WARN}
+
+app:
+  admissibility-processor:
+    # if true, it will try to build each rule singularly, but this will take more time
+    online-syntax-check: ${ADMISSIBILITY_PROCESSOR_BUILD_ONLINE_SYNTAX_CHECK:false}
+    # the delay after which it will fetch all the rules and compile them
+    build-delay-duration: ${ADMISSIBILITY_PROCESSOR_BUILD_DELAY_DURATION:PT1M} # each minute

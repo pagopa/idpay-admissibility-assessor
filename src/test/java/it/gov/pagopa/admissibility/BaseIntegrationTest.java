@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,7 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @SpringBootTest
 @EmbeddedKafka(topics = {
@@ -141,5 +143,14 @@ public abstract class BaseIntegrationTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    protected void waitFor(Supplier<Boolean> test, String testFailureMessage, int maxAttempts, int millisAttemptDelay){
+        int i=0;
+        while(!test.get() && i<maxAttempts) {
+            i++;
+            wait(millisAttemptDelay);
+        }
+        Assertions.assertTrue(test.get(), testFailureMessage);
     }
 }

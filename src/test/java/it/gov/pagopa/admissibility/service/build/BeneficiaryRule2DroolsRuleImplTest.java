@@ -36,11 +36,15 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
     public BeneficiaryRule2DroolsRuleImplTest() {
         this.criteriaCodeServiceMock = Mockito.mock(CriteriaCodeService.class);
-        this.beneficiaryRule2DroolsRule = new BeneficiaryRule2DroolsRuleImpl(criteriaCodeServiceMock, ExtraFilter2DroolsTransformerImplTest.extraFilter2DroolsTransformer, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        this.beneficiaryRule2DroolsRule = buildBeneficiaryRule2DroolsRule(false);
+    }
+
+    private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerImplTest.extraFilter2DroolsTransformer, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
     }
 
     @BeforeEach
-    public void configurMock(){
+    public void configureMock(){
         CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c->{
             Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c);
         });
@@ -52,9 +56,25 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = buildInitiative();
 
         // when
+        DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(Flux.just(dto)).blockFirst();
+
+        // then
+        checkResult(result);
+    }
+
+    @Test
+    public void testBuildWithOnlineBuildCheck() {
+        // given
+        Initiative2BuildDTO dto = buildInitiative();
+
+        // when
         DroolsRule result = beneficiaryRule2DroolsRule.apply(Flux.just(dto)).blockFirst();
 
         // then
+        checkResult(result);
+    }
+
+    private void checkResult(DroolsRule result) {
         DroolsRule expected = new DroolsRule();
         expected.setName("ID-NAME");
         expected.setId("ID");
