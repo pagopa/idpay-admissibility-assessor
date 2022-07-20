@@ -16,7 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
-        "app.beneficiary-rule.build-delay-duration=PT1S"
+        "app.beneficiary-rule.build-delay-duration=PT1S",
+        "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
 })
 public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
