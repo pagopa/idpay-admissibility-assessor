@@ -1,55 +1,8 @@
 microservice-chart:
-  namespace: "idpay"
-  nameOverride: ""
-  fullnameOverride: ""
-
   image:
     repository: cstardcommonarc.azurecr.io/idpayadmissibilityassessor
     tag: 0.0.1
     pullPolicy: Always
-
-  livenessProbe:
-    httpGet:
-      path: /status/live
-      port: 8080
-    initialDelaySeconds: 60
-    failureThreshold: 6
-    periodSeconds: 10
-
-  readinessProbe:
-    httpGet:
-      path: /status/ready
-      port: 8080
-    initialDelaySeconds: 60
-    failureThreshold: 6
-    periodSeconds: 10
-
-  deployment:
-    create: true
-
-  service:
-    create: true
-    type: ClusterIP
-    port: 8080
-
-  ingress:
-    create: true
-    host: "dev01.idpay.internal.dev.cstar.pagopa.it"
-    path: /idpay/admissibility/(.*)
-
-  serviceAccount:
-    create: false
-    annotations: {}
-    name: ""
-
-  podAnnotations: {}
-
-  podSecurityContext:
-    seccompProfile:
-      type: RuntimeDefault
-
-  securityContext:
-    allowPrivilegeEscalation: false
 
   resources:
     requests:
@@ -79,22 +32,9 @@ microservice-chart:
 #          metricAggregationType: Count
 #          targetValue: "30"
 
-  envConfig:
-    APP: idpay-admissibility-assessor
-
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
-    MONGODB_URI: mongodb-connection-string
-    EVH_CONNECTION_ONBOARDING_REQUEST: evh-idpay-onboarding-request-consumer-key
-    EVH_CONNECTION_ONBOARDING_OUTCOME: evh-idpay-onboarding-outcome-producer-key
-
 
   keyvault:
     name: "cstar-d-idpay-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
-
-  # nodeSelector: {}
-
-  # tolerations: []
-
-  # affinity: {}

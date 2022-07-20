@@ -1,3 +1,6 @@
+server:
+  port: ${ADMISSIBILITY_ASSESSOR_PORT:8080}
+
 spring:
   application:
     name: idpay-admissibility-assessor
@@ -10,17 +13,17 @@ spring:
         definition: admissibilityProcessor;beneficiaryRuleConsumer
       bindings:
         admissibilityProcessor-in-0:
-          destination: ${KAFKA_TOPIC_ONBOARDING_REQUEST:idpay-onboarding-request}
-          group: ${KAFKA_IDPAY_GROUP:idPayAdmissibilityProcessor}
+          destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
+          group: ${KAFKA_ONBOARDING_REQUEST_GROUP_ID:idPayAdmissibilityProcessor}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-request
         admissibilityProcessor-out-0:
-          destination: ${KAFKA_TOPIC_ONBOARDING_OUTCOME:idpay-onboarding-outcome}
+          destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
         beneficiaryRuleConsumer-in-0:
-          destination: ${KAFKA_TOPIC_BENEFICIARY_RULE_REQUEST:idpay-beneficiary-rule-update}
-          group: ${KAFKA_IDPAY_GROUP:idPayBeneficiaryRuleConsumer}
+          destination: ${KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC:idpay-beneficiary-rule-update}
+          group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-beneficiary-rule
       binders:
@@ -32,8 +35,8 @@ spring:
                 stream:
                   kafka:
                     binder:
-                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_ONBOARDING_REQUEST:}
-                      configuration.sasl.jaas.config: ${EVH_CONNECTION_ONBOARDING_REQUEST:}
+                      brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
+                      configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
         kafka-onboarding-outcome:
           type: kafka
           environment:
@@ -42,8 +45,8 @@ spring:
                 stream:
                   kafka:
                     binder:
-                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_ONBOARDING_OUTCOME:}
-                      configuration.sasl.jaas.config: ${EVH_CONNECTION_ONBOARDING_OUTCOME:}
+                      brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
+                      configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
         kafka-beneficiary-rule:
           type: kafka
           environment:
@@ -52,33 +55,35 @@ spring:
                 stream:
                   kafka:
                     binder:
-                      brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_BENEFICIARY_RULE_REQUEST:}
-                      configuration.sasl.jaas.config: ${EVH_CONNECTION_BENEFICIARY_RULE_REQUEST:}
+                      brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
+                      configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
       kafka:
         binder:
           auto-create-topics: false
           configuration:
             heartbeat.interval.ms: ${KAFKA_CONFIG_HEARTBEAT_INTERVAL_MS:30000}
             session.timeout.ms: ${KAFKA_CONFIG_SESSION_TIMEOUT_MS:60000}
+            request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
             sasl.mechanism: ${KAFKA_CONFIG_SASL_MECHANISM:PLAIN}
             security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
           consumerProperties:
             startOffset: ${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}
-            socket:
-              connection:
-                setup:
-                  timeout:
-                    max:
-                      ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}
-                    ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}
-            connections:
-              max:
-                idle:
-                  ms: ${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}
+            autoCommitOffset: ${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}
+            enableDlq: ${KAFKA_CONSUMER_CONFIG_ENABLE_DLQ:false}
+            dlqName: ${KAFKA_CONSUMER_CONFIG_DLQ_NAME:errorTopic}
+            standardHeaders: ${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}
+            configuration:
+              max.poll:
+                records: ${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:}
+                interval.ms: ${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}
+            socket.connection.setup.timeout:
+              max.ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}
+              ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}
+            connections.max.idle.ms: ${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}
   data:
     mongodb:
       uri: ${MONGODB_URI}
-      database: ${MONGODB_DBNAME:idPay}
+      database: ${MONGODB_DBNAME:idpay}
 
 logging:
   level:
@@ -102,11 +107,11 @@ logging:
     org.mongodb.driver: ${LOG_LEVEL_MONGODB_DRIVER:WARN}
 
 app:
-  admissibility-processor:
+  beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
-    online-syntax-check: ${ADMISSIBILITY_PROCESSOR_BUILD_ONLINE_SYNTAX_CHECK:false}
+    online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}
     # the delay after which it will fetch all the rules and compile them
-    build-delay-duration: ${ADMISSIBILITY_PROCESSOR_BUILD_DELAY_DURATION:PT1M} # each minute
+    build-delay-duration: ${BENEFICIARY_RULE_BUILD_DELAY_DURATION:PT1S} # each second
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"

@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
-        "app.admissibility-processor.build-delay-duration=PT1S"
+        "app.beneficiary-rule.build-delay-duration=PT1S"
 })
 public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
 

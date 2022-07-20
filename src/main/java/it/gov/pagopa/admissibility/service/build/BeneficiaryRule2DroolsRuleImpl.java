@@ -30,7 +30,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     private final ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer;
     private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.admissibility-processor.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, KieContainerBuilderService builderService) {
+    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, KieContainerBuilderService builderService) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
         this.criteriaCodeService = criteriaCodeService;
         this.extraFilter2DroolsTransformer = extraFilter2DroolsTransformer;
@@ -43,6 +43,8 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     }
 
     private DroolsRule apply(Initiative2BuildDTO initiative) {
+        log.info("Building inititative having id: %s".formatted(initiative.getInitiativeId()));
+
         try {
             DroolsRule out = new DroolsRule();
             out.setId(initiative.getInitiativeId());
@@ -57,9 +59,11 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
             );
 
             if(onlineSyntaxCheck){
+                log.debug("Checking if the rule has valid syntax. id: %s".formatted(initiative.getInitiativeId()));
                 builderService.build(Flux.just(out)).block(); // TODO handle if it goes to exception due to error
             }
 
+            log.info("Conversion into drools rule completed; storing it. id: %s".formatted(initiative.getInitiativeId()));
             return out;
         } catch (RuntimeException e){
             log.error("Something gone wrong while building initiative %s".formatted(initiative.getInitiativeId()), e);

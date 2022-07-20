@@ -26,6 +26,7 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
 
     @Override
     public Mono<KieContainer> buildAll() {
+        log.info("Fetching and building all the initiatives");
         return build(droolsRuleRepository.findAll());
     }
 
@@ -43,6 +44,8 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
                         throw new IllegalArgumentException("Build Errors:" + kb.getResults().toString());
                     }*/
                     KieModule kieModule = kieBuilder.getKieModule();
+
+                    log.info("Build completed");
                     return kieServices.newKieContainer(kieModule.getReleaseId());
                 }));
     }

@@ -19,7 +19,7 @@ public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediat
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
-    public BeneficiaryRuleMediatorServiceImpl(@Value("${app.admissibility-processor.build-delay-duration}") String beneficiaryBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
+    public BeneficiaryRuleMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
         this.beneficiaryBuildDelay = beneficiaryBuildDelay;
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
