@@ -2,6 +2,10 @@ package it.gov.pagopa.admissibility;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.flapdoodle.embed.mongo.MongodExecutable;
+import de.flapdoodle.embed.mongo.config.MongodConfig;
+import de.flapdoodle.embed.mongo.config.Net;
+import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -20,12 +24,17 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.ReflectionUtils;
 
+import javax.annotation.PostConstruct;
 import javax.management.*;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 @SpringBootTest
@@ -63,6 +72,9 @@ public abstract class BaseIntegrationTest {
     protected KafkaTemplate<byte[], byte[]> template;
 
     @Autowired
+    private MongodExecutable embeddedMongoServer;
+
+    @Autowired
     protected DroolsRuleRepository droolsRuleRepository;
 
     @Autowired
@@ -87,6 +99,23 @@ public abstract class BaseIntegrationTest {
         if (mBeanServer.isRegistered(kafkaServerMbeanName)) {
             mBeanServer.unregisterMBean(kafkaServerMbeanName);
         }
+    }
+
+    @PostConstruct
+    public void logEmbeddedServerConfig() throws NoSuchFieldException, UnknownHostException {
+        Field mongoEmbeddedServerConfigField = Executable.class.getDeclaredField("config");
+        mongoEmbeddedServerConfigField.setAccessible(true);
+        MongodConfig mongodConfig = (MongodConfig) ReflectionUtils.getField(mongoEmbeddedServerConfigField, embeddedMongoServer);
+        Net mongodNet = Objects.requireNonNull(mongodConfig).net();
+
+        System.out.printf("""
+                ************************
+                Embedded mongo: %s
+                Embedded kafka: %s
+                ************************
+                """,
+                "mongo://%s:%s".formatted(mongodNet.getServerAddress().getHostAddress(), mongodNet.getPort()),
+                "bootstrapServers: %s, zkNodes: %s".formatted(bootstrapServers, zkNodes));
     }
 
     protected Consumer<String, String> getEmbeddedKafkaConsumer(String topic, String groupId) {
@@ -145,12 +174,12 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected void waitFor(Supplier<Boolean> test, String testFailureMessage, int maxAttempts, int millisAttemptDelay){
+    protected void waitFor(Supplier<Boolean> test, Supplier<String> buildTestFailureMessage, int maxAttempts, int millisAttemptDelay){
         int i=0;
         while(!test.get() && i<maxAttempts) {
             i++;
             wait(millisAttemptDelay);
         }
-        Assertions.assertTrue(test.get(), testFailureMessage);
+        Assertions.assertTrue(test.get(), buildTestFailureMessage.get());
     }
 }

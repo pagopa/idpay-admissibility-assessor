@@ -27,7 +27,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
 
     @Test
     public void testBeneficiaryRuleBuilding(){
-        int N=100;
+        int N=1000;
         int[] expectedRules ={0};
         List<Initiative2BuildDTO> initiatives = IntStream.range(0,N)
                 .mapToObj(Initiative2BuildDTOFaker::mockInstance)
@@ -40,11 +40,11 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
 
         long[] countSaved={0};
         //noinspection ConstantConditions
-        waitFor(()->(countSaved[0]=droolsRuleRepository.count().block()) >= N, "Expected %d saved rules, read %d".formatted(N, countSaved[0]), 15, 1000);
+        waitFor(()->(countSaved[0]=droolsRuleRepository.count().block()) >= N, ()->"Expected %d saved rules, read %d".formatted(N, countSaved[0]), 15, 1000);
         long timeDroolsSavingCheckPublishingEnd=System.currentTimeMillis();
 
         int[] ruleBuiltSize={0};
-        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize()) >= expectedRules[0], "Expected %d rules, read %d".formatted(expectedRules[0], ruleBuiltSize[0]), 10, 500);
+        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize()) >= expectedRules[0], ()->"Expected %d rules, read %d".formatted(expectedRules[0], ruleBuiltSize[0]), 10, 500);
         long timeEnd=System.currentTimeMillis();
 
         Assertions.assertEquals(N, countSaved[0]);

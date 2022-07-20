@@ -24,7 +24,7 @@ public final class Initiative2BuildDTOFaker {
 
         FakeValuesService fakeValuesService = getFakeValuesService(bias);
 
-        out.setInitiativeId(fakeValuesService.bothify("?????"));
+        out.setInitiativeId(fakeValuesService.bothify(bias!=null? "id_%d".formatted(bias) : "?????"));
         out.setInitiativeName(fakeValuesService.bothify("?????"));
 
         out.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
