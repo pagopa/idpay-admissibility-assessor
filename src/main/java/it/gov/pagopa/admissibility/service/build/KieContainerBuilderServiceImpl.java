@@ -44,9 +44,15 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
                         throw new IllegalArgumentException("Build Errors:" + kb.getResults().toString());
                     }*/
                     KieModule kieModule = kieBuilder.getKieModule();
+                    KieContainer newKieContainer = kieServices.newKieContainer(kieModule.getReleaseId());
 
                     log.info("Build completed");
-                    return kieServices.newKieContainer(kieModule.getReleaseId());
+                    if(log.isDebugEnabled()){
+                        log.debug("The container now will contains the following rules: %s".formatted(newKieContainer.getKieBase()
+                                .getKiePackage("it.gov.pagopa.admissibility.drools.buildrules")
+                                .getRules()));
+                    }
+                    return newKieContainer;
                 }));
     }
 }
