@@ -47,10 +47,11 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
             out.setName(String.format("%s-%s", initiative.getInitiativeId(), initiative.getInitiativeName()));
 
             out.setRule("""
-                    package it.gov.pagopa.admissibility.drools.buildrules;
-                    
+                    package %s;
+                                        
                     %s
                     """.formatted(
+                    KieContainerBuilderServiceImpl.rulesBuiltPackage,
                     initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
             );
 
