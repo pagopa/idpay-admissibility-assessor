@@ -60,6 +60,6 @@ public class BeneficiaryRuleMediatorServiceTest {
         Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(inputFlux));
         initiatives.forEach(i-> Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId()))));
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
-        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
     }
 }

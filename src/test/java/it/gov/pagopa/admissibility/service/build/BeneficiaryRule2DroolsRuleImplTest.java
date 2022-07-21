@@ -132,7 +132,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule rule = beneficiaryRule2DroolsRule.apply(Flux.just(initiative)).blockFirst();
 
         OnboardingContextHolderService onboardingContextHolderService=Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(buildContainer(rule));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), new Onboarding2OnboardingDroolsMapper());
 

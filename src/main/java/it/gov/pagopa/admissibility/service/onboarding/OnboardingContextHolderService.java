@@ -1,19 +1,16 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import org.kie.api.runtime.KieContainer;
 
 
 /**
- * This component will retrieve the KieContainer configured with all the initiatives and the PDND token associated to the input initiative id
- * it will also cache the new container created
+ * This component will retrieve the beneficiaries' rules kieContainer and the PDND token associated to the input initiative id
+ * It will also cache the new kieContainer created
  * */
 public interface OnboardingContextHolderService {
-    KieContainer getKieContainer();
-    void setKieContainer(KieContainer kieContainer);
+    KieContainer getBeneficiaryRulesKieContainer();
+    void setBeneficiaryRulesKieContainer(KieContainer kieContainer);
 
     InitiativeConfig getInitiativeConfig(String initiativeId);
-    CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode);
-
 }

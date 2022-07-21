@@ -33,6 +33,6 @@ public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediat
                 .flatMap(droolsRuleRepository::save)
                 .buffer(beneficiaryRulesBuildDelay)
                 .flatMap(r -> kieContainerBuilderService.buildAll())
-                .subscribe(onboardingContextHolderService::setKieContainer);
+                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
     }
 }

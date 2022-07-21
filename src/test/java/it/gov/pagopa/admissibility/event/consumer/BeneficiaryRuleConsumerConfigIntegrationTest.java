@@ -52,7 +52,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         Assertions.assertEquals(expectedRules[0], ruleBuiltSize[0]);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
-        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setKieContainer(Mockito.any());
+        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
 
         System.out.printf("""
             ************************
@@ -76,8 +76,8 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
     }
 
     private int getRuleBuiltSize() {
-        return onboardingContextHolderServiceSpy.getKieContainer() == null ? 0
-                : onboardingContextHolderServiceSpy.getKieContainer().getKieBase()
+        return onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer() == null ? 0
+                : onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer().getKieBase()
                 .getKiePackage("it.gov.pagopa.admissibility.drools.buildrules")
                 .getRules().size();
     }

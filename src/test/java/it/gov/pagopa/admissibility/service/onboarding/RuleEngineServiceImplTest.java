@@ -44,13 +44,13 @@ class RuleEngineServiceImplTest {
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId("INITIATIVEID");
 
-        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO);
 
         // Then
-        Mockito.verify(onboardingContextHolderService).getKieContainer();
+        Mockito.verify(onboardingContextHolderService).getBeneficiaryRulesKieContainer();
 
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));

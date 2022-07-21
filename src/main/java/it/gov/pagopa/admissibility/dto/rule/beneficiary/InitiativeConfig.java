@@ -11,5 +11,6 @@ public class InitiativeConfig {
     private String initiativeId;
     private LocalDate startDate;
     private LocalDate endDate;
+    private String pdndToken;
     private List<String> automatedCriteriaCodes;
 }

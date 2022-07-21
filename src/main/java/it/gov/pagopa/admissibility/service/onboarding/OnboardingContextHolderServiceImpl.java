@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.InitiativeDTO2ConfigMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.rest.initiative.InitiativeRestService;
 import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -37,21 +36,21 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     //region kieContainer holder
     @Override
-    public void setKieContainer(KieContainer kiecontainer) {
+    public void setBeneficiaryRulesKieContainer(KieContainer kiecontainer) {
         this.kieContainer=kiecontainer; //TODO store in cache
 
     }
 
     @Override
-    public KieContainer getKieContainer() {
+    public KieContainer getBeneficiaryRulesKieContainer() {
         return kieContainer;
     }
 
     // TODO use cache
-    @Scheduled(fixedRateString = "${app.rules.cache.refresh-ms-rate}")
+    @Scheduled(fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
     public void refreshKieContainer(){
         log.trace("Refreshing KieContainer");
-        kieContainerBuilderService.buildAll().subscribe(this::setKieContainer);
+        kieContainerBuilderService.buildAll().subscribe(this::setBeneficiaryRulesKieContainer);
     }
     //endregion
 
@@ -68,13 +67,6 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             return null;
         }
         return initiativeDTO2ConfigMapper.apply(initiative);
-    }
-    //endregion
-
-    //region criteriaCode holder
-    @Override
-    public CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode) {
-        return criteriaCodeService.getCriteriaCodeConfig(criteriaCode);
     }
     //endregion
 }
