@@ -28,7 +28,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
 
     @Test
     public void testBeneficiaryRuleBuilding(){
-        int N=1000;
+        int N=100;
         int[] expectedRules ={0};
         List<Initiative2BuildDTO> initiatives = IntStream.range(0,N)
                 .mapToObj(Initiative2BuildDTOFaker::mockInstance)
