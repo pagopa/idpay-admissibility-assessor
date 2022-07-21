@@ -59,7 +59,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                 builderService.build(Flux.just(out)).block(); // TODO handle if it goes to exception due to error
             }
 
-            log.info("Conversion into drools rule completed; storing it. id: %s".formatted(initiative.getInitiativeId()));
+            log.debug("Conversion into drools rule completed; storing it. id: %s".formatted(initiative.getInitiativeId()));
             return out;
         } catch (RuntimeException e){
             log.error("Something gone wrong while building initiative %s".formatted(initiative.getInitiativeId()), e);
