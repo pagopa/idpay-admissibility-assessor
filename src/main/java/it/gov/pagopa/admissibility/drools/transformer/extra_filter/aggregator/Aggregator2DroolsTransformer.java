@@ -4,15 +4,16 @@ import it.gov.pagopa.admissibility.drools.model.aggregator.Aggregator;
 import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorAnd;
 import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorOr;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformer;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
 import org.springframework.util.CollectionUtils;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class Aggregator2DroolsTransformer {
+public class Aggregator2DroolsTransformer implements ExtraFilter2DroolsTransformer<Aggregator> {
 
-    public String apply(ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, Aggregator aggregator, Class<?> entityClass, Map<String, Object> context) {
+    public String apply(ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, Aggregator aggregator, Class<?> entityClass, Map<String, Object> context) {
         if (!CollectionUtils.isEmpty(aggregator.getOperands())) {
             String aggregationOp = transcodeAggregatorOp(aggregator);
             Map<String, Object> aggregatorContext;
@@ -22,7 +23,7 @@ public class Aggregator2DroolsTransformer {
                 aggregatorContext = context;
             }
             return String.format("(%s)", aggregator.getOperands().stream()
-                    .map(o -> extraFilter2DroolsTransformer.apply(o, entityClass, (aggregator instanceof AggregatorOr)?new HashMap<>(context):aggregatorContext))
+                    .map(o -> extraFilter2DroolsTransformerFacade.apply(o, entityClass, (aggregator instanceof AggregatorOr)?new HashMap<>(context):aggregatorContext))
                     .collect(Collectors.joining(aggregationOp)));
         } else {
             return "";

@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -40,7 +40,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
-        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerImplTest.extraFilter2DroolsTransformer, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
     }
 
     @BeforeEach
@@ -175,7 +175,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");
-        ignoredRule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
+        ignoredRule.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
 
         return new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
     }

@@ -30,7 +30,7 @@ import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-public class ExtraFilter2DroolsTransformerImplTest {
+public class ExtraFilter2DroolsTransformerFacadeImplTest {
     public static final String STRINGVALUE = "STRINGVALUE";
     private static final BigDecimal BIGDECIMALVALUE = BigDecimal.valueOf(123);
     private static final LocalDate LOCALDATEOBJECT = LocalDate.of(2022, 7, 15);
@@ -41,8 +41,8 @@ public class ExtraFilter2DroolsTransformerImplTest {
     private static final ZonedDateTime ZONEDDATETIMEOBJECT = ZonedDateTime.of(LOCALDATEOBJECT, LOCALTIMEOBJECT, ZONEIDOBJECT);
     private static final OffsetDateTime OFFSETDATETIMEOBJECT = OffsetDateTime.of(LOCALDATEOBJECT, LOCALTIMEOBJECT, ZONEOFFSETOBJECT);
 
-    public static ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer =
-            new ExtraFilter2DroolsTransformerImpl();
+    public static ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade =
+            new ExtraFilter2DroolsTransformerFacadeImpl();
 
     @BeforeAll
     public static void configDroolsLogLevel() {
@@ -123,7 +123,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
                 new Filter("booleanObject", FilterOperator.EQ, null)
 
         ));
-        String result = extraFilter2DroolsTransformer.apply(extraFilter, ExtraFilterTestModelSample.class, null);
+        String result = extraFilter2DroolsTransformerFacade.apply(extraFilter, ExtraFilterTestModelSample.class, null);
 
         String expected = "(" +
                 "stringObject == null && " +
@@ -163,7 +163,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
     @Test
     public void testErrors() {
         try {
-            extraFilter2DroolsTransformer.apply(new Filter("DUMMY", FilterOperator.EQ, ""), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("DUMMY", FilterOperator.EQ, ""), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Cannot find field DUMMY on %s", OnboardingDroolsDTO.class), e.getMessage());
@@ -173,7 +173,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         String expectedClassLogginError = "it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.ScalarOpValueBuilder";
         try {
             ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.OFF);
-            extraFilter2DroolsTransformer.apply(new Filter("isee", FilterOperator.EQ, "abc"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("isee", FilterOperator.EQ, "abc"), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Unsupported value provided for the field isee: it is supposed to be a %s", BigDecimal.class), e.getMessage());
@@ -183,7 +183,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         }
 
         try {
-            extraFilter2DroolsTransformer.apply(new Filter("isee()", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("isee()", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Cannot find field isee() on %s", OnboardingDroolsDTO.class), e.getMessage());
@@ -191,7 +191,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         }
 
         try {
-            extraFilter2DroolsTransformer.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("The Class defined as cast of the field isee of %s is not assignable to field type %s", OnboardingDroolsDTO.class, BigDecimal.class.getName()), e.getMessage());
@@ -199,7 +199,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         }
 
         try {
-            extraFilter2DroolsTransformer.apply(new Filter("isee", FilterOperator.INSTANCE_OF, String.class.getName()), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("isee", FilterOperator.INSTANCE_OF, String.class.getName()), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals("Unsupported Class provided for the field isee", e.getMessage());
@@ -207,7 +207,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         }
 
         try {
-            extraFilter2DroolsTransformer.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "DUMMY"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "DUMMY"), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals("The Class defined as cast of the field isee of " + OnboardingDroolsDTO.class + " is not assignable to field type java.math.BigDecimal", e.getMessage());
@@ -217,7 +217,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
 
     @Test
     public void testImplicitCast() {
-        String result = extraFilter2DroolsTransformer.apply(new Filter("(" + LocalDateTime.class.getName() + ")criteriaConsensusTimestamp.(java.time.Month)month", FilterOperator.EQ, "JANUARY"), OnboardingDroolsDTO.class, null);
+        String result = extraFilter2DroolsTransformerFacade.apply(new Filter("(" + LocalDateTime.class.getName() + ")criteriaConsensusTimestamp.(java.time.Month)month", FilterOperator.EQ, "JANUARY"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("((criteriaConsensusTimestamp instanceof " + LocalDateTime.class.getName() + ") && (criteriaConsensusTimestamp.month instanceof java.time.Month) && criteriaConsensusTimestamp.month == java.time.Month.valueOf(\"JANUARY\"))", result);
     }
 
@@ -236,7 +236,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         String ruleConsequence = "$onboarding.getOnboardingRejectionReasons().add(\"OK\");";
 
         System.out.println("Testing Collection EQ value matching");
-        String result = extraFilter2DroolsTransformer.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY1"), OnboardingDroolsDTO.class, null);
+        String result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY1"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("selfDeclarationList.keySet() contains \"KEY1\"", result);
         String ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
         rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
@@ -244,7 +244,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         onboarding.setOnboardingRejectionReasons(new ArrayList<>());
 
         System.out.println("Testing Collection EQ value not matching");
-        result = extraFilter2DroolsTransformer.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY4"), OnboardingDroolsDTO.class, null);
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY4"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("selfDeclarationList.keySet() contains \"KEY4\"", result);
         ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
         rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
@@ -252,7 +252,7 @@ public class ExtraFilter2DroolsTransformerImplTest {
         onboarding.setOnboardingRejectionReasons(new ArrayList<>());
 
         System.out.println("Testing Collection EQ collection matching");
-        result = extraFilter2DroolsTransformer.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY3)"), OnboardingDroolsDTO.class, null);
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY3)"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY2\",\"KEY1\",\"KEY3\"))", result);
         ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
         rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
@@ -260,14 +260,14 @@ public class ExtraFilter2DroolsTransformerImplTest {
         onboarding.setOnboardingRejectionReasons(new ArrayList<>());
 
         System.out.println("Testing Collection EQ collection not matching");
-        result = extraFilter2DroolsTransformer.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1)"), OnboardingDroolsDTO.class, null);
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1)"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY1\"))", result);
         ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
         rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
         checkCollectionResult(onboarding, rule, false);
         onboarding.setOnboardingRejectionReasons(new ArrayList<>());
 
-        result = extraFilter2DroolsTransformer.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY4)"), OnboardingDroolsDTO.class, null);
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY4)"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY2\",\"KEY1\",\"KEY4\"))", result);
         ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
         rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));

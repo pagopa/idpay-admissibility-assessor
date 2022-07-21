@@ -5,7 +5,7 @@ import it.gov.pagopa.admissibility.drools.model.NotOperation;
 import it.gov.pagopa.admissibility.drools.model.aggregator.Aggregator;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.aggregator.Aggregator2DroolsTransformer;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTranformer;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTransformer;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.not.NotOperation2DroolsTransformer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,19 +14,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * @see ExtraFilter2DroolsTransformer
+ * @see ExtraFilter2DroolsTransformerFacade
  */
 @Service
-public class ExtraFilter2DroolsTransformerImpl implements ExtraFilter2DroolsTransformer {
+public class ExtraFilter2DroolsTransformerFacadeImpl implements ExtraFilter2DroolsTransformerFacade {
     private final Aggregator2DroolsTransformer aggregator2DroolsTransformer;
     private final NotOperation2DroolsTransformer notOperation2DroolsTransformer;
-    private final Filter2DroolsTranformer filter2DroolsTranformer;
+    private final Filter2DroolsTransformer filter2DroolsTransformer;
 
     @Autowired
-    public ExtraFilter2DroolsTransformerImpl() {
+    public ExtraFilter2DroolsTransformerFacadeImpl() {
         this.aggregator2DroolsTransformer = new Aggregator2DroolsTransformer();
         this.notOperation2DroolsTransformer = new NotOperation2DroolsTransformer();
-        this.filter2DroolsTranformer = new Filter2DroolsTranformer();
+        this.filter2DroolsTransformer = new Filter2DroolsTransformer();
     }
 
     /**
@@ -38,12 +38,12 @@ public class ExtraFilter2DroolsTransformerImpl implements ExtraFilter2DroolsTran
             context = new HashMap<>();
         }
         StringBuilder droolsConditionBuilder = new StringBuilder();
-        if (extraFilter instanceof Aggregator) {
-            droolsConditionBuilder.append(aggregator2DroolsTransformer.apply(this, (Aggregator) extraFilter, entityClass, context));
-        } else if (extraFilter instanceof NotOperation) {
-            droolsConditionBuilder.append(notOperation2DroolsTransformer.apply(this, (NotOperation) extraFilter, entityClass, context));
-        } else if (extraFilter instanceof Filter) {
-            droolsConditionBuilder.append(filter2DroolsTranformer.apply(this, (Filter) extraFilter, entityClass, context));
+        if (extraFilter instanceof Aggregator aggregator) {
+            droolsConditionBuilder.append(aggregator2DroolsTransformer.apply(this, aggregator, entityClass, context));
+        } else if (extraFilter instanceof NotOperation notOperation) {
+            droolsConditionBuilder.append(notOperation2DroolsTransformer.apply(this, notOperation, entityClass, context));
+        } else if (extraFilter instanceof Filter filter) {
+            droolsConditionBuilder.append(filter2DroolsTransformer.apply(this, filter, entityClass, context));
         }
         return droolsConditionBuilder.toString();
     }

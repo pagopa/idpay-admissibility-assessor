@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.build;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import org.junit.jupiter.api.Assertions;
@@ -47,7 +47,7 @@ public class KieContainerBuilderServiceImplTest {
         dr.setName("name");
         String ruleCondition = "eval(true)";
         String ruleConsequence = "System.out.println(\"EXECUTED\");";
-        dr.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(dr.getId(), dr.getName(), ruleCondition, ruleConsequence));
+        dr.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(dr.getId(), dr.getName(), ruleCondition, ruleConsequence));
 
         Flux<DroolsRule> rulesFlux = Flux.just(dr);
         Mockito.when(droolsRuleRepository.findAll()).thenReturn(rulesFlux);

@@ -4,7 +4,7 @@ import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
 import it.gov.pagopa.admissibility.drools.model.NotOperation;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformer;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
@@ -27,13 +27,13 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     private final boolean onlineSyntaxCheck;
 
     private final CriteriaCodeService criteriaCodeService;
-    private final ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer;
+    private final ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade;
     private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformer extraFilter2DroolsTransformer, KieContainerBuilderService builderService) {
+    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
         this.criteriaCodeService = criteriaCodeService;
-        this.extraFilter2DroolsTransformer = extraFilter2DroolsTransformer;
+        this.extraFilter2DroolsTransformerFacade = extraFilter2DroolsTransformerFacade;
         this.builderService = builderService;
     }
 
@@ -86,7 +86,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                         ruleName + "-" + automatedCriteriaDTO.getCode(),
                         initiativeId,
                         OnboardingDroolsDTO.class.getName(),
-                        extraFilter2DroolsTransformer.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+                        extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
                 automatedCriteriaDTO.getCode()
         );
     }
