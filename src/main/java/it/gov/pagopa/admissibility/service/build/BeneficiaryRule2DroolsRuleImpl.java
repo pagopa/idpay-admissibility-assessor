@@ -38,11 +38,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     }
 
     @Override
-    public Flux<DroolsRule> apply(Flux<Initiative2BuildDTO> initiativeFlux) {
-        return initiativeFlux.map(this::apply);
-    }
-
-    private DroolsRule apply(Initiative2BuildDTO initiative) {
+    public DroolsRule apply(Initiative2BuildDTO initiative) {
         log.info("Building inititative having id: %s".formatted(initiative.getInitiativeId()));
 
         try {

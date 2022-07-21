@@ -40,8 +40,10 @@ public class BeneficiaryRuleMediatorServiceTest {
 
     @BeforeEach
     public void configureMocks(){
-        //noinspection unchecked
-        Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> ((Flux<Initiative2BuildDTO>)invocation.getArgument(0)).map(i->new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE")));
+        Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> {
+            Initiative2BuildDTO i = invocation.getArgument(0);
+            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE");
+        });
         Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation-> Mono.just(invocation.getArgument(0)));
         Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));
     }
@@ -57,8 +59,11 @@ public class BeneficiaryRuleMediatorServiceTest {
         service.execute(inputFlux);
 
         // then
-        Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(inputFlux));
-        initiatives.forEach(i-> Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId()))));
+        Mockito.verify(beneficiaryRule2DroolsRuleMock, Mockito.times(N)).apply(Mockito.any());
+        initiatives.forEach(i-> {
+            Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(i));
+            Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId())));
+        });
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
     }

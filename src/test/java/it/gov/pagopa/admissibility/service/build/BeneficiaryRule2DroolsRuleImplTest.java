@@ -10,13 +10,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMa
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineServiceImpl;
+import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,9 +45,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
     @BeforeEach
     public void configureMock(){
-        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c->{
-            Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c);
-        });
+        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c-> Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
     }
 
     @Test
@@ -56,7 +54,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = buildInitiative();
 
         // when
-        DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(Flux.just(dto)).blockFirst();
+        DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(dto);
 
         // then
         checkResult(result);
@@ -68,7 +66,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = buildInitiative();
 
         // when
-        DroolsRule result = beneficiaryRule2DroolsRule.apply(Flux.just(dto)).blockFirst();
+        DroolsRule result = beneficiaryRule2DroolsRule.apply(dto);
 
         // then
         checkResult(result);
@@ -129,7 +127,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
             onboardingDTO.getBirthDate().setAnno("2021");
         }
 
-        DroolsRule rule = beneficiaryRule2DroolsRule.apply(Flux.just(initiative)).blockFirst();
+        DroolsRule rule = beneficiaryRule2DroolsRule.apply(initiative);
 
         OnboardingContextHolderService onboardingContextHolderService=Mockito.mock(OnboardingContextHolderService.class);
         Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
