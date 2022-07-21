@@ -6,7 +6,7 @@ import org.kie.api.runtime.KieContainer;
 
 /**
  * This component will retrieve the beneficiaries' rules kieContainer and the PDND token associated to the input initiative id
- * It will also cache the new kieContainer created
+ * It will also update the cached version when new rules arrives
  * */
 public interface OnboardingContextHolderService {
     KieContainer getBeneficiaryRulesKieContainer();
