@@ -1,9 +1,8 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.InitiativeDTO2ConfigMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
-import it.gov.pagopa.admissibility.rest.initiative.InitiativeRestService;
-import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeDTO;
+import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,19 +17,18 @@ import java.util.Map;
 @Slf4j
 public class OnboardingContextHolderServiceImpl implements OnboardingContextHolderService {
     private final KieContainerBuilderService kieContainerBuilderService;
-    private final InitiativeRestService initiativeRestService;
-    private final InitiativeDTO2ConfigMapper initiativeDTO2ConfigMapper;
     private final CriteriaCodeService criteriaCodeService;
+
+    private final DroolsRuleRepository droolsRuleRepository;
 
     private KieContainer kieContainer;
     private final Map<String, InitiativeConfig> initiativeId2Config=new HashMap<>();
 
 
-    public OnboardingContextHolderServiceImpl(InitiativeRestService initiativeRestService, KieContainerBuilderService kieContainerBuilderService, CriteriaCodeService criteriaCodeService, InitiativeDTO2ConfigMapper initiativeDTO2ConfigMapper) {
-        this.initiativeRestService = initiativeRestService;
+    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, CriteriaCodeService criteriaCodeService, DroolsRuleRepository droolsRuleRepository) {
         this.kieContainerBuilderService = kieContainerBuilderService;
-        this.initiativeDTO2ConfigMapper = initiativeDTO2ConfigMapper;
         this.criteriaCodeService = criteriaCodeService;
+        this.droolsRuleRepository = droolsRuleRepository;
         refreshKieContainer();
     }
 
@@ -59,14 +57,21 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     public InitiativeConfig getInitiativeConfig(String initiativeId) {
         return initiativeId2Config.computeIfAbsent(initiativeId, this::retrieveInitiativeConfig);
     }
+
+    @Override
+    public void setInitiativeConfig(InitiativeConfig initiativeConfig) {  //TODO save inside cache
+        initiativeId2Config.put(initiativeConfig.getInitiativeId(),initiativeConfig);
+
+    }
+
     // TODO read from cache
     private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
-        InitiativeDTO initiative = initiativeRestService.findById(initiativeId).block();
-        if (initiative==null){
+        DroolsRule droolsRule = droolsRuleRepository.findById(initiativeId).block();
+        if (droolsRule==null){
             log.error("cannot find initiative having id %s".formatted(initiativeId));
             return null;
         }
-        return initiativeDTO2ConfigMapper.apply(initiative);
+        return droolsRule.getInitiativeConfig();
     }
     //endregion
 }

@@ -29,8 +29,13 @@ public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediat
 
     @Override
     public void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux) {
-        initiativeBeneficiaryRuleDTOFlux.map(beneficiaryRule2DroolsRule) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleMediatorService
+        initiativeBeneficiaryRuleDTOFlux
+                .map(beneficiaryRule2DroolsRule) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleMediatorService
                 .flatMap(droolsRuleRepository::save)
+                .map(i->{
+                    onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
+                    return i;
+                })
                 .buffer(beneficiaryRulesBuildDelay)
                 .flatMap(r -> kieContainerBuilderService.buildAll())
                 .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);

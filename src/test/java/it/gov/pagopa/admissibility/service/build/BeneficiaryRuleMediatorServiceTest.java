@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
@@ -42,7 +43,10 @@ public class BeneficiaryRuleMediatorServiceTest {
     public void configureMocks(){
         Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> {
             Initiative2BuildDTO i = invocation.getArgument(0);
-            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE");
+            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
+                    new InitiativeConfig(i.getInitiativeId(),i.getGeneral().getStartDate(),i.getGeneral().getEndDate(),
+                            i.getPdndToken(), List.of("CODE"),i.getGeneral().getBudget(),
+                            i.getGeneral().getBeneficiaryBudget(), i.getStatus()));
         });
         Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation-> Mono.just(invocation.getArgument(0)));
         Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));

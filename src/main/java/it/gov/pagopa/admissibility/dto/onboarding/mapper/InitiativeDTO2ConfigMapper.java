@@ -20,6 +20,9 @@ public class InitiativeDTO2ConfigMapper implements Function<InitiativeDTO, Initi
         out.setPdndToken(initiativeDTO.getPdndToken());
         List<String> automatedCriteriaCodes = getAutomatedCriteriaCodes(initiativeDTO.getBeneficiaryRule().getAutomatedCriteria());
         out.setAutomatedCriteriaCodes(automatedCriteriaCodes);
+        out.setInitiativeBudget(initiativeDTO.getGeneral().getBudget());
+        out.setBeneficiaryInitiativeBudget(initiativeDTO.getGeneral().getBeneficiaryBudget());
+        out.setStatus(initiativeDTO.getStatus());
         return out;
     }
 

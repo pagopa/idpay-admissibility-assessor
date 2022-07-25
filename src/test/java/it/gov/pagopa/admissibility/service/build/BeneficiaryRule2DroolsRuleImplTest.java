@@ -10,8 +10,10 @@ import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMa
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
@@ -25,6 +27,7 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -93,6 +96,11 @@ public class BeneficiaryRule2DroolsRuleImplTest {
                 end
                                         
                 """);
+
+        expected.setInitiativeConfig(new InitiativeConfig("ID",
+                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
+                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal(100000.00), new BigDecimal(1000.00),
+                "STATUS"));
 
         Assertions.assertEquals(expected, result);
     }
@@ -166,6 +174,13 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "anno", FilterOperator.GT, "2000"));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
+        dto.setPdndToken("PDND_TOKEN");
+        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal(100000.00),
+                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal(1000.00),
+                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
+                null,null));
+
+        dto.setStatus("STATUS");
         return dto;
     }
 

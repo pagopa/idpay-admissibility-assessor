@@ -13,4 +13,6 @@ public interface OnboardingContextHolderService {
     void setBeneficiaryRulesKieContainer(KieContainer kieContainer);
 
     InitiativeConfig getInitiativeConfig(String initiativeId);
+
+    void setInitiativeConfig(InitiativeConfig initiativeConfig);
 }

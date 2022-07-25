@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,6 +57,23 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                     KieContainerBuilderServiceImpl.rulesBuiltPackage,
                     initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
             );
+
+            InitiativeConfig initiativeConfig = InitiativeConfig.builder()
+                    .initiativeId(initiative.getInitiativeId())
+                    .pdndToken(initiative.getPdndToken())
+                    .automatedCriteriaCodes(getAutomatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria()))
+                    .initiativeBudget(initiative.getGeneral().getBudget())
+                    .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
+                    .status(initiative.getStatus())
+                    .build();
+            if(initiative.getGeneral().getRankingStartDate()==null || initiative.getGeneral().getRankingEndDate()==null) {
+                initiativeConfig.setStartDate(initiative.getGeneral().getStartDate());
+                initiativeConfig.setEndDate(initiative.getGeneral().getEndDate());
+            }else{
+                initiativeConfig.setStartDate(initiative.getGeneral().getRankingStartDate());
+                initiativeConfig.setEndDate(initiative.getGeneral().getRankingEndDate());
+            }
+            out.setInitiativeConfig(initiativeConfig);
 
             if(onlineSyntaxCheck){
                 log.debug("Checking if the rule has valid syntax. id: %s".formatted(initiative.getInitiativeId()));
@@ -92,5 +112,13 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
         FilterOperator operator = automatedCriteriaDTO.getOperator();
         return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue()));
+    }
+
+    private List<String> getAutomatedCriteriaCodes(List<AutomatedCriteriaDTO> initiativeAutomatedCriteria) {
+        List<String> automatedCriteriaCodes = new ArrayList<>();
+        for(AutomatedCriteriaDTO criterium : initiativeAutomatedCriteria) {
+            automatedCriteriaCodes.add(criterium.getCode());
+        }
+        return automatedCriteriaCodes;
     }
 }
