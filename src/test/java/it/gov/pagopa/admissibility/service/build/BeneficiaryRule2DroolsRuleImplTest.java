@@ -99,8 +99,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
         expected.setInitiativeConfig(new InitiativeConfig("ID",
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
-                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal(100000.00), new BigDecimal(1000.00),
-                "STATUS"));
+                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal(100000.00), new BigDecimal(1000.00)));
 
         Assertions.assertEquals(expected, result);
     }
@@ -180,7 +179,6 @@ public class BeneficiaryRule2DroolsRuleImplTest {
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
 
-        dto.setStatus("STATUS");
         return dto;
     }
 

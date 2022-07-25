@@ -22,5 +22,4 @@ public class InitiativeConfig {
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;
-    private String status;
 }

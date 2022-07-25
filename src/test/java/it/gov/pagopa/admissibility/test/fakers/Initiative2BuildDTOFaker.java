@@ -41,8 +41,6 @@ public final class Initiative2BuildDTOFaker {
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
 
-        out.setStatus("STATUS");
-
         TestUtils.checkNotNullFields(out);
         return out;
     }

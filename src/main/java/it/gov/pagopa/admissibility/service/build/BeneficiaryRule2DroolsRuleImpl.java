@@ -19,8 +19,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,9 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     private final CriteriaCodeService criteriaCodeService;
     private final ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade;
     private final KieContainerBuilderService builderService;
+
+    private static final String START = "START";
+    private static final String END = "END";
 
     public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
@@ -58,21 +64,18 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                     initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
             );
 
+            Map<String, LocalDate> startAndEndDates = setStartAndEndDate(initiative);
+
             InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                     .initiativeId(initiative.getInitiativeId())
                     .pdndToken(initiative.getPdndToken())
-                    .automatedCriteriaCodes(getAutomatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria()))
+                    .automatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(AutomatedCriteriaDTO::getCode).toList())
                     .initiativeBudget(initiative.getGeneral().getBudget())
                     .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
-                    .status(initiative.getStatus())
+                    .startDate(startAndEndDates.get(START))
+                    .endDate(startAndEndDates.get(END))
                     .build();
-            if(initiative.getGeneral().getRankingStartDate()==null || initiative.getGeneral().getRankingEndDate()==null) {
-                initiativeConfig.setStartDate(initiative.getGeneral().getStartDate());
-                initiativeConfig.setEndDate(initiative.getGeneral().getEndDate());
-            }else{
-                initiativeConfig.setStartDate(initiative.getGeneral().getRankingStartDate());
-                initiativeConfig.setEndDate(initiative.getGeneral().getRankingEndDate());
-            }
+
             out.setInitiativeConfig(initiativeConfig);
 
             if(onlineSyntaxCheck){
@@ -114,11 +117,15 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue()));
     }
 
-    private List<String> getAutomatedCriteriaCodes(List<AutomatedCriteriaDTO> initiativeAutomatedCriteria) {
-        List<String> automatedCriteriaCodes = new ArrayList<>();
-        for(AutomatedCriteriaDTO criterium : initiativeAutomatedCriteria) {
-            automatedCriteriaCodes.add(criterium.getCode());
+    private Map<String, LocalDate> setStartAndEndDate(Initiative2BuildDTO initiative){
+        Map<String, LocalDate> startAndEndDates = new HashMap<>();
+        if(initiative.getGeneral().getRankingStartDate()==null || initiative.getGeneral().getRankingEndDate()==null) {
+            startAndEndDates.put(START,initiative.getGeneral().getStartDate());
+            startAndEndDates.put(END,initiative.getGeneral().getEndDate());
+        }else{
+            startAndEndDates.put(START,initiative.getGeneral().getRankingStartDate());
+            startAndEndDates.put(END,initiative.getGeneral().getRankingEndDate());
         }
-        return automatedCriteriaCodes;
+        return startAndEndDates;
     }
 }

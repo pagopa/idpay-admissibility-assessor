@@ -22,7 +22,6 @@ public class InitiativeDTO2ConfigMapper implements Function<InitiativeDTO, Initi
         out.setAutomatedCriteriaCodes(automatedCriteriaCodes);
         out.setInitiativeBudget(initiativeDTO.getGeneral().getBudget());
         out.setBeneficiaryInitiativeBudget(initiativeDTO.getGeneral().getBeneficiaryBudget());
-        out.setStatus(initiativeDTO.getStatus());
         return out;
     }
 
