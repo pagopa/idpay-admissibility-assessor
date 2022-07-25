@@ -42,7 +42,7 @@ steps:
   #      secureFile: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
   #      retryCount: '2'
 
-  # options: '-B -s $(settingsxml.secureFilePath) -Dmaven.test.failure.ignore=true'
+  # options: '-B -s $(settingsxml.secureFilePath)'
   - task: Maven@3
     inputs:
       mavenPomFile: 'pom.xml'

@@ -3,10 +3,13 @@ package it.gov.pagopa.admissibility.event.consumer;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
+import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.kie.api.definition.KiePackage;
+import org.kie.api.runtime.KieContainer;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
@@ -18,6 +21,7 @@ import java.util.stream.IntStream;
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })
 public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
@@ -52,7 +56,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         Assertions.assertEquals(expectedRules[0], ruleBuiltSize[0]);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
-        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setKieContainer(Mockito.any());
+        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
 
         System.out.printf("""
             ************************
@@ -76,10 +80,15 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
     }
 
     private int getRuleBuiltSize() {
-        return onboardingContextHolderServiceSpy.getKieContainer() == null ? 0
-                : onboardingContextHolderServiceSpy.getKieContainer().getKieBase()
-                .getKiePackage("it.gov.pagopa.admissibility.drools.buildrules")
-                .getRules().size();
+        KieContainer kieContainer = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer();
+        if (kieContainer == null) {
+            return 0;
+        } else {
+            KiePackage kiePackage = kieContainer.getKieBase().getKiePackage(KieContainerBuilderServiceImpl.rulesBuiltPackage);
+            return kiePackage != null
+                    ? kiePackage.getRules().size()
+                    : 0;
+        }
     }
 
 }

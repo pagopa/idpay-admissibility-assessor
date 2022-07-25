@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.drools.utils;
 
 import it.gov.pagopa.admissibility.drools.model.DroolsRuleTemplateParam;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -81,8 +81,8 @@ public class DroolsTemplateRuleUtilsTest {
         Assertions.assertEquals(expectedZonedDateTime, DroolsTemplateRuleUtils.toTemplateParam(zonedDateTimeObject));
 
         Assertions.assertEquals(DroolsTemplateRuleUtils.NULL_TEMPLATE_PARAM, DroolsTemplateRuleUtils.buildNewObjectDroolsParam(null));
-        ExtraFilter2DroolsTransformerImplTest.ExtraFilterTestModelSample newObjectObject = new ExtraFilter2DroolsTransformerImplTest.ExtraFilterTestModelSample();
-        DroolsRuleTemplateParam expectedNewObject = new DroolsRuleTemplateParam("((%s)(new java.util.function.Supplier<%s>(){public %s get(){%s varExtraFilterTestModelSample = new %s();SETTERS;return varExtraFilterTestModelSample;}}).get())".replace("%s", ExtraFilter2DroolsTransformerImplTest.ExtraFilterTestModelSample.class.getName().replace('$', '.')));
+        ExtraFilter2DroolsTransformerFacadeImplTest.ExtraFilterTestModelSample newObjectObject = new ExtraFilter2DroolsTransformerFacadeImplTest.ExtraFilterTestModelSample();
+        DroolsRuleTemplateParam expectedNewObject = new DroolsRuleTemplateParam("((%s)(new java.util.function.Supplier<%s>(){public %s get(){%s varExtraFilterTestModelSample = new %s();SETTERS;return varExtraFilterTestModelSample;}}).get())".replace("%s", ExtraFilter2DroolsTransformerFacadeImplTest.ExtraFilterTestModelSample.class.getName().replace('$', '.')));
         Set<String> expectedNewObjectSetters = Set.of(
                 "varExtraFilterTestModelSample.setZonedDateTimeObject(null)",
                 "varExtraFilterTestModelSample.setZoneOffsetObject(null)",

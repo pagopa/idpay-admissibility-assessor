@@ -5,8 +5,6 @@ import org.kie.api.runtime.KieContainer;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 /**
  * It will handle the compilation operation to obtain a new KieContainer
  * */

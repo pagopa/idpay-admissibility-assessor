@@ -5,11 +5,6 @@ import it.gov.pagopa.admissibility.model.DroolsRule;
 
 import java.util.Map;
 
-/** A service to validate and tranform an{@link ExtraFilter} into a {@link DroolsRule#getRuleCondition()} using as context entity the input <i>entityClass</i> */
-public interface ExtraFilter2DroolsTransformer {
-    /**
-     * @param context: it will be used to store information used during parser (Initialized as default to new HashMap).
-     *               Filters aggregated using AND will share the same context, Filters aggregated using OR will use separated context (inherited from parent)
-     * @see ExtraFilter2DroolsTransformer */
-    String apply(ExtraFilter extraFilter, Class<?> entityClass, Map<String, Object> context);
+public interface ExtraFilter2DroolsTransformer <T extends ExtraFilter> {
+     String apply(ExtraFilter2DroolsTransformerFacade transformerFacade, T extraFilter, Class<?> entityClass, Map<String, Object> context);
 }

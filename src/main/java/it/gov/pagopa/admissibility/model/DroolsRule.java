@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.model;
 
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,4 +20,5 @@ public class DroolsRule {
     private String id;
     private String name;
     private String rule;
+    private InitiativeConfig initiativeConfig;
 }

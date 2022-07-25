@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     @Override
     public EvaluationDTO applyRules(OnboardingDTO onboardingDTO) {
 
-        StatelessKieSession statelessKieSession = onboardingContextHolderService.getKieContainer().newStatelessKieSession();
+        StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieContainer().newStatelessKieSession();
 
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingDTO);
 
