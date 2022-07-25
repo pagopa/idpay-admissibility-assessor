@@ -1,18 +1,18 @@
-# Deploy to Azure Kubernetes Service
 # Build and push image to Azure Container Registry; Deploy to Azure Kubernetes Service
 # https://docs.microsoft.com/azure/devops/pipelines/languages/docker
 
 parameters:
   - name: 'executeBuild'
-    displayName: 'Remove this flag to skip build and proceed to deploy a docker image previously built'
+    displayName: 'Launch maven and docker build'
     type: boolean
     default: true
 
 trigger:
   branches:
     include:
-      - main
-      - release-*
+      - release-dev
+      - release-uat
+      - release-prod
   paths:
     include:
       - src/*
@@ -25,34 +25,37 @@ resources:
 
 variables:
 
-  # Agent VM image name for Build
+#  vmImageNameDefault: 'ubuntu-latest'
+  vmImageNameDefault: ubuntu-22.04
 
-  vmImageNameDefault: 'ubuntu-latest'
-
-  # Image Repository Name
   imageRepository: '$(K8S_IMAGE_REPOSITORY_NAME)'
   deployNamespace: '$(DEPLOY_NAMESPACE)'
   helmReleaseName : '$(HELM_RELEASE_NAME)'
   settingsXmlROsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  settingsXmlSecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
+  canDeploy: true
 
+  # If the branch is develop or a feature branch starting with CEN, deploy in DEV environment
+  ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/release-dev') }}:
+    environment: 'DEV'
+    dockerRegistryServiceConnection: '$(DEV_CONTAINER_REGISTRY_SERVICE_CONN)'
+    kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
+    containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
+    selfHostedAgentPool: $(DEV_AGENT_POOL)
 
-  ${{ if or(startsWith(variables['Build.SourceBranch'], 'refs/heads/release-uat'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix')) }}:
+  ${{ elseif startsWith(variables['Build.SourceBranch'], 'refs/heads/release-uat') }}:
     environment: 'UAT'
     dockerRegistryServiceConnection: '$(UAT_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(UAT_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(UAT_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(UAT_AGENT_POOL)
-    mavenGoals: 'package'
-    settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
-  ${{ elseif or(eq(variables['Build.SourceBranch'], 'refs/heads/main'),eq(variables['Build.SourceBranch'], 'refs/heads/release-prod')) }}:
+  ${{ elseif startsWith(variables['Build.SourceBranch'], 'refs/heads/release-prod') }}:
     environment: 'PROD'
     dockerRegistryServiceConnection: '$(PROD_CONTAINER_REGISTRY_SERVICE_CONN)'
     kubernetesServiceConnection: '$(PROD_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(PROD_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(PROD_AGENT_POOL)
-    mavenGoals: 'package'
-    settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
   ${{ else }}:
     environment: 'DEV'
@@ -60,12 +63,11 @@ variables:
     kubernetesServiceConnection: '$(DEV_KUBERNETES_SERVICE_CONN)'
     containerRegistry: '$(DEV_CONTAINER_REGISTRY_NAME)'
     selfHostedAgentPool: $(DEV_AGENT_POOL)
-    mavenGoals: 'package'
-    settingsXmlsecureFileName: '$(SETTINGS_XML_RO_SECURE_FILE_NAME)'
 
 stages:
   - stage: 'pom_version'
     displayName: Release
+    condition: eq(variables.canDeploy, true)
     jobs:
       - job: POM
         displayName: POM
@@ -75,7 +77,7 @@ stages:
           - task: Bash@3
             displayName: Get POM version
             name: getpomversion
-            condition: succeeded()
+            condition: and(succeeded(), eq(variables.canDeploy, true))
             inputs:
               targetType: 'inline'
               script: |
@@ -86,7 +88,6 @@ stages:
   - stage: 'build'
     displayName: 'Build_and_Publish_to_${{ variables.environment }}'
     dependsOn: 'pom_version'
-    condition: and(succeeded(), ${{ parameters.executeBuild }} )
     variables:
       pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
     jobs:
@@ -95,27 +96,9 @@ stages:
         pool:
           vmImage: $(vmImageNameDefault)
         steps:
-          - task: DownloadSecureFile@1
-            displayName: 'download settings.xml for Maven'
-            name: settingsxml
-            inputs:
-              secureFile: '$(settingsXmlsecureFileName)'
-              retryCount: '2'
-          - task: Maven@3
-            inputs:
-              mavenPomFile: 'pom.xml'
-              goals: '$(mavenGoals)'
-              options: '-B -s $(settingsxml.secureFilePath) -DskipTests=true'
-              javaHomeOption: 'JDKVersion'
-              jdkVersionOption: '1.11'
-              mavenVersionOption: 'Default'
-              mavenOptions: '-Xmx3072m'
-              mavenAuthenticateFeed: false
-              effectivePomSkip: true
-              sonarQubeRunAnalysis: false
           - task: Docker@2
+            condition: and(succeeded(), ${{ parameters.executeBuild }})
             displayName: 'Publish_image_to_${{ variables.environment }}'
-            condition: succeeded()
             inputs:
               containerRegistry: '$(dockerRegistryServiceConnection)'
               repository: '$(imageRepository)'
@@ -124,11 +107,17 @@ stages:
                 $(Build.BuildId)
                 latest
                 $(pomversion)
+          # - task: PublishPipelineArtifact@1
+          #   displayName: 'Publish Artifact manifests'
+          #   condition: and(succeeded(), eq(variables.canDeploy, true))
+          #   inputs:
+          #     targetPath: '$(Build.Repository.LocalPath)/manifests'
+          #     artifact: 'manifests'
+          #     publishLocation: 'pipeline'
 
   - stage: 'publish_artifact_helm'
     displayName: 'Publish_artifact_Helm'
     dependsOn: ['build']
-    condition: or(succeeded(), not(${{ parameters.executeBuild }}) )
     jobs:
       - job: Publish_artifact_helm
         displayName: Publish_artifact_helm
@@ -146,7 +135,7 @@ stages:
   - stage: 'deploy'
     displayName: 'Deploy to ${{ variables.environment }} K8S'
     dependsOn: ['publish_artifact_helm']
-    condition: or(succeeded(), not(${{ parameters.executeBuild }}) )
+    condition: and(succeeded(), eq(variables.canDeploy, true))
     variables:
       pomversion: $[ stageDependencies.Release.POM.outputs['getpomversion.outputpomversion'] ]
     jobs:
@@ -189,14 +178,3 @@ stages:
                     install: true
                     waitForExecution: true
                     arguments: "--timeout 3m0s --debug"
-                # restart at each deploy
-                - task: KubernetesManifest@0
-                  displayName: Patch
-                  inputs:
-                    kubernetesServiceConnection: ${{ variables.kubernetesServiceConnection }}
-                    namespace: '$(deployNamespace)'
-                    action: patch
-                    kind: deployment
-                    name: '$(deploymentName)'
-                    mergeStrategy: strategic
-                    patch: '{"spec":{"template":{"metadata":{"annotations":{"buildNumber":"$(Build.BuildNumber)"}}}}}'
