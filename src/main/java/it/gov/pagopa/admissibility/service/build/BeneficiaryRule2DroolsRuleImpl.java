@@ -63,8 +63,9 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                     .automatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(AutomatedCriteriaDTO::getCode).toList())
                     .initiativeBudget(initiative.getGeneral().getBudget())
                     .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
+                    .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
+                    .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
                     .build();
-            setStartAndEndDate(initiative,initiativeConfig);
 
             out.setInitiativeConfig(initiativeConfig);
 
@@ -105,10 +106,5 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
         FilterOperator operator = automatedCriteriaDTO.getOperator();
         return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue()));
-    }
-
-    private void setStartAndEndDate(Initiative2BuildDTO initiative, InitiativeConfig initiativeConfig){
-        initiativeConfig.setStartDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()));
-        initiativeConfig.setEndDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()));
     }
 }
