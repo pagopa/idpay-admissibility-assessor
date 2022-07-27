@@ -18,7 +18,7 @@ public final class DroolsTemplateRuleUtils {
     private DroolsTemplateRuleUtils() {
     }
 
-    public final static DroolsRuleTemplateParam NULL_TEMPLATE_PARAM = new DroolsRuleTemplateParam("null");
+    public static final DroolsRuleTemplateParam NULL_TEMPLATE_PARAM = new DroolsRuleTemplateParam("null");
 
     /**
      * To build a String containing the logic to instantiate a new LocalDate copy of the input
@@ -26,32 +26,32 @@ public final class DroolsTemplateRuleUtils {
     public static DroolsRuleTemplateParam toTemplateParam(Object o) {
         if (o == null) {
             return NULL_TEMPLATE_PARAM;
-        } else if (o instanceof DroolsRuleTemplateParam) {
-            return ((DroolsRuleTemplateParam) o);
-        }  else if (o instanceof String) {
-            return buildStringDroolsParam((String) o);
+        } else if (o instanceof DroolsRuleTemplateParam droolsRuleTemplateParam) {
+            return droolsRuleTemplateParam;
+        }  else if (o instanceof String string) {
+            return buildStringDroolsParam(string);
         }  else if (o instanceof Enum) {
             return buildValueOfStringDroolsParam(o.getClass(), o);
         } else if (o instanceof Number) {
             return buildNewObjectFromStringDroolsParam(o.getClass(), o);
         } else if (o instanceof Collection) {
             return buildCollectionDroolsParam((Collection<?>)o);
-        } else if (o instanceof LocalDate) {
-            return buildLocalDateDroolsParam((LocalDate)o);
-        } else if (o instanceof LocalTime) {
-            return buildLocalTimeDroolsParam((LocalTime)o);
-        } else if (o instanceof LocalDateTime) {
-            return buildLocalDateTimeDroolsParam((LocalDateTime)o);
-        } else if (o instanceof ZoneOffset) {
-            return buildZoneOffsetDroolsParam((ZoneOffset)o);
-        } else if (o instanceof ZoneId) {
-            return buildZoneIdDroolsParam((ZoneId)o);
-        } else if (o instanceof ZonedDateTime) {
-            return buildZonedDateTimeDroolsParam((ZonedDateTime)o);
-        } else if (o instanceof OffsetDateTime) {
-            return buildOffsetDateTimeDroolsParam((OffsetDateTime)o);
-        } else if (o instanceof Boolean) {
-            return buildBooleanDroolsParam((Boolean)o);
+        } else if (o instanceof LocalDate localDate) {
+            return buildLocalDateDroolsParam(localDate);
+        } else if (o instanceof LocalTime localTime) {
+            return buildLocalTimeDroolsParam(localTime);
+        } else if (o instanceof LocalDateTime localDateTime) {
+            return buildLocalDateTimeDroolsParam(localDateTime);
+        } else if (o instanceof ZoneOffset zoneOffset) {
+            return buildZoneOffsetDroolsParam(zoneOffset);
+        } else if (o instanceof ZoneId zoneId) {
+            return buildZoneIdDroolsParam(zoneId);
+        } else if (o instanceof ZonedDateTime zonedDateTime) {
+            return buildZonedDateTimeDroolsParam(zonedDateTime);
+        } else if (o instanceof OffsetDateTime offsetDateTime) {
+            return buildOffsetDateTimeDroolsParam(offsetDateTime);
+        } else if (o instanceof Boolean booleanObject) {
+            return buildBooleanDroolsParam(booleanObject);
         }  else {
             return buildNewObjectDroolsParam(o);
         }
@@ -177,12 +177,7 @@ public final class DroolsTemplateRuleUtils {
         for(Method setter : clazz.getMethods()){
             try{
                 if(setter.getName().startsWith("set") && setter.getParameterTypes().length==1){
-                    Method getter;
-                    try{
-                        getter = clazz.getMethod(setter.getName().replaceFirst("set", "get"));
-                    } catch (NoSuchMethodException e){
-                        getter = clazz.getMethod(setter.getName().replaceFirst("set", "is"));
-                    }
+                    Method getter = retrieveGetter(clazz, setter);
 
                     String value = toTemplateParam(getter.invoke(o)).toString();
                     if(setter.getParameterTypes()[0].isAssignableFrom(getter.getReturnType())) {
@@ -198,6 +193,16 @@ public final class DroolsTemplateRuleUtils {
 
         String clazzString = o.getClass().getName().replace("$", ".");
         return new DroolsRuleTemplateParam(String.format("((%s)(new java.util.function.Supplier<%s>(){public %s get(){%s %s = new %s();%sreturn %s;}}).get())", clazzString, clazzString, clazzString, clazzString, varName, clazzString, String.join("", setters), varName));
+    }
+
+    private static Method retrieveGetter(Class<?> clazz, Method setter) throws NoSuchMethodException {
+        Method getter;
+        try{
+            getter = clazz.getMethod(setter.getName().replaceFirst("set", "get"));
+        } catch (NoSuchMethodException e){
+            getter = clazz.getMethod(setter.getName().replaceFirst("set", "is"));
+        }
+        return getter;
     }
 
     private static DroolsRuleTemplateParam buildValueOfStringDroolsParam(Class<?> clazz, Object value) {

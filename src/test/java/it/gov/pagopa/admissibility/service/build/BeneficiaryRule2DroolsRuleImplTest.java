@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -10,13 +10,15 @@ import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMa
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
+import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineServiceImpl;
+import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,14 +43,12 @@ public class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
-        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerImplTest.extraFilter2DroolsTransformer, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
     }
 
     @BeforeEach
     public void configureMock(){
-        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c->{
-            Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c);
-        });
+        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c-> Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
     }
 
     @Test
@@ -56,7 +57,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = buildInitiative();
 
         // when
-        DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(Flux.just(dto)).blockFirst();
+        DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(dto);
 
         // then
         checkResult(result);
@@ -68,7 +69,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = buildInitiative();
 
         // when
-        DroolsRule result = beneficiaryRule2DroolsRule.apply(Flux.just(dto)).blockFirst();
+        DroolsRule result = beneficiaryRule2DroolsRule.apply(dto);
 
         // then
         checkResult(result);
@@ -95,6 +96,10 @@ public class BeneficiaryRule2DroolsRuleImplTest {
                 end
                                         
                 """);
+
+        expected.setInitiativeConfig(new InitiativeConfig("ID",
+                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
+                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal(100000.00), new BigDecimal(1000.00)));
 
         Assertions.assertEquals(expected, result);
     }
@@ -129,10 +134,10 @@ public class BeneficiaryRule2DroolsRuleImplTest {
             onboardingDTO.getBirthDate().setAnno("2021");
         }
 
-        DroolsRule rule = beneficiaryRule2DroolsRule.apply(Flux.just(initiative)).blockFirst();
+        DroolsRule rule = beneficiaryRule2DroolsRule.apply(initiative);
 
         OnboardingContextHolderService onboardingContextHolderService=Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(buildContainer(rule));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), new Onboarding2OnboardingDroolsMapper());
 
@@ -168,6 +173,12 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "anno", FilterOperator.GT, "2000"));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
+        dto.setPdndToken("PDND_TOKEN");
+        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal(100000.00),
+                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal(1000.00),
+                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
+                null,null));
+
         return dto;
     }
 
@@ -175,7 +186,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");
-        ignoredRule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
+        ignoredRule.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
 
         return new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
     }

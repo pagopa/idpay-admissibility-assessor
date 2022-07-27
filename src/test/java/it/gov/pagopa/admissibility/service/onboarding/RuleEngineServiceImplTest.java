@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerImplTest;
+import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
@@ -8,7 +8,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMa
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import lombok.extern.slf4j.Slf4j;
@@ -45,13 +44,13 @@ class RuleEngineServiceImplTest {
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId("INITIATIVEID");
 
-        Mockito.when(onboardingContextHolderService.getKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO);
 
         // Then
-        Mockito.verify(onboardingContextHolderService).getKieContainer();
+        Mockito.verify(onboardingContextHolderService).getBeneficiaryRulesKieContainer();
 
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
@@ -70,12 +69,12 @@ class RuleEngineServiceImplTest {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");
-        ignoredRule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
+        ignoredRule.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
 
         DroolsRule rule = new DroolsRule();
         rule.setId(initiativeId);
         rule.setName("RULE");
-        rule.setRule(ExtraFilter2DroolsTransformerImplTest.applyRuleTemplate(rule.getId(), rule.getName(),
+        rule.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(rule.getId(), rule.getName(),
                 "$onboarding: %s()".formatted(OnboardingDroolsDTO.class.getName()),
                 "$onboarding.getOnboardingRejectionReasons().add(\"REASON1\");"));
 

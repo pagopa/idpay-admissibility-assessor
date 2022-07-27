@@ -40,6 +40,8 @@ class InitiativeDTO2ConfigMapperTest {
                         .builder()
                         .startDate(LocalDate.of(2022, 1, 1))
                         .endDate(LocalDate.of(2022, 12, 31))
+                        .budget(new BigDecimal(100000.00))
+                        .beneficiaryBudget(new BigDecimal(1000.00))
                         .build()
                 ,
                 InitiativeBeneficiaryRuleDTO

@@ -81,20 +81,24 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
             //noinspection unchecked,rawtypes
             return Enum.valueOf((Class<? extends Enum>)fieldType, value);
         } else if (Collection.class.isAssignableFrom(fieldType)){
-            if(value.startsWith("(") && value.endsWith(")")){
-                List<String> values = Arrays.asList(value.substring(1, value.length()-1).split(","));
-                if(Set.class.isAssignableFrom(fieldType)){
-                    return new HashSet<>(values);
-                } else if (List.class.isAssignableFrom(fieldType)){
-                    return values;
-                } else {
-                    throw new IllegalStateException(String.format("Unsupported collection type %s", fieldType));
-                }
-            } else {
-                return value;
-            }
+            return handleCollection(value, fieldType);
         } else {
             throw new IllegalArgumentException(String.format("Unsupported scalar value: %s", value.getClass()));
+        }
+    }
+
+    private Object handleCollection(String value, Class<?> fieldType) {
+        if(value.startsWith("(") && value.endsWith(")")){
+            List<String> values = Arrays.asList(value.substring(1, value.length()-1).split(","));
+            if(Set.class.isAssignableFrom(fieldType)){
+                return new HashSet<>(values);
+            } else if (List.class.isAssignableFrom(fieldType)){
+                return values;
+            } else {
+                throw new IllegalStateException(String.format("Unsupported collection type %s", fieldType));
+            }
+        } else {
+            return value;
         }
     }
 }

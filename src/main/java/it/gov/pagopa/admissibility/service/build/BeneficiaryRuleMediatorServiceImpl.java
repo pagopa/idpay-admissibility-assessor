@@ -12,15 +12,15 @@ import java.time.Duration;
 @Service
 public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediatorService {
 
-    private final String beneficiaryBuildDelay;
+    private final Duration beneficiaryRulesBuildDelay;
 
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final DroolsRuleRepository droolsRuleRepository;
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
-    public BeneficiaryRuleMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
-        this.beneficiaryBuildDelay = beneficiaryBuildDelay;
+    public BeneficiaryRuleMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService) {
+        this.beneficiaryRulesBuildDelay = Duration.parse(beneficiaryRulesBuildDelay);
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
         this.kieContainerBuilderService = kieContainerBuilderService;
@@ -29,10 +29,15 @@ public class BeneficiaryRuleMediatorServiceImpl implements BeneficiaryRuleMediat
 
     @Override
     public void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux) {
-        beneficiaryRule2DroolsRule.apply(initiativeBeneficiaryRuleDTOFlux) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleMediatorService
+        initiativeBeneficiaryRuleDTOFlux
+                .map(beneficiaryRule2DroolsRule) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleMediatorService
                 .flatMap(droolsRuleRepository::save)
-                .buffer(Duration.parse(beneficiaryBuildDelay))
+                .map(i->{
+                    onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
+                    return i;
+                })
+                .buffer(beneficiaryRulesBuildDelay)
                 .flatMap(r -> kieContainerBuilderService.buildAll())
-                .subscribe(onboardingContextHolderService::setKieContainer);
+                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
     }
 }
