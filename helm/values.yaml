@@ -61,7 +61,6 @@ microservice-chart:
       KAFKA_CONFIG_SECURITY_PROTOCOL: kafka_security_protocol
       KAFKA_ONBOARDING_REQUEST_TOPIC: idpay_onboarding_request_topic
       KAFKA_ONBOARDING_OUTCOME_TOPIC: idpay_onboarding_outcome_topic
-      KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
     idpay-eventhub-01:
       KAFKA_BENEFICIARY_RULE_BROKER: kafka_broker
       KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
