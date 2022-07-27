@@ -1,6 +1,6 @@
 microservice-chart:
   image:
-    repository: cstardcommonarc.azurecr.io/idpayadmissibilityassessor
+    repository: cstardcommonacr.azurecr.io/idpayadmissibilityassessor
     tag: latest
     pullPolicy: Always
 
