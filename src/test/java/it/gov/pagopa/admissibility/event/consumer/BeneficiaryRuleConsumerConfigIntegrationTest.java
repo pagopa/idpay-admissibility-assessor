@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import org.junit.jupiter.api.Assertions;
@@ -48,12 +49,11 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         waitFor(()->(countSaved[0]=droolsRuleRepository.count().block()) >= N, ()->"Expected %d saved rules, read %d".formatted(N, countSaved[0]), 15, 1000);
         long timeDroolsSavingCheckPublishingEnd=System.currentTimeMillis();
 
-        int[] ruleBuiltSize={0};
-        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize()) >= expectedRules[0], ()->"Expected %d rules, read %d".formatted(expectedRules[0], ruleBuiltSize[0]), 10, 500);
+        int ruleBuiltSize = waitForKieContainerBuild(expectedRules[0]);
         long timeEnd=System.currentTimeMillis();
 
         Assertions.assertEquals(N, countSaved[0]);
-        Assertions.assertEquals(expectedRules[0], ruleBuiltSize[0]);
+        Assertions.assertEquals(expectedRules[0], ruleBuiltSize);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
         Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
@@ -79,7 +79,14 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         );
     }
 
-    private int getRuleBuiltSize() {
+    private int waitForKieContainerBuild(int expectedRules) {return waitForKieContainerBuild(expectedRules, onboardingContextHolderServiceSpy);}
+    public static int waitForKieContainerBuild(int expectedRules,OnboardingContextHolderService onboardingContextHolderServiceSpy) {
+        int[] ruleBuiltSize={0};
+        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, ()->"Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 10, 500);
+        return ruleBuiltSize[0];
+    }
+
+    public static int getRuleBuiltSize(OnboardingContextHolderService onboardingContextHolderServiceSpy) {
         KieContainer kieContainer = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer();
         if (kieContainer == null) {
             return 0;
