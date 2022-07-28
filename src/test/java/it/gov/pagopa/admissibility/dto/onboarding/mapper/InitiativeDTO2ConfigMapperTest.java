@@ -8,12 +8,10 @@ import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -40,8 +38,8 @@ class InitiativeDTO2ConfigMapperTest {
                         .builder()
                         .startDate(LocalDate.of(2022, 1, 1))
                         .endDate(LocalDate.of(2022, 12, 31))
-                        .budget(new BigDecimal(100000.00))
-                        .beneficiaryBudget(new BigDecimal(1000.00))
+                        .budget(new BigDecimal("100000.00"))
+                        .beneficiaryBudget(new BigDecimal("1000.00"))
                         .build()
                 ,
                 InitiativeBeneficiaryRuleDTO

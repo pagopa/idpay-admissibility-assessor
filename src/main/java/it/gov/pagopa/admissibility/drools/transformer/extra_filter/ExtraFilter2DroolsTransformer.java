@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.drools.transformer.extra_filter;
 
 import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
-import it.gov.pagopa.admissibility.model.DroolsRule;
 
 import java.util.Map;
 

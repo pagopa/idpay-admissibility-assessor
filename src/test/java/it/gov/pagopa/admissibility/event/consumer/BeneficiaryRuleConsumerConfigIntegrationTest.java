@@ -4,7 +4,6 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import org.junit.jupiter.api.Assertions;
@@ -16,7 +15,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
@@ -24,7 +22,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })
-public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
+class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @SpyBean
     private KieContainerBuilderService kieContainerBuilderServiceSpy;
@@ -32,13 +30,13 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
     private OnboardingContextHolderService onboardingContextHolderServiceSpy;
 
     @Test
-    public void testBeneficiaryRuleBuilding(){
+    void testBeneficiaryRuleBuilding(){
         int N=100;
         int[] expectedRules ={0};
         List<Initiative2BuildDTO> initiatives = IntStream.range(0,N)
                 .mapToObj(Initiative2BuildDTOFaker::mockInstance)
                 .peek(i->expectedRules[0]+=i.getBeneficiaryRule().getAutomatedCriteria().size())
-                .collect(Collectors.toList());
+                .toList();
 
         long timeStart=System.currentTimeMillis();
         initiatives.forEach(i->publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
@@ -91,7 +89,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         if (kieContainer == null) {
             return 0;
         } else {
-            KiePackage kiePackage = kieContainer.getKieBase().getKiePackage(KieContainerBuilderServiceImpl.rulesBuiltPackage);
+            KiePackage kiePackage = kieContainer.getKieBase().getKiePackage(KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE);
             return kiePackage != null
                     ? kiePackage.getRules().size()
                     : 0;

@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BeneficiaryRule2DroolsRuleImplTest {
+class BeneficiaryRule2DroolsRuleImplTest {
 
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final CriteriaCodeService criteriaCodeServiceMock;
@@ -52,7 +52,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     @Test
-    public void testBuild() {
+    void testBuild() {
         // given
         Initiative2BuildDTO dto = buildInitiative();
 
@@ -64,7 +64,7 @@ public class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     @Test
-    public void testBuildWithOnlineBuildCheck() {
+    void testBuildWithOnlineBuildCheck() {
         // given
         Initiative2BuildDTO dto = buildInitiative();
 
@@ -99,20 +99,20 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
         expected.setInitiativeConfig(new InitiativeConfig("ID",
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
-                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal(100000.00), new BigDecimal(1000.00)));
+                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal("100000.00"), new BigDecimal("1000.00")));
 
         Assertions.assertEquals(expected, result);
     }
 
     @Test
-    public void testExecutions() {
+    void testExecutions() {
         testExecution(Collections.emptyList());
         testExecution(List.of("ISEE"));
         testExecution(List.of("BIRTHDATE"));
         testExecution(List.of("ISEE", "BIRTHDATE"));
     }
 
-    public void testExecution(List<String> failingCode){
+    void testExecution(List<String> failingCode){
         //given
         boolean expectedIseeFail = failingCode.contains("ISEE");
         boolean expectedBirthDateFail = failingCode.contains("BIRTHDATE");
@@ -174,8 +174,8 @@ public class BeneficiaryRule2DroolsRuleImplTest {
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");
-        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal(100000.00),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal(1000.00),
+        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
+                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
 

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class BeneficiaryRuleMediatorServiceTest {
+class BeneficiaryRuleMediatorServiceTest {
 
     // mocks
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRuleMock;
@@ -40,7 +40,7 @@ public class BeneficiaryRuleMediatorServiceTest {
     }
 
     @BeforeEach
-    public void configureMocks(){
+    void configureMocks(){
         Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> {
             Initiative2BuildDTO i = invocation.getArgument(0);
             return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
@@ -53,7 +53,7 @@ public class BeneficiaryRuleMediatorServiceTest {
     }
 
     @Test
-    public void testSuccessful(){
+    void testSuccessful(){
         // given
         int N=10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0,N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
