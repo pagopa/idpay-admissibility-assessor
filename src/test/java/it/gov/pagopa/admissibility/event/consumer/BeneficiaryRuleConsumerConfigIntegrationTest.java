@@ -22,7 +22,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })
-class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
+public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @SpyBean
     private KieContainerBuilderService kieContainerBuilderServiceSpy;
