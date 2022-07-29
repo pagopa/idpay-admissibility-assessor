@@ -13,7 +13,7 @@ import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRul
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.build.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
