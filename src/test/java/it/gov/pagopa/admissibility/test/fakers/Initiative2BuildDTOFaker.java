@@ -6,8 +6,7 @@ import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
-import it.gov.pagopa.admissibility.rest.initiative.dto.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.build.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 
 import java.math.BigDecimal;
@@ -36,8 +35,8 @@ public final class Initiative2BuildDTOFaker {
         out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "anno", FilterOperator.GT, "10"));
 
         out.setPdndToken("PDND_TOKEN");
-        out.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal(100000.00),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal(1000.00),
+        out.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
+                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
 

@@ -66,7 +66,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
     }
 
     @Test
-    public void testSuccessful() {
+    void testSuccessful() {
         ExtraFilter extraFilter = new AggregatorAnd(Arrays.asList(
                 new Filter("stringObject", FilterOperator.EQ, null),
                 new Filter("stringObject", FilterOperator.GE, STRINGVALUE),
@@ -161,7 +161,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
     }
 
     @Test
-    public void testErrors() {
+    void testErrors() {
         try {
             extraFilter2DroolsTransformerFacade.apply(new Filter("DUMMY", FilterOperator.EQ, ""), OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
@@ -216,13 +216,13 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
     }
 
     @Test
-    public void testImplicitCast() {
+    void testImplicitCast() {
         String result = extraFilter2DroolsTransformerFacade.apply(new Filter("(" + LocalDateTime.class.getName() + ")criteriaConsensusTimestamp.(java.time.Month)month", FilterOperator.EQ, "JANUARY"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("((criteriaConsensusTimestamp instanceof " + LocalDateTime.class.getName() + ") && (criteriaConsensusTimestamp.month instanceof java.time.Month) && criteriaConsensusTimestamp.month == java.time.Month.valueOf(\"JANUARY\"))", result);
     }
 
     @Test
-    public void testCollection() {
+    void testCollection() {
         OnboardingDroolsDTO onboarding = new OnboardingDroolsDTO();
         onboarding.setInitiativeId("id");
         onboarding.setSelfDeclarationList(new HashMap<>());
@@ -275,7 +275,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         onboarding.setOnboardingRejectionReasons(new ArrayList<>());
     }
 
-    private void checkCollectionResult(OnboardingDroolsDTO onboardingDroolsDTO, DroolsRule rule, boolean success) {
+    void checkCollectionResult(OnboardingDroolsDTO onboardingDroolsDTO, DroolsRule rule, boolean success) {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");

@@ -9,12 +9,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 
-public class CriteriaCodeServiceIntegrationTest extends BaseIntegrationTest {
+class CriteriaCodeServiceIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private CriteriaCodesConfiguration criteriaCodesConfiguration;
 
     @Test
-    public void test(){
+    void test(){
         Map<String, CriteriaCodeConfig> result = criteriaCodesConfiguration.getCriteriaCodeConfigs();
 
         Map<String, CriteriaCodeConfig> expected = Map.of(

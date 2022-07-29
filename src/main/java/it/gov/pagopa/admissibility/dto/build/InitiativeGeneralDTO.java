@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.rest.initiative.dto;
+package it.gov.pagopa.admissibility.dto.build;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

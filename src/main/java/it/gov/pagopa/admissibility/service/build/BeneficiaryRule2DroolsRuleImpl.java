@@ -53,7 +53,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                                         
                     %s
                     """.formatted(
-                    KieContainerBuilderServiceImpl.rulesBuiltPackage,
+                    KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE,
                     initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
             );
 

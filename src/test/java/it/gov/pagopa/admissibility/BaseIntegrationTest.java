@@ -166,7 +166,7 @@ public abstract class BaseIntegrationTest {
         template.send(record);
     }
 
-    protected void wait(int millis){
+    public static void wait(int millis){
         try {
             Thread.sleep(millis);
         } catch (InterruptedException e) {
@@ -174,7 +174,7 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected void waitFor(Supplier<Boolean> test, Supplier<String> buildTestFailureMessage, int maxAttempts, int millisAttemptDelay){
+    public static void waitFor(Supplier<Boolean> test, Supplier<String> buildTestFailureMessage, int maxAttempts, int millisAttemptDelay){
         int i=0;
         while(!test.get() && i<maxAttempts) {
             i++;

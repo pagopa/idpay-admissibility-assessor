@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ExtraFilter2DroolsUtilsTest {
+class ExtraFilter2DroolsUtilsTest {
     private static final Set<String> ignoredPaths = new HashSet<>(Arrays.asList(
             "userId",
             "initiativeId",
@@ -25,7 +25,7 @@ public class ExtraFilter2DroolsUtilsTest {
             "criteriaConsensusTimestamp"
     ));
 
-    public static final Map<String, Class<?>> expectedFields2Class = Map.of(
+    static final Map<String, Class<?>> expectedFields2Class = Map.of(
             "birthDate", DataNascita.class,
             "birthDate.anno", String.class,
             "birthDate.eta", Integer.class,
@@ -40,7 +40,7 @@ public class ExtraFilter2DroolsUtilsTest {
     public static final Set<String> expectedFields = expectedFields2Class.keySet();
 
     @Test
-    public void testBuildExtraFilterFields() {
+    void testBuildExtraFilterFields() {
         System.out.println("Testing null parameters (only nullable)");
         List<ExtraFilterField> result = ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, null, ignoredPaths);
         Assertions.assertNotNull(result);

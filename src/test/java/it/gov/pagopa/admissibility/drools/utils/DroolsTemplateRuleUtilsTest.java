@@ -11,10 +11,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class DroolsTemplateRuleUtilsTest {
+class DroolsTemplateRuleUtilsTest {
 
     @Test
-    public void testToTemplateParam() {
+    void testToTemplateParam() {
         Assertions.assertEquals(DroolsTemplateRuleUtils.NULL_TEMPLATE_PARAM, DroolsTemplateRuleUtils.toTemplateParam(null));
 
         DroolsRuleTemplateParam templateParam = new DroolsRuleTemplateParam("asd");
