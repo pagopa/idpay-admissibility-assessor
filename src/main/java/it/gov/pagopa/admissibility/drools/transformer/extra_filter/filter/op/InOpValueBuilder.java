@@ -25,9 +25,9 @@ public class InOpValueBuilder implements OperationValueBuilder{
     }
 
     @Override
-    public String apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
+    public String[] apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
         String[] values = filter.getValue().replaceFirst("^\\(", "").replaceFirst("\\)$", "").split(",");
 
-        return String.format("(%s)", Arrays.stream(values).map(v -> scalarOpValueBuilder.apply(new Filter(null, null, v), fieldType, context)).collect(Collectors.joining(",")));
+        return new String[]{String.format("(%s)", Arrays.stream(values).map(v -> scalarOpValueBuilder.apply(new Filter(null, null, v), fieldType, context)[0]).collect(Collectors.joining(",")))};
     }
 }

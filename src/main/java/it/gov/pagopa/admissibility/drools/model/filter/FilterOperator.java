@@ -8,5 +8,7 @@ public enum FilterOperator {
     GT,
     GE,
     INSTANCE_OF,
-    IN
+    IN,
+    BTW_CLOSED,
+    BTW_OPEN
 }

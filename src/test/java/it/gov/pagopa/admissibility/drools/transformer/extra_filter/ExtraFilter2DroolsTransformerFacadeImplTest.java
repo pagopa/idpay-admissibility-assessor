@@ -104,7 +104,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
                 new Filter("localDateTimeObject", FilterOperator.NOT_EQ, LOCALDATETIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
                 new Filter("localDateTimeObject", FilterOperator.EQ, null),
 
-                new Filter("localDateTimeObject", FilterOperator.EQ, LOCALDATETIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
+                new Filter("localDateTimeObject", FilterOperator.BTW_OPEN, LOCALDATETIMEOBJECT.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), LOCALDATETIMEOBJECT.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)),
                 new Filter("localDateTimeObject", FilterOperator.EQ, null),
 
                 new Filter("zoneOffsetObject", FilterOperator.EQ, ZONEOFFSETOBJECT.toString()),
@@ -113,7 +113,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
                 new Filter("zoneIdObject", FilterOperator.EQ, ZONEIDOBJECT.toString()),
                 new Filter("zoneIdObject", FilterOperator.EQ, null),
 
-                new Filter("zonedDateTimeObject", FilterOperator.EQ, ZONEDDATETIMEOBJECT.format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
+                new Filter("zonedDateTimeObject", FilterOperator.BTW_CLOSED, ZONEDDATETIMEOBJECT.format(DateTimeFormatter.ISO_ZONED_DATE_TIME), ZONEDDATETIMEOBJECT.plusDays(1).format(DateTimeFormatter.ISO_ZONED_DATE_TIME)),
                 new Filter("zonedDateTimeObject", FilterOperator.EQ, null),
 
                 new Filter("offsetDateTimeObject", FilterOperator.EQ, OFFSETDATETIMEOBJECT.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)),
@@ -140,12 +140,16 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
                 "!(" +
                 "localDateObject.dayOfWeek != java.time.DayOfWeek.valueOf(\"MONDAY\")" +
                 ") && " +
-                "localTimeObject <= java.time.LocalTime.of(5,1,59,999000000) && localTimeObject == null && " +
+                "localTimeObject <= java.time.LocalTime.of(5,1,59,999000000) && " +
+                "localTimeObject == null && " +
                 "localDateTimeObject != java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && localDateTimeObject == null && " +
-                "localDateTimeObject == java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && localDateTimeObject == null && " +
+                "localDateTimeObject > java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && localDateTimeObject < java.time.LocalDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000)) && " +
+                "localDateTimeObject == null && " +
                 "zoneOffsetObject == java.time.ZoneOffset.of(\"Z\") && zoneOffsetObject == null && zoneIdObject == java.time.ZoneOffset.of(\"Z\") && " +
-                "zoneIdObject == null && zonedDateTimeObject == java.time.ZonedDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneId.of(\"Z\")) && " +
-                "zonedDateTimeObject == null && offsetDateTimeObject.isEqual(java.time.OffsetDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneOffset.of(\"Z\"))) && " +
+                "zoneIdObject == null && " +
+                "(!zonedDateTimeObject.isBefore(java.time.ZonedDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneId.of(\"Z\"))) && !zonedDateTimeObject.isAfter(java.time.ZonedDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneId.of(\"Z\")))) && " +
+                "zonedDateTimeObject.isEqual(null) && " +
+                "offsetDateTimeObject.isEqual(java.time.OffsetDateTime.of(java.time.LocalDate.of(2022,7,15), java.time.LocalTime.of(5,1,59,999000000), java.time.ZoneOffset.of(\"Z\"))) && " +
                 "offsetDateTimeObject.isEqual(null) && " +
                 "booleanObject == true && booleanObject == null)";
         Assertions.assertEquals(expected, result);

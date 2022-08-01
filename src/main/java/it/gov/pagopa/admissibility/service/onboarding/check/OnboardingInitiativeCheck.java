@@ -23,6 +23,13 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
         this.onboardingContextHolderService = onboardingContextHolderService;
     }
 
+    private String dateCheck (LocalDateTime dateToCheck, LocalDate startDate, LocalDate endDate,String rejectionReason){
+        if(dateToCheck.toLocalDate().isBefore(startDate) || (endDate!=null && dateToCheck.toLocalDate().isAfter(endDate))){
+            return rejectionReason;
+        }
+        return null;
+    }
+
     @Override
     public String apply(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
         InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingDTO.getInitiativeId());
@@ -40,12 +47,5 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
 
         return dateCheck(onboardingDTO.getCriteriaConsensusTimestamp(), initiativeConfig.getStartDate(),
                 initiativeConfig.getEndDate(),"CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL");
-    }
-
-    private String dateCheck (LocalDateTime dateToCheck, LocalDate startDate, LocalDate endDate,String fieldToCheck){
-        if(dateToCheck.toLocalDate().isBefore(startDate) || dateToCheck.toLocalDate().isAfter(endDate)){
-            return fieldToCheck;
-        }
-        return null;
     }
 }

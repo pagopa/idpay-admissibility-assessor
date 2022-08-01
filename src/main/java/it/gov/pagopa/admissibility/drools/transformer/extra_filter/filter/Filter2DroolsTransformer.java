@@ -37,7 +37,7 @@ public class Filter2DroolsTransformer implements ExtraFilter2DroolsTransformer<F
     public String apply(ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, Filter filter, Class<?> entityClass, Map<String, Object> context) {
         Class<?> fieldType = determineFieldType(filter, entityClass, context);
         String op = transcodeFilterOp(filter.getFilterOperator(), fieldType, filter.getValue());
-        String value = null;
+        String[] value = null;
         for (OperationValueBuilder operationValueBuilder : operationValueBuilders) {
             if (operationValueBuilder.supports(filter.getFilterOperator())) {
                 value = operationValueBuilder.apply(filter, fieldType, context);
@@ -76,19 +76,28 @@ public class Filter2DroolsTransformer implements ExtraFilter2DroolsTransformer<F
         }
     }
 
-    private String buildOperatorApplication(Filter filter, Class<?> fieldType, String op, String value, String fullPathNoCast) {
-        if (fieldType.isAssignableFrom(OffsetDateTime.class) || fieldType.isAssignableFrom(ChronoZonedDateTime.class)) {
+    private String buildOperatorApplication(Filter filter, Class<?> fieldType, String op, String[] value, String fullPathNoCast) {
+        final String value1 = value[0];
+        final String value2 = value.length>1 ? value[1] : value[0];
+
+        if (fieldType.isAssignableFrom(OffsetDateTime.class) || ChronoZonedDateTime.class.isAssignableFrom(fieldType)) {
             return switch (filter.getFilterOperator()) {
-                case EQ -> String.format("%s.isEqual(%s)", fullPathNoCast, value);
-                case LT -> String.format("%s.isBefore(%s)", fullPathNoCast, value);
-                case LE -> String.format("(%s.isEqual(%s) || %s.isBefore(%s))", fullPathNoCast, value, fullPathNoCast, value);
-                case GT -> String.format("%s.isAfter(%s)", fullPathNoCast, value);
-                case GE -> String.format("(%s.isEqual(%s) || %s.isAfter(%s))", fullPathNoCast, value, fullPathNoCast, value);
+                case EQ -> String.format("%s.isEqual(%s)", fullPathNoCast, value1);
+                case LT -> String.format("%s.isBefore(%s)", fullPathNoCast, value1);
+                case LE -> String.format("(%s.isEqual(%s) || %s.isBefore(%s))", fullPathNoCast, value1, fullPathNoCast, value1);
+                case GT -> String.format("%s.isAfter(%s)", fullPathNoCast, value1);
+                case GE -> String.format("(%s.isEqual(%s) || %s.isAfter(%s))", fullPathNoCast, value1, fullPathNoCast, value1);
+                case BTW_OPEN -> String.format("(%s.isAfter(%s) && %s.isBefore(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
+                case BTW_CLOSED -> String.format("(!%s.isBefore(%s) && !%s.isAfter(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
                 default -> throw new IllegalStateException("Operator not allowed for Date fields: %s".formatted(filter.getFilterOperator()));
             };
         }
 
-        return String.format("%s %s %s", fullPathNoCast, op, value);
+        return switch (filter.getFilterOperator()){
+            case BTW_OPEN -> String.format("%s > %s && %s < %s", fullPathNoCast, value1, fullPathNoCast, value2);
+            case BTW_CLOSED -> String.format("%s >= %s && %s <= %s", fullPathNoCast, value1, fullPathNoCast, value2);
+            default -> String.format("%s %s %s", fullPathNoCast, op, value1);
+        };
     }
 
     /**
@@ -227,6 +236,10 @@ public class Filter2DroolsTransformer implements ExtraFilter2DroolsTransformer<F
                 return "instanceof";
             case IN:
                 return "in";
+            case BTW_OPEN:
+                return "><";
+            case BTW_CLOSED:
+                return ">=<";
             default:
                 throw new IllegalArgumentException(String.format("Unsupported Drools operator:%s", filterOperator));
         }

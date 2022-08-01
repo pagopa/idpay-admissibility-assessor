@@ -1,14 +1,12 @@
 package it.gov.pagopa.admissibility.drools.model.filter;
 
 import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
 /** to express a filter */
-@Data @NoArgsConstructor @AllArgsConstructor
+@Data
 public class Filter implements ExtraFilter {
     @NotNull
     private String field;
@@ -16,4 +14,21 @@ public class Filter implements ExtraFilter {
     private FilterOperator filterOperator;
     @NotNull
     private String value;
+    /** used just when {@link FilterOperator#BTW_OPEN} and {@link FilterOperator#BTW_CLOSED} */
+    private String value2;
+
+
+    public Filter() {
+    }
+
+    public Filter(@NotNull String field, @NotNull FilterOperator filterOperator, @NotNull String value) {
+        this(field, filterOperator, value, null);
+    }
+
+    public Filter(@NotNull String field, @NotNull FilterOperator filterOperator, @NotNull String value, String value2) {
+        this.field = field;
+        this.filterOperator = filterOperator;
+        this.value = value;
+        this.value2 = value2;
+    }
 }
