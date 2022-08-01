@@ -11,5 +11,5 @@ public interface OperationValueBuilder {
     boolean supports(FilterOperator operator);
 
     /** @see OperationValueBuilder */
-    String apply(Filter filter, Class<?> fieldType, Map<String, Object> context);
+    String[] apply(Filter filter, Class<?> fieldType, Map<String, Object> context);
 }

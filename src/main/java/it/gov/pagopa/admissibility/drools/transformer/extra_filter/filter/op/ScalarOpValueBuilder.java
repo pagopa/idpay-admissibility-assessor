@@ -20,14 +20,16 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm[:ss[.SSS]]");
 
-    private static final Set<FilterOperator> scalarOperations= Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+    private static final Set<FilterOperator> scalarOperations= Set.of(
             FilterOperator.EQ,
             FilterOperator.NOT_EQ,
             FilterOperator.LE,
             FilterOperator.LT,
             FilterOperator.GE,
-            FilterOperator.GT
-    )));
+            FilterOperator.GT,
+            FilterOperator.BTW_CLOSED,
+            FilterOperator.BTW_OPEN
+    );
 
     @Override
     public boolean supports(FilterOperator operator) {
@@ -35,9 +37,14 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
     }
 
     @Override
-    public String apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
+    public String[] apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
         try {
-            return DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue(), fieldType)).getParam();
+            String v1 = DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue(), fieldType)).getParam();
+            if(filter.getValue2()!=null){
+                return new String[]{v1, DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue2(), fieldType)).getParam()};
+            } else {
+                return new String[]{v1};
+            }
         } catch (Exception e) {
             log.error("Something gone wrong analyzing the input extraFilter", e);
             throw new IllegalArgumentException(

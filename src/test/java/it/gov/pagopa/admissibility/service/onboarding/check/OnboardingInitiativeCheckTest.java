@@ -6,6 +6,8 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
+import it.gov.pagopa.admissibility.utils.Constants;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -153,7 +155,7 @@ class OnboardingInitiativeCheckTest {
 
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
+        OnboardingDTO onboarding = new OnboardingDTO(
                 "1",
                 "1",
                 true,
@@ -170,12 +172,18 @@ class OnboardingInitiativeCheckTest {
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingInitiativeCheck onboardingInitiativeCheck = Mockito.mock(OnboardingInitiativeCheck.class);
+        final InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setStartDate(LocalDate.now());
+
+        OnboardingContextHolderService onboardingContextMock = Mockito.mock(OnboardingContextHolderService.class);
+        Mockito.when(onboardingContextMock.getInitiativeConfig("1")).thenReturn(initiativeConfig);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
 
         // When
-        String result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        String result = onboardingInitiativeCheck.apply(onboarding, onboardingContext);
 
         // Then
         assertNull(result);
+        Assertions.assertSame(initiativeConfig, onboardingContext.get(Constants.ONBOARDING_CONTEXT_INITIATIVE_KEY));
     }
 }

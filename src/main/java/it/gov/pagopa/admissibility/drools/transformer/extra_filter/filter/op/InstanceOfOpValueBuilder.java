@@ -16,14 +16,14 @@ public class InstanceOfOpValueBuilder implements OperationValueBuilder {
     }
 
     @Override
-    public String apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
+    public String[] apply(Filter filter, Class<?> fieldType, Map<String, Object> context) {
         try {
             Class<?> class2Check = Class.forName(filter.getValue());
             if (!fieldType.isAssignableFrom(class2Check)) {
                 throw new IllegalArgumentException(String.format("Unsupported Class provided for the field %s", filter.getField()));
             } else {
                 ExtraFilter2DroolsUtils.storeFieldType(filter.getField(), class2Check, context);
-                return class2Check.getName();
+                return new String[]{class2Check.getName()};
             }
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException(String.format("Unknown Class provided for the field %s", filter.getField()));
