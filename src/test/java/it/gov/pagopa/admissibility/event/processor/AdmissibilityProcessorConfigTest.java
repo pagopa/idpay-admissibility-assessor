@@ -27,6 +27,7 @@ import java.util.stream.IntStream;
 @Slf4j
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
+        "app.beneficiary-rule.cache.refresh-ms-rate:60000",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityMediatorServiceImpl=WARN",

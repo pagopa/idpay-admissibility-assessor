@@ -19,6 +19,7 @@ import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
+        "app.beneficiary-rule.cache.refresh-ms-rate:60000",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })
@@ -80,7 +81,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
     private int waitForKieContainerBuild(int expectedRules) {return waitForKieContainerBuild(expectedRules, onboardingContextHolderServiceSpy);}
     public static int waitForKieContainerBuild(int expectedRules,OnboardingContextHolderService onboardingContextHolderServiceSpy) {
         int[] ruleBuiltSize={0};
-        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, ()->"Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 10, 500);
+        waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, ()->"Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 500);
         return ruleBuiltSize[0];
     }
 
