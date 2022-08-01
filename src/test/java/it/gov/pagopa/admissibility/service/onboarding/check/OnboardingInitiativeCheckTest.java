@@ -176,7 +176,7 @@ class OnboardingInitiativeCheckTest {
         initiativeConfig.setStartDate(LocalDate.now());
 
         OnboardingContextHolderService onboardingContextMock = Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextMock.getInitiativeConfig(Mockito.eq(("1")))).thenReturn(initiativeConfig);
+        Mockito.when(onboardingContextMock.getInitiativeConfig("1")).thenReturn(initiativeConfig);
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
 
         // When
