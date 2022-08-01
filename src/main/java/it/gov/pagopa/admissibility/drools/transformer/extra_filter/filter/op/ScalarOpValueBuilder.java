@@ -41,7 +41,7 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
         try {
             String v1 = DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue(), fieldType)).getParam();
             if(filter.getValue2()!=null){
-                return new String[]{v1, DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue(), fieldType)).getParam()};
+                return new String[]{v1, DroolsTemplateRuleUtils.toTemplateParam(deserializeValue(filter.getValue2(), fieldType)).getParam()};
             } else {
                 return new String[]{v1};
             }

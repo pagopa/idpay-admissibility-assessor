@@ -82,11 +82,12 @@ public class Filter2DroolsTransformer implements ExtraFilter2DroolsTransformer<F
 
         if (fieldType.isAssignableFrom(OffsetDateTime.class) || ChronoZonedDateTime.class.isAssignableFrom(fieldType)) {
             return switch (filter.getFilterOperator()) {
+                case NOT_EQ -> String.format("!%s.isEqual(%s)", fullPathNoCast, value1);
                 case EQ -> String.format("%s.isEqual(%s)", fullPathNoCast, value1);
                 case LT -> String.format("%s.isBefore(%s)", fullPathNoCast, value1);
-                case LE -> String.format("(%s.isEqual(%s) || %s.isBefore(%s))", fullPathNoCast, value1, fullPathNoCast, value1);
+                case LE -> String.format("!%s.isAfter(%s)", fullPathNoCast, value1);
                 case GT -> String.format("%s.isAfter(%s)", fullPathNoCast, value1);
-                case GE -> String.format("(%s.isEqual(%s) || %s.isAfter(%s))", fullPathNoCast, value1, fullPathNoCast, value1);
+                case GE -> String.format("!%s.isBefore(%s)", fullPathNoCast, value1);
                 case BTW_OPEN -> String.format("(%s.isAfter(%s) && %s.isBefore(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
                 case BTW_CLOSED -> String.format("(!%s.isBefore(%s) && !%s.isAfter(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
                 default -> throw new IllegalStateException("Operator not allowed for Date fields: %s".formatted(filter.getFilterOperator()));
