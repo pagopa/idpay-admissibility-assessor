@@ -40,23 +40,29 @@ class BeneficiaryRuleMediatorServiceTest {
     }
 
     @BeforeEach
-    void configureMocks(){
-        Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation-> {
+    void configureMocks() {
+        Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation -> {
             Initiative2BuildDTO i = invocation.getArgument(0);
             return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
-                    new InitiativeConfig(i.getInitiativeId(),i.getGeneral().getStartDate(),i.getGeneral().getEndDate(),
-                            i.getPdndToken(), List.of("CODE"),i.getGeneral().getBudget(),
-                            i.getGeneral().getBeneficiaryBudget()));
+                    InitiativeConfig.builder()
+                            .initiativeId(i.getInitiativeId())
+                            .startDate(i.getGeneral().getStartDate())
+                            .endDate(i.getGeneral().getEndDate())
+                            .pdndToken(i.getPdndToken())
+                            .automatedCriteriaCodes(List.of("CODE"))
+                            .initiativeBudget(i.getGeneral().getBudget())
+                            .beneficiaryInitiativeBudget(i.getGeneral().getBeneficiaryBudget())
+                            .build());
         });
-        Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation-> Mono.just(invocation.getArgument(0)));
+        Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
         Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));
     }
 
     @Test
-    void testSuccessful(){
+    void testSuccessful() {
         // given
-        int N=10;
-        List<Initiative2BuildDTO> initiatives = IntStream.range(0,N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
+        int N = 10;
+        List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
         Flux<Initiative2BuildDTO> inputFlux = Flux.fromIterable(initiatives);
 
         // when
@@ -64,7 +70,7 @@ class BeneficiaryRuleMediatorServiceTest {
 
         // then
         Mockito.verify(beneficiaryRule2DroolsRuleMock, Mockito.times(N)).apply(Mockito.any());
-        initiatives.forEach(i-> {
+        initiatives.forEach(i -> {
             Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(i));
             Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId())));
         });

@@ -47,8 +47,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     @BeforeEach
-    public void configureMock(){
-        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c-> Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
+    public void configureMock() {
+        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c -> Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
     }
 
     @Test
@@ -97,9 +97,15 @@ class BeneficiaryRule2DroolsRuleImplTest {
                                         
                 """);
 
-        expected.setInitiativeConfig(new InitiativeConfig("ID",
-                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
-                "PDND_TOKEN", List.of("ISEE", "BIRTHDATE"), new BigDecimal("100000.00"), new BigDecimal("1000.00")));
+        expected.setInitiativeConfig(InitiativeConfig.builder()
+                .initiativeId("ID")
+                .startDate(LocalDate.of(2021, 1, 1))
+                .endDate(LocalDate.of(2025, 12, 1))
+                .pdndToken("PDND_TOKEN")
+                .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
+                .initiativeBudget(new BigDecimal("100000.00"))
+                .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
+                .build());
 
         Assertions.assertEquals(expected, result);
     }
@@ -112,7 +118,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         testExecution(List.of("ISEE", "BIRTHDATE"));
     }
 
-    void testExecution(List<String> failingCode){
+    void testExecution(List<String> failingCode) {
         //given
         boolean expectedIseeFail = failingCode.contains("ISEE");
         boolean expectedBirthDateFail = failingCode.contains("BIRTHDATE");
@@ -123,12 +129,12 @@ class BeneficiaryRule2DroolsRuleImplTest {
         onboardingDTO.setInitiativeId(initiative.getInitiativeId());
         onboardingDTO.setBirthDate(new DataNascita());
 
-        if(expectedIseeFail){
+        if (expectedIseeFail) {
             onboardingDTO.setIsee(BigDecimal.TEN);
         } else {
             onboardingDTO.setIsee(BigDecimal.ONE);
         }
-        if(expectedBirthDateFail){
+        if (expectedBirthDateFail) {
             onboardingDTO.getBirthDate().setAnno("2000");
         } else {
             onboardingDTO.getBirthDate().setAnno("2021");
@@ -136,7 +142,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
 
         DroolsRule rule = beneficiaryRule2DroolsRule.apply(initiative);
 
-        OnboardingContextHolderService onboardingContextHolderService=Mockito.mock(OnboardingContextHolderService.class);
+        OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderService.class);
         Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), new Onboarding2OnboardingDroolsMapper());
@@ -151,13 +157,13 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setInitiativeId(initiative.getInitiativeId());
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
-        if(expectedIseeFail){
+        if (expectedIseeFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_ISEE_FAIL");
         }
-        if(expectedBirthDateFail){
+        if (expectedBirthDateFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_BIRTHDATE_FAIL");
         }
-        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0? "ONBOARDING_OK" : "ONBOARDING_KO");
+        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? "ONBOARDING_OK" : "ONBOARDING_KO");
 
         Assertions.assertEquals(expectedEvaluationResult, evaluationResult);
     }
@@ -175,9 +181,9 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");
         dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
-                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
-                null,null));
+                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE, new BigDecimal("1000.00"),
+                LocalDate.of(2021, 1, 1), LocalDate.of(2025, 12, 1),
+                null, null));
 
         return dto;
     }
