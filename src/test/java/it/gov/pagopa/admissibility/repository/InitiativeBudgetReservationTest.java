@@ -38,13 +38,13 @@ public class InitiativeBudgetReservationTest extends BaseIntegrationTest {
 
         final ExecutorService executorService = Executors.newFixedThreadPool(N);
 
-        final List<Future<Mono<DroolsRule>>> tasks = IntStream.range(0, N)
-                .mapToObj(i -> executorService.submit(() -> initiativeBudgetReservation.reserveBudget("prova", budgetReservedPerRequest)))
+        final List<Future<DroolsRule>> tasks = IntStream.range(0, N)
+                .mapToObj(i -> executorService.submit(() -> initiativeBudgetReservation.reserveBudget("prova", budgetReservedPerRequest).block()))
                 .collect(Collectors.toList());
 
         final long successfulReservation = tasks.stream().filter(t -> {
             try {
-                return t.get().block() != null;
+                return t.get() != null;
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
             }
