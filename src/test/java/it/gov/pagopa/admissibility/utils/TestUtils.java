@@ -2,15 +2,21 @@ package it.gov.pagopa.admissibility.utils;
 
 import org.junit.jupiter.api.Assertions;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class TestUtils {
-    private TestUtils(){}
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-    /** It will assert not null on all o's fields */
-    public static void checkNotNullFields(Object o, String... excludedFields){
+public final class TestUtils {
+    private TestUtils() {
+    }
+
+    /**
+     * It will assert not null on all o's fields
+     */
+    public static void checkNotNullFields(Object o, String... excludedFields) {
         Set<String> excludedFieldsSet = new HashSet<>(Arrays.asList(excludedFields));
         org.springframework.util.ReflectionUtils.doWithFields(o.getClass(),
                 f -> {
@@ -20,5 +26,12 @@ public final class TestUtils {
                 f -> !excludedFieldsSet.contains(f.getName()));
     }
 
+
+    /**
+     * It will assert if 2 BigDecimal are equals, ignoring scale
+     */
+    public static void assertBigDecimalEquals(BigDecimal expected, BigDecimal actual) {
+        assertEquals(0, expected.compareTo(actual), "Expected: %s, Obtained: %s".formatted(expected, actual));
+    }
 
 }

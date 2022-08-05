@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.repository;
 
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -10,6 +11,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -26,26 +28,24 @@ public class InitiativeBudgetReservation {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Mono<DroolsRule> reserveBudget(String initiativeId) {
+    public Mono<DroolsRule> reserveBudget(String initiativeId, BigDecimal reservation) {
         return mongoTemplate.findAndModify(
                 Query.query(Criteria
                         .where("id").is(initiativeId)
                         .and("$expr").gt(
                                 List.of(
-                                        FIELD_INITIATIVE_BUDGET,
+                                        "$"+FIELD_INITIATIVE_BUDGET,
                                         ArithmeticOperators.Add
                                                 .valueOf(FIELD_RESERVED_BUDGET)
-                                                .add(FIELD_BENEFICIARY_BUDGET)
+                                                .add(reservation)
                                                 .toDocument()
                                 )
                         )
                 ),
                 new Update()
                         .inc(FIELD_ONBOARDED_FIELD, 1L)
-                        .set(FIELD_RESERVED_BUDGET,
-                                ArithmeticOperators.Add
-                                        .valueOf(FIELD_RESERVED_BUDGET)
-                                        .add(FIELD_BENEFICIARY_BUDGET)),
+                        .inc(FIELD_RESERVED_BUDGET,reservation),
+                FindAndModifyOptions.options().returnNew(true),
                 DroolsRule.class
         );
     }
