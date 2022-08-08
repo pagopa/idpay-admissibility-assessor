@@ -7,14 +7,14 @@ import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-@Service
-public class InitiativeBudgetReservationImpl {
+@Repository
+public class InitiativeCountersReservationOpsRepositoryImpl implements InitiativeCountersReservationOpsRepository {
 
     public static final String FIELD_INITIATIVE_BUDGET = InitiativeCounters.Fields.initiativeBudget;
     public static final String FIELD_RESERVED_BUDGET = InitiativeCounters.Fields.reservedInitiativeBudget;
@@ -22,7 +22,7 @@ public class InitiativeBudgetReservationImpl {
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public InitiativeBudgetReservationImpl(ReactiveMongoTemplate mongoTemplate) {
+    public InitiativeCountersReservationOpsRepositoryImpl(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 

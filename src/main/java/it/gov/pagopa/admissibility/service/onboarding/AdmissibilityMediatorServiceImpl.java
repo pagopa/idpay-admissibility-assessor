@@ -9,12 +9,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static it.gov.pagopa.admissibility.utils.Constants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
+import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 
 @Service
 @Slf4j
@@ -22,13 +23,13 @@ public class AdmissibilityMediatorServiceImpl implements AdmissibilityMediatorSe
 
     private final OnboardingCheckService onboardingCheckService;
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
-    private final RuleEngineService ruleEngineService;
+    private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
 
-    public AdmissibilityMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, RuleEngineService ruleEngineService, Onboarding2EvaluationMapper onboarding2EvaluationMapper) {
+    public AdmissibilityMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper) {
         this.onboardingCheckService = onboardingCheckService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
-        this.ruleEngineService = ruleEngineService;
+        this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
     }
 
@@ -38,22 +39,33 @@ public class AdmissibilityMediatorServiceImpl implements AdmissibilityMediatorSe
      */
     @Override
     public Flux<EvaluationDTO> execute(Flux<OnboardingDTO> onboardingDTOFlux) {
-
-        return onboardingDTOFlux.map(o -> {
-            Map<String,Object> onboardingContext = new HashMap<>();
-            String rejectionReason = onboardingCheckService.check(o, onboardingContext);
-            if (StringUtils.hasText(rejectionReason)) {
-                log.info("[ONBOARDING_KO] Onboarding request failed: {}",rejectionReason);
-                return onboarding2EvaluationMapper.apply(o, Collections.singletonList(rejectionReason));
-            } else {
-                if(authoritiesDataRetrieverService.retrieve(o,(InitiativeConfig) onboardingContext.get(ONBOARDING_CONTEXT_INITIATIVE_KEY))) {
-                    return ruleEngineService.applyRules(o);
-                }else {
-                    log.info("[ONBOARDING_POSTPONED] Onboarding request postponed");
-                    //TODO reschedule to next day
-                    return null;
-                }
-            }
-        });
+        return onboardingDTOFlux.flatMap(this::execute);
     }
+
+    private Mono<EvaluationDTO> execute(OnboardingDTO onboardingRequest) {
+        Map<String,Object> onboardingContext = new HashMap<>();
+
+        EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, onboardingContext);
+        if(rejectedRequest!= null){
+            return Mono.just(rejectedRequest);
+        } else {
+            return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext);
+        }
+    }
+
+    private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+        String rejectionReason = onboardingCheckService.check(onboardingRequest, onboardingContext);
+        if (StringUtils.hasText(rejectionReason)) {
+            log.info("[ONBOARDING_KO] Onboarding request failed: {}",rejectionReason);
+            return onboarding2EvaluationMapper.apply(onboardingRequest, Collections.singletonList(rejectionReason));
+        } else return null;
+    }
+
+    private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+        final InitiativeConfig initiativeConfig = (InitiativeConfig) onboardingContext.get(ONBOARDING_CONTEXT_INITIATIVE_KEY);
+
+        return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig)
+                .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig));
+    }
+
 }

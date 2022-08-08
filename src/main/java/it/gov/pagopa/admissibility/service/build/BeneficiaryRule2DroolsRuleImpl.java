@@ -13,6 +13,7 @@ import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -69,36 +70,36 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
             out.setInitiativeConfig(initiativeConfig);
 
-            if(onlineSyntaxCheck){
+            if (onlineSyntaxCheck) {
                 log.debug("Checking if the rule has valid syntax. id: %s".formatted(initiative.getInitiativeId()));
                 builderService.build(Flux.just(out)).block(); // TODO handle if it goes to exception due to error
             }
 
             log.debug("Conversion into drools rule completed; storing it. id: %s".formatted(initiative.getInitiativeId()));
             return out;
-        } catch (RuntimeException e){
+        } catch (RuntimeException e) {
             log.error("Something gone wrong while building initiative %s".formatted(initiative.getInitiativeId()), e);
             return null;
         }
     }
 
-    private String automatedCriteriaRuleBuild(String initiativeId, String ruleName, AutomatedCriteriaDTO automatedCriteriaDTO){
+    private String automatedCriteriaRuleBuild(String initiativeId, String ruleName, AutomatedCriteriaDTO automatedCriteriaDTO) {
         CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(automatedCriteriaDTO.getCode());
-        if(criteriaCodeConfig == null){
+        if (criteriaCodeConfig == null) {
             throw new IllegalStateException("Invalid criteria code provided or not configured: %s".formatted(automatedCriteriaDTO.getCode()));
         }
         return """
                 rule "%s"
                 agenda-group "%s"
                 when $onboarding: %s(%s)
-                then $onboarding.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_%s_FAIL");
+                then $onboarding.getOnboardingRejectionReasons().add("%s");
                 end
                 """.formatted(
-                        ruleName + "-" + automatedCriteriaDTO.getCode(),
-                        initiativeId,
-                        OnboardingDroolsDTO.class.getName(),
-                        extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
-                automatedCriteriaDTO.getCode()
+                ruleName + "-" + automatedCriteriaDTO.getCode(),
+                initiativeId,
+                OnboardingDroolsDTO.class.getName(),
+                extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+                OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted(automatedCriteriaDTO.getCode())
         );
     }
 

@@ -16,12 +16,12 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class InitiativeBudgetReservationImplTest extends BaseIntegrationTest {
+public class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
 
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
     @Autowired
-    private InitiativeBudgetReservationImpl initiativeBudgetReservationImpl;
+    private InitiativeCountersReservationOpsRepositoryImpl initiativeCountersReservationOpsRepositoryImpl;
 
     @Test
     public void testReservation() {
@@ -37,7 +37,7 @@ public class InitiativeBudgetReservationImplTest extends BaseIntegrationTest {
         final ExecutorService executorService = Executors.newFixedThreadPool(N);
 
         final List<Future<InitiativeCounters>> tasks = IntStream.range(0, N)
-                .mapToObj(i -> executorService.submit(() -> initiativeBudgetReservationImpl.reserveBudget("prova", budgetReservedPerRequest).block()))
+                .mapToObj(i -> executorService.submit(() -> initiativeCountersReservationOpsRepositoryImpl.reserveBudget("prova", budgetReservedPerRequest).block()))
                 .collect(Collectors.toList());
 
         final long successfulReservation = tasks.stream().filter(t -> {

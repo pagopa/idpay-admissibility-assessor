@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding.check;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import static it.gov.pagopa.admissibility.utils.Constants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
+import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 
 @Service
 @Slf4j
@@ -35,17 +36,17 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
         InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingDTO.getInitiativeId());
         if(initiativeConfig == null){
             log.error("cannot find the initiative id %s to which the user %s is asking to onboard".formatted(onboardingDTO.getInitiativeId(), onboardingDTO.getUserId()));
-            return "INVALID_INITIATIVE_ID";
+            return OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL;
         }
         onboardingContext.put(ONBOARDING_CONTEXT_INITIATIVE_KEY,initiativeConfig);
 
         String tcAcceptDateCheck = dateCheck(onboardingDTO.getTcAcceptTimestamp(), initiativeConfig.getStartDate(),
-                initiativeConfig.getEndDate(),"CONSENSUS_CHECK_TC_ACCEPT_FAIL");
+                initiativeConfig.getEndDate(), OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL);
         if(tcAcceptDateCheck != null){
             return tcAcceptDateCheck;
         }
 
         return dateCheck(onboardingDTO.getCriteriaConsensusTimestamp(), initiativeConfig.getStartDate(),
-                initiativeConfig.getEndDate(),"CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL");
+                initiativeConfig.getEndDate(), OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL);
     }
 }
