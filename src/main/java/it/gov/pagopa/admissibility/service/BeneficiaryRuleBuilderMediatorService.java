@@ -1,7 +1,7 @@
-package it.gov.pagopa.admissibility.service.build;
+package it.gov.pagopa.admissibility.service;
 
 
-import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import reactor.core.publisher.Flux;
 
 /**
@@ -13,6 +13,6 @@ import reactor.core.publisher.Flux;
  *     <li>notify the new kieContainer</li>
  * </ol>
  * */
-public interface BeneficiaryRuleMediatorService {
+public interface BeneficiaryRuleBuilderMediatorService {
     void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux);
 }

@@ -3,10 +3,10 @@ package it.gov.pagopa.admissibility.service.onboarding.check;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
-import it.gov.pagopa.admissibility.utils.Constants;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -184,6 +184,6 @@ class OnboardingInitiativeCheckTest {
 
         // Then
         assertNull(result);
-        Assertions.assertSame(initiativeConfig, onboardingContext.get(Constants.ONBOARDING_CONTEXT_INITIATIVE_KEY));
+        Assertions.assertSame(initiativeConfig, onboardingContext.get(OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY));
     }
 }

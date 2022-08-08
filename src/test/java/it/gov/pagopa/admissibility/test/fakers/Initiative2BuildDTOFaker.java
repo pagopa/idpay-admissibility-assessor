@@ -3,10 +3,10 @@ package it.gov.pagopa.admissibility.test.fakers;
 import com.github.javafaker.service.FakeValuesService;
 import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.dto.build.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 
 import java.math.BigDecimal;

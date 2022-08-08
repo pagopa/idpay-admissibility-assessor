@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import org.kie.api.runtime.KieContainer;
 
 

@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.dto.onboarding.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -17,7 +18,7 @@ public class Onboarding2EvaluationMapper implements BiFunction<OnboardingDTO, Li
         EvaluationDTO out = new EvaluationDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setInitiativeId(onboardingDTO.getInitiativeId());
-        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? "ONBOARDING_OK" : "ONBOARDING_KO");
+        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingConstants.ONBOARDING_STATUS_OK : OnboardingConstants.ONBOARDING_STATUS_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setOnboardingRejectionReasons(rejectionReasons);
         return out;

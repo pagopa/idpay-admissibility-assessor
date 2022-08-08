@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.test.fakers;
 import com.github.javafaker.service.FakeValuesService;
 import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 

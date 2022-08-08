@@ -10,7 +10,7 @@ spring:
   cloud:
     stream:
       function:
-        definition: admissibilityProcessor;beneficiaryRuleConsumer
+        definition: admissibilityProcessor;beneficiaryRuleBuilderConsumer
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
@@ -21,11 +21,11 @@ spring:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
-        beneficiaryRuleConsumer-in-0:
+        beneficiaryRuleBuilderConsumer-in-0:
           destination: ${KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC:idpay-beneficiary-rule-update}
           group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
-          binder: kafka-beneficiary-rule
+          binder: kafka-beneficiary-rule-builder
       binders:
         kafka-onboarding-request:
           type: kafka
@@ -47,7 +47,7 @@ spring:
                     binder:
                       brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
                       configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
-        kafka-beneficiary-rule:
+        kafka-beneficiary-rule-builder:
           type: kafka
           environment:
             spring:

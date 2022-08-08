@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.service.onboarding.check.OnboardingCheck;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.service.onboarding.check.OnboardingCheck;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

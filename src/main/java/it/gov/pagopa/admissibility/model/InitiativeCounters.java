@@ -9,17 +9,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
+
 @Slf4j
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
-@Document(collection = "beneficiary_rule")
+@Document(collection = "initiative_counters")
 @FieldNameConstants()
-public class DroolsRule {
+public class InitiativeCounters {
     @Id
     private String id;
-    private String name;
-    private String rule;
-    private InitiativeConfig initiativeConfig;
+    private BigDecimal initiativeBudget;
+
+    @Builder.Default
+    private Long onboarded=0L;
+    @Builder.Default
+    private BigDecimal reservedInitiativeBudget=BigDecimal.ZERO;
 }

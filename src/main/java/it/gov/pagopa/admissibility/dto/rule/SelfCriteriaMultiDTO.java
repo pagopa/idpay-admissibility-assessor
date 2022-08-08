@@ -1,9 +1,9 @@
-package it.gov.pagopa.admissibility.dto.rule.beneficiary;
+package it.gov.pagopa.admissibility.dto.rule;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.List;
-
 import lombok.*;
+
+import java.util.List;
 
 /**
  * SelfCriteriaMultiDTO
