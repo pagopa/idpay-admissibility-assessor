@@ -1,6 +1,5 @@
-package it.gov.pagopa.admissibility.dto.build;
+package it.gov.pagopa.admissibility.dto.rule;
 
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeBeneficiaryRuleDTO;
 import lombok.Data;
 
 @Data

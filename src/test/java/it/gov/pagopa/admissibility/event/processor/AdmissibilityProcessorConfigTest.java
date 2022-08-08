@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -34,7 +34,7 @@ import java.util.stream.IntStream;
         "app.beneficiary-rule.cache.refresh-ms-rate:60000",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityMediatorServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
 })
 class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
@@ -109,7 +109,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 .forEach(i-> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
 
-       BeneficiaryRuleConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0],onboardingContextHolderServiceSpy);
+       BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0],onboardingContextHolderServiceSpy);
     }
 
     OnboardingDTO mockInstance(int bias){

@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.dto.rule.beneficiary;
+package it.gov.pagopa.admissibility.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

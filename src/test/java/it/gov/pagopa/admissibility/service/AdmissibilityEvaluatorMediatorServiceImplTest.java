@@ -1,8 +1,12 @@
-package it.gov.pagopa.admissibility.service.onboarding;
+package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingRequestEvaluatorService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,7 +18,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
-class AdmissibilityMediatorServiceImplTest {
+class AdmissibilityEvaluatorMediatorServiceImplTest {
 
     @Test
     void mediatorTest() {
@@ -25,7 +29,7 @@ class AdmissibilityMediatorServiceImplTest {
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
 
-        AdmissibilityMediatorService admissibilityMediatorService = new AdmissibilityMediatorServiceImpl(onboardingCheckService, authoritiesDataRetrieverService, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckService, authoritiesDataRetrieverService, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper);
 
         OnboardingDTO onboarding1 = new OnboardingDTO();
         OnboardingDTO onboarding2 = new OnboardingDTO();
@@ -38,7 +42,7 @@ class AdmissibilityMediatorServiceImplTest {
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i-> Mono.just(i.getArgument(0)));
 
         // When
-        List<EvaluationDTO> result = admissibilityMediatorService.execute(onboardingFlux).collectList().block();
+        List<EvaluationDTO> result = admissibilityEvaluatorMediatorService.execute(onboardingFlux).collectList().block();
 
         // Then
         Assertions.assertNotNull(result);

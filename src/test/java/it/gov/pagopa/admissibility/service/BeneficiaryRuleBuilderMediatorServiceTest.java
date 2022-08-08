@@ -1,9 +1,12 @@
-package it.gov.pagopa.admissibility.service.build;
+package it.gov.pagopa.admissibility.service;
 
-import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
+import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
+import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-class BeneficiaryRuleMediatorServiceTest {
+class BeneficiaryRuleBuilderMediatorServiceTest {
 
     // mocks
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRuleMock;
@@ -29,16 +32,16 @@ class BeneficiaryRuleMediatorServiceTest {
     private final KieContainer newKieContainerBuiltmock = Mockito.mock(KieContainer.class);
 
     // service
-    private final BeneficiaryRuleMediatorService service;
+    private final BeneficiaryRuleBuilderMediatorService service;
 
-    public BeneficiaryRuleMediatorServiceTest() {
+    public BeneficiaryRuleBuilderMediatorServiceTest() {
         this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
         this.droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
         this.initInitiativeCounterServiceMock = Mockito.mock(InitInitiativeCounterService.class);
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        service = new BeneficiaryRuleMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock);
+        service = new BeneficiaryRuleBuilderMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock);
     }
 
     @BeforeEach

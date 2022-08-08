@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.dto.rule.beneficiary;
+package it.gov.pagopa.admissibility.dto.rule;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;

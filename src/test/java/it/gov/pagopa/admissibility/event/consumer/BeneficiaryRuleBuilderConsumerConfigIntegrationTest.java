@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.event.consumer;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })
-public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegrationTest {
+public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @SpyBean
     private KieContainerBuilderService kieContainerBuilderServiceSpy;

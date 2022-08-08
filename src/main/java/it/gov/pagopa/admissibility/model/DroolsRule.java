@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.model;
 
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

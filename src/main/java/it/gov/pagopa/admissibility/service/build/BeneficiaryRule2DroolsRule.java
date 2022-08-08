@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.service.build;
 
-import it.gov.pagopa.admissibility.dto.build.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 
 import java.util.function.Function;

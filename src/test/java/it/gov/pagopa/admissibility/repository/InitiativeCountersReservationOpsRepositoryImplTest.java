@@ -16,7 +16,7 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
+class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
 
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
@@ -24,7 +24,7 @@ public class InitiativeCountersReservationOpsRepositoryImplTest extends BaseInte
     private InitiativeCountersReservationOpsRepositoryImpl initiativeCountersReservationOpsRepositoryImpl;
 
     @Test
-    public void testReservation() {
+    void testReservation() {
         int N = 1000;
 
         final BigDecimal budget = BigDecimal.valueOf(10099);

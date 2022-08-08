@@ -1,8 +1,8 @@
 package it.gov.pagopa.admissibility.dto.onboarding.mapper;
 
 
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Function;

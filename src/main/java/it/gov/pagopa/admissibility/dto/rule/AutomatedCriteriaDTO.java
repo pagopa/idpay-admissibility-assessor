@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.dto.rule.beneficiary;
+package it.gov.pagopa.admissibility.dto.rule;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import lombok.*;
