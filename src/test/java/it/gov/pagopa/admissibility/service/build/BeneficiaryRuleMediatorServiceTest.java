@@ -22,6 +22,7 @@ class BeneficiaryRuleMediatorServiceTest {
     // mocks
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRuleMock;
     private final DroolsRuleRepository droolsRuleRepositoryMock;
+    private final InitInitiativeCounterService initInitiativeCounterServiceMock;
     private final KieContainerBuilderService kieContainerBuilderServiceMock;
     private final OnboardingContextHolderService onboardingContextHolderServiceMock;
 
@@ -33,10 +34,11 @@ class BeneficiaryRuleMediatorServiceTest {
     public BeneficiaryRuleMediatorServiceTest() {
         this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
         this.droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
+        this.initInitiativeCounterServiceMock = Mockito.mock(InitInitiativeCounterService.class);
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        service = new BeneficiaryRuleMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock);
+        service = new BeneficiaryRuleMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock);
     }
 
     @BeforeEach
@@ -56,6 +58,7 @@ class BeneficiaryRuleMediatorServiceTest {
         });
         Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
         Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));
+        Mockito.when(initInitiativeCounterServiceMock.initCounters(Mockito.any())).thenAnswer(i->Mono.just(i.getArgument(0)));
     }
 
     @Test

@@ -14,6 +14,8 @@ import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 
+import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -54,6 +56,8 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         Assertions.assertEquals(N, countSaved[0]);
         Assertions.assertEquals(expectedRules[0], ruleBuiltSize);
 
+        checkInitiativeCounters(N);
+
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
         Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
 
@@ -79,6 +83,7 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
     }
 
     private int waitForKieContainerBuild(int expectedRules) {return waitForKieContainerBuild(expectedRules, onboardingContextHolderServiceSpy);}
+
     public static int waitForKieContainerBuild(int expectedRules,OnboardingContextHolderService onboardingContextHolderServiceSpy) {
         int[] ruleBuiltSize={0};
         waitFor(()->(ruleBuiltSize[0]=getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, ()->"Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 500);
@@ -97,4 +102,15 @@ public class BeneficiaryRuleConsumerConfigIntegrationTest extends BaseIntegratio
         }
     }
 
+
+    private void checkInitiativeCounters(int N) {
+        Assertions.assertEquals(N, initiativeCountersRepository.count().block());
+        Assertions.assertEquals(
+                Collections.emptyList(),
+                initiativeCountersRepository.findAll()
+                        .filter(i->i.getOnboarded()!=0L && !i.getReservedInitiativeBudget().equals(BigDecimal.ZERO))
+                        .collectList()
+                        .block()
+        );
+    }
 }

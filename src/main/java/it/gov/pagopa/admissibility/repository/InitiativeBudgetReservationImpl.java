@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.repository;
 
-import it.gov.pagopa.admissibility.dto.rule.beneficiary.InitiativeConfig;
-import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
@@ -15,20 +14,19 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
-public class InitiativeBudgetReservation {
+public class InitiativeBudgetReservationImpl {
 
-    public static final String FIELD_INITIATIVE_BUDGET = "%s.%s".formatted(DroolsRule.Fields.initiativeConfig, InitiativeConfig.Fields.initiativeBudget);
-    public static final String FIELD_RESERVED_BUDGET = "%s.%s".formatted(DroolsRule.Fields.initiativeConfig, InitiativeConfig.Fields.reservedInitiativeBudget);
-    public static final String FIELD_BENEFICIARY_BUDGET = "%s.%s".formatted(DroolsRule.Fields.initiativeConfig, InitiativeConfig.Fields.beneficiaryInitiativeBudget);
-    public static final String FIELD_ONBOARDED_FIELD = "%s.%s".formatted(DroolsRule.Fields.initiativeConfig, InitiativeConfig.Fields.onboarded);
+    public static final String FIELD_INITIATIVE_BUDGET = InitiativeCounters.Fields.initiativeBudget;
+    public static final String FIELD_RESERVED_BUDGET = InitiativeCounters.Fields.reservedInitiativeBudget;
+    public static final String FIELD_ONBOARDED_FIELD = InitiativeCounters.Fields.onboarded;
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public InitiativeBudgetReservation(ReactiveMongoTemplate mongoTemplate) {
+    public InitiativeBudgetReservationImpl(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
-    public Mono<DroolsRule> reserveBudget(String initiativeId, BigDecimal reservation) {
+    public Mono<InitiativeCounters> reserveBudget(String initiativeId, BigDecimal reservation) {
         return mongoTemplate.findAndModify(
                 Query.query(Criteria
                         .where("id").is(initiativeId)
@@ -46,7 +44,7 @@ public class InitiativeBudgetReservation {
                         .inc(FIELD_ONBOARDED_FIELD, 1L)
                         .inc(FIELD_RESERVED_BUDGET,reservation),
                 FindAndModifyOptions.options().returnNew(true),
-                DroolsRule.class
+                InitiativeCounters.class
         );
     }
 }

@@ -7,6 +7,7 @@ import de.flapdoodle.embed.mongo.config.MongodConfig;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -80,6 +81,8 @@ public abstract class BaseIntegrationTest {
 
     @Autowired
     protected DroolsRuleRepository droolsRuleRepository;
+    @Autowired
+    protected InitiativeCountersRepository initiativeCountersRepository;
 
     @Autowired
     protected ObjectMapper objectMapper;
