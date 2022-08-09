@@ -1,10 +1,5 @@
 package it.gov.pagopa.admissibility.service.build;
 
-import it.gov.pagopa.admissibility.config.CriteriaCodesConfiguration;
-import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
-import it.gov.pagopa.admissibility.drools.model.NotOperation;
-import it.gov.pagopa.admissibility.drools.model.filter.Filter;
-import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
 import it.gov.pagopa.admissibility.drools.utils.DroolsTemplateRuleUtils;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -12,13 +7,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.mapper.AutomatedCriteria2ExtraFilterMapper;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -33,13 +28,15 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
     private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper;
     private final CriteriaCodeService criteriaCodeService;
+    private final AutomatedCriteria2ExtraFilterMapper automatedCriteria2ExtraFilterMapper;
     private final ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade;
     private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
+    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper, CriteriaCodeService criteriaCodeService, AutomatedCriteria2ExtraFilterMapper automatedCriteria2ExtraFilterMapper, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
         this.initiative2InitiativeConfigMapper = initiative2InitiativeConfigMapper;
         this.criteriaCodeService = criteriaCodeService;
+        this.automatedCriteria2ExtraFilterMapper = automatedCriteria2ExtraFilterMapper;
         this.extraFilter2DroolsTransformerFacade = extraFilter2DroolsTransformerFacade;
         this.builderService = builderService;
     }
@@ -97,7 +94,9 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                 initiativeId,
                 CriteriaCodeService.class.getName(),
                 OnboardingDroolsDTO.class.getName(),
-                extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+                extraFilter2DroolsTransformerFacade.apply(
+                        automatedCriteria2ExtraFilterMapper.apply(automatedCriteriaDTO, criteriaCodeConfig)
+                        , OnboardingDTO.class, null),
                 CriteriaCodeConfig.class.getName(),
                 automatedCriteriaDTO.getCode(),
                 OnboardingRejectionReason.class.getName(),
@@ -106,9 +105,4 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         );
     }
 
-    private ExtraFilter automatedCriteria2ExtraFilter(AutomatedCriteriaDTO automatedCriteriaDTO, CriteriaCodeConfig criteriaCodeConfig) {
-        String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
-        FilterOperator operator = automatedCriteriaDTO.getOperator();
-        return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue()));
-    }
 }

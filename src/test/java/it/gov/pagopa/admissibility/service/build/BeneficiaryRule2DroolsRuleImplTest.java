@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
+import it.gov.pagopa.admissibility.mapper.AutomatedCriteria2ExtraFilterMapper;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
@@ -48,7 +49,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
-        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, initiative2InitiativeConfigMapper, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, initiative2InitiativeConfigMapper, criteriaCodeServiceMock, new AutomatedCriteria2ExtraFilterMapper(), ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
     }
 
     @BeforeEach
@@ -203,8 +204,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
-        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1"));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "anno", FilterOperator.GT, "2000"));
+        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "anno", FilterOperator.GT, "2000", null));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");
