@@ -7,9 +7,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * Gets or Sets _type
  */
 public enum FieldEnumOnboardingDTO {
-
     BOOLEAN("boolean"),
-
     MULTI("multi");
 
     private String value;

@@ -18,7 +18,6 @@ public class InitiativeBeneficiaryRuleDTO   {
 
     @JsonProperty("selfDeclarationCriteria")
     private List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria;
-
     @JsonProperty("automatedCriteria")
     private List<AutomatedCriteriaDTO> automatedCriteria;
 

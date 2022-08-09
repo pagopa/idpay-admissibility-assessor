@@ -3,8 +3,10 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.kie.api.command.Command;
@@ -22,16 +24,18 @@ import java.util.List;
 public class RuleEngineServiceImpl implements RuleEngineService {
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
+    private final CriteriaCodeService criteriaCodeService;
     private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper;
 
-    public RuleEngineServiceImpl(OnboardingContextHolderService onboardingContextHolderService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper) {
+    public RuleEngineServiceImpl(OnboardingContextHolderService onboardingContextHolderService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, CriteriaCodeService criteriaCodeService, Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
+        this.criteriaCodeService = criteriaCodeService;
         this.onboarding2OnboardingDroolsMapper = onboarding2OnboardingDroolsMapper;
     }
 
     @Override
-    public EvaluationDTO applyRules(OnboardingDTO onboardingDTO) {
+    public EvaluationDTO applyRules(OnboardingDTO onboardingDTO, InitiativeConfig initiative) {
 
         StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieContainer().newStatelessKieSession();
 
@@ -40,6 +44,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
         @SuppressWarnings("unchecked")
         List<Command<?>> cmds = Arrays.asList(
                 CommandFactory.newInsert(req),
+                CommandFactory.newInsert(criteriaCodeService),
                 new AgendaGroupSetFocusCommand(req.getInitiativeId())
         );
 
@@ -50,6 +55,6 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         log.debug("Send message prepared: {}", req);
 
-        return onboarding2EvaluationMapper.apply(req, req.getOnboardingRejectionReasons());
+        return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
     }
 }

@@ -11,5 +11,6 @@ import lombok.NoArgsConstructor;
 public class CriteriaCodeConfig {
     private String code;
     private String authority;
+    private String authorityLabel;
     private String onboardingField;
 }

@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -21,12 +22,15 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
 
     @Override
     public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest);
+        final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
         if(OnboardingConstants.ONBOARDING_STATUS_OK.equals(result.getStatus())){
             return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
                     .map(c->result)
                     .switchIfEmpty(Mono.defer(()->{
-                        result.getOnboardingRejectionReasons().add(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED);
+                        result.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
+                                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                                        .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
+                                .build());
                         result.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
                         return Mono.just(result);
                     }));

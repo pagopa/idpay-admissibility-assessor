@@ -16,18 +16,17 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OnboardingDTO {
-
-    String userId;
-    String initiativeId;
-    boolean tc;
-    String status;
-    Boolean pdndAccept;
-    Map<String, Boolean> selfDeclarationList;
-    LocalDateTime tcAcceptTimestamp;
-    LocalDateTime criteriaConsensusTimestamp;
+    private String userId;
+    private String initiativeId;
+    private boolean tc;
+    private String status;
+    private Boolean pdndAccept;
+    private Map<String, Boolean> selfDeclarationList;
+    private LocalDateTime tcAcceptTimestamp;
+    private LocalDateTime criteriaConsensusTimestamp;
 
     // Authorities data fetched if the initiative requires them
-    BigDecimal isee;
-    Residenza residenza;
-    DataNascita birthDate;
+    private BigDecimal isee;
+    private Residenza residenza;
+    private DataNascita birthDate;
 }

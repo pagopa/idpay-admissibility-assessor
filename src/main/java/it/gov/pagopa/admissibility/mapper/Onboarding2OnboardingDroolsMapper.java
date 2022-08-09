@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.dto.onboarding.mapper;
+package it.gov.pagopa.admissibility.mapper;
 
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;

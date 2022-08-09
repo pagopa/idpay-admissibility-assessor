@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -53,10 +54,14 @@ class OnboardingInitiativeCheckTest {
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
 
         // When
-        String result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
 
         // Then
-        assertEquals("INVALID_INITIATIVE_ID", result);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                .code("INVALID_INITIATIVE_ID")
+                .build();
+        assertEquals(expected, result);
     }
 
     @Test
@@ -96,10 +101,14 @@ class OnboardingInitiativeCheckTest {
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
 
         // When
-        String result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_TC_ACCEPT_FAIL", result);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                .code("CONSENSUS_CHECK_TC_ACCEPT_FAIL")
+                .build();
+        assertEquals(expected, result);
     }
 
     @Test
@@ -140,10 +149,14 @@ class OnboardingInitiativeCheckTest {
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
 
         // When
-        String result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL", result);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                .code("CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL")
+                .build();
+        assertEquals(expected, result);
     }
 
     @Test
@@ -180,7 +193,7 @@ class OnboardingInitiativeCheckTest {
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
 
         // When
-        String result = onboardingInitiativeCheck.apply(onboarding, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboarding, onboardingContext);
 
         // Then
         assertNull(result);

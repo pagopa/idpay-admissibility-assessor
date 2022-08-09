@@ -11,6 +11,5 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 public class OnboardingDroolsDTO extends OnboardingDTO{
-
-    private List<String> onboardingRejectionReasons = new ArrayList<>();
+    private List<OnboardingRejectionReason> onboardingRejectionReasons = new ArrayList<>();
 }

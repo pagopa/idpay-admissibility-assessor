@@ -1,12 +1,14 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -32,7 +34,17 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
     }
 
     @Override
-    public String apply(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
+    public OnboardingRejectionReason apply(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
+        final String initiativeBasedRejectionReason = checkInitiativeError(onboardingDTO, onboardingContext);
+        return StringUtils.hasText(initiativeBasedRejectionReason) ?
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(initiativeBasedRejectionReason)
+                        .build()
+                : null;
+    }
+
+    private String checkInitiativeError(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
         InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingDTO.getInitiativeId());
         if(initiativeConfig == null){
             log.error("cannot find the initiative id %s to which the user %s is asking to onboard".formatted(onboardingDTO.getInitiativeId(), onboardingDTO.getUserId()));

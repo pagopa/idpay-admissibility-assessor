@@ -1,21 +1,23 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.config.CriteriaCodesConfiguration;
 import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
 import it.gov.pagopa.admissibility.drools.model.NotOperation;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
+import it.gov.pagopa.admissibility.drools.utils.DroolsTemplateRuleUtils;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
-import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -29,12 +31,14 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
     private final boolean onlineSyntaxCheck;
 
+    private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper;
     private final CriteriaCodeService criteriaCodeService;
     private final ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade;
     private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
+    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper, CriteriaCodeService criteriaCodeService, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
+        this.initiative2InitiativeConfigMapper = initiative2InitiativeConfigMapper;
         this.criteriaCodeService = criteriaCodeService;
         this.extraFilter2DroolsTransformerFacade = extraFilter2DroolsTransformerFacade;
         this.builderService = builderService;
@@ -58,17 +62,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                     initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
             );
 
-            InitiativeConfig initiativeConfig = InitiativeConfig.builder()
-                    .initiativeId(initiative.getInitiativeId())
-                    .pdndToken(initiative.getPdndToken())
-                    .automatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(AutomatedCriteriaDTO::getCode).toList())
-                    .initiativeBudget(initiative.getGeneral().getBudget())
-                    .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
-                    .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
-                    .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
-                    .build();
-
-            out.setInitiativeConfig(initiativeConfig);
+            out.setInitiativeConfig(initiative2InitiativeConfigMapper.apply(initiative));
 
             if (onlineSyntaxCheck) {
                 log.debug("Checking if the rule has valid syntax. id: %s".formatted(initiative.getInitiativeId()));
@@ -91,14 +85,23 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         return """
                 rule "%s"
                 agenda-group "%s"
-                when $onboarding: %s(%s)
-                then $onboarding.getOnboardingRejectionReasons().add("%s");
+                when
+                   $criteriaCodeService: %s()
+                   $onboarding: %s(%s)
+                then
+                   %s criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("%s");
+                   $onboarding.getOnboardingRejectionReasons().add(%s.builder().type(%s).code("%s").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
                 end
                 """.formatted(
                 ruleName + "-" + automatedCriteriaDTO.getCode(),
                 initiativeId,
+                CriteriaCodeService.class.getName(),
                 OnboardingDroolsDTO.class.getName(),
                 extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+                CriteriaCodeConfig.class.getName(),
+                automatedCriteriaDTO.getCode(),
+                OnboardingRejectionReason.class.getName(),
+                DroolsTemplateRuleUtils.toTemplateParam(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL).getParam().replace("$","."),
                 OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted(automatedCriteriaDTO.getCode())
         );
     }

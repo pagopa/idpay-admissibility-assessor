@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.service.onboarding.check.OnboardingCheck;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -21,9 +22,11 @@ class OnboardingCheckServiceImplTest {
     @Test
     void testFilterFalse() {
         // Given
+        OnboardingRejectionReason expectedRejectionReason = OnboardingRejectionReason.builder().type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR).code("Failing mock 3").build();
+
         OnboardingCheck checkMock1 = configureOnboardingCheckMock(null);
         OnboardingCheck checkMock2 = configureOnboardingCheckMock(null);
-        OnboardingCheck checkMock3 = configureOnboardingCheckMock("Failing mock 3");
+        OnboardingCheck checkMock3 = configureOnboardingCheckMock(expectedRejectionReason);
         OnboardingCheck checkMock4 = Mockito.mock(OnboardingCheck.class);
         List<OnboardingCheck> checkMocks = Arrays.asList(checkMock1, checkMock2, checkMock3, checkMock4);
         OnboardingCheckService OnboardingCheckService = new OnboardingCheckServiceImpl(checkMocks);
@@ -31,10 +34,10 @@ class OnboardingCheckServiceImplTest {
         OnboardingDTO trx = Mockito.mock(OnboardingDTO.class);
 
         // When
-        String result = OnboardingCheckService.check(trx, null);
+        OnboardingRejectionReason result = OnboardingCheckService.check(trx, null);
 
         // Then
-        Assertions.assertEquals("Failing mock 3", result);
+        Assertions.assertEquals(expectedRejectionReason, result);
 
         Mockito.verify(checkMock1).apply(Mockito.same(trx), Mockito.any());
         Mockito.verify(checkMock2).apply(Mockito.same(trx), Mockito.any());
@@ -60,7 +63,7 @@ class OnboardingCheckServiceImplTest {
         OnboardingDTO trx = Mockito.mock(OnboardingDTO.class);
 
         // When
-        String result = OnboardingCheckService.check(trx, null);
+        OnboardingRejectionReason result = OnboardingCheckService.check(trx, null);
 
         // Then
         Assertions.assertNull(result);
@@ -74,7 +77,7 @@ class OnboardingCheckServiceImplTest {
 
     }
 
-    private OnboardingCheck configureOnboardingCheckMock(String expectedRejection) {
+    private OnboardingCheck configureOnboardingCheckMock(OnboardingRejectionReason expectedRejection) {
         OnboardingCheck checkMock = Mockito.mock(OnboardingCheck.class);
         Mockito.when(checkMock.apply(Mockito.any(), Mockito.any())).thenReturn(expectedRejection);
         return checkMock;

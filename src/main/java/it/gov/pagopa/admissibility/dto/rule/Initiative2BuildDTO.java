@@ -6,6 +6,7 @@ import lombok.Data;
 public class Initiative2BuildDTO {
     private String initiativeId;
     private String initiativeName;
+    private String organizationId;
     private String pdndToken;
     private InitiativeBeneficiaryRuleDTO beneficiaryRule;
     private InitiativeGeneralDTO general;

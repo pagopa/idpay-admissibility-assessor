@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,10 +15,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EvaluationDTO {
+    @NotEmpty
+    private String userId;
+    @NotEmpty
+    private String initiativeId;
+    private String initiativeName;
+    private String organizationId;
+    @NotEmpty
+    private String status;
+    @NotNull
+    private LocalDateTime admissibilityCheckDate;
+    @NotNull
+    private List<OnboardingRejectionReason> onboardingRejectionReasons;
 
-    String userId;
-    String initiativeId;
-    String status;
-    LocalDateTime admissibilityCheckDate;
-    List<String> onboardingRejectionReasons;
 }
