@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         include = JsonTypeInfo.As.PROPERTY,
         property = "_type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SelfCriteriaMultiDTO.class, name = "SelfCriteriaMultiDTO"),
-        @JsonSubTypes.Type(value = SelfCriteriaBoolDTO.class, name = "SelfCriteriaBoolDTO")
+        @JsonSubTypes.Type(value = SelfCriteriaMultiDTO.class, name = "multi"),
+        @JsonSubTypes.Type(value = SelfCriteriaBoolDTO.class, name = "boolean")
 })
 public interface AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems {
 

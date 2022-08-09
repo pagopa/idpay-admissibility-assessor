@@ -16,4 +16,5 @@ public class AutomatedCriteriaDTO   {
     private String field;
     private FilterOperator operator;
     private String value;
+    private String value2;
 }

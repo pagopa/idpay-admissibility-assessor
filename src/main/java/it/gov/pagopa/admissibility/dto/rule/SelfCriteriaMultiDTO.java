@@ -16,9 +16,6 @@ import java.util.List;
 @Builder
 public class SelfCriteriaMultiDTO  implements AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems {
 
-    @JsonProperty("_type")
-    private FieldEnumOnboardingDTO _type;
-
     @JsonProperty("description")
     private String description;
 

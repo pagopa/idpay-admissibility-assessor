@@ -1,11 +1,15 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class OnboardingRejectionReason {
     @NotNull
@@ -22,6 +26,6 @@ public class OnboardingRejectionReason {
         INVALID_REQUEST,
         BUDGET_EXHAUSTED,
         AUTOMATED_CRITERIA_FAIL,
-        OUT_OF_RANKING
+        OUT_OF_RANKING;
     }
 }

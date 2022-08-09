@@ -14,9 +14,6 @@ import lombok.*;
 @Builder
 public class SelfCriteriaBoolDTO  implements AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems {
 
-    @JsonProperty("_type")
-    private FieldEnumOnboardingDTO _type;
-
     @JsonProperty("description")
     private String description;
 

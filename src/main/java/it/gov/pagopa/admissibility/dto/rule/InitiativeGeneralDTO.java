@@ -29,6 +29,28 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("budget")
   private BigDecimal budget;
 
+  @JsonProperty("beneficiaryType")
+  private BeneficiaryTypeEnum beneficiaryType;
+
+  @JsonProperty("beneficiaryKnown")
+  private Boolean beneficiaryKnown;
+
+  @JsonProperty("beneficiaryBudget")
+  private BigDecimal beneficiaryBudget;
+
+  @JsonProperty("startDate")
+  private LocalDate startDate;
+
+  @JsonProperty("endDate")
+  private LocalDate endDate;
+
+  @JsonProperty("rankingStartDate")
+  private LocalDate rankingStartDate;
+
+  @JsonProperty("rankingEndDate")
+  private LocalDate rankingEndDate;
+
+
   /**
    * Gets or Sets beneficiaryType
    */
@@ -58,26 +80,4 @@ public class InitiativeGeneralDTO   {
       return null;
     }
   }
-
-  @JsonProperty("beneficiaryType")
-  private BeneficiaryTypeEnum beneficiaryType;
-
-  @JsonProperty("beneficiaryKnown")
-  private Boolean beneficiaryKnown;
-
-  @JsonProperty("beneficiaryBudget")
-  private BigDecimal beneficiaryBudget;
-
-  @JsonProperty("startDate")
-  private LocalDate startDate;
-
-  @JsonProperty("endDate")
-  private LocalDate endDate;
-
-  @JsonProperty("rankingStartDate")
-  private LocalDate rankingStartDate;
-
-  @JsonProperty("rankingEndDate")
-  private LocalDate rankingEndDate;
-
 }
