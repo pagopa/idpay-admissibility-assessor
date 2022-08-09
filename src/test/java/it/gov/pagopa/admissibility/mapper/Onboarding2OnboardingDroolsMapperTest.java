@@ -2,8 +2,8 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,8 +34,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 localDateTimeMock1,
                 localDateTimeMock1,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
@@ -54,7 +54,7 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());
         Assertions.assertNotNull(result.getOnboardingRejectionReasons());
-        Assertions.assertSame(objectMock1.getResidenza(), result.getResidenza());
+        Assertions.assertSame(objectMock1.getResidence(), result.getResidence());
         Assertions.assertSame(objectMock1.getBirthDate(), result.getBirthDate());
 
         TestUtils.checkNotNullFields(result);

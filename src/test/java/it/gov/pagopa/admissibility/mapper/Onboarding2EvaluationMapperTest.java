@@ -3,8 +3,8 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -41,8 +41,8 @@ class Onboarding2EvaluationMapperTest {
                 acceptanceDateTime,
                 acceptanceDateTime,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         List<OnboardingRejectionReason> rejectReasons = new ArrayList<>();
@@ -86,8 +86,8 @@ class Onboarding2EvaluationMapperTest {
                 localDateTimeMock1,
                 localDateTimeMock1,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         List<OnboardingRejectionReason> rejectReasons = Collections.singletonList(OnboardingRejectionReason.builder()

@@ -2,8 +2,8 @@ package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -36,8 +36,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -73,8 +73,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -110,8 +110,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -146,8 +146,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();

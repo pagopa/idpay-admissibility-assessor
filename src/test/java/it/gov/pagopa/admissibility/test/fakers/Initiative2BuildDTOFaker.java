@@ -33,7 +33,7 @@ public final class Initiative2BuildDTOFaker {
         out.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         out.getBeneficiaryRule().setAutomatedCriteria(new ArrayList<>());
         out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null));
-        out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "anno", FilterOperator.GT, "10", null));
+        out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null));
 
         out.setPdndToken("PDND_TOKEN");
         out.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),

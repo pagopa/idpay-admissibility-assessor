@@ -58,7 +58,7 @@ public final class AutomatedCriteriaDTOFaker {
                     CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE,
                     Map.of("anno", "[0-9]{4}", "eta", "[0-9]{2}")),
             ImmutablePair.of(
-                    CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENZA,
+                    CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE,
                     Map.of("citta", "[A-Z]{6}", "cap", "[0-9]{5}", "nazione", "[A-Z]{4}", "regione", "[A-Z]{5}"))
     );
 
@@ -74,7 +74,7 @@ public final class AutomatedCriteriaDTOFaker {
     //region mock criteria code's field selection
     private static final Map<String, List<String>> criteriaCode2AllowedNestedFields = Map.ofEntries(
             buildCriteriaCode2AllowedNestedFieldsEntry(CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE),
-            buildCriteriaCode2AllowedNestedFieldsEntry(CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENZA)
+            buildCriteriaCode2AllowedNestedFieldsEntry(CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE)
     );
 
     private static Map.Entry<String, List<String>> buildCriteriaCode2AllowedNestedFieldsEntry(String criteriaCode) {
@@ -89,7 +89,7 @@ public final class AutomatedCriteriaDTOFaker {
         List<String> allowedFields = criteriaCode2AllowedNestedFields.get(criteriaCode);
         return switch (criteriaCode) {
             case CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE -> null;
-            case CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENZA -> allowedFields.get(getRandom(bias).nextInt() % allowedFields.size());
+            case CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE -> allowedFields.get(getRandom(bias).nextInt() % allowedFields.size());
             default -> throw new IllegalArgumentException("Criteria code %s not configured in AutomatedCriteriaDTOFaker.mockCriteriaCodeField".formatted(criteriaCode));
         };
     }

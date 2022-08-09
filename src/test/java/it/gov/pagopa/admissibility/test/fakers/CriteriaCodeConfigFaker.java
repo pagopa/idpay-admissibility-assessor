@@ -16,15 +16,15 @@ public final class CriteriaCodeConfigFaker {
     public static final String CRITERIA_CODE_BIRTHDATE_AUTH = "AGID";
     public static final String CRITERIA_CODE_BIRTHDATE_AUTH_LABEL = "Agenzia per l'Italia Digitale";
 
-    public static final String CRITERIA_CODE_RESIDENZA = "RESIDENZA";
-    public static final String CRITERIA_CODE_RESIDENZA_AUTH = "AGID";
-    public static final String CRITERIA_CODE_RESIDENZA_AUTH_LABEL = "Agenzia per l'Italia Digitale";
+    public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
+    public static final String CRITERIA_CODE_RESIDENCE_AUTH = "AGID";
+    public static final String CRITERIA_CODE_RESIDENCE_AUTH_LABEL = "Agenzia per l'Italia Digitale";
 
     /** mocked criteria codes */
     public static List<CriteriaCodeConfig> mockedCriteriaCodes = List.of(
             new CriteriaCodeConfig(CRITERIA_CODE_ISEE, CRITERIA_CODE_ISEE_AUTH, CRITERIA_CODE_ISEE_AUTH_LABEL, "isee"),
             new CriteriaCodeConfig(CRITERIA_CODE_BIRTHDATE, CRITERIA_CODE_BIRTHDATE_AUTH, CRITERIA_CODE_BIRTHDATE_AUTH_LABEL, "birthDate"),
-            new CriteriaCodeConfig(CRITERIA_CODE_RESIDENZA, CRITERIA_CODE_RESIDENZA_AUTH, CRITERIA_CODE_RESIDENZA_AUTH_LABEL, "residenza")
+            new CriteriaCodeConfig(CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_RESIDENCE_AUTH, CRITERIA_CODE_RESIDENCE_AUTH_LABEL, "residence")
     );
 
     private static final Random random = new Random();

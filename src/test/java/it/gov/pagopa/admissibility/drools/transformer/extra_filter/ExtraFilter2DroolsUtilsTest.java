@@ -3,11 +3,10 @@ package it.gov.pagopa.admissibility.drools.transformer.extra_filter;
 import it.gov.pagopa.admissibility.drools.model.ExtraFilterField;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.Filter2DroolsTransformer;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.util.ReflectionUtils;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -25,16 +24,18 @@ class ExtraFilter2DroolsUtilsTest {
             "criteriaConsensusTimestamp"
     ));
 
-    static final Map<String, Class<?>> expectedFields2Class = Map.of(
-            "birthDate", DataNascita.class,
-            "birthDate.anno", String.class,
-            "birthDate.eta", Integer.class,
-            "isee", BigDecimal.class,
-            "residenza", Residenza.class,
-            "residenza.cap", String.class,
-            "residenza.citta", String.class,
-            "residenza.nazione", String.class,
-            "residenza.regione", String.class
+    static final Map<String, Class<?>> expectedFields2Class = Map.ofEntries(
+            Map.entry("birthDate", BirthDate.class),
+            Map.entry("birthDate.year", String.class),
+            Map.entry("birthDate.age", Integer.class),
+            Map.entry("isee", BigDecimal.class),
+            Map.entry("residence", Residence.class),
+            Map.entry("residence.postalCode", String.class),
+            Map.entry("residence.cityCouncil", String.class),
+            Map.entry("residence.province", String.class),
+            Map.entry("residence.city", String.class),
+            Map.entry("residence.nation", String.class),
+            Map.entry("residence.region", String.class)
     );
 
     public static final Set<String> expectedFields = expectedFields2Class.keySet();
