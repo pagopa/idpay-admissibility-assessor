@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.test.fakers;
 import com.github.javafaker.service.FakeValuesService;
 import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,9 +35,9 @@ public final class OnboardingDTOFaker {
         out.criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0));
         out.isee(new BigDecimal(20));
 
-        final DataNascita birthDate = new DataNascita();
-        birthDate.setAnno("1990");
-        birthDate.setEta(32);
+        final BirthDate birthDate = new BirthDate();
+        birthDate.setYear("1990");
+        birthDate.setAge(32);
         out.birthDate(birthDate);
         return  out;
     }

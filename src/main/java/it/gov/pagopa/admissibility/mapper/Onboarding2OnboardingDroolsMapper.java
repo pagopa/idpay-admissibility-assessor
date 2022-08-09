@@ -24,7 +24,7 @@ public class Onboarding2OnboardingDroolsMapper implements Function<OnboardingDTO
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
         out.setIsee(onboardingDTO.getIsee());
-        out.setResidenza(onboardingDTO.getResidenza());
+        out.setResidence(onboardingDTO.getResidence());
         out.setBirthDate(onboardingDTO.getBirthDate());
         return out;
     }

@@ -126,7 +126,7 @@ app:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "birthDate"
-    RESIDENZA:
+    RESIDENCE:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
-      onboardingField: "residenza"
+      onboardingField: "residence"

@@ -2,8 +2,8 @@ package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
@@ -42,8 +42,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -83,8 +83,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -131,8 +131,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock1,
                 localDateTimeMock2,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -178,8 +178,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
-                new Residenza(),
-                new DataNascita()
+                new Residence(),
+                new BirthDate()
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();

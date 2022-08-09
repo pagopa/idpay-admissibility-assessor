@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,6 +27,6 @@ public class OnboardingDTO {
 
     // Authorities data fetched if the initiative requires them
     private BigDecimal isee;
-    private Residenza residenza;
-    private DataNascita birthDate;
+    private Residence residence;
+    private BirthDate birthDate;
 }
