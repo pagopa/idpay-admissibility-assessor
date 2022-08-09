@@ -11,14 +11,9 @@ import lombok.*;
 @ToString
 @Builder
 public class AutomatedCriteriaDTO   {
-
     private String authority;
-
     private String code ;
-
     private String field;
-
     private FilterOperator operator;
-
     private String value;
 }

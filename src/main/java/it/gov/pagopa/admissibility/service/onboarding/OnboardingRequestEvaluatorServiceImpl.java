@@ -21,7 +21,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
 
     @Override
     public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest);
+        final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
         if(OnboardingConstants.ONBOARDING_STATUS_OK.equals(result.getStatus())){
             return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
                     .map(c->result)

@@ -4,9 +4,10 @@ import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2D
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
@@ -44,10 +45,15 @@ class RuleEngineServiceImplTest {
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId("INITIATIVEID");
 
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setInitiativeId("INITIATIVEID");
+        initiativeConfig.setInitiativeName("INITIATIVENAME");
+        initiativeConfig.setOrganizationId("ORGANIZATIONID");
+
         Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
-        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO);
+        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
         // Then
         Mockito.verify(onboardingContextHolderService).getBeneficiaryRulesKieContainer();
@@ -58,6 +64,8 @@ class RuleEngineServiceImplTest {
 
         EvaluationDTO expected = new EvaluationDTO();
         expected.setInitiativeId(onboardingDTO.getInitiativeId());
+        expected.setInitiativeName(initiativeConfig.getInitiativeName());
+        expected.setOrganizationId(initiativeConfig.getOrganizationId());
         expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
         expected.setStatus("ONBOARDING_KO");
         expected.setOnboardingRejectionReasons(Collections.singletonList("REASON1"));

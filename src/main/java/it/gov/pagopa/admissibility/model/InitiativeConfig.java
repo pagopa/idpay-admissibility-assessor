@@ -18,6 +18,8 @@ import java.util.List;
 public class InitiativeConfig {
 
     private String initiativeId;
+    private String initiativeName;
+    private String organizationId;
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdndToken;

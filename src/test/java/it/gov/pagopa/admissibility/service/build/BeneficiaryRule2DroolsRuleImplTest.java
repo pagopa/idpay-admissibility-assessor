@@ -6,8 +6,9 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -37,13 +38,16 @@ class BeneficiaryRule2DroolsRuleImplTest {
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final CriteriaCodeService criteriaCodeServiceMock;
 
+    private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper;
+
     public BeneficiaryRule2DroolsRuleImplTest() {
         this.criteriaCodeServiceMock = Mockito.mock(CriteriaCodeService.class);
+        this.initiative2InitiativeConfigMapper = new Initiative2InitiativeConfigMapper();
         this.beneficiaryRule2DroolsRule = buildBeneficiaryRule2DroolsRule(false);
     }
 
     private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
-        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, initiative2InitiativeConfigMapper, criteriaCodeServiceMock, ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
     }
 
     @BeforeEach
@@ -99,6 +103,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
 
         expected.setInitiativeConfig(InitiativeConfig.builder()
                 .initiativeId("ID")
+                .initiativeName("NAME")
+                .organizationId("ORGANIZATIONID")
                 .startDate(LocalDate.of(2021, 1, 1))
                 .endDate(LocalDate.of(2025, 12, 1))
                 .pdndToken("PDND_TOKEN")
@@ -148,13 +154,15 @@ class BeneficiaryRule2DroolsRuleImplTest {
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), new Onboarding2OnboardingDroolsMapper());
 
         // when
-        EvaluationDTO evaluationResult = ruleEngineService.applyRules(onboardingDTO);
+        EvaluationDTO evaluationResult = ruleEngineService.applyRules(onboardingDTO, initiative2InitiativeConfigMapper.apply(initiative));
 
         // then
         Assertions.assertNotNull(rule);
 
         EvaluationDTO expectedEvaluationResult = new EvaluationDTO();
         expectedEvaluationResult.setInitiativeId(initiative.getInitiativeId());
+        expectedEvaluationResult.setInitiativeName("NAME");
+        expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
@@ -172,6 +180,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         Initiative2BuildDTO dto = new Initiative2BuildDTO();
         dto.setInitiativeId("ID");
         dto.setInitiativeName("NAME");
+        dto.setOrganizationId("ORGANIZATIONID");
         dto.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 

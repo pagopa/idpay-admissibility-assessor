@@ -3,8 +3,9 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2EvaluationMapper;
-import it.gov.pagopa.admissibility.dto.onboarding.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.kie.api.command.Command;
@@ -31,7 +32,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     }
 
     @Override
-    public EvaluationDTO applyRules(OnboardingDTO onboardingDTO) {
+    public EvaluationDTO applyRules(OnboardingDTO onboardingDTO, InitiativeConfig initiative) {
 
         StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieContainer().newStatelessKieSession();
 
@@ -50,6 +51,6 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         log.debug("Send message prepared: {}", req);
 
-        return onboarding2EvaluationMapper.apply(req, req.getOnboardingRejectionReasons());
+        return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
     }
 }

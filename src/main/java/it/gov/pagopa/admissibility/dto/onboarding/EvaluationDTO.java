@@ -13,10 +13,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class EvaluationDTO {
-
-    String userId;
-    String initiativeId;
-    String status;
-    LocalDateTime admissibilityCheckDate;
-    List<String> onboardingRejectionReasons;
+    private String userId;
+    private String initiativeId;
+    private String initiativeName;
+    private String organizationId;
+    private String status;
+    private LocalDateTime admissibilityCheckDate;
+    private List<String> onboardingRejectionReasons;
 }
