@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import org.junit.jupiter.api.Test;
@@ -42,10 +43,14 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        String resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null);
+        OnboardingRejectionReason resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_TC_FAIL", resultTcFalse);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                .code("CONSENSUS_CHECK_TC_FAIL")
+                .build();
+        assertEquals(expected, resultTcFalse);
 
     }
 
@@ -75,10 +80,14 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        String resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null);
+        OnboardingRejectionReason resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_PDND_FAIL", resultPdndFalse);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                .code("CONSENSUS_CHECK_PDND_FAIL")
+                .build();
+        assertEquals(expected, resultPdndFalse);
 
     }
 
@@ -108,10 +117,14 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        String resultSelfDeclarationFalse = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
+        OnboardingRejectionReason resultSelfDeclarationFalse = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
 
         // Then
-        assertEquals("CONSENSUS_CHECK_SELF_DECLARATION_MAP_FAIL", resultSelfDeclarationFalse);
+        OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                .code("CONSENSUS_CHECK_SELF_DECLARATION_MAP_FAIL")
+                .build();
+        assertEquals(expected, resultSelfDeclarationFalse);
 
     }
 
@@ -140,7 +153,7 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        String result = onboardingConsensusCheck.apply(onboardingMock, null);
+        OnboardingRejectionReason result = onboardingConsensusCheck.apply(onboardingMock, null);
 
         // Then
         assertNull(result);

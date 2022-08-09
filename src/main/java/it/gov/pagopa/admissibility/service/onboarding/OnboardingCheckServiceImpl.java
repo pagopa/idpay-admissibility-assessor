@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.service.onboarding.check.OnboardingCheck;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +20,7 @@ public class OnboardingCheckServiceImpl implements OnboardingCheckService {
 
 
     @Override
-    public String check(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
+    public OnboardingRejectionReason check(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
         return checks.stream().map(f -> f.apply(onboardingDTO, onboardingContext)).filter(Objects::nonNull).findFirst().orElse(null);
     }
 }

@@ -1,12 +1,15 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.config.CriteriaCodesConfiguration;
 import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
 import it.gov.pagopa.admissibility.drools.model.NotOperation;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
+import it.gov.pagopa.admissibility.drools.utils.DroolsTemplateRuleUtils;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
@@ -82,14 +85,23 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         return """
                 rule "%s"
                 agenda-group "%s"
-                when $onboarding: %s(%s)
-                then $onboarding.getOnboardingRejectionReasons().add("%s");
+                when
+                   $criteriaCodeService: %s()
+                   $onboarding: %s(%s)
+                then
+                   %s criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("%s");
+                   $onboarding.getOnboardingRejectionReasons().add(%s.builder().type(%s).code("%s").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
                 end
                 """.formatted(
                 ruleName + "-" + automatedCriteriaDTO.getCode(),
                 initiativeId,
+                CriteriaCodeService.class.getName(),
                 OnboardingDroolsDTO.class.getName(),
                 extraFilter2DroolsTransformerFacade.apply(automatedCriteria2ExtraFilter(automatedCriteriaDTO, criteriaCodeConfig), OnboardingDTO.class, null),
+                CriteriaCodeConfig.class.getName(),
+                automatedCriteriaDTO.getCode(),
+                OnboardingRejectionReason.class.getName(),
+                DroolsTemplateRuleUtils.toTemplateParam(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL).getParam().replace("$","."),
                 OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted(automatedCriteriaDTO.getCode())
         );
     }

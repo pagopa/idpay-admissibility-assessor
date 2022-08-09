@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.DataNascita;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residenza;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -44,7 +45,7 @@ class Onboarding2EvaluationMapperTest {
                 new DataNascita()
         );
 
-        List<String> rejectReasonsMock1 = new ArrayList<>();
+        List<OnboardingRejectionReason> rejectReasons = new ArrayList<>();
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId("INITIATIVEID");
@@ -53,7 +54,7 @@ class Onboarding2EvaluationMapperTest {
 
 
         // WHEN
-        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasonsMock1);
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
 
         // THEN
         Assertions.assertEquals("USERID", result.getUserId());
@@ -89,10 +90,13 @@ class Onboarding2EvaluationMapperTest {
                 new DataNascita()
         );
 
-        List<String> rejectReasonsMock1 = Collections.singletonList("InitiativeId NULL");
+        List<OnboardingRejectionReason> rejectReasons = Collections.singletonList(OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                .code("InitiativeId NULL")
+                .build());
 
         // WHEN
-        EvaluationDTO result = onboarding2EvaluationMapper.apply(objectMock1, null, rejectReasonsMock1);
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(objectMock1, null, rejectReasons);
 
         // THEN
         Assertions.assertEquals("1", result.getUserId());
@@ -102,7 +106,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(result.getInitiativeName());
         Assertions.assertNull(result.getOrganizationId());
 
-        Assertions.assertFalse(CollectionUtils.isEmpty(result.getOnboardingRejectionReasons()));
+        Assertions.assertEquals(rejectReasons, result.getOnboardingRejectionReasons());
 
         TestUtils.checkNotNullFields(result, "initiativeName", "organizationId");
     }

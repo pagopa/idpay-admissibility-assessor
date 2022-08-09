@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
@@ -10,7 +11,6 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingRequestEvaluatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -57,8 +57,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
-        String rejectionReason = onboardingCheckService.check(onboardingRequest, onboardingContext);
-        if (StringUtils.hasText(rejectionReason)) {
+        OnboardingRejectionReason rejectionReason = onboardingCheckService.check(onboardingRequest, onboardingContext);
+        if (rejectionReason != null) {
             log.info("[ONBOARDING_KO] Onboarding request failed: {}",rejectionReason);
             return onboarding2EvaluationMapper.apply(onboardingRequest, readInitiativeConfigFromContext(onboardingContext), Collections.singletonList(rejectionReason));
         } else return null;

@@ -4,11 +4,13 @@ import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2D
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +31,19 @@ import java.util.Collections;
 class RuleEngineServiceImplTest {
 
     @BeforeAll
-    public static void configDroolsLogLevel(){
+    public static void configDroolsLogLevel() {
         KieContainerBuilderServiceImplTest.configDroolsLogs();
     }
 
     @Test
     void applyRules() {
         // Given
-        OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderServiceImpl.class);
+        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderServiceImpl.class);
+        CriteriaCodeService criteriaCodeServiceMock = Mockito.mock(CriteriaCodeService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
 
-        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, onboarding2EvaluationMapper, onboarding2OnboardingDroolsMapper);
+        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderServiceMock, onboarding2EvaluationMapper, criteriaCodeServiceMock, onboarding2OnboardingDroolsMapper);
 
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId("INITIATIVEID");
@@ -50,13 +53,13 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
 
-        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
         // Then
-        Mockito.verify(onboardingContextHolderService).getBeneficiaryRulesKieContainer();
+        Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieContainer();
 
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
@@ -68,7 +71,9 @@ class RuleEngineServiceImplTest {
         expected.setOrganizationId(initiativeConfig.getOrganizationId());
         expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
         expected.setStatus("ONBOARDING_KO");
-        expected.setOnboardingRejectionReasons(Collections.singletonList("REASON1"));
+        expected.setOnboardingRejectionReasons(Collections.singletonList(OnboardingRejectionReason.builder()
+                .code("REASON1")
+                .build()));
 
         Assertions.assertEquals(expected, result);
     }
@@ -84,7 +89,7 @@ class RuleEngineServiceImplTest {
         rule.setName("RULE");
         rule.setRule(ExtraFilter2DroolsTransformerFacadeImplTest.applyRuleTemplate(rule.getId(), rule.getName(),
                 "$onboarding: %s()".formatted(OnboardingDroolsDTO.class.getName()),
-                "$onboarding.getOnboardingRejectionReasons().add(\"REASON1\");"));
+                "$onboarding.getOnboardingRejectionReasons().add(%s.builder().code(\"REASON1\").build());".formatted(OnboardingRejectionReason.class.getName())));
 
         return new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
     }

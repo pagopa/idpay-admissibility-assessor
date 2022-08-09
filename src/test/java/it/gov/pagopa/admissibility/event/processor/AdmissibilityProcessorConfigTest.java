@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
@@ -138,35 +139,60 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tc(false)
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL, false)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL)
+                                    .build(),
+                            false)
             ),
             // PDND consensuns fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .pdndAccept(false)
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL, false)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL)
+                                    .build()
+                            , false)
             ),
             // self declaration fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .selfDeclarationList(Map.of("DUMMY", false))
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT.formatted("DUMMY"), false)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT.formatted("DUMMY"))
+                                    .build()
+                            , false)
             ),
             // TC acceptance timestamp fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tcAcceptTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL, true)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                                    .code( OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL)
+                                    .build()
+                           , true)
             ),
             // TC criteria acceptance timestamp fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .criteriaConsensusTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL, true)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                                    .code(OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL)
+                                    .build()
+                            , true)
 
             ),
             // AUTOMATED_CRITERIA fail
@@ -174,14 +200,26 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .isee(BigDecimal.TEN)
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"), true)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"))
+                                    .authority("INPS")
+                                    .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                                    .build()
+                            , true)
             ),
             // exhausted initiative budget
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(EXHAUSTED_INITIATIVE_ID)
                             .build(),
-                    evaluation -> checkKO(evaluation, OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED, true)
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                                    .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
+                                    .build()
+                            , true)
             )
     );
     //endregion
@@ -202,7 +240,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         }
     }
 
-    private void checkKO(EvaluationDTO evaluation, String expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
+    private void checkKO(EvaluationDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
         Assertions.assertEquals("ONBOARDING_KO", evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
         Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().contains(expectedRejectionReason),

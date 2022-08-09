@@ -120,10 +120,13 @@ app:
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"
+      authorityLabel: "Istituto Nazionale Previdenza Sociale"
       onboardingField: "isee"
     BIRTHDATE:
       authority: "AGID"
+      authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "birthDate"
     RESIDENZA:
       authority: "AGID"
+      authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residenza"

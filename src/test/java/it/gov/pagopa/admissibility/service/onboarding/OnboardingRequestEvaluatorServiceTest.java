@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
@@ -44,10 +45,12 @@ class OnboardingRequestEvaluatorServiceTest {
     @Test
     void testRejectedFromRuleEngine(){
         //given
+        final List<OnboardingRejectionReason> ruleEngineMockedRejectionReason = List.of(OnboardingRejectionReason.builder().type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR).code("DUMMY_REJECTION_REASON").build());
+
         final EvaluationDTO mockedRuleEngineResult = EvaluationDTO.builder()
                 .initiativeId(onboardingRequest.getInitiativeId())
                 .status(OnboardingConstants.ONBOARDING_STATUS_KO)
-                .onboardingRejectionReasons(new ArrayList<>(List.of("DUMMY_REJECITON_REASON")))
+                .onboardingRejectionReasons(new ArrayList<>(ruleEngineMockedRejectionReason))
                 .build();
 
         Mockito.when(ruleEngineService.applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig))).thenAnswer(i-> mockedRuleEngineResult);
@@ -59,7 +62,7 @@ class OnboardingRequestEvaluatorServiceTest {
         Assertions.assertNotNull(result);
         Assertions.assertSame(mockedRuleEngineResult, result);
         Assertions.assertEquals(OnboardingConstants.ONBOARDING_STATUS_KO, result.getStatus());
-        Assertions.assertEquals(List.of("DUMMY_REJECITON_REASON"), result.getOnboardingRejectionReasons());
+        Assertions.assertEquals(ruleEngineMockedRejectionReason, result.getOnboardingRejectionReasons());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
 
@@ -88,7 +91,13 @@ class OnboardingRequestEvaluatorServiceTest {
         //then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(OnboardingConstants.ONBOARDING_STATUS_KO, result.getStatus());
-        Assertions.assertEquals(List.of(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED), result.getOnboardingRejectionReasons());
+        Assertions.assertEquals(List.of(
+                        OnboardingRejectionReason.builder()
+                                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                                .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
+                                .build()
+                )
+                , result.getOnboardingRejectionReasons());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
         Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudget()));

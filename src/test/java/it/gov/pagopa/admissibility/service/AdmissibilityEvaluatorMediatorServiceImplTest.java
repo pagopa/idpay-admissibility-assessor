@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
@@ -33,13 +34,16 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         OnboardingDTO onboarding1 = new OnboardingDTO();
         OnboardingDTO onboarding2 = new OnboardingDTO();
-        Flux<OnboardingDTO> onboardingFlux = Flux.just(onboarding1,onboarding2);
+        Flux<OnboardingDTO> onboardingFlux = Flux.just(onboarding1, onboarding2);
 
         Mockito.when(onboardingCheckService.check(Mockito.same(onboarding1), Mockito.any())).thenReturn(null);
-        Mockito.when(onboardingCheckService.check(Mockito.same(onboarding2), Mockito.any())).thenReturn("Rejected");
+        Mockito.when(onboardingCheckService.check(Mockito.same(onboarding2), Mockito.any())).thenReturn(OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR)
+                .code("Rejected")
+                .build());
 
-        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i-> Mono.just(i.getArgument(0)));
-        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i-> Mono.just(i.getArgument(0)));
+        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
 
         // When
         List<EvaluationDTO> result = admissibilityEvaluatorMediatorService.execute(onboardingFlux).collectList().block();

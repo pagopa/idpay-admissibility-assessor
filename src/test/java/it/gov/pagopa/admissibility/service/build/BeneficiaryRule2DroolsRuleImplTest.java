@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -88,15 +89,23 @@ class BeneficiaryRule2DroolsRuleImplTest {
                                         
                 rule "ID-NAME-ISEE"
                 agenda-group "ID"
-                when $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(isee == new java.math.BigDecimal("1")))
-                then $onboarding.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_ISEE_FAIL");
+                when
+                   $criteriaCodeService: it.gov.pagopa.admissibility.service.CriteriaCodeService()
+                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(isee == new java.math.BigDecimal("1")))
+                then
+                   it.gov.pagopa.admissibility.model.CriteriaCodeConfig criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("ISEE");
+                   $onboarding.getOnboardingRejectionReasons().add(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.builder().type(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.valueOf("AUTOMATED_CRITERIA_FAIL")).code("AUTOMATED_CRITERIA_ISEE_FAIL").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
                 end
                                         
                                         
                 rule "ID-NAME-BIRTHDATE"
                 agenda-group "ID"
-                when $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(birthDate.anno > "2000"))
-                then $onboarding.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_BIRTHDATE_FAIL");
+                when
+                   $criteriaCodeService: it.gov.pagopa.admissibility.service.CriteriaCodeService()
+                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(birthDate.anno > "2000"))
+                then
+                   it.gov.pagopa.admissibility.model.CriteriaCodeConfig criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("BIRTHDATE");
+                   $onboarding.getOnboardingRejectionReasons().add(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.builder().type(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.valueOf("AUTOMATED_CRITERIA_FAIL")).code("AUTOMATED_CRITERIA_BIRTHDATE_FAIL").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
                 end
                                         
                 """);
@@ -151,7 +160,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderService.class);
         Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
 
-        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), new Onboarding2OnboardingDroolsMapper());
+        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), criteriaCodeServiceMock, new Onboarding2OnboardingDroolsMapper());
 
         // when
         EvaluationDTO evaluationResult = ruleEngineService.applyRules(onboardingDTO, initiative2InitiativeConfigMapper.apply(initiative));
@@ -166,10 +175,20 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
-            expectedEvaluationResult.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_ISEE_FAIL");
+            expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                    .code("AUTOMATED_CRITERIA_ISEE_FAIL")
+                    .authority("INPS")
+                    .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                    .build());
         }
         if (expectedBirthDateFail) {
-            expectedEvaluationResult.getOnboardingRejectionReasons().add("AUTOMATED_CRITERIA_BIRTHDATE_FAIL");
+            expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                    .code("AUTOMATED_CRITERIA_BIRTHDATE_FAIL")
+                    .authority("AGID")
+                    .authorityLabel("Agenzia per l'Italia Digitale")
+                    .build());
         }
         expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? "ONBOARDING_OK" : "ONBOARDING_KO");
 

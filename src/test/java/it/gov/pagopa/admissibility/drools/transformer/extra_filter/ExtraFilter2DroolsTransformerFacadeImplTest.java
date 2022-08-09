@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorOr;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
@@ -29,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExtraFilter2DroolsTransformerFacadeImplTest {
     public static final String STRINGVALUE = "STRINGVALUE";
@@ -252,7 +254,7 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         DroolsRule rule = new DroolsRule();
         rule.setId(onboarding.getInitiativeId());
         rule.setName("CollectionTest");
-        String ruleConsequence = "$onboarding.getOnboardingRejectionReasons().add(\"OK\");";
+        String ruleConsequence = "$onboarding.getOnboardingRejectionReasons().add(%s.builder().code(\"OK\").build());".formatted(OnboardingRejectionReason.class.getName());
 
         System.out.println("Testing Collection EQ value matching");
         String result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY1"), OnboardingDroolsDTO.class, null);
@@ -310,7 +312,10 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         );
         container.newStatelessKieSession().execute(CommandFactory.newBatchExecution(commands));
 
-        Assertions.assertEquals(success, onboardingDroolsDTO.getOnboardingRejectionReasons().contains("OK"), "Unexpected result applying rule%n%s%non object:%n%s".formatted(rule.getRule(), onboardingDroolsDTO));
+        Assertions.assertEquals(success,
+                onboardingDroolsDTO.getOnboardingRejectionReasons().stream()
+                        .map(OnboardingRejectionReason::getCode).collect(Collectors.toList())
+                        .contains("OK"), "Unexpected result applying rule%n%s%non object:%n%s".formatted(rule.getRule(), onboardingDroolsDTO));
     }
 
     public static String applyRuleTemplate(String agendaGroup, String ruleName, String ruleCondition, String ruleConsequence) {
