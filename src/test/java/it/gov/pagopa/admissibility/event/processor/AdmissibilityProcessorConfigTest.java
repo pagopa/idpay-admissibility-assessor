@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -32,7 +34,6 @@ import java.util.stream.IntStream;
 @Slf4j
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
-        "app.beneficiary-rule.cache.refresh-ms-rate:60000",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
@@ -49,7 +50,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         int onboardingsNumber = 1000;
         long maxWaitingMs = 30000;
 
-        publishOnboardingRules();
+        publishOnboardingRules(onboardingsNumber);
 
         List<OnboardingDTO> onboardings = IntStream.range(0, onboardingsNumber)
                 .mapToObj(this::mockInstance).toList();
@@ -96,17 +97,24 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         );
     }
 
-    private void publishOnboardingRules() {
+    private void publishOnboardingRules(int onboardingsNumber) {
         int[] expectedRules = {0};
         IntStream.range(0, initiativesNumber + 1)
-                .mapToObj(Initiative2BuildDTOFaker::mockInstance)
-                .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
-                .peek(i -> {
-                    if (i.getInitiativeId().endsWith("_" + initiativesNumber)) {
-                        i.setInitiativeId(EXHAUSTED_INITIATIVE_ID);
-                        i.getGeneral().setBudget(BigDecimal.ZERO);
+                .mapToObj(i -> {
+                    final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstance(i);
+
+                    BigDecimal budget;
+                    if (initiative.getInitiativeId().endsWith("_" + initiativesNumber)) {
+                        initiative.setInitiativeId(EXHAUSTED_INITIATIVE_ID);
+                        budget = BigDecimal.ZERO;
+                    } else {
+                        budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
                     }
+                    initiative.getGeneral().setBudget(budget);
+
+                    return initiative;
                 })
+                .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
                 .forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
 
@@ -129,7 +137,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
                     evaluation -> {
-                        Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().isEmpty());
+                        Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
                         Assertions.assertEquals("ONBOARDING_OK", evaluation.getStatus());
                         assertEvaluationFields(evaluation, true);
                     }
