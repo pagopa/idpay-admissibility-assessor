@@ -21,7 +21,6 @@ import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
-        "app.beneficiary-rule.cache.refresh-ms-rate:60000",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=DEBUG",
 })

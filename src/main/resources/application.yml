@@ -1,6 +1,10 @@
 server:
   port: ${ADMISSIBILITY_ASSESSOR_PORT:8080}
 
+reactor:
+  bufferSize:
+    small: ${REACTOR_BUFFER_SIZE:256}
+
 spring:
   application:
     name: idpay-admissibility-assessor
@@ -30,33 +34,21 @@ spring:
         kafka-onboarding-request:
           type: kafka
           environment:
-            spring:
-              cloud:
-                stream:
-                  kafka:
-                    binder:
-                      brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
-                      configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
         kafka-onboarding-outcome:
           type: kafka
           environment:
-            spring:
-              cloud:
-                stream:
-                  kafka:
-                    binder:
-                      brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
-                      configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
-            spring:
-              cloud:
-                stream:
-                  kafka:
-                    binder:
-                      brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
-                      configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
       kafka:
         binder:
           auto-create-topics: false
@@ -66,20 +58,37 @@ spring:
             request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
             sasl.mechanism: ${KAFKA_CONFIG_SASL_MECHANISM:PLAIN}
             security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
-          consumerProperties:
-            startOffset: ${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}
-            autoCommitOffset: ${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}
-            enableDlq: ${KAFKA_CONSUMER_CONFIG_ENABLE_DLQ:false}
-            dlqName: ${KAFKA_CONSUMER_CONFIG_DLQ_NAME:errorTopic}
-            standardHeaders: ${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}
-            configuration:
-              max.poll:
-                records: ${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:}
-                interval.ms: ${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}
-            socket.connection.setup.timeout:
-              max.ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}
-              ms: ${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}
-            connections.max.idle.ms: ${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}
+        bindings:
+          admissibilityProcessor-in-0:
+            consumer:
+              startOffset: ${KAFKA_ONBOARDING_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+              autoCommitOffset: ${KAFKA_ONBOARDING_REQUEST_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              enableDlq: ${KAFKA_ONBOARDING_REQUEST_ENABLE_DLQ:${KAFKA_CONSUMER_CONFIG_ENABLE_DLQ:false}}
+              dlqName: ${KAFKA_ONBOARDING_REQUEST_DLQ_NAME:${KAFKA_CONSUMER_CONFIG_DLQ_NAME:errorTopic}}
+              standardHeaders: ${KAFKA_ONBOARDING_REQUEST_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              configuration:
+                max.poll:
+                  records: ${KAFKA_ONBOARDING_REQUEST_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                  interval.ms: ${KAFKA_ONBOARDING_REQUEST_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+          beneficiaryRuleBuilderConsumer-in-0:
+            consumer:
+              startOffset: ${KAFKA_BENEFICIARY_RULE_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+              autoCommitOffset: ${KAFKA_BENEFICIARY_RULE_REQUEST_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
+              enableDlq: ${KAFKA_BENEFICIARY_RULE_REQUEST_ENABLE_DLQ:${KAFKA_CONSUMER_CONFIG_ENABLE_DLQ:false}}
+              dlqName: ${KAFKA_BENEFICIARY_RULE_REQUEST_DLQ_NAME:${KAFKA_CONSUMER_CONFIG_DLQ_NAME:errorTopic}}
+              standardHeaders: ${KAFKA_BENEFICIARY_RULE_REQUEST_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              configuration:
+                max.poll:
+                  records: ${KAFKA_BENEFICIARY_RULE_REQUEST_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                  interval.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
   data:
     mongodb:
       uri: ${MONGODB_URI}
