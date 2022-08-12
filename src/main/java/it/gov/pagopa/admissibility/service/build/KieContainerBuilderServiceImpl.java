@@ -45,8 +45,9 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
                     kieBuilder.buildAll();
 
                     if (kieBuilder.getResults().hasMessages(Message.Level.ERROR)) {
-                        // TODO if a stored rule don't compile, stop the container build or ignore the rule?
-//                        kieBuilder.getResults().getMessages(Message.Level.ERROR).stream().map(Message::getPath).forEach(kieFileSystem::delete);
+                        /* TODO if a stored rule don't compile, stop the container build or ignore the rule?
+                        kieBuilder.getResults().getMessages(Message.Level.ERROR).stream().map(Message::getPath).forEach(kieFileSystem::delete);
+                        */
                         throw new IllegalArgumentException("[BENEFICIARY_RULE_BUILDER] Build Errors:" + kieBuilder.getResults().toString());
                     }
 

@@ -82,7 +82,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         // then
         Mockito.verify(beneficiaryRule2DroolsRuleMock, Mockito.times(N)).apply(Mockito.any());
         initiatives.forEach(i -> {
-            Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.eq(i));
+            Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(i);
             Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId())));
         });
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();

@@ -71,7 +71,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRul
     }
 
     private Initiative2BuildDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, (e) -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e));
+        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e));
     }
 
     private Mono<DroolsRule> initializeCounters(DroolsRule droolsRule) {

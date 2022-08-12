@@ -88,7 +88,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, (e) -> errorNotifierService.notifyAdmissibility(message, "Unexpected JSON", true, e));
+        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "Unexpected JSON", true, e));
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
