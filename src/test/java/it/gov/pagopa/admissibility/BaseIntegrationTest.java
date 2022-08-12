@@ -15,6 +15,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static org.awaitility.Awaitility.await;
 
@@ -132,11 +137,11 @@ public abstract class BaseIntegrationTest {
         Net mongodNet = Objects.requireNonNull(mongodConfig).net();
 
         System.out.printf("""
-                ************************
-                Embedded mongo: %s
-                Embedded kafka: %s
-                ************************
-                """,
+                        ************************
+                        Embedded mongo: %s
+                        Embedded kafka: %s
+                        ************************
+                        """,
                 "mongo://%s:%s".formatted(mongodNet.getServerAddress().getHostAddress(), mongodNet.getPort()),
                 "bootstrapServers: %s, zkNodes: %s".formatted(bootstrapServers, zkNodes));
     }
@@ -158,7 +163,7 @@ public abstract class BaseIntegrationTest {
     }
 
     protected void readFromEmbeddedKafka(Consumer<String, String> consumer, java.util.function.Consumer<ConsumerRecord<String, String>> consumeMessage, boolean consumeFromBeginning, Integer expectedMessagesCount, Duration timeout) {
-        if(consumeFromBeginning){
+        if (consumeFromBeginning) {
             consumeFromBeginning(consumer);
         }
         int i = 0;
@@ -178,7 +183,7 @@ public abstract class BaseIntegrationTest {
 
     protected List<ConsumerRecord<String, String>> consumeMessages(String topic, int expectedNumber, long maxWaitingMs) {
         long startTime = System.currentTimeMillis();
-        try(Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group")) {
+        try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group")) {
 
             List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
             while (payloadConsumed.size() < expectedNumber) {
@@ -200,7 +205,16 @@ public abstract class BaseIntegrationTest {
     }
 
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, String payload) {
-        ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, null, key==null? null : key.getBytes(StandardCharsets.UTF_8), payload.getBytes(StandardCharsets.UTF_8), headers);
+        final RecordHeader retryHeader = new RecordHeader("RETRY", "1".getBytes());
+        if (headers == null) {
+            headers = new RecordHeaders(new RecordHeader[]{retryHeader});
+        } else {
+            headers = Stream.concat(
+                            StreamSupport.stream(headers.spliterator(), false),
+                            Stream.of(retryHeader))
+                    .collect(Collectors.toList());
+        }
+        ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, null, key == null ? null : key.getBytes(StandardCharsets.UTF_8), payload.getBytes(StandardCharsets.UTF_8), headers);
         template.send(record);
     }
 
@@ -216,6 +230,7 @@ public abstract class BaseIntegrationTest {
     }
 
     private final Pattern errorUseCaseIdPatternMatch = Pattern.compile("\"initiativeId\":\"id_([0-9]+)_?[^\"]*\"");
+
     protected void checkErrorsPublished(int notValidRules, long maxWaitingMs, List<Pair<Supplier<String>, java.util.function.Consumer<ConsumerRecord<String, String>>>> errorUseCases) {
         final List<ConsumerRecord<String, String>> errors = consumeMessages(topicErrors, notValidRules, maxWaitingMs);
         for (final ConsumerRecord<String, String> record : errors) {
@@ -233,6 +248,7 @@ public abstract class BaseIntegrationTest {
         Assertions.assertEquals(srcTopic, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
         Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
         Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
+        Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "RETRY")); // to test if headers are correctly propagated
         Assertions.assertEquals(errorMessage.value(), expectedPayload);
     }
 }
