@@ -9,10 +9,13 @@ import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.api.runtime.KieContainer;
 import org.mockito.Mockito;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,7 +46,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
         this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
 
-        service = new BeneficiaryRuleBuilderMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock);
+        service = new BeneficiaryRuleBuilderMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
     }
 
     @BeforeEach
@@ -71,7 +74,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         // given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
-        Flux<Initiative2BuildDTO> inputFlux = Flux.fromIterable(initiatives);
+        Flux<Message<String>> inputFlux = Flux.fromIterable(initiatives).map(TestUtils::jsonSerializer).map(MessageBuilder::withPayload).map(MessageBuilder::build);
 
         // when
         service.execute(inputFlux);
@@ -79,7 +82,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         // then
         Mockito.verify(beneficiaryRule2DroolsRuleMock, Mockito.times(N)).apply(Mockito.any());
         initiatives.forEach(i -> {
-            Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.same(i));
+            Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.eq(i));
             Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId())));
         });
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();

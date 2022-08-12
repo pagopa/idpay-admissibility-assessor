@@ -43,41 +43,36 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
     @Override
     public DroolsRule apply(Initiative2BuildDTO initiative) {
-        log.info("Building inititative having id: %s".formatted(initiative.getInitiativeId()));
+        log.info("[BENEFICIARY_RULE_BUILDER] Building inititative having id: {}", initiative.getInitiativeId());
 
-        try {
-            DroolsRule out = new DroolsRule();
-            out.setId(initiative.getInitiativeId());
-            out.setName(String.format("%s-%s", initiative.getInitiativeId(), initiative.getInitiativeName()));
+        DroolsRule out = new DroolsRule();
+        out.setId(initiative.getInitiativeId());
+        out.setName(String.format("%s-%s", initiative.getInitiativeId(), initiative.getInitiativeName()));
 
-            out.setRule("""
-                    package %s;
-                                        
-                    %s
-                    """.formatted(
-                    KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE,
-                    initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
-            );
+        out.setRule("""
+                package %s;
+                                    
+                %s
+                """.formatted(
+                KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE,
+                initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
+        );
 
-            out.setInitiativeConfig(initiative2InitiativeConfigMapper.apply(initiative));
+        out.setInitiativeConfig(initiative2InitiativeConfigMapper.apply(initiative));
 
-            if (onlineSyntaxCheck) {
-                log.debug("Checking if the rule has valid syntax. id: %s".formatted(initiative.getInitiativeId()));
-                builderService.build(Flux.just(out)).block(); // TODO handle if it goes to exception due to error
-            }
-
-            log.debug("Conversion into drools rule completed; storing it. id: %s".formatted(initiative.getInitiativeId()));
-            return out;
-        } catch (RuntimeException e) {
-            log.error("Something gone wrong while building initiative %s".formatted(initiative.getInitiativeId()), e);
-            return null;
+        if (onlineSyntaxCheck) {
+            log.debug("[BENEFICIARY_RULE_BUILDER] Checking if the rule has valid syntax. id: {}", initiative.getInitiativeId());
+            builderService.build(Flux.just(out)).block();
         }
+
+        log.debug("[BENEFICIARY_RULE_BUILDER] Conversion into drools rule completed; storing it. id: {}", initiative.getInitiativeId());
+        return out;
     }
 
     private String automatedCriteriaRuleBuild(String initiativeId, String ruleName, AutomatedCriteriaDTO automatedCriteriaDTO) {
         CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(automatedCriteriaDTO.getCode());
         if (criteriaCodeConfig == null) {
-            throw new IllegalStateException("Invalid criteria code provided or not configured: %s".formatted(automatedCriteriaDTO.getCode()));
+            throw new IllegalStateException("[BENEFICIARY_RULE_BUILDER] Invalid criteria code provided or not configured: %s".formatted(automatedCriteriaDTO.getCode()));
         }
         return """
                 rule "%s"

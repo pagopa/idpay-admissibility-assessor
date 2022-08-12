@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
@@ -42,18 +43,19 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     }
 
     @Override
-    public void notifyBeneficiaryRuleBuilder(Object payload, String description, boolean retryable, Throwable exception) {
-        notify(beneficiaryRuleBuilderServer, beneficiaryRuleBuilderTopic, payload, description, retryable, exception);
+    public void notifyBeneficiaryRuleBuilder(Message<?> message, String description, boolean retryable, Throwable exception) {
+        notify(beneficiaryRuleBuilderServer, beneficiaryRuleBuilderTopic, message, description, retryable, exception);
     }
 
     @Override
-    public void notifyAdmissibility(Object payload, String description, boolean retryable, Throwable exception) {
-        notify(admissibilityServer, admissibilityTopic, payload, description, retryable, exception);
+    public void notifyAdmissibility(Message<?> message, String description, boolean retryable, Throwable exception) {
+        notify(admissibilityServer, admissibilityTopic, message, description, retryable, exception);
     }
 
     @Override
-    public void notify(String srcServer, String srcTopic, Object payload, String description, boolean retryable, Throwable exception) {
-        final MessageBuilder<?> errorMessage = MessageBuilder.withPayload(payload)
+    public void notify(String srcServer, String srcTopic, Message<?> message, String description, boolean retryable, Throwable exception) {
+        log.info("[ERROR_NOTIFIER] notifying error: {}", description, exception);
+        final MessageBuilder<?> errorMessage = MessageBuilder.fromMessage(message)
                 .setHeader(ERROR_MSG_HEADER_SRC_SERVER, srcServer)
                 .setHeader(ERROR_MSG_HEADER_SRC_TOPIC, srcTopic)
                 .setHeader(ERROR_MSG_HEADER_DESCRIPTION, description)
@@ -64,7 +66,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
         addExceptionInfo(errorMessage, "cause", exception.getCause());
 
         if (!streamBridge.send("errors-out-0", errorMessage.build())) {
-            log.error("Something gone wrong while notifying error");
+            log.error("[ERROR_NOTIFIER] Something gone wrong while notifying error");
         }
     }
 

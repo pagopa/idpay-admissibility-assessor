@@ -55,6 +55,7 @@ import static org.awaitility.Awaitility.await;
         properties = {
                 //region common feature disabled
                 "app.beneficiary-rule.cache.refresh-ms-rate:60000",
+                "logging.level.it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl=WARN",
                 //endregion
 
                 //region kafka brokers
@@ -177,7 +178,7 @@ public abstract class BaseIntegrationTest {
         List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
         while (payloadConsumed.size() < expectedNumber) {
             if (System.currentTimeMillis() - startTime > maxWaitingMs) {
-                Assertions.fail("timeout of %d ms expired".formatted(maxWaitingMs));
+                Assertions.fail("timeout of %d ms expired. Read %d messages of %d".formatted(maxWaitingMs, payloadConsumed.size(), expectedNumber));
             }
             consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);
         }

@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieContainer;
@@ -17,17 +16,14 @@ import java.util.Map;
 @Slf4j
 public class OnboardingContextHolderServiceImpl implements OnboardingContextHolderService {
     private final KieContainerBuilderService kieContainerBuilderService;
-    private final CriteriaCodeService criteriaCodeService;
 
     private final DroolsRuleRepository droolsRuleRepository;
 
     private KieContainer kieContainer;
     private final Map<String, InitiativeConfig> initiativeId2Config=new HashMap<>();
 
-
-    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, CriteriaCodeService criteriaCodeService, DroolsRuleRepository droolsRuleRepository) {
+    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository) {
         this.kieContainerBuilderService = kieContainerBuilderService;
-        this.criteriaCodeService = criteriaCodeService;
         this.droolsRuleRepository = droolsRuleRepository;
         refreshKieContainer();
     }
@@ -47,7 +43,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     // TODO use cache
     @Scheduled(fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
     public void refreshKieContainer(){
-        log.trace("Refreshing KieContainer");
+        log.trace("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
         kieContainerBuilderService.buildAll().subscribe(this::setBeneficiaryRulesKieContainer);
     }
     //endregion
@@ -68,7 +64,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
         DroolsRule droolsRule = droolsRuleRepository.findById(initiativeId).block();
         if (droolsRule==null){
-            log.error("cannot find initiative having id %s".formatted(initiativeId));
+            log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
             return null;
         }
         return droolsRule.getInitiativeConfig();
