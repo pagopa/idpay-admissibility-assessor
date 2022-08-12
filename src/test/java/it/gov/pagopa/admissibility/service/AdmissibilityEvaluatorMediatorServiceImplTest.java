@@ -8,11 +8,14 @@ import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverSe
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingRequestEvaluatorService;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -29,21 +32,24 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         AuthoritiesDataRetrieverService authoritiesDataRetrieverService = Mockito.mock(AuthoritiesDataRetrieverService.class);
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
+        ErrorNotifierService errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
 
-        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckService, authoritiesDataRetrieverService, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckService, authoritiesDataRetrieverService, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper);
 
-        OnboardingDTO onboarding1 = new OnboardingDTO();
-        OnboardingDTO onboarding2 = new OnboardingDTO();
-        Flux<OnboardingDTO> onboardingFlux = Flux.just(onboarding1, onboarding2);
+        OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
+        OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();
+        Flux<Message<String>> onboardingFlux = Flux.just(onboarding1, onboarding2)
+                .map(TestUtils::jsonSerializer)
+                .map(MessageBuilder::withPayload).map(MessageBuilder::build);
 
-        Mockito.when(onboardingCheckService.check(Mockito.same(onboarding1), Mockito.any())).thenReturn(null);
-        Mockito.when(onboardingCheckService.check(Mockito.same(onboarding2), Mockito.any())).thenReturn(OnboardingRejectionReason.builder()
+        Mockito.when(onboardingCheckService.check(Mockito.eq(onboarding1), Mockito.any())).thenReturn(null);
+        Mockito.when(onboardingCheckService.check(Mockito.eq(onboarding2), Mockito.any())).thenReturn(OnboardingRejectionReason.builder()
                 .type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR)
                 .code("Rejected")
                 .build());
 
-        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
-        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.same(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
 
         // When
         List<EvaluationDTO> result = admissibilityEvaluatorMediatorService.execute(onboardingFlux).collectList().block();
@@ -51,5 +57,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         // Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(2, result.size());
+
+        Mockito.verifyNoInteractions(errorNotifierServiceMock);
     }
 }

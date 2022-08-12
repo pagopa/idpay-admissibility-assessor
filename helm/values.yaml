@@ -64,12 +64,17 @@ microservice-chart:
     idpay-eventhub-01:
       KAFKA_BENEFICIARY_RULE_BROKER: kafka_broker
       KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
+      # TODO fix error topic reference
+      KAFKA_ERRORS_BROKER: kafka_broker
+      KAFKA_ERRRORS_TOPIC: idpay-transaction-error
 
   envSecret:
     MONGODB_URI: mongodb-connection-string
     KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG: evh-idpay-onboarding-request-idpay-onboarding-request-consumer-jaas-config-idpay-00
     KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
     KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG: evh-idpay-rule-update-idpay-rule-update-consumer-jaas-config-idpay-01
+    # TODO fix error topic reference
+    KAFKA_ERRORS_SASL_JAAJ_CONFIG: evh-idpay-transaction-error-idpay-transaction-error-producer-jaas-config-idpay-01
 
   # nodeSelector: {}
 

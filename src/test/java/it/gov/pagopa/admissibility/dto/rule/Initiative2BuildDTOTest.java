@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.config.JsonConfig;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -12,8 +13,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 class Initiative2BuildDTOTest {
-
-    private final ObjectMapper objectMapper = new JsonConfig().objectMapper();
 
     @Test
     void testDeserialization() throws JsonProcessingException {
@@ -53,7 +52,7 @@ class Initiative2BuildDTOTest {
         expected.setBeneficiaryRule(expectedBeneficiaryRule);
 
         //when
-        final Initiative2BuildDTO result = objectMapper.readValue(payload, Initiative2BuildDTO.class);
+        final Initiative2BuildDTO result = TestUtils.objectMapper.readValue(payload, Initiative2BuildDTO.class);
 
         //then
         Assertions.assertEquals(expected, result);

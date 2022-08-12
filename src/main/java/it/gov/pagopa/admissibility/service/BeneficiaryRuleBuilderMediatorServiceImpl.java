@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
@@ -7,7 +9,9 @@ import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
 import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.utils.Utils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -24,29 +28,50 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRul
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final InitInitiativeCounterService initInitiativeCounterService;
+    private final ErrorNotifierService errorNotifierService;
 
-    public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService) {
+    private final ObjectReader objectReader;
+
+    public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper) {
         this.beneficiaryRulesBuildDelay = Duration.parse(beneficiaryRulesBuildDelay);
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.initInitiativeCounterService = initInitiativeCounterService;
+        this.errorNotifierService = errorNotifierService;
+
+        this.objectReader = objectMapper.readerFor(Initiative2BuildDTO.class);
     }
 
     @Override
-    public void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux) {
+    public void execute(Flux<Message<String>> initiativeBeneficiaryRuleDTOFlux) {
         initiativeBeneficiaryRuleDTOFlux
-                .map(beneficiaryRule2DroolsRule) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleBuilderMediatorService
+                .flatMap(this::execute)
+                .buffer(beneficiaryRulesBuildDelay)
+                .flatMap(r -> kieContainerBuilderService.buildAll())
+                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
+    }
+
+    private Mono<DroolsRule> execute(Message<String> message){
+        return Mono.just(message)
+                .mapNotNull(this::deserializeMessage)
+                .map(beneficiaryRule2DroolsRule)
                 .flatMap(droolsRuleRepository::save)
-                .map(i->{
+                .map(i -> {
                     onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
                     return i;
                 })
                 .flatMap(this::initializeCounters)
-                .buffer(beneficiaryRulesBuildDelay)
-                .flatMap(r -> kieContainerBuilderService.buildAll())
-                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
+
+                .onErrorResume(e->{
+                    errorNotifierService.notifyBeneficiaryRuleBuilder(message, "An error occurred handling initiative", true, e);
+                    return Mono.empty();
+                });
+    }
+
+    private Initiative2BuildDTO deserializeMessage(Message<String> message) {
+        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e));
     }
 
     private Mono<DroolsRule> initializeCounters(DroolsRule droolsRule) {

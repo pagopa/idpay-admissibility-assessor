@@ -35,11 +35,12 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     }
 
     @Override
-    public EvaluationDTO applyRules(OnboardingDTO onboardingDTO, InitiativeConfig initiative) {
+    public EvaluationDTO applyRules(OnboardingDTO onboardingRequest, InitiativeConfig initiative) {
+        log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] evaluating rules of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieContainer().newStatelessKieSession();
 
-        OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingDTO);
+        OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
 
         @SuppressWarnings("unchecked")
         List<Command<?>> cmds = Arrays.asList(
@@ -48,12 +49,12 @@ public class RuleEngineServiceImpl implements RuleEngineService {
                 new AgendaGroupSetFocusCommand(req.getInitiativeId())
         );
 
-        Instant before = Instant.now();
+        long before = System.currentTimeMillis();
         statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
-        Instant after = Instant.now();
-        log.debug("Time between before and after fireAllRules: {} ms", Duration.between(before, after).toMillis());
+        long after = System.currentTimeMillis();
+        log.debug("[ONBOARDING_REQUEST] Time between before and after fireAllRules: {} ms", after - before);
 
-        log.debug("Send message prepared: {}", req);
+        log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] Send message prepared: {}", req);
 
         return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
     }

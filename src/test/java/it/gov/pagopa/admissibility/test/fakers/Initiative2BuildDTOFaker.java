@@ -22,26 +22,31 @@ public final class Initiative2BuildDTOFaker {
 
     /** It will return an example of {@link Initiative2BuildDTO}. Providing a bias, it will return a pseudo-casual object */
     public static Initiative2BuildDTO mockInstance(Integer bias){
-        Initiative2BuildDTO out = new Initiative2BuildDTO();
+        return mockInstanceBuilder(bias).build();
+    }
+    public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias){
+        Initiative2BuildDTO.Initiative2BuildDTOBuilder out = Initiative2BuildDTO.builder();
 
         FakeValuesService fakeValuesService = getFakeValuesService(bias);
 
-        out.setInitiativeId(fakeValuesService.bothify(bias!=null? "id_%d".formatted(bias) : "?????"));
-        out.setInitiativeName(fakeValuesService.bothify("?????"));
-        out.setOrganizationId(fakeValuesService.bothify("?????"));
+        out.initiativeId(fakeValuesService.bothify(bias!=null? "id_%d".formatted(bias) : "?????"));
+        out.initiativeName(fakeValuesService.bothify("?????"));
+        out.organizationId(fakeValuesService.bothify("?????"));
 
-        out.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
-        out.getBeneficiaryRule().setAutomatedCriteria(new ArrayList<>());
-        out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null));
-        out.getBeneficiaryRule().getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null));
+        final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
+        beneficiaryRule.setAutomatedCriteria(new ArrayList<>());
+        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null));
+        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null));
 
-        out.setPdndToken("PDND_TOKEN");
-        out.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
+        out.beneficiaryRule(beneficiaryRule);
+
+        out.pdndToken("PDND_TOKEN");
+        out.general(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
                 InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
 
-        TestUtils.checkNotNullFields(out);
+        TestUtils.checkNotNullFields(out.build());
         return out;
     }
 

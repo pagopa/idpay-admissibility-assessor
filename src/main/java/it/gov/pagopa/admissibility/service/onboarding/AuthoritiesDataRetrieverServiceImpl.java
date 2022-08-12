@@ -17,7 +17,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     @Override
-    public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingDTO, InitiativeConfig initiativeConfig) {
+    public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+        log.trace("[ONBOARDING_REQUEST] [AUTOMATED_CRITERIA_FIELD_FILL] retrieving automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         /* TODO
         * for each initiativeConfig.automatedCriteriaCode,
@@ -27,7 +28,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        return Mono.just(onboardingDTO);    // TODO
+        return Mono.just(onboardingRequest);    // TODO
 
     }
 }

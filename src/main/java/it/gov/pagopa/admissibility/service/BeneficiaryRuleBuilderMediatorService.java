@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service;
 
 
-import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 
 /**
@@ -14,5 +14,5 @@ import reactor.core.publisher.Flux;
  * </ol>
  * */
 public interface BeneficiaryRuleBuilderMediatorService {
-    void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux);
+    void execute(Flux<Message<String>> initiativeBeneficiaryRuleDTOFlux);
 }

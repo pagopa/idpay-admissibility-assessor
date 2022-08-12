@@ -1,5 +1,9 @@
 package it.gov.pagopa.admissibility.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.admissibility.config.JsonConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Assertions;
 
 import java.math.BigDecimal;
@@ -12,6 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public final class TestUtils {
     private TestUtils() {
     }
+
+    /** applications's objectMapper */
+    public static ObjectMapper objectMapper = new JsonConfig().objectMapper();
 
     /**
      * It will assert not null on all o's fields
@@ -26,7 +33,6 @@ public final class TestUtils {
                 f -> !excludedFieldsSet.contains(f.getName()));
     }
 
-
     /**
      * It will assert if 2 BigDecimal are equals, ignoring scale
      */
@@ -34,4 +40,17 @@ public final class TestUtils {
         assertEquals(0, expected.compareTo(actual), "Expected: %s, Obtained: %s".formatted(expected, actual));
     }
 
+    /** To serialize an object as a JSON handling Exception */
+    public static String jsonSerializer(Object value) {
+        try {
+            return objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /** To read {@link org.apache.kafka.common.header.Header} value */
+    public static String getHeaderValue(ConsumerRecord<String, String> errorMessage, String errorMsgHeaderSrcServer) {
+        return new String(errorMessage.headers().lastHeader(errorMsgHeaderSrcServer).value());
+    }
 }

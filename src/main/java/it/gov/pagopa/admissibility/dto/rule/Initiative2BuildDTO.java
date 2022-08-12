@@ -1,8 +1,14 @@
 package it.gov.pagopa.admissibility.dto.rule;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Initiative2BuildDTO {
     private String initiativeId;
     private String initiativeName;

@@ -34,8 +34,9 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
     }
 
     @Override
-    public OnboardingRejectionReason apply(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
-        final String initiativeBasedRejectionReason = checkInitiativeError(onboardingDTO, onboardingContext);
+    public OnboardingRejectionReason apply(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+        log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] evaluating initiative check on onboarding request of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+        final String initiativeBasedRejectionReason = checkInitiativeError(onboardingRequest, onboardingContext);
         return StringUtils.hasText(initiativeBasedRejectionReason) ?
                 OnboardingRejectionReason.builder()
                         .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
@@ -44,21 +45,21 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
                 : null;
     }
 
-    private String checkInitiativeError(OnboardingDTO onboardingDTO, Map<String, Object> onboardingContext) {
-        InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingDTO.getInitiativeId());
+    private String checkInitiativeError(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+        InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingRequest.getInitiativeId());
         if(initiativeConfig == null){
-            log.error("cannot find the initiative id %s to which the user %s is asking to onboard".formatted(onboardingDTO.getInitiativeId(), onboardingDTO.getUserId()));
+            log.error("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] [INITIATIVE_CHECK] cannot find the initiative id {} to which the user {} is asking to onboard", onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
             return OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL;
         }
         onboardingContext.put(ONBOARDING_CONTEXT_INITIATIVE_KEY,initiativeConfig);
 
-        String tcAcceptDateCheck = dateCheck(onboardingDTO.getTcAcceptTimestamp(), initiativeConfig.getStartDate(),
+        String tcAcceptDateCheck = dateCheck(onboardingRequest.getTcAcceptTimestamp(), initiativeConfig.getStartDate(),
                 initiativeConfig.getEndDate(), OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL);
         if(tcAcceptDateCheck != null){
             return tcAcceptDateCheck;
         }
 
-        return dateCheck(onboardingDTO.getCriteriaConsensusTimestamp(), initiativeConfig.getStartDate(),
+        return dateCheck(onboardingRequest.getCriteriaConsensusTimestamp(), initiativeConfig.getStartDate(),
                 initiativeConfig.getEndDate(), OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL);
     }
 }
