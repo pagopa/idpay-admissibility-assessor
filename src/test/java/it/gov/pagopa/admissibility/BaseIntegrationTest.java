@@ -34,6 +34,8 @@ import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
@@ -47,6 +49,7 @@ import static org.awaitility.Awaitility.await;
         "${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}",
+        "${spring.cloud.stream.bindings.errors-out-0.destination}",
 }, controlledShutdown = true)
 @TestPropertySource(
         properties = {
@@ -56,7 +59,7 @@ import static org.awaitility.Awaitility.await;
 
                 //region kafka brokers
                 "logging.level.org.apache.zookeeper=WARN",
-                "logging.level.org.apache.kafka=INFO",
+                "logging.level.org.apache.kafka=WARN",
                 "logging.level.kafka=WARN",
                 "logging.level.state.change.logger=WARN",
                 "spring.cloud.stream.kafka.binder.configuration.security.protocol=PLAINTEXT",
@@ -65,6 +68,7 @@ import static org.awaitility.Awaitility.await;
                 "spring.cloud.stream.binders.kafka-beneficiary-rule-builder.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-onboarding-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
+                "spring.cloud.stream.binders.kafka-errors.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 //endregion
 
                 //region mongodb
@@ -92,7 +96,7 @@ public abstract class BaseIntegrationTest {
     protected ObjectMapper objectMapper;
 
     @Value("${spring.kafka.bootstrap-servers}")
-    private String bootstrapServers;
+    protected String bootstrapServers;
     @Value("${spring.cloud.stream.kafka.binder.zkNodes}")
     private String zkNodes;
 
@@ -102,6 +106,8 @@ public abstract class BaseIntegrationTest {
     protected String topicAdmissibilityProcessorRequest;
     @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}")
     protected String topicAdmissibilityProcessorOutcome;
+    @Value("${spring.cloud.stream.bindings.errors-out-0.destination}")
+    protected String topicErrors;
 
     @BeforeAll
     public static void unregisterPreviouslyKafkaServers() throws MalformedObjectNameException, MBeanRegistrationException, InstanceNotFoundException {
@@ -162,6 +168,20 @@ public abstract class BaseIntegrationTest {
 
     protected void consumeFromBeginning(Consumer<String, String> consumer) {
         consumer.seekToBeginning(consumer.assignment());
+    }
+
+    protected List<ConsumerRecord<String, String>> consumeMessages(String topic, int expectedNumber, long maxWaitingMs) {
+        long startTime = System.currentTimeMillis();
+        Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group");
+
+        List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
+        while (payloadConsumed.size() < expectedNumber) {
+            if (System.currentTimeMillis() - startTime > maxWaitingMs) {
+                Assertions.fail("timeout of %d ms expired".formatted(maxWaitingMs));
+            }
+            consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);
+        }
+        return payloadConsumed;
     }
 
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, Object payload) {

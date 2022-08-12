@@ -30,6 +30,10 @@ spring:
           group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-beneficiary-rule-builder
+        errors-out-0:
+          destination: ${KAFKA_ERROR_TOPIC:idpay-errors}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-errors
       binders:
         kafka-onboarding-request:
           type: kafka
@@ -49,6 +53,12 @@ spring:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
               configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
+        kafka-errors:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_ERRORS_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_ERRORS_SASL_JAAJ_CONFIG:}
       kafka:
         binder:
           auto-create-topics: false

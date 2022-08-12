@@ -12,9 +12,7 @@ import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -22,9 +20,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,27 +55,14 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
-        Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topicAdmissibilityProcessorOutcome, "idpay-group");
-
         long timeConsumerResponse = System.currentTimeMillis();
-
-        List<String> payloadConsumed = new ArrayList<>(onboardingsNumber);
-        int counter = 0;
-        while (counter < onboardingsNumber) {
-            if (System.currentTimeMillis() - timeConsumerResponse > maxWaitingMs) {
-                Assertions.fail("timeout of %d ms expired".formatted(maxWaitingMs));
-            }
-            ConsumerRecords<String, String> published = consumer.poll(Duration.ofMillis(7000));
-            for (ConsumerRecord<String, String> record : published) {
-                payloadConsumed.add(record.value());
-                counter++;
-            }
-        }
+        List<ConsumerRecord<String, String>> payloadConsumed = consumeMessages(topicAdmissibilityProcessorOutcome, onboardingsNumber, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
+
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
-        Assertions.assertEquals(onboardingsNumber, counter);
-        for (String p : payloadConsumed) {
-            EvaluationDTO evaluation = objectMapper.readValue(p, EvaluationDTO.class);
+        Assertions.assertEquals(onboardingsNumber, payloadConsumed.size());
+        for (ConsumerRecord<String, String> p : payloadConsumed) {
+            EvaluationDTO evaluation = objectMapper.readValue(p.value(), EvaluationDTO.class);
             checkResponse(evaluation);
         }
 

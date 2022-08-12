@@ -24,22 +24,25 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRul
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final InitInitiativeCounterService initInitiativeCounterService;
+    private final ErrorNotifierService errorNotifierService;
 
-    public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService) {
+    public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService, ErrorNotifierService errorNotifierService) {
         this.beneficiaryRulesBuildDelay = Duration.parse(beneficiaryRulesBuildDelay);
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.initInitiativeCounterService = initInitiativeCounterService;
+        this.errorNotifierService = errorNotifierService;
     }
 
     @Override
     public void execute(Flux<Initiative2BuildDTO> initiativeBeneficiaryRuleDTOFlux) {
         initiativeBeneficiaryRuleDTOFlux
                 .map(beneficiaryRule2DroolsRule) // TODO handle null value due to invalid ruleit.gov.pagopa.admissibility.service.build.BeneficiaryRuleBuilderMediatorService
+                .onErrorContinue((error, payload) -> errorNotifierService.notifyBeneficiaryRuleBuilder(payload, error instanceof ClassCastException ? "Unexpected JSON" : "An error occurred while building drools rule", true, error))
                 .flatMap(droolsRuleRepository::save)
-                .map(i->{
+                .map(i -> {
                     onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
                     return i;
                 })
