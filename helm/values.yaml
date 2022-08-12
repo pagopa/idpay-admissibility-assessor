@@ -67,7 +67,7 @@ microservice-chart:
       KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
       # TODO fix error topic reference
       KAFKA_ERRORS_BROKER: kafka_broker
-      KAFKA_ERRRORS_TOPIC: idpay-transaction-error
+      KAFKA_ERRRORS_TOPIC: idpay_transaction_error_topic
 
   envSecret:
     MONGODB_URI: mongodb-connection-string
