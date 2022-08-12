@@ -51,6 +51,7 @@ microservice-chart:
     KAFKA_ONBOARDING_REQUEST_GROUP_ID: idpay-onboarding-request-consumer-group
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: idpay-beneficiary-rule-update-consumer-group
     JAVA_TOOL_OPTIONS: -Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar
+    # CACHE_REFRESH_MS_RATE: 31536000000 TODO to fill into configMap
 
   envConfigMapExternals:
     idpay-common:

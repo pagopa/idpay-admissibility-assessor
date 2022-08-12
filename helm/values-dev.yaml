@@ -38,7 +38,3 @@ microservice-chart:
   keyvault:
     name: "cstar-d-idpay-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
-
-  envConfig:
-    # TODO change when setting cache for kieContainer or using more than 1 pod
-    CACHE_REFRESH_MS_RATE: 31536000000

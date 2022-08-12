@@ -135,7 +135,8 @@ app:
     # the delay after which it will fetch all the rules and compile them
     build-delay-duration: ${BENEFICIARY_RULE_BUILD_DELAY_DURATION:PT1S} # each second
     # The milliseconds rate after which to fetch from cache a new instance of the benefiricaryRilekieContainer
-    cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:10000}
+    # TODO revert default value (10000) once filled env-specific value into config Map
+    cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:31536000000}
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"
