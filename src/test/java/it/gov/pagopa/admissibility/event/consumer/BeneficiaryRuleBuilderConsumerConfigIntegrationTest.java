@@ -27,8 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -48,7 +46,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     @Test
     void testBeneficiaryRuleBuilding() {
-        int validRules = 100; // use even values
+        int validRules = 100; // use even number
         int notValidRules = errorUseCases.size();
         long maxWaitingMs = 30000;
 
@@ -75,7 +73,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
         checkInitiativeCounters(validRules);
 
-        checkErrorsPublished(notValidRules, maxWaitingMs);
+        checkErrorsPublished(notValidRules, maxWaitingMs, errorUseCases);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
         Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
@@ -144,20 +142,6 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         );
     }
 
-    private final Pattern errorUseCaseIdPatternMatch = Pattern.compile("\"initiativeId\":\"id_([0-9]+)_?[^\"]*\"");
-
-    private void checkErrorsPublished(int notValidRules, long maxWaitingMs) {
-        final List<ConsumerRecord<String, String>> errors = consumeMessages(topicErrors, notValidRules, maxWaitingMs);
-        for (final ConsumerRecord<String, String> record : errors) {
-            final Matcher matcher = errorUseCaseIdPatternMatch.matcher(record.value());
-            int useCaseId = matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
-            if (useCaseId == -1) {
-                throw new IllegalStateException("UseCaseId not recognized! " + record.value());
-            }
-            errorUseCases.get(useCaseId).getSecond().accept(record);
-        }
-    }
-
     //region not valid useCases
     // all use cases configured must have a unique id recognized by the regexp errorUseCaseIdPatternMatch
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
@@ -200,12 +184,8 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         ));
     }
 
-    private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String s, String expectedPayload) {
-        Assertions.assertEquals(bootstrapServers, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_SERVER));
-        Assertions.assertEquals(topicBeneficiaryRuleConsumer, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
-        Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
-        Assertions.assertEquals(s, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
-        Assertions.assertEquals(errorMessage.value(), expectedPayload);
+    private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
+        checkErrorMessageHeaders(topicBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload);
     }
     //endregion
 }

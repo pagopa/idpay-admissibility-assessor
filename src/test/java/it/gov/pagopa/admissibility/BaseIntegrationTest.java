@@ -8,6 +8,8 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.util.Pair;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
@@ -41,6 +44,8 @@ import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.awaitility.Awaitility.await;
 
@@ -173,16 +178,17 @@ public abstract class BaseIntegrationTest {
 
     protected List<ConsumerRecord<String, String>> consumeMessages(String topic, int expectedNumber, long maxWaitingMs) {
         long startTime = System.currentTimeMillis();
-        Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group");
+        try(Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group")) {
 
-        List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
-        while (payloadConsumed.size() < expectedNumber) {
-            if (System.currentTimeMillis() - startTime > maxWaitingMs) {
-                Assertions.fail("timeout of %d ms expired. Read %d messages of %d".formatted(maxWaitingMs, payloadConsumed.size(), expectedNumber));
+            List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
+            while (payloadConsumed.size() < expectedNumber) {
+                if (System.currentTimeMillis() - startTime > maxWaitingMs) {
+                    Assertions.fail("timeout of %d ms expired. Read %d messages of %d".formatted(maxWaitingMs, payloadConsumed.size(), expectedNumber));
+                }
+                consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);
             }
-            consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);
+            return payloadConsumed;
         }
-        return payloadConsumed;
     }
 
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, Object payload) {
@@ -207,5 +213,26 @@ public abstract class BaseIntegrationTest {
         } catch (RuntimeException e) {
             Assertions.fail(buildTestFailureMessage.get(), e);
         }
+    }
+
+    private final Pattern errorUseCaseIdPatternMatch = Pattern.compile("\"initiativeId\":\"id_([0-9]+)_?[^\"]*\"");
+    protected void checkErrorsPublished(int notValidRules, long maxWaitingMs, List<Pair<Supplier<String>, java.util.function.Consumer<ConsumerRecord<String, String>>>> errorUseCases) {
+        final List<ConsumerRecord<String, String>> errors = consumeMessages(topicErrors, notValidRules, maxWaitingMs);
+        for (final ConsumerRecord<String, String> record : errors) {
+            final Matcher matcher = errorUseCaseIdPatternMatch.matcher(record.value());
+            int useCaseId = matcher.find() ? Integer.parseInt(matcher.group(1)) : -1;
+            if (useCaseId == -1) {
+                throw new IllegalStateException("UseCaseId not recognized! " + record.value());
+            }
+            errorUseCases.get(useCaseId).getSecond().accept(record);
+        }
+    }
+
+    protected void checkErrorMessageHeaders(String srcTopic, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
+        Assertions.assertEquals(bootstrapServers, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_SERVER));
+        Assertions.assertEquals(srcTopic, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
+        Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
+        Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
+        Assertions.assertEquals(errorMessage.value(), expectedPayload);
     }
 }

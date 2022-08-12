@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
@@ -10,6 +9,7 @@ import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
 import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.utils.Utils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -64,19 +64,14 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRul
                 })
                 .flatMap(this::initializeCounters)
 
-                .onErrorResume(e->Mono.deferContextual(ctx -> {
+                .onErrorResume(e->{
                     errorNotifierService.notifyBeneficiaryRuleBuilder(message, "An error occurred handling initiative", true, e);
                     return Mono.empty();
-                }));
+                });
     }
 
     private Initiative2BuildDTO deserializeMessage(Message<String> message) {
-            try {
-                return objectReader.readValue(message.getPayload());
-            } catch (JsonProcessingException e) {
-                errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e);
-                return null;
-            }
+        return Utils.deserializeMessage(message, objectReader, (e) -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e));
     }
 
     private Mono<DroolsRule> initializeCounters(DroolsRule droolsRule) {

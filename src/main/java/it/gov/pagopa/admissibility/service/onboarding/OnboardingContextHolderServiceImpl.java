@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieContainer;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +45,9 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     @Scheduled(fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
     public void refreshKieContainer(){
         log.trace("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
-        kieContainerBuilderService.buildAll().subscribe(this::setBeneficiaryRulesKieContainer);
+        final Flux<DroolsRule> droolsRuleFlux = droolsRuleRepository.findAll().doOnNext(dr -> setInitiativeConfig(dr.getInitiativeConfig()));
+
+        kieContainerBuilderService.build(droolsRuleFlux).subscribe(this::setBeneficiaryRulesKieContainer);
     }
     //endregion
 

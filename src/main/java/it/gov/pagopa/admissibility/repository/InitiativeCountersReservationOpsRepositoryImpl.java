@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.repository;
 
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.ArithmeticOperators;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Repository
+@Slf4j
 public class InitiativeCountersReservationOpsRepositoryImpl implements InitiativeCountersReservationOpsRepository {
 
     public static final String FIELD_INITIATIVE_BUDGET = InitiativeCounters.Fields.initiativeBudget;
@@ -27,6 +29,7 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
     }
 
     public Mono<InitiativeCounters> reserveBudget(String initiativeId, BigDecimal reservation) {
+        log.trace("[ONBOARDING_REQUEST] [BUDGET_RESERVATION] Reserving budget {} on initiative {}", reservation, initiativeId);
         return mongoTemplate.findAndModify(
                 Query.query(Criteria
                         .where("id").is(initiativeId)
