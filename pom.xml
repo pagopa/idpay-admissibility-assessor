@@ -55,6 +55,23 @@
 			<version>7.73.0.Final</version>
 		</dependency>
 
+		<!--MQ SERVICE BUS-->
+		<dependency>
+			<groupId>com.azure.spring</groupId>
+			<artifactId>spring-cloud-azure-stream-binder-servicebus</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jms</artifactId>
+			<version>5.3.22</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.qpid</groupId>
+			<artifactId>qpid-jms-client</artifactId>
+			<version>1.6.0</version>
+		</dependency>
+
 		<!--3rd party library-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
