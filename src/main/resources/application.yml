@@ -37,14 +37,6 @@ spring:
           destination: ${KAFKA_ERROR_TOPIC:idpay-errors}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-errors
-      servicebus:
-        bindings:
-          admissibilityProcessor-in-0:
-            consumer:
-              auto-complete: false
-          admissibilityProcessor-out-0:
-            producer:
-              entity-type: topic
       binders:
         kafka-onboarding-request:
           type: servicebus
