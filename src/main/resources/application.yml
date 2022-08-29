@@ -21,13 +21,13 @@ spring:
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
-          group: ${KAFKA_ONBOARDING_REQUEST_GROUP_ID:idPayAdmissibilityProcessor}
+#          group: ${KAFKA_ONBOARDING_REQUEST_GROUP_ID:idPayAdmissibilityProcessor}
 #          content-type: ${KAFKA_CONTENT_TYPE:application/json}
-#          binder: kafka-onboarding-request
+          binder: kafka-onboarding-request
         admissibilityProcessor-out-0:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
-#          content-type: ${KAFKA_CONTENT_TYPE:application/json}
-#          binder: kafka-onboarding-outcome
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-onboarding-outcome
         beneficiaryRuleBuilderConsumer-in-0:
           destination: ${KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC:idpay-beneficiary-rule-update}
           group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
@@ -46,18 +46,18 @@ spring:
             producer:
               entity-type: topic
       binders:
-#        kafka-onboarding-request:
-#          type: kafka
-#          environment:
-#            spring.cloud.stream.kafka.binder:
-#              brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
-#              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
-#        kafka-onboarding-outcome:
-#          type: kafka
-#          environment:
-#            spring.cloud.stream.kafka.binder:
-#              brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
-#              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
+        kafka-onboarding-request:
+          type: servicebus
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
+        kafka-onboarding-outcome:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:

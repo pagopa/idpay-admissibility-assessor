@@ -68,6 +68,7 @@ microservice-chart:
       # TODO fix error topic reference
       KAFKA_ERRORS_BROKER: kafka_broker
       KAFKA_ERRRORS_TOPIC: idpay_transaction_error_topic
+      SERVICEBUS_ONBOARDING_CONNECTION_STRING: idpay-onboarding-request-processor-sas-key
 
   envSecret:
     MONGODB_URI: mongodb-connection-string
