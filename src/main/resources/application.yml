@@ -17,7 +17,7 @@ spring:
         connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     stream:
       function:
-        definition: admissibilityProcessor;beneficiaryRuleBuilderConsumer
+        definition: admissibilityProcessor;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
@@ -28,6 +28,9 @@ spring:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
+        admissibilityDelayProducer-out-0:
+          destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
+          binder: kafka-onboarding-request
         beneficiaryRuleBuilderConsumer-in-0:
           destination: ${KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC:idpay-beneficiary-rule-update}
           group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
@@ -37,6 +40,11 @@ spring:
           destination: ${KAFKA_ERROR_TOPIC:idpay-errors}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-errors
+        servicebus:
+          bindings:
+            admissibilityDelayProducer-out-0:
+              producer:
+                entity-type: queue
       binders:
         kafka-onboarding-request:
           type: servicebus
