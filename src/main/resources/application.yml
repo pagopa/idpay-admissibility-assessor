@@ -40,11 +40,11 @@ spring:
           destination: ${KAFKA_ERROR_TOPIC:idpay-errors}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-errors
-        servicebus:
-          bindings:
-            admissibilityDelayProducer-out-0:
-              producer:
-                entity-type: queue
+      servicebus:
+        bindings:
+          admissibilityDelayProducer-out-0:
+            producer:
+              entity-type: queue
       binders:
         kafka-onboarding-request:
           type: servicebus
@@ -125,6 +125,10 @@ app:
   threads:
     # the size of the thread pool to handle @Scheduled tasks
     schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
+  onboarding-request:
+    delay-message:
+      next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
+      delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
   beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
     online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}

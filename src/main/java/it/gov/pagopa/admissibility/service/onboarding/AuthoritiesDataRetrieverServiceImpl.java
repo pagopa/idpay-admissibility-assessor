@@ -10,22 +10,28 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService{
 
-    private static int counter = 0;
+    private int counter = 0;
+
+    private final Long delaySeconds;
+    private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
     private final StreamBridge streamBridge;
 
-    public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService, StreamBridge streamBridge) {
+    public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
+                                               StreamBridge streamBridge,
+                                               @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
+                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
+        this.delaySeconds = delaySeconds;
+        this.nextDay = nextDay;
     }
 
     @Override
@@ -43,7 +49,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         if (counter == 1) {
             log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold");
             MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
-                    .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcTomorrow());
+                    .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
             streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
             counter = 0;
             return Mono.empty();
@@ -54,9 +60,13 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     }
 
-    private LocalDateTime calcTomorrow() {
+    private OffsetDateTime calcDelay() {
         LocalDate today = LocalDate.now();
-        LocalTime midnight = LocalTime.MIDNIGHT;
-        return LocalDateTime.of(today, midnight).plusDays(1);
+        if(this.nextDay) {
+            LocalTime midnight = LocalTime.MIDNIGHT;
+            return LocalDateTime.of(today, midnight).plusDays(1).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+        } else {
+            return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+        }
     }
 }
