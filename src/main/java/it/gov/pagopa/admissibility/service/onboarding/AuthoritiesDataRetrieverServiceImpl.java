@@ -46,8 +46,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        if (counter == 1) {
-            log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold");
+        if (counter == 2) {
+            log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
             MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
                     .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
             streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
