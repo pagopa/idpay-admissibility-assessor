@@ -1,19 +1,37 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+
+import java.time.*;
 
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService{
 
+    private int counter = 0;
+
+    private final Long delaySeconds;
+    private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
-    public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService) {
+    private final StreamBridge streamBridge;
+
+    public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
+                                               StreamBridge streamBridge,
+                                               @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
+                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay) {
         this.onboardingContextHolderService = onboardingContextHolderService;
+        this.streamBridge = streamBridge;
+        this.delaySeconds = delaySeconds;
+        this.nextDay = nextDay;
     }
 
     @Override
@@ -28,7 +46,27 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        return Mono.just(onboardingRequest);    // TODO
+        if (counter == 2) {
+            log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
+            MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
+                    .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
+            streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
+            counter = 0;
+            return Mono.empty();
+        } else {
+            counter++;
+            return Mono.just(onboardingRequest);    // TODO
+        }
 
+    }
+
+    private OffsetDateTime calcDelay() {
+        LocalDate today = LocalDate.now();
+        if(this.nextDay) {
+            LocalTime midnight = LocalTime.MIDNIGHT;
+            return LocalDateTime.of(today, midnight).plusDays(1).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+        } else {
+            return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+        }
     }
 }
