@@ -4,15 +4,12 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.kie.api.definition.KiePackage;
@@ -23,7 +20,6 @@ import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -138,7 +134,11 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         Assertions.assertEquals(
                 Collections.emptyList(),
                 initiativeCountersRepository.findAll()
-                        .filter(i -> i.getOnboarded() != 0L && !i.getReservedInitiativeBudget().equals(BigDecimal.ZERO))
+                        .filter(i ->
+                                i.getOnboarded() == 1L
+                                        && i.getReservedInitiativeBudgetCents() > 0L
+                                        && i.getResidualInitiativeBudgetCents() < i.getInitiativeBudgetCents()
+                                        && i.getResidualInitiativeBudgetCents() > 0L)
                         .collectList()
                         .block()
         );

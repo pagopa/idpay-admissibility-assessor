@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.repository;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +29,7 @@ class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegration
         final BigDecimal budget = BigDecimal.valueOf(10099);
         final BigDecimal budgetReservedPerRequest = BigDecimal.valueOf(100);
         final BigDecimal expectedBudgetReserved = BigDecimal.valueOf(10000);
+        final BigDecimal expectedBudgetResidual = BigDecimal.valueOf(99);
         final int expectedReservations = 100;
 
         storeInitiative(budget, budgetReservedPerRequest);
@@ -48,22 +48,28 @@ class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegration
             }
         }).count();
 
-        checkStoredBudgetReservation(expectedBudgetReserved, expectedReservations);
+        checkStoredBudgetReservation(expectedBudgetReserved, expectedBudgetResidual, expectedReservations);
         Assertions.assertEquals(expectedReservations, successfulReservation);
     }
 
     private void storeInitiative(BigDecimal budget, BigDecimal reservedPerRequest) {
         initiativeCountersRepository.save(InitiativeCounters.builder()
                 .id("prova")
-                .initiativeBudget(budget)
+                .initiativeBudgetCents(euro2cents(budget))
+                .residualInitiativeBudgetCents(euro2cents(budget))
                 .build()).block();
     }
 
-    private void checkStoredBudgetReservation(BigDecimal expectedBudgetReserved, int expectedReservations) {
+    private long euro2cents(BigDecimal budget) {
+        return budget.longValue() * 100;
+    }
+
+    private void checkStoredBudgetReservation(BigDecimal expectedBudgetReservedCents, BigDecimal expectedResidualBudgetCents, int expectedReservations) {
         final InitiativeCounters c = initiativeCountersRepository.findById("prova").block();
 
         Assertions.assertNotNull(c);
-        TestUtils.assertBigDecimalEquals(expectedBudgetReserved, c.getReservedInitiativeBudget());
+        Assertions.assertEquals(euro2cents(expectedBudgetReservedCents), c.getReservedInitiativeBudgetCents());
+        Assertions.assertEquals(euro2cents(expectedResidualBudgetCents), c.getResidualInitiativeBudgetCents());
         Assertions.assertEquals(expectedReservations, c.getOnboarded());
     }
 }

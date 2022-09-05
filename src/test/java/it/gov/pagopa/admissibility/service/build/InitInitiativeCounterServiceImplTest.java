@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.build;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +41,7 @@ class InitInitiativeCounterServiceImplTest {
 
     @Test
     void testNotExistent(){
-        test(0L, BigDecimal.ZERO);
+        test(0L, 0L);
     }
 
     @Test
@@ -50,29 +49,35 @@ class InitInitiativeCounterServiceImplTest {
         InitiativeCounters preSaved = InitiativeCounters.builder()
                 .id(initiative.getInitiativeId())
                 .onboarded(10L)
-                .initiativeBudget(BigDecimal.TEN)
+                .initiativeBudgetCents(10000L)
+                .residualInitiativeBudgetCents(10000L)
                 .build();
 
         Mockito.when(initiativeCountersRepositoryMock.findById("ID")).thenReturn(Mono.just(preSaved));
 
-        test(preSaved.getOnboarded(), preSaved.getReservedInitiativeBudget());
+        test(preSaved.getOnboarded(), preSaved.getReservedInitiativeBudgetCents());
     }
 
-    private void test(Long expectedOnboarded, BigDecimal expectedReservation) {
+    private void test(Long expectedOnboarded, Long expectedReservationCents) {
         final InitiativeCounters result = initInitiativeCounterService.initCounters(initiative).block();
 
         Assertions.assertNotNull(result);
         Assertions.assertSame(initiative.getInitiativeId(), result.getId());
-        Assertions.assertSame(initiative.getInitiativeBudget(), result.getInitiativeBudget());
+        Assertions.assertEquals(euro2cents(initiative.getInitiativeBudget()), result.getInitiativeBudgetCents());
 
-        checkCounters(result, expectedOnboarded, expectedReservation);
+        checkCounters(result, expectedOnboarded, expectedReservationCents);
 
         Mockito.verify(initiativeCountersRepositoryMock).save(Mockito.same(result));
     }
 
-    private void checkCounters(InitiativeCounters result, Long expectedOnboarded, BigDecimal expectedReservation) {
+    private long euro2cents(BigDecimal beneficiaryInitiativeBudget) {
+        return beneficiaryInitiativeBudget.longValue() * 100;
+    }
+
+    private void checkCounters(InitiativeCounters result, Long expectedOnboarded, Long expectedReservationCents) {
         Assertions.assertEquals(expectedOnboarded, result.getOnboarded());
-        TestUtils.assertBigDecimalEquals(expectedReservation, result.getReservedInitiativeBudget());
+        Assertions.assertEquals(expectedReservationCents, result.getReservedInitiativeBudgetCents());
+        Assertions.assertEquals(euro2cents(initiative.getInitiativeBudget()), result.getResidualInitiativeBudgetCents());
     }
 
 }
