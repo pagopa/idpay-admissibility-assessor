@@ -69,7 +69,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return Mono.just(rejectedRequest);
                 } else {
                     log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                    return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext)
+                    return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext, message)
 
                             .onErrorResume(e -> {
                                 // TODO we should persist it as ONBOARDING_KO instead?
@@ -99,10 +99,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } else return null;
     }
 
-    private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+    private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext, Message<String> message) {
         final InitiativeConfig initiativeConfig = readInitiativeConfigFromContext(onboardingContext);
 
-        return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig)
+        return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig));
     }
 

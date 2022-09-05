@@ -20,6 +20,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @ExtendWith(MockitoExtension.class)
 class AdmissibilityEvaluatorMediatorServiceImplTest {
@@ -38,9 +40,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
         OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();
-        Flux<Message<String>> onboardingFlux = Flux.just(onboarding1, onboarding2)
-                .map(TestUtils::jsonSerializer)
-                .map(MessageBuilder::withPayload).map(MessageBuilder::build);
+
+        List<Message<String>> msgs = Stream.of(onboarding1, onboarding2).map(TestUtils::jsonSerializer)
+                .map(MessageBuilder::withPayload).map(MessageBuilder::build).collect(Collectors.toList());
+
+        Flux<Message<String>> onboardingFlux = Flux.fromIterable(msgs);
 
         Mockito.when(onboardingCheckService.check(Mockito.eq(onboarding1), Mockito.any())).thenReturn(null);
         Mockito.when(onboardingCheckService.check(Mockito.eq(onboarding2), Mockito.any())).thenReturn(OnboardingRejectionReason.builder()
@@ -48,7 +52,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .code("Rejected")
                 .build());
 
-        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        Mockito.when(authoritiesDataRetrieverService.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(i.getArgument(0)));
 
         // When

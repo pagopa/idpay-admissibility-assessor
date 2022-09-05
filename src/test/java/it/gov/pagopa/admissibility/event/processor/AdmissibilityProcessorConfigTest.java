@@ -319,7 +319,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         );
         errorUseCases.add(Pair.of(
                 () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any());
+                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any(), Mockito.any());
                     return failingAuthoritiesDataRetriever;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
