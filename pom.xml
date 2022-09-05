@@ -55,6 +55,13 @@
 			<version>7.73.0.Final</version>
 		</dependency>
 
+		<!--MQ SERVICE BUS-->
+		<dependency>
+			<groupId>com.azure.spring</groupId>
+			<artifactId>spring-cloud-azure-stream-binder-servicebus</artifactId>
+			<version>4.3.0</version>
+		</dependency>
+
 		<!--3rd party library-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>

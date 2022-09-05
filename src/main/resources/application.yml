@@ -12,31 +12,42 @@ spring:
     activate:
       on-profile: default
   cloud:
+    azure:
+      servicebus:
+        connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     stream:
       function:
-        definition: admissibilityProcessor;beneficiaryRuleBuilderConsumer
+        definition: admissibilityProcessor;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
-          group: ${KAFKA_ONBOARDING_REQUEST_GROUP_ID:idPayAdmissibilityProcessor}
-          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+#          group: ${KAFKA_ONBOARDING_REQUEST_GROUP_ID:idPayAdmissibilityProcessor}
+#          content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-request
         admissibilityProcessor-out-0:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
+        admissibilityDelayProducer-out-0:
+          destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
+          binder: kafka-onboarding-request
         beneficiaryRuleBuilderConsumer-in-0:
           destination: ${KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC:idpay-beneficiary-rule-update}
           group: ${KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID:idPayBeneficiaryRuleConsumer}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-beneficiary-rule-builder
         errors-out-0:
-          destination: ${KAFKA_ERROR_TOPIC:idpay-errors}
+          destination: ${KAFKA_ERRORS_TOPIC:idpay-errors}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-errors
+      servicebus:
+        bindings:
+          admissibilityDelayProducer-out-0:
+            producer:
+              entity-type: queue
       binders:
         kafka-onboarding-request:
-          type: kafka
+          type: servicebus
           environment:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
@@ -69,21 +80,6 @@ spring:
             sasl.mechanism: ${KAFKA_CONFIG_SASL_MECHANISM:PLAIN}
             security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
         bindings:
-          admissibilityProcessor-in-0:
-            consumer:
-              startOffset: ${KAFKA_ONBOARDING_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
-              autoCommitOffset: ${KAFKA_ONBOARDING_REQUEST_AUTO_COMMIT:${KAFKA_CONSUMER_CONFIG_AUTO_COMMIT:true}}
-              enableDlq: ${KAFKA_ONBOARDING_REQUEST_ENABLE_DLQ:${KAFKA_CONSUMER_CONFIG_ENABLE_DLQ:false}}
-              dlqName: ${KAFKA_ONBOARDING_REQUEST_DLQ_NAME:${KAFKA_CONSUMER_CONFIG_DLQ_NAME:errorTopic}}
-              standardHeaders: ${KAFKA_ONBOARDING_REQUEST_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
-              configuration:
-                max.poll:
-                  records: ${KAFKA_ONBOARDING_REQUEST_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
-                  interval.ms: ${KAFKA_ONBOARDING_REQUEST_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
-                connections.max.idle.ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
-                socket.connection.setup.timeout:
-                  max.ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
-                  ms: ${KAFKA_ONBOARDING_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
           beneficiaryRuleBuilderConsumer-in-0:
             consumer:
               startOffset: ${KAFKA_BENEFICIARY_RULE_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
@@ -129,6 +125,10 @@ app:
   threads:
     # the size of the thread pool to handle @Scheduled tasks
     schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
+  onboarding-request:
+    delay-message:
+      next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
+      delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
   beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
     online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}
