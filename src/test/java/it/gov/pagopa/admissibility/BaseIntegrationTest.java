@@ -86,7 +86,7 @@ import static org.awaitility.Awaitility.await;
 
                 //region service bus
                 // mocked replacing it using kafka
-                "spring.cloud.azure.servicebus.connection-string=Endpoint=endpoint;SharedAccessKeyName=sharedAccessKeyName;SharedAccessKey=sharedAccessKey;EntityPath=entityPath",
+                "spring.cloud.azure.servicebus.connection-string=Endpoint=sb://ServiceBusEndpoint;SharedAccessKeyName=sharedAccessKeyName;SharedAccessKey=sharedAccessKey;EntityPath=entityPath",
                 "spring.cloud.stream.binders.kafka-onboarding-request.type=kafka",
                 "spring.cloud.stream.binders.kafka-onboarding-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination=idpay-onboarding-request",
@@ -117,9 +117,10 @@ public abstract class BaseIntegrationTest {
     protected ObjectMapper objectMapper;
 
     @Value("${spring.kafka.bootstrap-servers}")
-    protected String bootstrapServers;
+    protected String kafkaBootstrapServers;
     @Value("${spring.cloud.stream.kafka.binder.zkNodes}")
     private String zkNodes;
+    protected String serviceBusServers = "ServiceBusEndpoint";
 
     @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}")
     protected String topicBeneficiaryRuleConsumer;
@@ -153,7 +154,7 @@ public abstract class BaseIntegrationTest {
                         ************************
                         """,
                 "mongo://%s:%s".formatted(mongodNet.getServerAddress().getHostAddress(), mongodNet.getPort()),
-                "bootstrapServers: %s, zkNodes: %s".formatted(bootstrapServers, zkNodes));
+                "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes));
     }
 
     protected Consumer<String, String> getEmbeddedKafkaConsumer(String topic, String groupId) {
@@ -253,8 +254,9 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected void checkErrorMessageHeaders(String srcTopic, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        Assertions.assertEquals(bootstrapServers, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_SERVER));
+    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
+        Assertions.assertEquals("kafka", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TYPE));
+        Assertions.assertEquals(srcServer, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_SERVER));
         Assertions.assertEquals(srcTopic, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
         Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
         Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
