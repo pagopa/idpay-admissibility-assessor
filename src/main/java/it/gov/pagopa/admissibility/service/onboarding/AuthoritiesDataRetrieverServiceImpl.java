@@ -6,7 +6,9 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -35,7 +37,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     @Override
-    public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+    public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         log.trace("[ONBOARDING_REQUEST] [AUTOMATED_CRITERIA_FIELD_FILL] retrieving automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         /* TODO
@@ -49,6 +51,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         if (counter == 2) {
             log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
             MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
+                    .setHeaders(new MessageHeaderAccessor(message))
                     .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
             streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
             counter = 0;

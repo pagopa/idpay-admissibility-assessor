@@ -21,10 +21,12 @@ import java.math.BigDecimal;
 public class InitiativeCounters {
     @Id
     private String id;
-    private BigDecimal initiativeBudget;
+    private Long initiativeBudgetCents;
 
     @Builder.Default
     private Long onboarded=0L;
     @Builder.Default
-    private BigDecimal reservedInitiativeBudget=BigDecimal.ZERO;
+    private Long reservedInitiativeBudgetCents=0L;
+    @Builder.Default
+    private Long residualInitiativeBudgetCents=0L;
 }

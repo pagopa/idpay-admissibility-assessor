@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import org.springframework.messaging.Message;
 import reactor.core.publisher.Mono;
 
 /**
@@ -10,5 +11,5 @@ import reactor.core.publisher.Mono;
  */
 public interface AuthoritiesDataRetrieverService {
 
-    Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingDTO, InitiativeConfig initiativeConfig);
+    Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingDTO, InitiativeConfig initiativeConfig, Message<String> message);
 }

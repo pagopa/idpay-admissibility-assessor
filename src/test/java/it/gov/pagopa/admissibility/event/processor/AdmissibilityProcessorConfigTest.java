@@ -18,8 +18,6 @@ import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -321,7 +319,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         );
         errorUseCases.add(Pair.of(
                 () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any());
+                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any(), Mockito.any());
                     return failingAuthoritiesDataRetriever;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingAuthoritiesDataRetriever)

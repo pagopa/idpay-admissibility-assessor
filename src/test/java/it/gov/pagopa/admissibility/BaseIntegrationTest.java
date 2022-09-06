@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility;
 
+import com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.flapdoodle.embed.mongo.MongodExecutable;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.util.Pair;
@@ -55,6 +57,7 @@ import java.util.stream.StreamSupport;
 import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
+@EnableAutoConfiguration(exclude = AzureEventHubsKafkaOAuth2AutoConfiguration.class)
 @EmbeddedKafka(topics = {
         "${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}",
@@ -77,9 +80,16 @@ import static org.awaitility.Awaitility.await;
                 "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.kafka.binder.zkNodes=${spring.embedded.zookeeper.connect}",
                 "spring.cloud.stream.binders.kafka-beneficiary-rule-builder.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
-                "spring.cloud.stream.binders.kafka-onboarding-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-errors.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
+                //endregion
+
+                //region service bus
+                // mocked replacing it using kafka
+                "spring.cloud.azure.servicebus.connection-string=Endpoint=endpoint;SharedAccessKeyName=sharedAccessKeyName;SharedAccessKey=sharedAccessKey;EntityPath=entityPath",
+                "spring.cloud.stream.binders.kafka-onboarding-request.type=kafka",
+                "spring.cloud.stream.binders.kafka-onboarding-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
+                "spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination=idpay-onboarding-request",
                 //endregion
 
                 //region mongodb

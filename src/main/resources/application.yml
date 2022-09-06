@@ -48,10 +48,6 @@ spring:
       binders:
         kafka-onboarding-request:
           type: servicebus
-          environment:
-            spring.cloud.stream.kafka.binder:
-              brokers: ${KAFKA_ONBOARDING_REQUEST_BROKER:${KAFKA_BROKER:}}
-              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_REQUEST_SASL_JAAJ_CONFIG:}
         kafka-onboarding-outcome:
           type: kafka
           environment:
