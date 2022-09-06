@@ -53,13 +53,13 @@ spring:
           environment:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
-              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAS_CONFIG:}
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
-              configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
+              configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAS_CONFIG:}
         kafka-errors:
           type: kafka
           environment:
