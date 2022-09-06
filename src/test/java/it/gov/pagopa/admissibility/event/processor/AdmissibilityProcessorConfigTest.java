@@ -354,7 +354,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     }
 
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(topicAdmissibilityProcessorRequest, errorMessage, errorDescription, expectedPayload);
+        checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, errorMessage, errorDescription, expectedPayload);
     }
     //endregion
 }

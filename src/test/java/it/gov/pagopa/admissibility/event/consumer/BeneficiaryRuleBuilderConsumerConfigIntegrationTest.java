@@ -187,7 +187,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     }
 
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(topicBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload);
+        checkErrorMessageHeaders(kafkaBootstrapServers, topicBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload);
     }
     //endregion
 }
