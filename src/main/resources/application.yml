@@ -8,6 +8,7 @@ reactor:
 spring:
   application:
     name: idpay-admissibility-assessor
+  jmx.enabled: true
   config:
     activate:
       on-profile: default
@@ -53,13 +54,13 @@ spring:
           environment:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_ONBOARDING_OUTCOME_BROKER:${KAFKA_BROKER:}}
-              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAJ_CONFIG:}
+              configuration.sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAS_CONFIG:}
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
-              configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAJ_CONFIG:}
+              configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAS_CONFIG:}
         kafka-errors:
           type: kafka
           environment:
@@ -131,8 +132,7 @@ app:
     # the delay after which it will fetch all the rules and compile them
     build-delay-duration: ${BENEFICIARY_RULE_BUILD_DELAY_DURATION:PT1S} # each second
     # The milliseconds rate after which to fetch from cache a new instance of the benefiricaryRilekieContainer
-    # TODO revert default value (10000) once filled env-specific value into config Map
-    cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:31536000000}
+    cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:10000}
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"
