@@ -5,9 +5,7 @@ microservice-chart:
     pullPolicy: Always
 
   ingress:
-    create: true
     host: "dev01.idpay.internal.dev.cstar.pagopa.it"
-    path: /idpay/admissibility/(.*)
 
   resources:
     requests:

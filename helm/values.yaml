@@ -27,6 +27,10 @@ microservice-chart:
     type: ClusterIP
     port: 8080
 
+  ingress:
+    create: true
+    path: /idpay/admissibility/(.*)
+
   serviceAccount:
     create: false
     annotations: {}
