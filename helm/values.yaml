@@ -29,7 +29,7 @@ microservice-chart:
 
   ingress:
     create: true
-    host: "dev01.idpay.internal.dev.cstar.pagopa.it"
+    host: ""
     path: /idpay/admissibility/(.*)
 
   serviceAccount:
