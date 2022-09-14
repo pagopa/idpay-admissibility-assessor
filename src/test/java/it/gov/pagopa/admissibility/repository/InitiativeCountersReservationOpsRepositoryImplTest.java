@@ -18,7 +18,7 @@ import java.util.stream.IntStream;
 class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
 
     @Autowired
-    private InitiativeCountersRepository initiativeCountersRepository;
+    protected InitiativeCountersRepository initiativeCountersRepository;
     @Autowired
     private InitiativeCountersReservationOpsRepositoryImpl initiativeCountersReservationOpsRepositoryImpl;
 
