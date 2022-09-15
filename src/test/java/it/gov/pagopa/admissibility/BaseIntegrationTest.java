@@ -66,6 +66,9 @@ import static org.awaitility.Awaitility.await;
 }, controlledShutdown = true)
 @TestPropertySource(
         properties = {
+                // even if enabled into application.yml, spring test will not load it https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing.spring-boot-applications.jmx
+//                "spring.jmx.enabled=true",
+
                 //region common feature disabled
                 "app.beneficiary-rule.cache.refresh-ms-rate:60000",
                 "logging.level.it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl=WARN",
@@ -135,10 +138,15 @@ public abstract class BaseIntegrationTest {
 
     @BeforeAll
     public static void unregisterPreviouslyKafkaServers() throws MalformedObjectNameException, MBeanRegistrationException, InstanceNotFoundException {
-        ObjectName kafkaServerMbeanName = new ObjectName("kafka.server:type=app-info,id=0");
+        unregisterMBean("kafka.server:type=app-info,id=0");
+        unregisterMBean("org.springframework.*:*");
+    }
+
+    private static void unregisterMBean(String objectName) throws MalformedObjectNameException, InstanceNotFoundException, MBeanRegistrationException {
+        ObjectName mbeanName = new ObjectName(objectName);
         MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-        if (mBeanServer.isRegistered(kafkaServerMbeanName)) {
-            mBeanServer.unregisterMBean(kafkaServerMbeanName);
+        for (ObjectInstance mBean : mBeanServer.queryMBeans(mbeanName, null)) {
+            mBeanServer.unregisterMBean(mBean.getObjectName());
         }
     }
 
