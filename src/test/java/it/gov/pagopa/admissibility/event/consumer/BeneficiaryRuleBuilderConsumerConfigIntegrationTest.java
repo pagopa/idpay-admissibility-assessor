@@ -73,7 +73,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
         checkErrorsPublished(notValidRules, maxWaitingMs, errorUseCases);
 
-        Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(2)).buildAll(); // +1 due to refresh at startup
+        Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(1)).buildAll(); // +1 due to refresh at startup
         Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
 
         System.out.printf("""
