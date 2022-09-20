@@ -3,15 +3,13 @@ package it.gov.pagopa.admissibility.test.fakers;
 import com.github.javafaker.service.FakeValuesService;
 import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
-import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
@@ -45,6 +43,14 @@ public final class Initiative2BuildDTOFaker {
                 InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
                 LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
                 null,null));
+
+        out.additionalInfo(new InitiativeAdditionalInfoDTO(
+                "SERVICEID%s".formatted(bias),
+                "SERVICENAME%s".formatted(bias),
+                "ARGUMENT%s".formatted(bias),
+                "DESCRIPTION%s".formatted(bias),
+                List.of(ChannelsDTO.builder().type("web").contact("CONTACT%s".formatted(bias)).build())
+        ));
 
         TestUtils.checkNotNullFields(out.build());
         return out;

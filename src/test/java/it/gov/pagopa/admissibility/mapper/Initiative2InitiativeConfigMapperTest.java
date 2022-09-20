@@ -1,9 +1,6 @@
 package it.gov.pagopa.admissibility.mapper;
 
-import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
-import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -39,6 +36,15 @@ class Initiative2InitiativeConfigMapperTest {
                         ))
                 .build());
 
+        initiative2BuildDTO.setAdditionalInfo(InitiativeAdditionalInfoDTO.builder()
+                        .serviceId("SERVICEID")
+                        .serviceName("SERVICENAME")
+                        .argument("ARGUMENT")
+                        .description("DESCRIPTION")
+                        .channels(List.of(
+                                ChannelsDTO.builder().type("web").contact("contact").build()
+                        ))
+                .build());
 
         final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
 
@@ -52,6 +58,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
+        Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
 
         TestUtils.checkNotNullFields(result);

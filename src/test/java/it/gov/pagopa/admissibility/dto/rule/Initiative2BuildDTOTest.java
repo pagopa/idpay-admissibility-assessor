@@ -49,6 +49,17 @@ class Initiative2BuildDTOTest {
 
         expected.setBeneficiaryRule(expectedBeneficiaryRule);
 
+        final InitiativeAdditionalInfoDTO expectedAdditionalInfo = new InitiativeAdditionalInfoDTO();
+        expectedAdditionalInfo.setServiceId("d447101f-a281-4bec-b8c8-f6a85c9e79e9");
+        expectedAdditionalInfo.setServiceName("Tuna");
+        expectedAdditionalInfo.setArgument("Velit mollitia consequatur aut mollitia quas modi a quia.");
+        expectedAdditionalInfo.setDescription("Totam sit aspernatur natus est accusantium ad quisquam architecto.");
+        expectedAdditionalInfo.setChannels(List.of(
+                ChannelsDTO.builder().type("web").contact("http://jayme.name").build()
+        ));
+
+        expected.setAdditionalInfo(expectedAdditionalInfo);
+
         //when
         final Initiative2BuildDTO result = TestUtils.objectMapper.readValue(payload, Initiative2BuildDTO.class);
 
