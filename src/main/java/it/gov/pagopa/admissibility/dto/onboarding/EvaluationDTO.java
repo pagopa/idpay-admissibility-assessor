@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class EvaluationDTO {
     @NotEmpty
     private String initiativeId;
     private String initiativeName;
+    private LocalDate initiativeEndDate;
     private String organizationId;
     @NotEmpty
     private String status;
@@ -27,5 +30,7 @@ public class EvaluationDTO {
     private LocalDateTime admissibilityCheckDate;
     @NotNull
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
+    private BigDecimal beneficiaryBudget;
+    private String serviceId;
 
 }
