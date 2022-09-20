@@ -6,10 +6,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
-import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.mapper.AutomatedCriteria2ExtraFilterMapper;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
@@ -121,6 +118,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
+                .serviceId("SERVICEID")
                 .build());
 
         Assertions.assertEquals(expected, result);
@@ -174,6 +172,9 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setInitiativeName("NAME");
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
+        expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
+        expectedEvaluationResult.setServiceId("SERVICEID");
+        expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
@@ -213,6 +214,14 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE, new BigDecimal("1000.00"),
                 LocalDate.of(2021, 1, 1), LocalDate.of(2025, 12, 1),
                 null, null));
+
+        dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
+                "SERVICEID",
+                "SERVICENAME",
+                "ARGUMENT",
+                "DESCRIPTION",
+                List.of(ChannelsDTO.builder().type("web").contact("CONTACT").build())
+        ));
 
         return dto;
     }
