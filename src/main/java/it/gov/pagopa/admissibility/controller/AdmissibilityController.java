@@ -4,7 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Component that exposes APIs
@@ -13,5 +13,5 @@ import reactor.core.publisher.Flux;
 public interface AdmissibilityController {
 
     @GetMapping(value = "/initiative/{initiativeId}")
-    Flux<InitiativeStatusDTO> getInitiativeStatus(@PathVariable("initiativeId") String initiativeId);
+    Mono<InitiativeStatusDTO> getInitiativeStatus(@PathVariable("initiativeId") String initiativeId);
 }

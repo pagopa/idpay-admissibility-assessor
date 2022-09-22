@@ -6,7 +6,7 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 
@@ -23,23 +23,26 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
     }
 
     @Override
-    public Flux<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
+    public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
         InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
-        droolsRuleRepository.findById(initiativeId)
+        return droolsRuleRepository.findById(initiativeId)
                 .flatMap(droolsRule -> {
                     InitiativeConfig initiativeConfig = droolsRule.getInitiativeConfig();
                     initiativeCountersRepository.findById(initiativeId)
                             .flatMap(initiativeCounters -> {
                                 initiativeStatus.setBudgetAvailable(
-                                        isInitiativeBudgetAvailable(initiativeCounters.getResidualInitiativeBudgetCents(),
-                                                initiativeConfig.getBeneficiaryInitiativeBudget())
+                                        isInitiativeBudgetAvailable(
+                                                initiativeCounters.getResidualInitiativeBudgetCents(),
+                                                initiativeConfig.getBeneficiaryInitiativeBudget()
+                                        )
                                 );
-                                return null;
+                                return Mono.just(initiativeCounters);
                             });
-                    return null;
-                });
+                    return Mono.just(droolsRule);
+                })
+                .then(Mono.just(initiativeStatus));
+
         // TODO initiativeStatus.setStatus()
-        return Flux.just(initiativeStatus);
     }
 
     private boolean isInitiativeBudgetAvailable(Long residualBudget, BigDecimal beneficiaryBudget) {

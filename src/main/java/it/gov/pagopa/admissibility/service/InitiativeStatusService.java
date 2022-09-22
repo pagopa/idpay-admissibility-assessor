@@ -1,9 +1,9 @@
 package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 public interface InitiativeStatusService {
 
-    Flux<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId);
+    Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId);
 }

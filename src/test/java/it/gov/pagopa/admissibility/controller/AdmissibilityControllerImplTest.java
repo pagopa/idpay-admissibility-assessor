@@ -1,8 +1,6 @@
 package it.gov.pagopa.admissibility.controller;
 
-import it.gov.pagopa.admissibility.dto.ErrorDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.exception.Severity;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import org.junit.jupiter.api.Test;
@@ -12,7 +10,7 @@ import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @WebFluxTest(controllers = {InitiativeStatusDTO.class})
 @Import(AdmissibilityControllerImpl.class)
@@ -35,14 +33,14 @@ class AdmissibilityControllerImplTest {
 
         //initiativeId present in request
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId))
-                .thenReturn(Flux.just(is));
+                .thenReturn(Mono.just(is));
 
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
                         .build(initiativeId))
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(InitiativeStatusDTO.class).contains(is);
+                .expectBody(InitiativeStatusDTO.class).isEqualTo(is);
 
         Mockito.verify(initiativeStatusService, Mockito.times(1)).getInitiativeStatusAndBudgetAvailable(Mockito.any());
     }
@@ -50,16 +48,11 @@ class AdmissibilityControllerImplTest {
     @Test
     void getInitiativeStatusBadRequest(){
 
-        String initiativeId = null;
-
-        ErrorDTO expectedErrorDTO = new ErrorDTO(Severity.ERROR,"Error", "Field initiativeId is mandatory");
-
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
                         .build(""))
                 .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody(ErrorDTO.class).isEqualTo(expectedErrorDTO);
+                .expectStatus().isNotFound();
 
         Mockito.verify(initiativeStatusService, Mockito.never()).getInitiativeStatusAndBudgetAvailable(Mockito.any());
     }
