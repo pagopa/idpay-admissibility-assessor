@@ -2,13 +2,16 @@ package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 
+@Service
+@Slf4j
 public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
     private final DroolsRuleRepository droolsRuleRepository;
