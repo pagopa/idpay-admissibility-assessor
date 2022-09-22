@@ -1,8 +1,10 @@
 package it.gov.pagopa.admissibility.controller;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.exception.ClientExceptionWithBody;
+import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 
@@ -10,14 +12,18 @@ import reactor.core.publisher.Flux;
 @Slf4j
 public class AdmissibilityControllerImpl implements AdmissibilityController{
 
+    private final InitiativeStatusService initiativeStatusService;
 
+    public AdmissibilityControllerImpl(InitiativeStatusService initiativeStatusService) {
+        this.initiativeStatusService = initiativeStatusService;
+    }
 
     @Override
     public Flux<InitiativeStatusDTO> getInitiativeStatus(String initiativeId) {
         if(initiativeId != null) {
-            return null;    // TODO InitiativeStatusDTO
+            return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId);
         } else {
-            return null;    // TODO ERROR
+            throw new ClientExceptionWithBody(HttpStatus.BAD_REQUEST, "Error", "Field initiativeId is mandatory");
         }
     }
 }
