@@ -51,7 +51,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     // TODO use cache
-    @Scheduled(fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
+    @Scheduled(initialDelayString = "${app.beneficiary-rule.cache.refresh-ms-rate}", fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
     public void refreshKieContainer(){
         refreshKieContainer(x -> log.trace("Refreshed KieContainer"));
     }

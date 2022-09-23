@@ -51,9 +51,11 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
 
     @Override
     public void onApplicationEvent(OnboardingContextHolderServiceImpl.OnboardingContextHolderReadyEvent event) {
-        synchronized (this) {
-            contextReady = true;
-            bindingsLifecycleController.changeState(ADMISSIBILITY_PROCESSOR_BINDING_NAME, BindingsLifecycleController.State.STARTED);
+        if(!contextReady) {
+            synchronized (this) {
+                contextReady = true;
+                bindingsLifecycleController.changeState(ADMISSIBILITY_PROCESSOR_BINDING_NAME, BindingsLifecycleController.State.STARTED);
+            }
         }
     }
 
