@@ -46,7 +46,7 @@ class AdmissibilityControllerImplTest {
     }
 
     @Test
-    void getInitiativeStatusBadRequest(){
+    void getInitiativeStatusNotFound(){
 
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")

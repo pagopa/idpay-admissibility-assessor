@@ -6,12 +6,10 @@ import it.gov.pagopa.admissibility.dto.ErrorDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
-@AutoConfigureWebTestClient
 class ErrorManagerTest extends BaseIntegrationTest {
 
     @SpyBean
@@ -23,11 +21,11 @@ class ErrorManagerTest extends BaseIntegrationTest {
     @Test
     void handleExceptionClientExceptionNoBody() {
         Mockito.when(admissibilityController.getInitiativeStatus("ClientExceptionNoBody"))
-                .thenThrow(new ClientExceptionNoBody(HttpStatus.BAD_REQUEST));
+                .thenThrow(new ClientExceptionNoBody(HttpStatus.NOT_FOUND));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build(""))
+                        .build("ClientExceptionNoBody"))
                 .exchange()
                 .expectStatus().isNotFound()
                 .expectBody().isEmpty();
@@ -41,7 +39,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build("INITIATIVE1"))
+                        .build("ClientExceptionWithBody"))
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(ErrorDTO.class).isEqualTo(errorClientExceptionWithBody);
@@ -52,7 +50,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build("INITIATIVE1"))
+                        .build("ClientExceptionWithBodyWithStatusAndTitleAndMessageAndThrowable"))
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody(ErrorDTO.class).isEqualTo(errorClientExceptionWithBodyWithStatusAndTitleAndMessageAndThrowable);
@@ -66,7 +64,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
                 .thenThrow(ClientException.class);
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build("INITIATIVE1"))
+                        .build("ClientException"))
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
                 .expectBody(ErrorDTO.class).isEqualTo(expectedErrorClientException);
@@ -76,7 +74,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
                 .thenThrow(new ClientException(HttpStatus.BAD_REQUEST, "ClientException with httpStatus and message"));
        webTestClient.get()
                .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                       .build("INITIATIVE1"))
+                       .build("ClientExceptionStatusAndMessage"))
                .exchange()
                .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
                .expectBody(ErrorDTO.class).isEqualTo(expectedErrorClientException);
@@ -85,7 +83,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
                 .thenThrow(new ClientException(HttpStatus.BAD_REQUEST, "ClientException with httpStatus, message and throwable", new Throwable()));
        webTestClient.get()
                .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                       .build("INITIATIVE1"))
+                       .build("ClientExceptionStatusAndMessageAndThrowable"))
                .exchange()
                .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
                .expectBody(ErrorDTO.class).isEqualTo(expectedErrorClientException);
@@ -99,7 +97,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
                 .thenThrow(RuntimeException.class);
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build("INITIATIVE1"))
+                        .build("RuntimeException"))
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
                 .expectBody(ErrorDTO.class).isEqualTo(expectedErrorDefault);
