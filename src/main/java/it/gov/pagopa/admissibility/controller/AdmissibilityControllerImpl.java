@@ -5,7 +5,6 @@ import it.gov.pagopa.admissibility.exception.ClientExceptionNoBody;
 import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
@@ -21,11 +20,7 @@ public class AdmissibilityControllerImpl implements AdmissibilityController{
 
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatus(String initiativeId) {
-        if(StringUtils.hasText(initiativeId)) {
             return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId)
                     .switchIfEmpty(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
-        } else {
-            throw new ClientExceptionNoBody(HttpStatus.BAD_REQUEST);
-        }
     }
 }
