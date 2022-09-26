@@ -24,29 +24,26 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
-        InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
         return droolsRuleRepository.findById(initiativeId)
-                .flatMap(droolsRule -> {
-                    InitiativeConfig initiativeConfig = droolsRule.getInitiativeConfig();
-                    initiativeCountersRepository.findById(initiativeId)
-                            .flatMap(initiativeCounters -> {
+                .flatMap(droolsRule ->
+                        initiativeCountersRepository.findById(initiativeId)
+                                .map(initiativeCounters -> {
+                                    InitiativeConfig initiativeConfig = droolsRule.getInitiativeConfig();
+                                InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
+                                initiativeStatus.setStatus(initiativeConfig.getStatus());
                                 initiativeStatus.setBudgetAvailable(
                                         isInitiativeBudgetAvailable(
                                                 initiativeCounters.getResidualInitiativeBudgetCents(),
                                                 initiativeConfig.getBeneficiaryInitiativeBudget()
                                         )
                                 );
-                                return Mono.just(initiativeCounters);
-                            });
-                    return Mono.just(droolsRule);
-                })
-                .then(Mono.just(initiativeStatus));
-
-        // TODO initiativeStatus.setStatus()
+                                return initiativeStatus;
+                                })
+                );
     }
 
     private boolean isInitiativeBudgetAvailable(Long residualBudget, BigDecimal beneficiaryBudget) {
-        BigDecimal residualBudgetBigDecimal = BigDecimal.valueOf(residualBudget/100);
-        return residualBudgetBigDecimal.compareTo(beneficiaryBudget) > -1;
+        BigDecimal residualBudgetBigDecimal = BigDecimal.valueOf(residualBudget);
+        return residualBudgetBigDecimal.compareTo(beneficiaryBudget.multiply(BigDecimal.valueOf(100))) > -1;
     }
 }

@@ -14,6 +14,7 @@ public class Initiative2BuildDTO {
     private String initiativeName;
     private String organizationId;
     private String pdndToken;
+    private String status;
     private InitiativeBeneficiaryRuleDTO beneficiaryRule;
     private InitiativeGeneralDTO general;
     private InitiativeAdditionalInfoDTO additionalInfo;

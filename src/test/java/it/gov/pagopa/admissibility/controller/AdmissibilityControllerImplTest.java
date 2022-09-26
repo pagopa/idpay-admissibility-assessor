@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.controller;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
+import it.gov.pagopa.admissibility.exception.ClientExceptionNoBody;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
@@ -45,15 +47,30 @@ class AdmissibilityControllerImplTest {
         Mockito.verify(initiativeStatusService, Mockito.times(1)).getInitiativeStatusAndBudgetAvailable(Mockito.any());
     }
 
-    @Test
-    void getInitiativeStatusNotFound(){
+    /*@Test
+    void getInitiativeStatusBadRequest(){
 
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build(""))
+                        .build(Mockito.anyString()))
+                .exchange()
+                .expectStatus().isBadRequest();
+
+        Mockito.verify(initiativeStatusService, Mockito.never()).getInitiativeStatusAndBudgetAvailable(Mockito.any());
+    }*/
+
+    @Test
+    void getInitiativeStatusNotFound(){
+
+        Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1"))
+                .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
+
+        webClient.get()
+                .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
+                        .build("INITIATIVE1"))
                 .exchange()
                 .expectStatus().isNotFound();
 
-        Mockito.verify(initiativeStatusService, Mockito.never()).getInitiativeStatusAndBudgetAvailable(Mockito.any());
+        Mockito.verify(initiativeStatusService, Mockito.times(1)).getInitiativeStatusAndBudgetAvailable(Mockito.any());
     }
 }

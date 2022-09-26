@@ -22,9 +22,10 @@ public class AdmissibilityControllerImpl implements AdmissibilityController{
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatus(String initiativeId) {
         if(StringUtils.hasText(initiativeId)) {
-            return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId);
+            return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId)
+                    .switchIfEmpty(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
         } else {
-            throw new ClientExceptionNoBody(HttpStatus.NOT_FOUND);
+            throw new ClientExceptionNoBody(HttpStatus.BAD_REQUEST);
         }
     }
 }
