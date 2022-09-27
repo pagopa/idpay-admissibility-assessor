@@ -18,8 +18,8 @@ public class ErrorManager {
         defaultErrorDTO =new ErrorDTO(Severity.ERROR, "Error", "Something gone wrong");
     }
     @ExceptionHandler(RuntimeException.class)
-    protected ResponseEntity<?> handleException(RuntimeException error, ServerWebExchange exchange) {
-        if(!(error instanceof ClientException clientException) || ((ClientException)error).isPrintStackTrace()){
+    protected ResponseEntity<ErrorDTO> handleException(RuntimeException error, ServerWebExchange exchange) {
+        if(!(error instanceof ClientException clientException) || clientException.isPrintStackTrace()){
             log.error("Something gone wrong handlind request: " + exchange.getRequest().getId(), error);
         }
         if(error instanceof ClientExceptionNoBody clientExceptionNoBody){
