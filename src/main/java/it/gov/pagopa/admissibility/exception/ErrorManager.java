@@ -19,18 +19,18 @@ public class ErrorManager {
     }
     @ExceptionHandler(RuntimeException.class)
     protected ResponseEntity<?> handleException(RuntimeException error, ServerWebExchange exchange) {
-        if(!(error instanceof ClientException) || ((ClientException)error).isPrintStackTrace()){
+        if(!(error instanceof ClientException clientException) || ((ClientException)error).isPrintStackTrace()){
             log.error("Something gone wrong handlind request: " + exchange.getRequest().getId(), error);
         }
-        if(error instanceof ClientExceptionNoBody){
-            return ResponseEntity.status(((ClientExceptionNoBody) error).getHttpStatus()).build();
+        if(error instanceof ClientExceptionNoBody clientExceptionNoBody){
+            return ResponseEntity.status(clientExceptionNoBody.getHttpStatus()).build();
         }
         else {
             ErrorDTO errorDTO;
             HttpStatus httpStatus;
-            if (error instanceof ClientExceptionWithBody){
-                httpStatus=((ClientExceptionWithBody) error).getHttpStatus();
-                errorDTO = new ErrorDTO(Severity.ERROR, ((ClientExceptionWithBody) error).getTitle(),  error.getMessage());
+            if (error instanceof ClientExceptionWithBody clientExceptionWithBody){
+                httpStatus=(clientExceptionWithBody).getHttpStatus();
+                errorDTO = new ErrorDTO(Severity.ERROR, clientExceptionWithBody.getTitle(),  clientExceptionWithBody.getMessage());
             }
             else {
                 httpStatus=HttpStatus.INTERNAL_SERVER_ERROR;
