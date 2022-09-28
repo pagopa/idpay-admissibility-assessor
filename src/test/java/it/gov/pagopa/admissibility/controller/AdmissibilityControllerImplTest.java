@@ -47,18 +47,6 @@ class AdmissibilityControllerImplTest {
         Mockito.verify(initiativeStatusService, Mockito.times(1)).getInitiativeStatusAndBudgetAvailable(Mockito.any());
     }
 
-    /*@Test
-    void getInitiativeStatusBadRequest(){
-
-        webClient.get()
-                .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
-                        .build(Mockito.anyString()))
-                .exchange()
-                .expectStatus().isBadRequest();
-
-        Mockito.verify(initiativeStatusService, Mockito.never()).getInitiativeStatusAndBudgetAvailable(Mockito.any());
-    }*/
-
     @Test
     void getInitiativeStatusNotFound(){
 
