@@ -21,6 +21,7 @@ class Initiative2BuildDTOTest {
         expected.setInitiativeId("62f12c58f85da16207b3c593");
         expected.setInitiativeName("Ball");
         expected.setOrganizationId("2f63a151-da4e-4e1e-acf9-adecc0c4d727");
+        expected.setStatus("DRAFT");
         expected.setPdndToken("TOKEN");
 
         final InitiativeGeneralDTO expectedGeneral = new InitiativeGeneralDTO();

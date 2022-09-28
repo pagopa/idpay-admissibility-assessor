@@ -16,6 +16,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .initiativeId(initiative.getInitiativeId())
                 .initiativeName(initiative.getInitiativeName())
                 .organizationId(initiative.getOrganizationId())
+                .status(initiative.getStatus())
                 .pdndToken(initiative.getPdndToken())
                 .automatedCriteriaCodes(initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(AutomatedCriteriaDTO::getCode).toList())
                 .initiativeBudget(initiative.getGeneral().getBudget())

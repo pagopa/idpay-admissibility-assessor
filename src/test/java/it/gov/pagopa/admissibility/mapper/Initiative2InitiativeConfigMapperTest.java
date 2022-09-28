@@ -19,6 +19,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setInitiativeId("INITIATIVEID");
         initiative2BuildDTO.setInitiativeName("INITIATIVENAME");
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
+        initiative2BuildDTO.setStatus("STATUS");
         initiative2BuildDTO.setPdndToken("PDNDTOKEN");
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
@@ -59,6 +60,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
+        Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
 
         TestUtils.checkNotNullFields(result);
