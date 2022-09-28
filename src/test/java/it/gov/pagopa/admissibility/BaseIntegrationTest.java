@@ -10,18 +10,26 @@ import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.StreamsHealthIndicator;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -42,10 +50,8 @@ import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -119,7 +125,8 @@ public abstract class BaseIntegrationTest {
     protected DroolsRuleRepository droolsRuleRepository;
     @Autowired
     protected InitiativeCountersRepository initiativeCountersRepository;
-
+    @Autowired
+    protected StreamsHealthIndicator streamsHealthIndicator;
     @Autowired
     protected ObjectMapper objectMapper;
 
@@ -138,9 +145,14 @@ public abstract class BaseIntegrationTest {
     @Value("${spring.cloud.stream.bindings.errors-out-0.destination}")
     protected String topicErrors;
 
+    @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}")
+    protected String groupIdBeneficiaryRuleConsumer;
+
     @BeforeAll
     public static void unregisterPreviouslyKafkaServers() throws MalformedObjectNameException, MBeanRegistrationException, InstanceNotFoundException {
-        unregisterMBean("kafka.server:type=app-info,id=0");
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Rome")));
+
+        unregisterMBean("kafka.*:*");
         unregisterMBean("org.springframework.*:*");
     }
 
@@ -174,6 +186,12 @@ public abstract class BaseIntegrationTest {
                         """,
                 mongoUrl,
                 "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes));
+    }
+
+    @Test
+    void testHealthIndicator(){
+        Health health = streamsHealthIndicator.health();
+        Assertions.assertEquals(Status.UP, health.getStatus());
     }
 
     protected Consumer<String, String> getEmbeddedKafkaConsumer(String topic, String groupId) {
@@ -248,6 +266,47 @@ public abstract class BaseIntegrationTest {
         template.send(record);
     }
 
+    protected Map<TopicPartition, OffsetAndMetadata> getCommittedOffsets(String topic, String groupId){
+        try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, groupId)) {
+            return consumer.committed(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).collect(Collectors.toSet()));
+        }
+    }
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages){
+        return checkCommittedOffsets(topic, groupId, expectedCommittedMessages, 10, 500);
+    }
+
+    // Cannot use directly Awaitlity cause the Callable condition is performed on separate thread, which will go into conflict with the consumer Kafka access
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages, int maxAttempts, int millisAttemptDelay){
+        RuntimeException lastException = null;
+        if(maxAttempts<=0){
+            maxAttempts=1;
+        }
+
+        for(;maxAttempts>0; maxAttempts--){
+            try {
+                final Map<TopicPartition, OffsetAndMetadata> commits = getCommittedOffsets(topic, groupId);
+                Assertions.assertEquals(expectedCommittedMessages, commits.values().stream().mapToLong(OffsetAndMetadata::offset).sum());
+                return commits;
+            } catch (RuntimeException e){
+                lastException = e;
+                wait(millisAttemptDelay, TimeUnit.MILLISECONDS);
+            }
+        }
+        throw lastException;
+    }
+
+    protected Map<TopicPartition, Long> getEndOffsets(String topic){
+        try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group-test-check")) {
+            return consumer.endOffsets(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).toList());
+        }
+    }
+
+    protected Map<TopicPartition, Long> checkPublishedOffsets(String topic, long expectedPublishedMessages){
+        Map<TopicPartition, Long> endOffsets = getEndOffsets(topic);
+        Assertions.assertEquals(expectedPublishedMessages, endOffsets.values().stream().mapToLong(x->x).sum());
+        return endOffsets;
+    }
+
     protected static void waitFor(Callable<Boolean> test, Supplier<String> buildTestFailureMessage, int maxAttempts, int millisAttemptDelay) {
         try {
             await()
@@ -256,6 +315,14 @@ public abstract class BaseIntegrationTest {
                     .until(test);
         } catch (RuntimeException e) {
             Assertions.fail(buildTestFailureMessage.get(), e);
+        }
+    }
+
+    protected static void wait(long timeout, TimeUnit timeoutUnit) {
+        try{
+            Awaitility.await().atLeast(timeout, timeoutUnit).until(()->false);
+        } catch (ConditionTimeoutException ex){
+            // Do Nothing
         }
     }
 

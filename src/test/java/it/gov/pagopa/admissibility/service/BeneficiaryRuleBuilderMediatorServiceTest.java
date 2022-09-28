@@ -46,7 +46,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
         this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
 
-        service = new BeneficiaryRuleBuilderMediatorServiceImpl("PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
+        service = new BeneficiaryRuleBuilderMediatorServiceImpl(1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
     }
 
     @BeforeEach
@@ -70,7 +70,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     }
 
     @Test
-    void testSuccessful() {
+    void testSuccessful() throws InterruptedException {
         // given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
@@ -87,7 +87,6 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         });
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
-
         Mockito.verifyNoInteractions(errorNotifierServiceMock);
     }
 }
