@@ -13,8 +13,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
 import org.springframework.messaging.Message;
+import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
 
+import java.lang.reflect.Field;
 import java.util.function.Function;
 
 @Configuration
@@ -44,8 +46,24 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
     public void onBindingCreatedEvent(BindingCreatedEvent event) {
         if (event.getSource() instanceof Binding<?> binding && ADMISSIBILITY_PROCESSOR_BINDING_NAME.equals(binding.getBindingName()) && contextReady) {
             synchronized (this) {
+                makeServiceBusBindingRestartable(binding);
                 binding.start();
             }
+        }
+    }
+
+    @SuppressWarnings("squid:S3011") // suppressing reflection accesses
+    private static void makeServiceBusBindingRestartable(Binding<?> binding) {
+        try {
+            Field restartableField = ReflectionUtils.findField(binding.getClass(), "restartable");
+            if(restartableField==null){
+                throw new IllegalStateException("Cannot make servicebus binding restartable");
+            }
+
+            restartableField.setAccessible(true);
+            restartableField.setBoolean(binding, true);
+        } catch (IllegalAccessException e) {
+            throw new IllegalStateException("Cannot make servicebus binding restartable", e);
         }
     }
 

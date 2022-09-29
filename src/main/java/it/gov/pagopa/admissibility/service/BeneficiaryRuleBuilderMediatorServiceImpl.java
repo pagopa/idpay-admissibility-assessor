@@ -32,6 +32,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRul
 
     private final ObjectReader objectReader;
 
+    @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper) {
         this.beneficiaryRulesBuildDelay = Duration.parse(beneficiaryRulesBuildDelay);
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
