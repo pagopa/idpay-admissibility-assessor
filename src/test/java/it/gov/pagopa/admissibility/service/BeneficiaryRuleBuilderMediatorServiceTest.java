@@ -38,6 +38,9 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     // service
     private final BeneficiaryRuleBuilderMediatorService service;
 
+    long commitDelay = 1000;
+    String beneficiaryRulesDelay = "PT1S";
+
     public BeneficiaryRuleBuilderMediatorServiceTest() {
         this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
         this.droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
@@ -46,7 +49,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
         this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
 
-        service = new BeneficiaryRuleBuilderMediatorServiceImpl(1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
+        service = new BeneficiaryRuleBuilderMediatorServiceImpl(commitDelay,beneficiaryRulesDelay, beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
     }
 
     @BeforeEach
@@ -70,7 +73,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     }
 
     @Test
-    void testSuccessful() throws InterruptedException {
+    void testSuccessful(){
         // given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
@@ -85,6 +88,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
             Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(i);
             Mockito.verify(droolsRuleRepositoryMock).save(Mockito.argThat(dr -> dr.getId().equals(i.getInitiativeId())));
         });
+
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
         Mockito.verifyNoInteractions(errorNotifierServiceMock);

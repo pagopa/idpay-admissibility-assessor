@@ -50,7 +50,8 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         this.commitDelay = Duration.ofMillis(commitMillis);
 
         Duration beneficiaryRulesBuildDelayDuration = Duration.parse(beneficiaryRulesBuildDelay).minusMillis(commitMillis);
-        this.beneficiaryRulesBuildDelayMinusCommit = beneficiaryRulesBuildDelayDuration.isNegative() ? Duration.ZERO : beneficiaryRulesBuildDelayDuration;
+        Duration defaultDurationDelay = Duration.ofMillis(2L);
+        this.beneficiaryRulesBuildDelayMinusCommit = defaultDurationDelay.compareTo(beneficiaryRulesBuildDelayDuration) >= 0 ? defaultDurationDelay : beneficiaryRulesBuildDelayDuration;
 
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
@@ -92,14 +93,10 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
 
     @Override
     protected Mono<DroolsRule> execute(Initiative2BuildDTO payload, Message<String> message) {
-        return Mono.just(message)
-                .mapNotNull(this::deserializeMessage)
+        return Mono.just(payload)
                 .map(beneficiaryRule2DroolsRule)
                 .flatMap(droolsRuleRepository::save)
-                .map(i -> {
-                    onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
-                    return i;
-                })
+                .doOnNext(i -> onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig()))
                 .flatMap(this::initializeCounters);
     }
 

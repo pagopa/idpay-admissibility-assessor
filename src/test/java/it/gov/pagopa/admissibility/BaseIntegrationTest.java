@@ -318,9 +318,9 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected static void wait(long timeout, TimeUnit timeoutUnit) {
+    public static void wait(long timeout, TimeUnit timeoutUnit) {
         try{
-            Awaitility.await().atLeast(timeout, timeoutUnit).until(()->false);
+            Awaitility.await().timeout(timeout,timeoutUnit).until(()->false);
         } catch (ConditionTimeoutException ex){
             // Do Nothing
         }
