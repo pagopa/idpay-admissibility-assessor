@@ -52,6 +52,11 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
         }
     }
 
+    /*
+     * Only setting "group" property makes the binding restartable.
+     * We are using a queue, and group is a configuration valid just for topics, so we cannot configure it.
+     * Because we are setting the auto-startup to false, we are not more able to start it when the container is ready without changing this flag
+    */
     @SuppressWarnings("squid:S3011") // suppressing reflection accesses
     private static void makeServiceBusBindingRestartable(Binding<?> binding) {
         try {
