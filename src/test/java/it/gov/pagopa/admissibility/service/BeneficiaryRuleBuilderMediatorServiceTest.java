@@ -11,7 +11,8 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderSer
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.kie.api.runtime.KieContainer;
 import org.mockito.Mockito;
 import org.springframework.messaging.Message;
@@ -35,12 +36,6 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
     private final KieContainer newKieContainerBuiltmock = Mockito.mock(KieContainer.class);
 
-    // service
-    private final BeneficiaryRuleBuilderMediatorService service;
-
-    long commitDelay = 1000;
-    String beneficiaryRulesDelay = "PT1S";
-
     public BeneficiaryRuleBuilderMediatorServiceTest() {
         this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
         this.droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
@@ -48,8 +43,6 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
         this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
-
-        service = new BeneficiaryRuleBuilderMediatorServiceImpl(commitDelay,beneficiaryRulesDelay, beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
     }
 
     @BeforeEach
@@ -72,13 +65,15 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         Mockito.when(initInitiativeCounterServiceMock.initCounters(Mockito.any())).thenAnswer(i->Mono.just(i.getArgument(0)));
     }
 
-    @Test
-    void testSuccessful(){
+    @ParameterizedTest
+    @ValueSource(longs = {800,1000,1010})
+    void testSuccessful(long commitDelay){
         // given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
         Flux<Message<String>> inputFlux = Flux.fromIterable(initiatives).map(TestUtils::jsonSerializer).map(MessageBuilder::withPayload).map(MessageBuilder::build);
 
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl(commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
         // when
         service.execute(inputFlux);
 
