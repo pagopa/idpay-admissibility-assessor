@@ -10,9 +10,15 @@ public final class Utils {
     private Utils(){}
 
     /** It will try to deserialize a message, eventually notifying the error  */
-    public static <T> T deserializeMessage(Message<String> message, ObjectReader objectReader, Consumer<Throwable> onError) {
+    public static <T> T deserializeMessage(Message<?> message, ObjectReader objectReader, Consumer<Throwable> onError) {
         try {
-            return objectReader.readValue(message.getPayload());
+            String payload;
+            if(message.getPayload() instanceof byte[] bytes){
+                payload=new String(bytes);
+            } else {
+                payload=message.getPayload().toString();
+            }
+            return objectReader.readValue(payload);
         } catch (JsonProcessingException e) {
             onError.accept(e);
             return null;
