@@ -12,8 +12,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @Service
@@ -24,7 +24,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     private final DroolsRuleRepository droolsRuleRepository;
 
     private KieContainer kieContainer;
-    private final Map<String, InitiativeConfig> initiativeId2Config=new HashMap<>();
+    private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
 
     public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.kieContainerBuilderService = kieContainerBuilderService;
