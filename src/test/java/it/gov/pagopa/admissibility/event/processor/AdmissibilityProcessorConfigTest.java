@@ -288,13 +288,13 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         String useCaseJsonNotExpected = "{\"initiativeId\":\"id_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", useCaseJsonNotExpected)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", useCaseJsonNotExpected)
         ));
 
         String jsonNotValid = "{\"initiativeId\":\"id_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", jsonNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", jsonNotValid)
         ));
 
         final String failingOnboardingChecksUserId = "FAILING_ONBOARDING_CHECKS";
@@ -308,7 +308,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i->failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any());
                     return failingOnboardingChecks;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected error", failingOnboardingChecks)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected error", failingOnboardingChecks)
         ));
 
         final String failingAuthorityData = "FAILING_AUTHORITY_DATA";
@@ -322,7 +322,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any(), Mockito.any());
                     return failingAuthoritiesDataRetriever;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
         ));
 
         final String failingRuleEngineUserId = "FAILING_RULE_ENGINE";
@@ -336,7 +336,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(ruleEngineServiceSpy).applyRules(Mockito.argThat(i->failingRuleEngineUserId.equals(i.getUserId())), Mockito.any());
                     return failingRuleEngineUseCase;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingRuleEngineUseCase)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingRuleEngineUseCase)
         ));
 
         String failingBudgetReservation = TestUtils.jsonSerializer(
@@ -349,7 +349,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(FAILING_BUDGET_RESERVATION_INITIATIVE_ID), Mockito.any());
                     return failingBudgetReservation;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingBudgetReservation)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingBudgetReservation)
         ));
     }
 
