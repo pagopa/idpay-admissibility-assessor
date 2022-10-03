@@ -1,0 +1,81 @@
+microservice-chart:
+  namespace: "idpay"
+  nameOverride: ""
+  fullnameOverride: ""
+
+  livenessProbe:
+    httpGet:
+      path: /actuator/health/liveness
+      port: 8080
+    initialDelaySeconds: 120
+    failureThreshold: 15
+    periodSeconds: 10
+
+  readinessProbe:
+    httpGet:
+      path: /actuator/health/readiness
+      port: 8080
+    initialDelaySeconds: 120
+    failureThreshold: 15
+    periodSeconds: 10
+
+  deployment:
+    create: true
+
+  service:
+    create: true
+    type: ClusterIP
+    port: 8080
+
+  ingress:
+    create: true
+    path: /idpay/admissibility/(.*)
+
+  serviceAccount:
+    create: false
+    annotations: {}
+    name: ""
+
+  podAnnotations: {}
+
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+  securityContext:
+    allowPrivilegeEscalation: false
+
+  envConfig:
+    APP: "idpay-admissibility-assessor"
+    KAFKA_ONBOARDING_REQUEST_GROUP_ID: "idpay-onboarding-request-consumer-group"
+    KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
+    CACHE_REFRESH_MS_RATE: "31536000000"
+
+  envConfigMapExternals:
+    idpay-common:
+      TZ: TZ
+    idpay-eventhub-00:
+      KAFKA_BROKER: kafka_broker
+      KAFKA_CONFIG_SASL_MECHANISM: kafka_sasl_mechanism
+      KAFKA_CONFIG_SECURITY_PROTOCOL: kafka_security_protocol
+      KAFKA_ONBOARDING_REQUEST_TOPIC: idpay_onboarding_request_topic
+      KAFKA_ONBOARDING_OUTCOME_TOPIC: idpay_onboarding_outcome_topic
+    idpay-eventhub-01:
+      KAFKA_BENEFICIARY_RULE_BROKER: kafka_broker
+      KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
+      KAFKA_ERRORS_BROKER: kafka_broker
+      KAFKA_ERRORS_TOPIC: idpay_error_topic
+
+
+  envSecret:
+    MONGODB_URI: mongodb-connection-string
+    KAFKA_ONBOARDING_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
+    KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAS_CONFIG: evh-idpay-rule-update-idpay-rule-update-consumer-jaas-config-idpay-01
+    SERVICEBUS_ONBOARDING_CONNECTION_STRING: idpay-onboarding-request-processor-sas-key
+    KAFKA_ERRORS_SASL_JAAS_CONFIG: evh-idpay-errors-idpay-errors-producer-jaas-config-idpay-01
+
+  # nodeSelector: {}
+
+  # tolerations: []
+
+  # affinity: {}
