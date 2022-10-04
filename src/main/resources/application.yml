@@ -44,6 +44,9 @@ spring:
           binder: kafka-errors
       servicebus:
         bindings:
+          admissibilityProcessor-in-0:
+            consumer:
+              auto-complete: false
           admissibilityDelayProducer-out-0:
             producer:
               entity-type: queue

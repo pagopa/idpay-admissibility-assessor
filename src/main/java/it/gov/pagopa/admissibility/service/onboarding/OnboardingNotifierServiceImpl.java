@@ -6,11 +6,11 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 @Service
-public class OnboardingNoifierServiceImpl implements OnboardingNoifierService{
+public class OnboardingNotifierServiceImpl implements OnboardingNotifierService {
 
     private final StreamBridge streamBridge;
 
-    public OnboardingNoifierServiceImpl(StreamBridge streamBridge) {
+    public OnboardingNotifierServiceImpl(StreamBridge streamBridge) {
         this.streamBridge = streamBridge;
     }
 
