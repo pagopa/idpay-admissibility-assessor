@@ -1,6 +1,8 @@
 package it.gov.pagopa.admissibility.event.processor;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.azure.spring.messaging.AzureHeaders;
+import com.azure.spring.messaging.checkpoint.Checkpointer;
+import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -8,6 +10,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorService;
 import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
@@ -18,14 +21,22 @@ import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.Scannable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,7 +46,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -61,9 +71,47 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     private InitiativeCountersRepository initiativeCountersRepositorySpy;
 
     private final int initiativesNumber = 5;
+    private static List<Checkpointer> checkpointers;
 
+    @TestConfiguration
+    static class MediatorSpyConfiguration {
+        @SpyBean
+        private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorServiceSpy;
+
+        @PostConstruct
+        void init() {
+            checkpointers = configureSpies();
+        }
+
+        private List<Checkpointer> configureSpies(){
+            List<Checkpointer> checkpoints = Collections.synchronizedList(new ArrayList<>(1100));
+
+            Mockito.doAnswer(args-> {
+                        Flux<Message<String>> messageFlux = args.getArgument(0);
+                        messageFlux = messageFlux.map(m -> {
+                            if(m.getHeaders().get(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME) == null) { //TODO verify commit on reschedule message when PDND integration will be test
+                                Checkpointer mock = Mockito.mock(Checkpointer.class);
+                                Mockito.when(mock.success()).thenReturn(Mono.empty());
+                                checkpoints.add(mock);
+                                return MessageBuilder.withPayload(m.getPayload())
+                                        .copyHeaders(m.getHeaders())
+                                        .setHeader(AzureHeaders.CHECKPOINTER, mock)
+                                        .build();
+                            }else {
+                                return  m;
+                            }
+                        })
+                                .name("spy");
+                        admissibilityEvaluatorMediatorServiceSpy.execute(messageFlux);
+                        return null;
+                    })
+                    .when(admissibilityEvaluatorMediatorServiceSpy).execute(Mockito.argThat(a -> !Scannable.from(a).name().equals("spy")));
+
+            return  checkpoints;
+        }
+    }
     @Test
-    void testAdmissibilityOnboarding() throws JsonProcessingException {
+    void testAdmissibilityOnboarding() throws IOException {
         int validOnboardings = 1000; // use even number
         int notValidOnboarding = errorUseCases.size();
         long maxWaitingMs = 30000;
@@ -71,7 +119,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         publishOnboardingRules(validOnboardings);
 
         List<String> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2));
-        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).collect(Collectors.toList()));
+        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
@@ -107,6 +155,8 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 timeConsumerResponseEnd,
                 timeEnd - timePublishOnboardingStart
         );
+
+        checkOffsets(onboardings.size(), validOnboardings);
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
@@ -288,13 +338,13 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         String useCaseJsonNotExpected = "{\"initiativeId\":\"id_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", useCaseJsonNotExpected)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", useCaseJsonNotExpected)
         ));
 
         String jsonNotValid = "{\"initiativeId\":\"id_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", jsonNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", jsonNotValid)
         ));
 
         final String failingOnboardingChecksUserId = "FAILING_ONBOARDING_CHECKS";
@@ -308,7 +358,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i->failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any());
                     return failingOnboardingChecks;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected error", failingOnboardingChecks)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingOnboardingChecks)
         ));
 
         final String failingAuthorityData = "FAILING_AUTHORITY_DATA";
@@ -322,7 +372,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityData.equals(i.getUserId())), Mockito.any(), Mockito.any());
                     return failingAuthoritiesDataRetriever;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
         ));
 
         final String failingRuleEngineUserId = "FAILING_RULE_ENGINE";
@@ -336,7 +386,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(ruleEngineServiceSpy).applyRules(Mockito.argThat(i->failingRuleEngineUserId.equals(i.getUserId())), Mockito.any());
                     return failingRuleEngineUseCase;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingRuleEngineUseCase)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingRuleEngineUseCase)
         ));
 
         String failingBudgetReservation = TestUtils.jsonSerializer(
@@ -349,7 +399,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(FAILING_BUDGET_RESERVATION_INITIATIVE_ID), Mockito.any());
                     return failingBudgetReservation;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling onboarding request", failingBudgetReservation)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingBudgetReservation)
         ));
     }
 
@@ -357,4 +407,25 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, errorMessage, errorDescription, expectedPayload);
     }
     //endregion
+
+    protected void checkOffsets(long expectedReadMessages, long exptectedPublishedResults) {
+        Assertions.assertEquals(expectedReadMessages, checkpointers.size());
+        checkpointers.forEach(checkpointer -> Mockito.verify(checkpointer).success());
+
+        long timeCommitChecked = System.currentTimeMillis();
+        final Map<TopicPartition, Long> destPublishedOffsets = checkPublishedOffsets(topicAdmissibilityProcessorOutcome, exptectedPublishedResults);
+        long timePublishChecked = System.currentTimeMillis();
+        System.out.printf("""
+                        ************************
+                        Time occurred to check published offset: %d millis
+                        ************************
+                        Source Topic Committed Offsets: %s
+                        Dest Topic Published Offsets: %s
+                        ************************
+                        """,
+                timePublishChecked - timeCommitChecked,
+                expectedReadMessages,
+                destPublishedOffsets
+        );
+    }
 }

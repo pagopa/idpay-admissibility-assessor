@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.event.processor;
 
 
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +15,8 @@ import org.springframework.messaging.Message;
 import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
 
+import java.util.function.Consumer;
 import java.lang.reflect.Field;
-import java.util.function.Function;
 
 @Configuration
 @Slf4j
@@ -38,7 +37,7 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
      * Read from the topic ${KAFKA_TOPIC_ONBOARDING} and publish to topic ${KAFKA_TOPIC_ONBOARDING_OUTCOME}
      */
     @Bean
-    public Function<Flux<Message<String>>, Flux<EvaluationDTO>> admissibilityProcessor() {
+    public Consumer<Flux<Message<String>>> admissibilityProcessor() {
         return this.admissibilityEvaluatorMediatorService::execute;
     }
 
