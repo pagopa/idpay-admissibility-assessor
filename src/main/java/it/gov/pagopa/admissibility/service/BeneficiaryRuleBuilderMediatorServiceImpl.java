@@ -108,6 +108,4 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         return initInitiativeCounterService.initCounters(droolsRule.getInitiativeConfig())
                 .then(Mono.just(droolsRule));
     }
-
-
 }
