@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.service;
 
-
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -67,17 +66,13 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         return Mono.just(message)
                 .flatMap(this::execute)
                 .doOnNext(evaluationDTO -> {
-                    Exception exception=null;
                     try {
                         if (!onboardingNotifierService.notify(evaluationDTO)) {
-                            exception = new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while transaction notify");
+                            throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while onboarding notify");
                         }
                     } catch (Exception e){
-                        exception = e;
-                    }
-                    if (exception != null) {
                         log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationDTO);
-                        errorNotifierService.notifyAdmissibility(new GenericMessage<>(evaluationDTO, message.getHeaders()), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, exception);
+                        errorNotifierService.notifyAdmissibility(new GenericMessage<>(evaluationDTO, message.getHeaders()), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
                     }
                 })
                 .onErrorResume(e -> {
@@ -86,7 +81,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return Mono.empty();
                 })
                 .doFinally(o-> {
-                    // commit subscribe e log successo (debug) o error (ERROR)
                     Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
                     if (checkpointer != null) {
                         checkpointer.success()
