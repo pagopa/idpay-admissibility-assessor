@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 class BeneficiaryListFilterTest {
 
     @Test
-    void test1() {
+    void testBeneficiaryListFilter() {
         // Given
         BeneficiaryListFilter beneficiaryListFilter = new BeneficiaryListFilter();
 

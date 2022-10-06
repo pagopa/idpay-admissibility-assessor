@@ -12,7 +12,9 @@ public class BeneficiaryListFilter implements BeneficiaryRuleFilter{
     @Override
     public boolean test(Initiative2BuildDTO initiative2BuildDTO) {
         boolean isPresentBeneficiaryRule = initiative2BuildDTO.getBeneficiaryRule() != null;
-        log.info("Beneficiary is present in initiative with id %s: %b".formatted(initiative2BuildDTO.getInitiativeId(), isPresentBeneficiaryRule));
+        if (!isPresentBeneficiaryRule){
+            log.info("Initiative containing beneficiary list: {}",initiative2BuildDTO.getInitiativeId());
+        }
         return isPresentBeneficiaryRule;
     }
 }
