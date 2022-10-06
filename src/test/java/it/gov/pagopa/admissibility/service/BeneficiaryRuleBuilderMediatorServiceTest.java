@@ -5,12 +5,14 @@ import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRuleFilterService;
 import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.kie.api.runtime.KieContainer;
@@ -33,6 +35,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     private final KieContainerBuilderService kieContainerBuilderServiceMock;
     private final OnboardingContextHolderService onboardingContextHolderServiceMock;
     private final ErrorNotifierService errorNotifierServiceMock;
+    private final BeneficiaryRuleFilterService beneficiaryRuleFilterServiceMock;
 
     private final KieContainer newKieContainerBuiltmock = Mockito.mock(KieContainer.class);
 
@@ -43,6 +46,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
         this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
+        this.beneficiaryRuleFilterServiceMock = Mockito.mock(BeneficiaryRuleFilterService.class);
     }
 
     @BeforeEach
@@ -68,12 +72,15 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     @ParameterizedTest
     @ValueSource(longs = {800,1000,1010})
     void testSuccessful(long commitDelay){
-        // given
+        // Given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
         Flux<Message<String>> inputFlux = Flux.fromIterable(initiatives).map(TestUtils::jsonSerializer).map(MessageBuilder::withPayload).map(MessageBuilder::build);
 
-        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl(commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, TestUtils.objectMapper);
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl(commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
+
+        Mockito.when(beneficiaryRuleFilterServiceMock.filter(Mockito.any())).thenReturn(true);
+
         // when
         service.execute(inputFlux);
 
@@ -85,6 +92,35 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         });
 
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verifyNoInteractions(errorNotifierServiceMock);
+    }
+
+    @Test
+    void filterInitiativeTest(){
+        // Given
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl(1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
+
+        Initiative2BuildDTO initiative1 = Initiative2BuildDTOFaker.mockInstance(1);
+        Initiative2BuildDTO initiative2 = Initiative2BuildDTOFaker.mockInstance(2);
+
+        Flux<Message<String>> msgs = Flux.just(initiative1, initiative2)
+                .map(TestUtils::jsonSerializer)
+                .map(MessageBuilder::withPayload).map(MessageBuilder::build);
+
+        Mockito.when(beneficiaryRuleFilterServiceMock.filter(initiative1)).thenReturn(true);
+        Mockito.when(beneficiaryRuleFilterServiceMock.filter(initiative2)).thenReturn(false);
+
+        // When
+        service.execute(msgs);
+
+        // Then
+        Mockito.verify(beneficiaryRuleFilterServiceMock, Mockito.times(2)).filter(Mockito.any());
+
+        Mockito.verify(beneficiaryRule2DroolsRuleMock).apply(Mockito.any());
+        Mockito.verify(droolsRuleRepositoryMock).save(Mockito.any());
+
+        Mockito.verify(kieContainerBuilderServiceMock).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
         Mockito.verifyNoInteractions(errorNotifierServiceMock);
     }

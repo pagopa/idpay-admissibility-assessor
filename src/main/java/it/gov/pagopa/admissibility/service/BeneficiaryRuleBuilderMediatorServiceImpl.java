@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRuleFilterService;
 import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
@@ -31,6 +32,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final InitInitiativeCounterService initInitiativeCounterService;
     private final ErrorNotifierService errorNotifierService;
+    private final BeneficiaryRuleFilterService beneficiaryRuleFilterService;
 
     private final ObjectReader objectReader;
 
@@ -45,6 +47,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
             OnboardingContextHolderService onboardingContextHolderService,
             InitInitiativeCounterService initInitiativeCounterService,
             ErrorNotifierService errorNotifierService,
+            BeneficiaryRuleFilterService beneficiaryRuleFilterService,
 
             ObjectMapper objectMapper) {
         this.commitDelay = Duration.ofMillis(commitMillis);
@@ -59,6 +62,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.initInitiativeCounterService = initInitiativeCounterService;
         this.errorNotifierService = errorNotifierService;
+        this.beneficiaryRuleFilterService = beneficiaryRuleFilterService;
 
         this.objectReader = objectMapper.readerFor(Initiative2BuildDTO.class);
     }
@@ -96,6 +100,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         long startTime = System.currentTimeMillis();
 
         return Mono.just(payload)
+                .filter(this.beneficiaryRuleFilterService::filter)
                 .map(beneficiaryRule2DroolsRule)
                 .flatMap(droolsRuleRepository::save)
                 .doOnNext(i -> onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig()))
