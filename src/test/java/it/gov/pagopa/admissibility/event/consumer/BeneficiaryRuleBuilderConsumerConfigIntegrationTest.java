@@ -10,6 +10,8 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderSer
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.kie.api.definition.KiePackage;
@@ -23,6 +25,7 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -97,6 +100,20 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                 Mockito.mockingDetails(kieContainerBuilderServiceSpy).getInvocations().stream()
                         .filter(i -> i.getMethod().getName().equals("buildAll")).count() - 1 // 1 is due on startup
         );
+
+        long timeCommitCheckStart = System.currentTimeMillis();
+        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer,initiativePayloads.size());
+        long timeCommitCheckEnd = System.currentTimeMillis();
+        System.out.printf("""
+                        ************************
+                        Time occurred to check committed offset: %d millis
+                        ************************
+                        Source Topic Committed Offsets: %s
+                        ************************
+                        """,
+                timeCommitCheckEnd - timeCommitCheckStart,
+                srcCommitOffsets
+        );
     }
 
     private List<String> buildValidPayloads(int bias, int validRules, int[] expectedRules) {
@@ -151,13 +168,13 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         String useCaseJsonNotExpected = "{\"initiativeId\":\"id_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", useCaseJsonNotExpected)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", useCaseJsonNotExpected)
         ));
         
         String jsonNotValid = "{\"initiativeId\":\"id_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", jsonNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", jsonNotValid)
         ));
         
         String criteriaCodeNotValid = TestUtils.jsonSerializer(Initiative2BuildDTOFaker.mockInstanceBuilder(errorUseCases.size())
@@ -170,7 +187,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                         .build()));
         errorUseCases.add(Pair.of(
                 () -> criteriaCodeNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling initiative", criteriaCodeNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", criteriaCodeNotValid)
         ));
 
         final String errorWhenSavingUseCaseId = "id_%s_ERRORWHENSAVING".formatted(errorUseCases.size());
@@ -182,7 +199,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(droolsRuleRepositorySpy).save(Mockito.argThat(i->errorWhenSavingUseCaseId.equals(i.getId())));
                     return droolRuleSaveInError;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling initiative", droolRuleSaveInError)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", droolRuleSaveInError)
         ));
     }
 

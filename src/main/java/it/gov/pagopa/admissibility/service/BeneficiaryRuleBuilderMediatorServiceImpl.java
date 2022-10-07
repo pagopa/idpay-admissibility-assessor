@@ -6,10 +6,11 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRuleFilterService;
 import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.utils.Utils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -17,62 +18,95 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.function.Consumer;
 
 @Service
-public class BeneficiaryRuleBuilderMediatorServiceImpl implements BeneficiaryRuleBuilderMediatorService {
-
-    private final Duration beneficiaryRulesBuildDelay;
-
+@Slf4j
+public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer<Initiative2BuildDTO, DroolsRule> implements BeneficiaryRuleBuilderMediatorService {
+    private final Duration commitDelay;
+    private final Duration beneficiaryRulesBuildDelayMinusCommit;
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final DroolsRuleRepository droolsRuleRepository;
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final InitInitiativeCounterService initInitiativeCounterService;
     private final ErrorNotifierService errorNotifierService;
+    private final BeneficiaryRuleFilterService beneficiaryRuleFilterService;
 
     private final ObjectReader objectReader;
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
-    public BeneficiaryRuleBuilderMediatorServiceImpl(@Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay, BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule, DroolsRuleRepository droolsRuleRepository, KieContainerBuilderService kieContainerBuilderService, OnboardingContextHolderService onboardingContextHolderService, InitInitiativeCounterService initInitiativeCounterService, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper) {
-        this.beneficiaryRulesBuildDelay = Duration.parse(beneficiaryRulesBuildDelay);
+    public BeneficiaryRuleBuilderMediatorServiceImpl(
+            @Value("${spring.cloud.stream.kafka.bindings.beneficiaryRuleBuilderConsumer-in-0.consumer.ackTime}") long commitMillis,
+            @Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay,
+
+            BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule,
+            DroolsRuleRepository droolsRuleRepository,
+            KieContainerBuilderService kieContainerBuilderService,
+            OnboardingContextHolderService onboardingContextHolderService,
+            InitInitiativeCounterService initInitiativeCounterService,
+            ErrorNotifierService errorNotifierService,
+            BeneficiaryRuleFilterService beneficiaryRuleFilterService,
+
+            ObjectMapper objectMapper) {
+        this.commitDelay = Duration.ofMillis(commitMillis);
+
+        Duration beneficiaryRulesBuildDelayDuration = Duration.parse(beneficiaryRulesBuildDelay).minusMillis(commitMillis);
+        Duration defaultDurationDelay = Duration.ofMillis(2L);
+        this.beneficiaryRulesBuildDelayMinusCommit = defaultDurationDelay.compareTo(beneficiaryRulesBuildDelayDuration) >= 0 ? defaultDurationDelay : beneficiaryRulesBuildDelayDuration;
+
         this.beneficiaryRule2DroolsRule = beneficiaryRule2DroolsRule;
         this.droolsRuleRepository = droolsRuleRepository;
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.initInitiativeCounterService = initInitiativeCounterService;
         this.errorNotifierService = errorNotifierService;
+        this.beneficiaryRuleFilterService = beneficiaryRuleFilterService;
 
         this.objectReader = objectMapper.readerFor(Initiative2BuildDTO.class);
     }
 
     @Override
-    public void execute(Flux<Message<String>> initiativeBeneficiaryRuleDTOFlux) {
-        initiativeBeneficiaryRuleDTOFlux
-                .flatMap(this::execute)
-                .buffer(beneficiaryRulesBuildDelay)
+    protected Duration getCommitDelay() {
+        return commitDelay;
+    }
+
+    @Override
+    protected void subscribeAfterCommits(Flux<List<DroolsRule>> afterCommits2subscribe) {
+        afterCommits2subscribe
+                .buffer(beneficiaryRulesBuildDelayMinusCommit)
                 .flatMap(r -> kieContainerBuilderService.buildAll())
                 .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
     }
 
-    private Mono<DroolsRule> execute(Message<String> message){
-        return Mono.just(message)
-                .mapNotNull(this::deserializeMessage)
-                .map(beneficiaryRule2DroolsRule)
-                .flatMap(droolsRuleRepository::save)
-                .map(i -> {
-                    onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
-                    return i;
-                })
-                .flatMap(this::initializeCounters)
-
-                .onErrorResume(e->{
-                    errorNotifierService.notifyBeneficiaryRuleBuilder(message, "An error occurred handling initiative", true, e);
-                    return Mono.empty();
-                });
+    @Override
+    protected ObjectReader getObjectReader() {
+        return objectReader;
     }
 
-    private Initiative2BuildDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "Unexpected JSON", true, e));
+    @Override
+    protected Consumer<Throwable> onDeserializationError(Message<String> message) {
+        return e -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", true, e);
+    }
+
+    @Override
+    protected void notifyError(Message<String> message, Throwable e) {
+        errorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", true, e);
+    }
+
+    @Override
+    protected Mono<DroolsRule> execute(Initiative2BuildDTO payload, Message<String> message) {
+        long startTime = System.currentTimeMillis();
+
+        return Mono.just(payload)
+                .filter(this.beneficiaryRuleFilterService::filter)
+                .map(beneficiaryRule2DroolsRule)
+                .flatMap(droolsRuleRepository::save)
+                .doOnNext(i -> onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig()))
+                .flatMap(this::initializeCounters)
+                .doOnEach(x ->log.info("[PERFORMANCE_LOG] [ADMISSIBILITY_RULE_BUILD] - Time between before and after evaluate message {} ms with payload: {}", System.currentTimeMillis() - startTime, message.getPayload())
+                );
     }
 
     private Mono<DroolsRule> initializeCounters(DroolsRule droolsRule) {

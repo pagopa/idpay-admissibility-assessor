@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service;
 
-
+import com.azure.spring.messaging.AzureHeaders;
+import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
@@ -10,10 +11,12 @@ import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,7 +39,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private final ObjectReader objectReader;
 
-    public AdmissibilityEvaluatorMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper) {
+    private final OnboardingNotifierService onboardingNotifierService;
+
+    public AdmissibilityEvaluatorMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper, OnboardingNotifierService onboardingNotifierService) {
         this.onboardingCheckService = onboardingCheckService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
@@ -44,51 +49,70 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         this.errorNotifierService = errorNotifierService;
 
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
+        this.onboardingNotifierService = onboardingNotifierService;
     }
-
 
     /**
      * This component will take a {@link OnboardingDTO} and will calculate the {@link EvaluationDTO}
      */
     @Override
-    public Flux<EvaluationDTO> execute(Flux<Message<String>> messageFlux) {
-        return messageFlux.flatMap(this::execute);
+    public void execute(Flux<Message<String>> messageFlux) {
+        messageFlux
+                .flatMap(this::executeAndCommit)
+                .subscribe(evaluationDTO -> log.info("[[ADMISSIBILITY_ONBOARDING_REQUEST]] Processed offsets committed successfully"));
+    }
+
+    private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
+        return Mono.just(message)
+                .flatMap(this::execute)
+                .doOnNext(evaluationDTO -> {
+                    try {
+                        if (!onboardingNotifierService.notify(evaluationDTO)) {
+                            throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while onboarding notify");
+                        }
+                    } catch (Exception e){
+                        log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationDTO);
+                        errorNotifierService.notifyAdmissibility(new GenericMessage<>(evaluationDTO, message.getHeaders()), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
+                    }
+                })
+                .onErrorResume(e -> {
+                    // TODO we should persist it as ONBOARDING_KO instead?
+                    errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
+                    return Mono.empty();
+                })
+                .doFinally(o-> {
+                    Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
+                    if (checkpointer != null) {
+                        checkpointer.success()
+                                .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
+                                .doOnError(e -> log.error("Fail to checkpoint the message", e))
+                                .subscribe();
+                    }
+                });
     }
 
     private Mono<EvaluationDTO> execute(Message<String> message) {
-        try {
-            Map<String, Object> onboardingContext = new HashMap<>();
+        Map<String, Object> onboardingContext = new HashMap<>();
 
-            log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", message.getPayload());
+        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", message.getPayload());
 
-            OnboardingDTO onboardingRequest = deserializeMessage(message);
+        OnboardingDTO onboardingRequest = deserializeMessage(message);
 
-            if(onboardingRequest!=null) {
-                EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, onboardingContext);
-                if (rejectedRequest != null) {
-                    return Mono.just(rejectedRequest);
-                } else {
-                    log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                    return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext, message)
-
-                            .onErrorResume(e -> {
-                                // TODO we should persist it as ONBOARDING_KO instead?
-                                errorNotifierService.notifyAdmissibility(message, "An error occurred handling onboarding request", true, e);
-                                return Mono.empty();
-                            });
-                }
+        if(onboardingRequest!=null) {
+            EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, onboardingContext);
+            if (rejectedRequest != null) {
+                return Mono.just(rejectedRequest);
             } else {
-                return Mono.empty();
+                log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+                return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext, message);
             }
-        } catch (RuntimeException e){
-            // TODO we should persist it as ONBOARDING_KO instead?
-            errorNotifierService.notifyAdmissibility(message, "Unexpected error", true, e);
+        } else {
             return Mono.empty();
         }
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "Unexpected JSON", true, e));
+        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
