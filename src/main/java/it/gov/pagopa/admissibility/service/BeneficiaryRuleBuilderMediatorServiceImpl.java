@@ -19,6 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 @Service
@@ -96,21 +97,22 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
     }
 
     @Override
-    protected Mono<DroolsRule> execute(Initiative2BuildDTO payload, Message<String> message) {
-        long startTime = System.currentTimeMillis();
-
+    protected Mono<DroolsRule> execute(Initiative2BuildDTO payload, Message<String> message, Map<String, Object> ctx) {
         return Mono.just(payload)
                 .filter(this.beneficiaryRuleFilterService::filter)
                 .map(beneficiaryRule2DroolsRule)
                 .flatMap(droolsRuleRepository::save)
                 .doOnNext(i -> onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig()))
-                .flatMap(this::initializeCounters)
-                .doOnEach(x ->log.info("[PERFORMANCE_LOG] [ADMISSIBILITY_RULE_BUILD] - Time between before and after evaluate message {} ms with payload: {}", System.currentTimeMillis() - startTime, message.getPayload())
-                );
+                .flatMap(this::initializeCounters);
     }
 
     private Mono<DroolsRule> initializeCounters(DroolsRule droolsRule) {
         return initInitiativeCounterService.initCounters(droolsRule.getInitiativeConfig())
                 .then(Mono.just(droolsRule));
+    }
+
+    @Override
+    protected String getFlowName() {
+        return "ADMISSIBILITY_RULE_BUILD";
     }
 }

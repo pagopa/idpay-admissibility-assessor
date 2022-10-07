@@ -54,6 +54,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
 })
 class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";

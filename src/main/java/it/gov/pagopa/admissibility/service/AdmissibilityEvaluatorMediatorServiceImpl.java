@@ -63,6 +63,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
+        long startTime = System.currentTimeMillis();
+
         return Mono.just(message)
                 .flatMap(this::execute)
                 .doOnNext(evaluationDTO -> {
@@ -76,7 +78,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     }
                 })
                 .onErrorResume(e -> {
-                    // TODO we should persist it as ONBOARDING_KO instead?
+                    // TODO we should send it as ONBOARDING_KO (instead or rescheduling)?
                     errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
@@ -88,6 +90,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .doOnError(e -> log.error("Fail to checkpoint the message", e))
                                 .subscribe();
                     }
+                    log.info("[PERFORMANCE_LOG] [ONBOARDING_REQUEST] Time occurred to perform business logic: {} ms {}", System.currentTimeMillis() - startTime, message.getPayload());
                 });
     }
 
