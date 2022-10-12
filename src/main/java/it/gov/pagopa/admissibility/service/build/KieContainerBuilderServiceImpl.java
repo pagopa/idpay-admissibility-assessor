@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.build;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.kie.api.KieBase;
 import org.kie.api.KieServices;
 import org.kie.api.builder.KieBuilder;
 import org.kie.api.builder.KieFileSystem;
@@ -10,7 +11,6 @@ import org.kie.api.builder.KieModule;
 import org.kie.api.builder.Message;
 import org.kie.api.definition.KiePackage;
 import org.kie.api.definition.rule.Rule;
-import org.kie.api.runtime.KieContainer;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,13 +29,13 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
     }
 
     @Override
-    public Mono<KieContainer> buildAll() {
+    public Mono<KieBase> buildAll() {
         log.info("[BENEFICIARY_RULE_BUILDER] Fetching and building all the initiatives");
         return build(droolsRuleRepository.findAll());
     }
 
     @Override
-    public Mono<KieContainer> build(Flux<DroolsRule> rules) {
+    public Mono<KieBase> build(Flux<DroolsRule> rules) {
         KieServices kieServices = KieServices.Factory.get();
         KieFileSystem kieFileSystem = KieServices.get().newKieFileSystem();
 
@@ -52,18 +52,18 @@ public class KieContainerBuilderServiceImpl implements KieContainerBuilderServic
                     }
 
                     KieModule kieModule = kieBuilder.getKieModule();
-                    KieContainer newKieContainer = kieServices.newKieContainer(kieModule.getReleaseId());
+                    KieBase newKieBase = kieServices.newKieContainer(kieModule.getReleaseId()).getKieBase();
 
                     log.info("[BENEFICIARY_RULE_BUILDER] Build completed");
                     if (log.isDebugEnabled()) {
-                        KiePackage kiePackage = newKieContainer.getKieBase().getKiePackage(RULES_BUILT_PACKAGE);
+                        KiePackage kiePackage = newKieBase.getKiePackage(RULES_BUILT_PACKAGE);
                         log.debug("[BENEFICIARY_RULE_BUILDER] The container now will contain the following rules inside %s package: %s".formatted(
                                 RULES_BUILT_PACKAGE,
                                 kiePackage != null
                                         ? kiePackage.getRules().stream().map(Rule::getId).toList()
                                         : "0"));
                     }
-                    return newKieContainer;
+                    return newKieBase;
                 }));
     }
 }

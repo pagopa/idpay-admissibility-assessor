@@ -8,7 +8,7 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -29,7 +29,7 @@ public class KieContainerBuilderServiceImplTest {
 
         Mockito.when(droolsRuleRepository.findAll()).thenReturn(Flux.empty());
         // When
-        KieContainer result = kieContainerBuilderService.buildAll().block();
+        KieBase result = kieContainerBuilderService.buildAll().block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -52,7 +52,7 @@ public class KieContainerBuilderServiceImplTest {
         Flux<DroolsRule> rulesFlux = Flux.just(dr);
         Mockito.when(droolsRuleRepository.findAll()).thenReturn(rulesFlux);
         // When
-        KieContainer result = kieContainerBuilderService.buildAll().block();
+        KieBase result = kieContainerBuilderService.buildAll().block();
 
         // Then
         Assertions.assertNotNull(result);

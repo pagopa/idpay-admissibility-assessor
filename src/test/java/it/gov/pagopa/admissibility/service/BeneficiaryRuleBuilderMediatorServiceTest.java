@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 import org.mockito.Mockito;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
@@ -37,7 +37,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     private final ErrorNotifierService errorNotifierServiceMock;
     private final BeneficiaryRuleFilterService beneficiaryRuleFilterServiceMock;
 
-    private final KieContainer newKieContainerBuiltmock = Mockito.mock(KieContainer.class);
+    private final KieBase newKieBaseBuiltMock = Mockito.mock(KieBase.class);
 
     public BeneficiaryRuleBuilderMediatorServiceTest() {
         this.beneficiaryRule2DroolsRuleMock = Mockito.mock(BeneficiaryRule2DroolsRule.class);
@@ -65,7 +65,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                             .build());
         });
         Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
-        Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieContainerBuiltmock));
+        Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieBaseBuiltMock));
         Mockito.when(initInitiativeCounterServiceMock.initCounters(Mockito.any())).thenAnswer(i->Mono.just(i.getArgument(0)));
     }
 
@@ -92,7 +92,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         });
 
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
-        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
         Mockito.verifyNoInteractions(errorNotifierServiceMock);
     }
 
@@ -121,7 +121,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         Mockito.verify(droolsRuleRepositoryMock).save(Mockito.any());
 
         Mockito.verify(kieContainerBuilderServiceMock).buildAll();
-        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
         Mockito.verifyNoInteractions(errorNotifierServiceMock);
     }
 }

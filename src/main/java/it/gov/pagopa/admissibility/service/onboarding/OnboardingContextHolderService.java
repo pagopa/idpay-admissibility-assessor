@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 
 
 /**
@@ -9,8 +9,8 @@ import org.kie.api.runtime.KieContainer;
  * It will also update the cached version when new rules arrives
  * */
 public interface OnboardingContextHolderService {
-    KieContainer getBeneficiaryRulesKieContainer();
-    void setBeneficiaryRulesKieContainer(KieContainer kieContainer);
+    KieBase getBeneficiaryRulesKieBase();
+    void setBeneficiaryRulesKieBase(KieBase kieBase);
 
     InitiativeConfig getInitiativeConfig(String initiativeId);
 

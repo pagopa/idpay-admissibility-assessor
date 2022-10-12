@@ -5,7 +5,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -23,7 +23,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     private final KieContainerBuilderService kieContainerBuilderService;
     private final DroolsRuleRepository droolsRuleRepository;
 
-    private KieContainer kieContainer;
+    private KieBase kieBase;
     private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
 
     public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher) {
@@ -40,14 +40,14 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     //region kieContainer holder
     @Override
-    public void setBeneficiaryRulesKieContainer(KieContainer kiecontainer) {
-        this.kieContainer=kiecontainer; //TODO store in cache
+    public void setBeneficiaryRulesKieBase(KieBase kieBase) {
+        this.kieBase =kieBase; //TODO store in cache
 
     }
 
     @Override
-    public KieContainer getBeneficiaryRulesKieContainer() {
-        return kieContainer;
+    public KieBase getBeneficiaryRulesKieBase() {
+        return kieBase;
     }
 
     // TODO use cache
@@ -57,11 +57,11 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     //TODO use cache
-    public void refreshKieContainer(Consumer<? super KieContainer> subscriber){
+    public void refreshKieContainer(Consumer<? super KieBase> subscriber){
         log.trace("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
         final Flux<DroolsRule> droolsRuleFlux = droolsRuleRepository.findAll().doOnNext(dr -> setInitiativeConfig(dr.getInitiativeConfig()));
 
-        kieContainerBuilderService.build(droolsRuleFlux).doOnNext(this::setBeneficiaryRulesKieContainer).subscribe(subscriber);
+        kieContainerBuilderService.build(droolsRuleFlux).doOnNext(this::setBeneficiaryRulesKieBase).subscribe(subscriber);
     }
     //endregion
 
@@ -79,7 +79,10 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     // TODO read from cache
     private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
+        log.debug("[CACHE_MISS] Cannot find locally initiativeId {}", initiativeId);
+        long startTime = System.currentTimeMillis();
         DroolsRule droolsRule = droolsRuleRepository.findById(initiativeId).block();
+        log.info("[PERFORMANCE_LOG] Time spent fetching initiativeId: {} ms", System.currentTimeMillis() - startTime);
         if (droolsRule==null){
             log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
             return null;
