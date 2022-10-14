@@ -148,6 +148,9 @@ public abstract class BaseIntegrationTest {
     @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}")
     protected String groupIdBeneficiaryRuleConsumer;
 
+    @Value("${spring.redis.url}")
+    protected String redisUrl;
+
     @BeforeAll
     public static void unregisterPreviouslyKafkaServers() throws MalformedObjectNameException, MBeanRegistrationException, InstanceNotFoundException {
         TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Rome")));
@@ -182,10 +185,12 @@ public abstract class BaseIntegrationTest {
                         ************************
                         Embedded mongo: %s
                         Embedded kafka: %s
+                        Embedded redis: %s
                         ************************
                         """,
                 mongoUrl,
-                "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes));
+                "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes),
+                redisUrl);
     }
 
     @Test
