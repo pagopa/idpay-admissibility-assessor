@@ -31,6 +31,5 @@ public class EvaluationDTO {
     @NotNull
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
     private BigDecimal beneficiaryBudget;
-    private String serviceId;
 
 }

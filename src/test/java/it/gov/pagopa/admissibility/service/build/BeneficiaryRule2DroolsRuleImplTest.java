@@ -118,7 +118,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
-                .serviceId("SERVICEID")
                 .build());
 
         Assertions.assertEquals(expected, result);
@@ -173,7 +172,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
-        expectedEvaluationResult.setServiceId("SERVICEID");
         expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
@@ -216,7 +214,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 null, null));
 
         dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
-                "SERVICEID",
                 "SERVICENAME",
                 "ARGUMENT",
                 "DESCRIPTION",

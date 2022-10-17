@@ -38,7 +38,6 @@ class Initiative2InitiativeConfigMapperTest {
                 .build());
 
         initiative2BuildDTO.setAdditionalInfo(InitiativeAdditionalInfoDTO.builder()
-                        .serviceId("SERVICEID")
                         .serviceName("SERVICENAME")
                         .argument("ARGUMENT")
                         .description("DESCRIPTION")
@@ -59,7 +58,6 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
-        Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
 

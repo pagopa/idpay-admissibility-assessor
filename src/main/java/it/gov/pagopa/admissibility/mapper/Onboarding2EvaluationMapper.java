@@ -26,7 +26,6 @@ public class Onboarding2EvaluationMapper {
             out.setInitiativeName(initiative.getInitiativeName());
             out.setInitiativeEndDate(initiative.getEndDate());
             out.setOrganizationId(initiative.getOrganizationId());
-            out.setServiceId(initiative.getServiceId());
             out.setBeneficiaryBudget(initiative.getBeneficiaryInitiativeBudget());
         }
         return out;
