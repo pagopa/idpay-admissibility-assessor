@@ -17,6 +17,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
+    public static final String ERROR_MSG_HEADER_APPLICATION_NAME = "applicationName";
+    public static final String ERROR_MSG_HEADER_GROUP = "group";
     public static final String ERROR_MSG_HEADER_SRC_TYPE = "srcType";
     public static final String ERROR_MSG_HEADER_SRC_SERVER = "srcServer";
     public static final String ERROR_MSG_HEADER_SRC_TOPIC = "srcTopic";
@@ -25,33 +27,44 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     public static final String ERROR_MSG_HEADER_STACKTRACE = "stacktrace";
 
     private final StreamBridge streamBridge;
+    private final String applicationName;
 
     private final String beneficiaryRuleBuilderMessagingServiceType;
     private final String beneficiaryRuleBuilderServer;
     private final String beneficiaryRuleBuilderTopic;
+    private final String beneficiaryRuleBuilderGroup;
 
     private final String admissibilityMessagingServiceType;
     private final String admissibilityServer;
     private final String admissibilityTopic;
+    private final String admissibilityGroup;
 
+    @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public ErrorNotifierServiceImpl(StreamBridge streamBridge,
+                                    @Value("${spring.application.name}") String applicationName,
 
                                     @Value("${spring.cloud.stream.binders.kafka-beneficiary-rule-builder.type}") String beneficiaryRuleBuilderMessagingServiceType,
                                     @Value("${spring.cloud.stream.binders.kafka-beneficiary-rule-builder.environment.spring.cloud.stream.kafka.binder.brokers}") String beneficiaryRuleBuilderServer,
                                     @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}") String beneficiaryRuleBuilderTopic,
+                                    @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}") String beneficiaryRuleBuilderGroup,
 
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-request.type}") String admissibilityMessagingServiceType,
                                     @Value("${spring.cloud.azure.servicebus.connection-string}") String admissibilityServer,
-                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}") String admissibilityTopic) {
+                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}") String admissibilityTopic,
+                                    @Value("") String admissibilityGroup
+                                    ) {
         this.streamBridge = streamBridge;
+        this.applicationName = applicationName;
 
         this.beneficiaryRuleBuilderMessagingServiceType = beneficiaryRuleBuilderMessagingServiceType;
         this.beneficiaryRuleBuilderServer = beneficiaryRuleBuilderServer;
         this.beneficiaryRuleBuilderTopic = beneficiaryRuleBuilderTopic;
+        this.beneficiaryRuleBuilderGroup = beneficiaryRuleBuilderGroup;
 
         this.admissibilityMessagingServiceType = admissibilityMessagingServiceType;
         this.admissibilityServer = extractServerFromServiceBusConnectionString(admissibilityServer);
         this.admissibilityTopic = admissibilityTopic;
+        this.admissibilityGroup = admissibilityGroup;
     }
 
     private final Pattern serviceBusEndpointPattern = Pattern.compile("Endpoint=sb://([^;]+)/?;");
@@ -62,18 +75,20 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
     @Override
     public void notifyBeneficiaryRuleBuilder(Message<?> message, String description, boolean retryable, Throwable exception) {
-        notify(beneficiaryRuleBuilderMessagingServiceType, beneficiaryRuleBuilderServer, beneficiaryRuleBuilderTopic, message, description, retryable, exception);
+        notify(beneficiaryRuleBuilderMessagingServiceType, beneficiaryRuleBuilderServer, beneficiaryRuleBuilderTopic, beneficiaryRuleBuilderGroup, message, description, retryable, exception);
     }
 
     @Override
     public void notifyAdmissibility(Message<?> message, String description, boolean retryable, Throwable exception) {
-        notify(admissibilityMessagingServiceType, admissibilityServer, admissibilityTopic, message, description, retryable, exception);
+        notify(admissibilityMessagingServiceType, admissibilityServer, admissibilityTopic, admissibilityGroup, message, description, retryable, exception);
     }
 
     @Override
-    public void notify(String srcType, String srcServer, String srcTopic, Message<?> message, String description, boolean retryable, Throwable exception) {
+    public void notify(String srcType, String srcServer, String srcTopic, String group, Message<?> message, String description, boolean retryable, Throwable exception) {
         log.info("[ERROR_NOTIFIER] notifying error: {}", description, exception);
         final MessageBuilder<?> errorMessage = MessageBuilder.fromMessage(message)
+                .setHeader(ERROR_MSG_HEADER_APPLICATION_NAME, applicationName)
+                .setHeader(ERROR_MSG_HEADER_GROUP, group)
                 .setHeader(ERROR_MSG_HEADER_SRC_TYPE, srcType)
                 .setHeader(ERROR_MSG_HEADER_SRC_SERVER, srcServer)
                 .setHeader(ERROR_MSG_HEADER_SRC_TOPIC, srcTopic)
