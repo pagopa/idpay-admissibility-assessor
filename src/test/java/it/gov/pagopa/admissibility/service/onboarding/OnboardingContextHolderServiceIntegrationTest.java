@@ -63,7 +63,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         DroolsRule dr = new DroolsRule();
         dr.setId("NAME");
-        dr.setName("id_1");
+        dr.setName("id_0");
         dr.setRule("""
                 package %s;
                                                 
@@ -76,7 +76,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                         KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE,
                         dr.getRule(),
                         dr.getName(),
-                        OnboardingDTO.class.getName()
+                        OnboardingDroolsDTO.class.getName()
                 )
         );
 
