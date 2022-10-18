@@ -81,7 +81,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         afterCommits2subscribe
                 .buffer(beneficiaryRulesBuildDelayMinusCommit)
                 .flatMap(r -> kieContainerBuilderService.buildAll())
-                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieContainer);
+                .subscribe(onboardingContextHolderService::setBeneficiaryRulesKieBase);
     }
 
     @Override

@@ -16,8 +16,8 @@ import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.kie.api.KieBase;
 import org.kie.api.definition.KiePackage;
-import org.kie.api.runtime.KieContainer;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
@@ -81,7 +81,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         checkErrorsPublished(notValidRules, maxWaitingMs, errorUseCases);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(1)).buildAll(); // +1 due to refresh at startup
-        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
+        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.any());
 
         System.out.printf("""
                         ************************
@@ -139,11 +139,11 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     }
 
     public static int getRuleBuiltSize(OnboardingContextHolderService onboardingContextHolderServiceSpy) {
-        KieContainer kieContainer = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer();
-        if (kieContainer == null) {
+        KieBase kieBase = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieBase();
+        if (kieBase == null) {
             return 0;
         } else {
-            KiePackage kiePackage = kieContainer.getKieBase().getKiePackage(KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE);
+            KiePackage kiePackage = kieBase.getKiePackage(KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE);
             return kiePackage != null
                     ? kiePackage.getRules().size()
                     : 0;

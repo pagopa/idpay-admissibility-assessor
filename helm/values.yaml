@@ -49,7 +49,6 @@ microservice-chart:
     APP: "idpay-admissibility-assessor"
     KAFKA_ONBOARDING_REQUEST_GROUP_ID: "idpay-onboarding-request-consumer-group"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
-    CACHE_REFRESH_MS_RATE: "31536000000"
 
   envConfigMapExternals:
     idpay-common:
@@ -73,6 +72,7 @@ microservice-chart:
     KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAS_CONFIG: evh-idpay-rule-update-idpay-rule-update-consumer-jaas-config-idpay-01
     SERVICEBUS_ONBOARDING_CONNECTION_STRING: idpay-onboarding-request-processor-sas-key
     KAFKA_ERRORS_SASL_JAAS_CONFIG: evh-idpay-errors-idpay-errors-producer-jaas-config-idpay-01
+    REDIS_CONNECTION_URL: idpay-redis-00-primary-connection-url
 
   # nodeSelector: {}
 

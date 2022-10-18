@@ -19,8 +19,8 @@ import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.kie.api.KieBase;
 import org.kie.api.command.Command;
-import org.kie.api.runtime.KieContainer;
 import org.kie.internal.command.CommandFactory;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
@@ -302,15 +302,15 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         ignoredRule.setName("IGNOREDRULE");
         ignoredRule.setRule(applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
 
-        KieContainer container = new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
-        Assertions.assertNotNull(container);
+        KieBase kieBase = new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
+        Assertions.assertNotNull(kieBase);
 
         @SuppressWarnings("unchecked")
         List<Command<?>> commands = Arrays.asList(
                 CommandFactory.newInsert(onboardingDroolsDTO),
                 new AgendaGroupSetFocusCommand(onboardingDroolsDTO.getInitiativeId())
         );
-        container.newStatelessKieSession().execute(CommandFactory.newBatchExecution(commands));
+        kieBase.newStatelessKieSession().execute(CommandFactory.newBatchExecution(commands));
 
         Assertions.assertEquals(success,
                 onboardingDroolsDTO.getOnboardingRejectionReasons().stream()
