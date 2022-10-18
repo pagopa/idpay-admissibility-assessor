@@ -39,6 +39,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public BeneficiaryRuleBuilderMediatorServiceImpl(
+            @Value("${spring.application.name}") String applicationName,
             @Value("${spring.cloud.stream.kafka.bindings.beneficiaryRuleBuilderConsumer-in-0.consumer.ackTime}") long commitMillis,
             @Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay,
 
@@ -51,6 +52,8 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
             BeneficiaryRuleFilterService beneficiaryRuleFilterService,
 
             ObjectMapper objectMapper) {
+        super(applicationName);
+
         this.commitDelay = Duration.ofMillis(commitMillis);
 
         Duration beneficiaryRulesBuildDelayDuration = Duration.parse(beneficiaryRulesBuildDelay).minusMillis(commitMillis);

@@ -23,7 +23,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
                 .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
-                .serviceId(initiative.getAdditionalInfo().getServiceId())
+                .serviceId(initiative.getAdditionalInfo() != null? initiative.getAdditionalInfo().getServiceId() : null)
                 .build();
     }
 }
