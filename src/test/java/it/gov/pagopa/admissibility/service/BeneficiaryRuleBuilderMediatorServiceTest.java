@@ -145,7 +145,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
         // Then
         Mockito.verify(kieContainerBuilderServiceMock).buildAll();
-        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.same(newKieContainerBuiltmock));
+        Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
 
         Mockito.verifyNoInteractions(errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock);
     }
