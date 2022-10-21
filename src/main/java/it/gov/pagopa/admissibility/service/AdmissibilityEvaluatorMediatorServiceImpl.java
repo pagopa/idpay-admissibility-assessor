@@ -9,14 +9,10 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingRequestEvaluatorService;
+import it.gov.pagopa.admissibility.service.onboarding.*;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.support.GenericMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -74,7 +70,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         }
                     } catch (Exception e){
                         log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationDTO);
-                        errorNotifierService.notifyAdmissibility(new GenericMessage<>(evaluationDTO, message.getHeaders()), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
+                        errorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
                     }
                 })
                 .onErrorResume(e -> {
