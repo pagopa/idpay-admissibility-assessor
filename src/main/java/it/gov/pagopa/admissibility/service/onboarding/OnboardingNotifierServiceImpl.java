@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,10 @@ public class OnboardingNotifierServiceImpl implements OnboardingNotifierService 
     @Override
     public boolean notify(EvaluationDTO evaluationDTO) {
         return streamBridge.send("admissibilityProcessor-out-0",
-                MessageBuilder.withPayload(evaluationDTO).build());
+                buildMessage(evaluationDTO));
+    }
+
+    public static Message<EvaluationDTO> buildMessage(EvaluationDTO evaluationDTO){
+        return MessageBuilder.withPayload(evaluationDTO).build();
     }
 }
