@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.event.processor;
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -11,16 +12,14 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorService;
-import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
+import it.gov.pagopa.admissibility.service.onboarding.*;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -58,8 +57,7 @@ import java.util.stream.IntStream;
 })
 class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
-    public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_5_FAILING_BUDGET_RESERVATION";
-
+    public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
     @SpyBean
     private OnboardingContextHolderService onboardingContextHolderServiceSpy;
     @SpyBean
@@ -71,7 +69,10 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     @SpyBean
     private InitiativeCountersRepository initiativeCountersRepositorySpy;
 
-    private final int initiativesNumber = 5;
+    @SpyBean
+    private OnboardingNotifierService onboardingNotifierServiceSpy;
+
+    private final int initiativesNumber = 7;
     private static List<Checkpointer> checkpointers;
 
     @TestConfiguration
@@ -390,6 +391,38 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingRuleEngineUseCase)
         ));
 
+        final String failingOnboardingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING";
+        OnboardingDTO onboardingFailinPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+                .userId(failingOnboardingPublishingUserId)
+                .build();
+        int onboardingFailinPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
+        errorUseCases.add(Pair.of(
+                () -> {
+                    Mockito.doReturn(false).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> failingOnboardingPublishingUserId.equals(i.getUserId())));
+                    return TestUtils.jsonSerializer(onboardingFailinPublishing);
+                },
+                errorMessage-> {
+                    EvaluationDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                }
+        ));
+
+        final String exceptionWhenOnboardingPublishingUserId = "FAILING_REWARD_PUBLISHING_DUE_EXCEPTION";
+        OnboardingDTO exceptionWhenOnboardingPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+                .userId(exceptionWhenOnboardingPublishingUserId)
+                .build();
+        int exceptionWhenOnboardingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
+        errorUseCases.add(Pair.of(
+                () -> {
+                    Mockito.doThrow(new KafkaException()).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> exceptionWhenOnboardingPublishingUserId.equals(i.getUserId())));
+                    return TestUtils.jsonSerializer(exceptionWhenOnboardingPublishing);
+                },
+                errorMessage-> {
+                    EvaluationDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                }
+        ));
+
         String failingBudgetReservation = TestUtils.jsonSerializer(
                 OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
                         .initiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID)
@@ -404,8 +437,23 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         ));
     }
 
+    private EvaluationDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO, int bias) {
+        Initiative2BuildDTO initiativeExceptionWhenOnboardingPublishing = Initiative2BuildDTOFaker.mockInstance(bias);
+        return EvaluationDTO.builder()
+                .userId(onboardingDTO.getUserId())
+                .initiativeId(onboardingDTO.getInitiativeId())
+                .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
+                .initiativeEndDate(initiativeExceptionWhenOnboardingPublishing.getGeneral().getEndDate())
+                .organizationId(initiativeExceptionWhenOnboardingPublishing.getOrganizationId())
+                .status("ONBOARDING_OK")
+                .onboardingRejectionReasons(Collections.emptyList())
+                .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
+                .serviceId(initiativeExceptionWhenOnboardingPublishing.getAdditionalInfo().getServiceId())
+                .build();
+    }
+
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, "", errorMessage, errorDescription, expectedPayload,true,true);
+        checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, "", errorMessage, errorDescription, expectedPayload,true,true,false);
     }
     //endregion
 
@@ -428,5 +476,27 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 expectedReadMessages,
                 destPublishedOffsets
         );
+    }
+
+    protected void checkPayload(String errorMessage, String expectedPayload) {
+        try {
+            EvaluationDTO actual = objectMapper.readValue(errorMessage, EvaluationDTO.class);
+            EvaluationDTO expected = objectMapper.readValue(expectedPayload, EvaluationDTO.class);
+
+            System.out.println(actual);
+            System.out.println(expected);
+
+            TestUtils.checkNotNullFields(actual);
+            Assertions.assertEquals(expected.getUserId(), actual.getUserId());
+            Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
+            Assertions.assertEquals(expected.getInitiativeName(), actual.getInitiativeName());
+            Assertions.assertEquals(expected.getOrganizationId(),actual.getOrganizationId());
+            Assertions.assertEquals(expected.getStatus(), actual.getStatus());
+            Assertions.assertEquals(expected.getOnboardingRejectionReasons(), actual.getOnboardingRejectionReasons());
+            Assertions.assertEquals(expected.getBeneficiaryBudget(), actual.getBeneficiaryBudget());
+            Assertions.assertEquals(expected.getServiceId(),actual.getServiceId());
+        } catch (JsonProcessingException e) {
+            Assertions.fail("Error check in payload");
+        }
     }
 }

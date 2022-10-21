@@ -371,7 +371,7 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, boolean expectRetryHeader, boolean expectedAppNameHeader) {
+    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, boolean expectRetryHeader, boolean expectedAppNameHeader, boolean runtimeFieldSetter) {
         if(expectedAppNameHeader) {
             Assertions.assertEquals("idpay-admissibility-assessor", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME));
             Assertions.assertEquals(group, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_GROUP));
@@ -384,6 +384,11 @@ public abstract class BaseIntegrationTest {
         if(expectRetryHeader) {
             Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "RETRY")); // to test if headers are correctly propagated
         }
-        Assertions.assertEquals(errorMessage.value(), expectedPayload);
+        if(!runtimeFieldSetter) {
+            Assertions.assertEquals(expectedPayload, errorMessage.value());
+        }else {
+            checkPayload(errorMessage.value(), expectedPayload);
+        }
     }
+    protected void checkPayload(String errorMessage, String expectedPayload){}
 }
