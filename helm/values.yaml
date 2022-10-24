@@ -47,7 +47,6 @@ microservice-chart:
 
   envConfig:
     APP: "idpay-admissibility-assessor"
-    KAFKA_ONBOARDING_REQUEST_GROUP_ID: "idpay-onboarding-request-consumer-group"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
 
   envConfigMapExternals:
