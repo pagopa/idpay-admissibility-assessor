@@ -22,7 +22,7 @@ import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 import org.mockito.Mockito;
 import reactor.core.publisher.Flux;
 
@@ -157,7 +157,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule rule = beneficiaryRule2DroolsRule.apply(initiative);
 
         OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(rule));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieBase()).thenReturn(buildKieBase(rule));
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), criteriaCodeServiceMock, new Onboarding2OnboardingDroolsMapper());
 
@@ -226,7 +226,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         return dto;
     }
 
-    private KieContainer buildContainer(DroolsRule rule) {
+    private KieBase buildKieBase(DroolsRule rule) {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");

@@ -14,8 +14,6 @@ import org.kie.api.runtime.StatelessKieSession;
 import org.kie.internal.command.CommandFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,7 +36,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     public EvaluationDTO applyRules(OnboardingDTO onboardingRequest, InitiativeConfig initiative) {
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] evaluating rules of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
-        StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieContainer().newStatelessKieSession();
+        StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
 
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
 

@@ -4,34 +4,40 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.kie.api.KieBase;
 import org.kie.api.definition.KiePackage;
-import org.kie.api.runtime.KieContainer;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
         "app.beneficiary-rule.build-delay-duration=PT1S",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
 })
 public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
@@ -51,11 +57,12 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         int[] expectedRules = {0};
 
         List<String> initiativePayloads = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validRules / 2, expectedRules));
-        initiativePayloads.addAll(IntStream.range(0, notValidRules).mapToObj(i -> errorUseCases.get(i).getFirst().get()).collect(Collectors.toList()));
+        initiativePayloads.addAll(IntStream.range(0, notValidRules).mapToObj(i -> errorUseCases.get(i).getFirst().get()).toList());
         initiativePayloads.addAll(buildValidPayloads(errorUseCases.size() + (validRules / 2) + notValidRules, validRules / 2, expectedRules));
 
         long timeStart = System.currentTimeMillis();
         initiativePayloads.forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
+        publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, List.of(new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "OTHERAPPNAME".getBytes(StandardCharsets.UTF_8))), null, "OTHERAPPMESSAGE");
         long timePublishingEnd = System.currentTimeMillis();
 
         long[] countSaved = {0};
@@ -74,7 +81,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         checkErrorsPublished(notValidRules, maxWaitingMs, errorUseCases);
 
         Mockito.verify(kieContainerBuilderServiceSpy, Mockito.atLeast(1)).buildAll(); // +1 due to refresh at startup
-        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieContainer(Mockito.any());
+        Mockito.verify(onboardingContextHolderServiceSpy, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.any());
 
         System.out.printf("""
                         ************************
@@ -97,6 +104,20 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                 Mockito.mockingDetails(kieContainerBuilderServiceSpy).getInvocations().stream()
                         .filter(i -> i.getMethod().getName().equals("buildAll")).count() - 1 // 1 is due on startup
         );
+
+        long timeCommitCheckStart = System.currentTimeMillis();
+        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer,initiativePayloads.size()+1); // +1 due to other applicationName useCase
+        long timeCommitCheckEnd = System.currentTimeMillis();
+        System.out.printf("""
+                        ************************
+                        Time occurred to check committed offset: %d millis
+                        ************************
+                        Source Topic Committed Offsets: %s
+                        ************************
+                        """,
+                timeCommitCheckEnd - timeCommitCheckStart,
+                srcCommitOffsets
+        );
     }
 
     private List<String> buildValidPayloads(int bias, int validRules, int[] expectedRules) {
@@ -118,11 +139,11 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     }
 
     public static int getRuleBuiltSize(OnboardingContextHolderService onboardingContextHolderServiceSpy) {
-        KieContainer kieContainer = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieContainer();
-        if (kieContainer == null) {
+        KieBase kieBase = onboardingContextHolderServiceSpy.getBeneficiaryRulesKieBase();
+        if (kieBase == null) {
             return 0;
         } else {
-            KiePackage kiePackage = kieContainer.getKieBase().getKiePackage(KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE);
+            KiePackage kiePackage = kieBase.getKiePackage(KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE);
             return kiePackage != null
                     ? kiePackage.getRules().size()
                     : 0;
@@ -151,13 +172,13 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         String useCaseJsonNotExpected = "{\"initiativeId\":\"id_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", useCaseJsonNotExpected)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", useCaseJsonNotExpected)
         ));
         
         String jsonNotValid = "{\"initiativeId\":\"id_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "Unexpected JSON", jsonNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", jsonNotValid)
         ));
         
         String criteriaCodeNotValid = TestUtils.jsonSerializer(Initiative2BuildDTOFaker.mockInstanceBuilder(errorUseCases.size())
@@ -170,7 +191,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                         .build()));
         errorUseCases.add(Pair.of(
                 () -> criteriaCodeNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling initiative", criteriaCodeNotValid)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", criteriaCodeNotValid)
         ));
 
         final String errorWhenSavingUseCaseId = "id_%s_ERRORWHENSAVING".formatted(errorUseCases.size());
@@ -182,12 +203,12 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                     Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(droolsRuleRepositorySpy).save(Mockito.argThat(i->errorWhenSavingUseCaseId.equals(i.getId())));
                     return droolRuleSaveInError;
                 },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "An error occurred handling initiative", droolRuleSaveInError)
+                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", droolRuleSaveInError)
         ));
     }
 
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(kafkaBootstrapServers, topicBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload);
+        checkErrorMessageHeaders(kafkaBootstrapServers, topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload, true, true, false);
     }
     //endregion
 }

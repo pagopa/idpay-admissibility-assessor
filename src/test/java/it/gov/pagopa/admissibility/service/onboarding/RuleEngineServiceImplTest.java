@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.api.runtime.KieContainer;
+import org.kie.api.KieBase;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
@@ -53,13 +53,13 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
 
-        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieContainer()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
         // Then
-        Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieContainer();
+        Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieBase();
 
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
@@ -78,7 +78,7 @@ class RuleEngineServiceImplTest {
         Assertions.assertEquals(expected, result);
     }
 
-    private KieContainer buildContainer(String initiativeId) {
+    private KieBase buildContainer(String initiativeId) {
         DroolsRule ignoredRule = new DroolsRule();
         ignoredRule.setId("IGNORED");
         ignoredRule.setName("IGNOREDRULE");

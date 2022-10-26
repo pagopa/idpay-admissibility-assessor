@@ -10,18 +10,26 @@ import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.StreamsHealthIndicator;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
@@ -42,12 +50,11 @@ import java.lang.reflect.Field;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.time.ZoneId;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -119,7 +126,8 @@ public abstract class BaseIntegrationTest {
     protected DroolsRuleRepository droolsRuleRepository;
     @Autowired
     protected InitiativeCountersRepository initiativeCountersRepository;
-
+    @Autowired
+    protected StreamsHealthIndicator streamsHealthIndicator;
     @Autowired
     protected ObjectMapper objectMapper;
 
@@ -138,9 +146,17 @@ public abstract class BaseIntegrationTest {
     @Value("${spring.cloud.stream.bindings.errors-out-0.destination}")
     protected String topicErrors;
 
+    @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}")
+    protected String groupIdBeneficiaryRuleConsumer;
+
+    @Value("${spring.redis.url}")
+    protected String redisUrl;
+
     @BeforeAll
     public static void unregisterPreviouslyKafkaServers() throws MalformedObjectNameException, MBeanRegistrationException, InstanceNotFoundException {
-        unregisterMBean("kafka.server:type=app-info,id=0");
+        TimeZone.setDefault(TimeZone.getTimeZone(ZoneId.of("Europe/Rome")));
+
+        unregisterMBean("kafka.*:*");
         unregisterMBean("org.springframework.*:*");
     }
 
@@ -170,13 +186,25 @@ public abstract class BaseIntegrationTest {
                         ************************
                         Embedded mongo: %s
                         Embedded kafka: %s
+                        Embedded redis: %s
                         ************************
                         """,
                 mongoUrl,
-                "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes));
+                "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes),
+                redisUrl);
+    }
+
+    @Test
+    void testHealthIndicator(){
+        Health health = streamsHealthIndicator.health();
+        Assertions.assertEquals(Status.UP, health.getStatus());
     }
 
     protected Consumer<String, String> getEmbeddedKafkaConsumer(String topic, String groupId) {
+        return getEmbeddedKafkaConsumer(topic, groupId, true);
+    }
+
+    protected Consumer<String, String> getEmbeddedKafkaConsumer(String topic, String groupId, boolean attachToBroker) {
         if (!kafkaBroker.getTopics().contains(topic)) {
             kafkaBroker.addTopics(topic);
         }
@@ -184,7 +212,9 @@ public abstract class BaseIntegrationTest {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(groupId, "true", kafkaBroker);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         Consumer<String, String> consumer = cf.createConsumer();
-        kafkaBroker.consumeFromAnEmbeddedTopic(consumer, topic);
+        if(attachToBroker){
+            kafkaBroker.consumeFromAnEmbeddedTopic(consumer, topic);
+        }
         return consumer;
     }
 
@@ -234,18 +264,78 @@ public abstract class BaseIntegrationTest {
         }
     }
 
+    private int totaleMessageSentCounter =0;
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, String payload) {
-        final RecordHeader retryHeader = new RecordHeader("RETRY", "1".getBytes());
+        final RecordHeader retryHeader = new RecordHeader("RETRY", "1".getBytes(StandardCharsets.UTF_8));
+        final RecordHeader applicationNameHeader = new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "idpay-admissibility-assessor".getBytes(StandardCharsets.UTF_8));
+
+        AtomicBoolean containAppNameHeader = new AtomicBoolean(false);
+        if(headers!= null){
+            headers.forEach(h -> {
+                if(h.key().equals(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME)){
+                    containAppNameHeader.set(true);
+                }
+            });
+        }
+
+        final RecordHeader[] additionalHeaders;
+        if(totaleMessageSentCounter++%2 == 0 || containAppNameHeader.get()){
+            additionalHeaders= new RecordHeader[]{retryHeader};
+        } else {
+            additionalHeaders= new RecordHeader[]{retryHeader, applicationNameHeader};
+        }
+
         if (headers == null) {
-            headers = new RecordHeaders(new RecordHeader[]{retryHeader});
+            headers = new RecordHeaders(additionalHeaders);
         } else {
             headers = Stream.concat(
                             StreamSupport.stream(headers.spliterator(), false),
-                            Stream.of(retryHeader))
+                            Arrays.stream(additionalHeaders))
                     .collect(Collectors.toList());
         }
         ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, null, key == null ? null : key.getBytes(StandardCharsets.UTF_8), payload.getBytes(StandardCharsets.UTF_8), headers);
         template.send(record);
+    }
+
+    protected Map<TopicPartition, OffsetAndMetadata> getCommittedOffsets(String topic, String groupId){
+        try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, groupId, false)) {
+            return consumer.committed(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).collect(Collectors.toSet()));
+        }
+    }
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages){
+        return checkCommittedOffsets(topic, groupId, expectedCommittedMessages, 10, 500);
+    }
+
+    // Cannot use directly Awaitlity cause the Callable condition is performed on separate thread, which will go into conflict with the consumer Kafka access
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages, int maxAttempts, int millisAttemptDelay){
+        RuntimeException lastException = null;
+        if(maxAttempts<=0){
+            maxAttempts=1;
+        }
+
+        for(;maxAttempts>0; maxAttempts--){
+            try {
+                final Map<TopicPartition, OffsetAndMetadata> commits = getCommittedOffsets(topic, groupId);
+                Assertions.assertEquals(expectedCommittedMessages, commits.values().stream().mapToLong(OffsetAndMetadata::offset).sum());
+                return commits;
+            } catch (Throwable e){
+                lastException = new RuntimeException(e);
+                wait(millisAttemptDelay, TimeUnit.MILLISECONDS);
+            }
+        }
+        throw lastException;
+    }
+
+    protected Map<TopicPartition, Long> getEndOffsets(String topic){
+        try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group-test-check", false)) {
+            return consumer.endOffsets(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).toList());
+        }
+    }
+
+    protected Map<TopicPartition, Long> checkPublishedOffsets(String topic, long expectedPublishedMessages){
+        Map<TopicPartition, Long> endOffsets = getEndOffsets(topic);
+        Assertions.assertEquals(expectedPublishedMessages, endOffsets.values().stream().mapToLong(x->x).sum());
+        return endOffsets;
     }
 
     protected static void waitFor(Callable<Boolean> test, Supplier<String> buildTestFailureMessage, int maxAttempts, int millisAttemptDelay) {
@@ -256,6 +346,14 @@ public abstract class BaseIntegrationTest {
                     .until(test);
         } catch (RuntimeException e) {
             Assertions.fail(buildTestFailureMessage.get(), e);
+        }
+    }
+
+    public static void wait(long timeout, TimeUnit timeoutUnit) {
+        try{
+            Awaitility.await().timeout(timeout,timeoutUnit).until(()->false);
+        } catch (ConditionTimeoutException ex){
+            // Do Nothing
         }
     }
 
@@ -273,13 +371,24 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
+    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, boolean expectRetryHeader, boolean expectedAppNameHeader, boolean runtimeFieldSetter) {
+        if(expectedAppNameHeader) {
+            Assertions.assertEquals("idpay-admissibility-assessor", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME));
+            Assertions.assertEquals(group, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_GROUP));
+        }
         Assertions.assertEquals("kafka", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TYPE));
         Assertions.assertEquals(srcServer, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_SERVER));
         Assertions.assertEquals(srcTopic, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
         Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
         Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
-        Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "RETRY")); // to test if headers are correctly propagated
-        Assertions.assertEquals(errorMessage.value(), expectedPayload);
+        if(expectRetryHeader) {
+            Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "RETRY")); // to test if headers are correctly propagated
+        }
+        if(!runtimeFieldSetter) {
+            Assertions.assertEquals(expectedPayload, errorMessage.value());
+        }else {
+            checkPayload(errorMessage.value(), expectedPayload);
+        }
     }
+    protected void checkPayload(String errorMessage, String expectedPayload){}
 }
