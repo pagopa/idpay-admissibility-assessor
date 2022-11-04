@@ -29,6 +29,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
@@ -55,6 +56,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
 })
+@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
@@ -81,9 +83,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorServiceSpy;
 
         @PostConstruct
-        void init() {
-            checkpointers = configureSpies();
-        }
+        void init() {checkpointers = configureSpies();}
 
         private List<Checkpointer> configureSpies(){
             List<Checkpointer> checkpoints = Collections.synchronizedList(new ArrayList<>(1100));
@@ -482,9 +482,6 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         try {
             EvaluationDTO actual = objectMapper.readValue(errorMessage, EvaluationDTO.class);
             EvaluationDTO expected = objectMapper.readValue(expectedPayload, EvaluationDTO.class);
-
-            System.out.println(actual);
-            System.out.println(expected);
 
             TestUtils.checkNotNullFields(actual);
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());

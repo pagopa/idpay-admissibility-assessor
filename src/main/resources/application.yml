@@ -187,3 +187,15 @@ app:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
+  pdv:
+    base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
+    headers:
+      x-api-key: ${PDV_DECRYPT_API_KEY:}
+    retry:
+      delay-millis: ${PDV_RETRY_DELAY_MILLIS:10000}
+      max-attempts: ${PDV_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
+  web-client:
+    connect.timeout.millis: ${CONNECT_TIMEOUT_MILLIS:10000}
+    response.timeout: ${RESPONSE_TIMEOUT:60000}
+    read.handler.timeout: ${READ_TIMEOUT_HANDLER:60000}
+    write.handler.timeout: ${WRITE_TIMEOUT_HANDLER:60000}
