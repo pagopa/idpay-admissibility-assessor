@@ -124,7 +124,7 @@ import static org.awaitility.Awaitility.await;
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
-@ContextConfiguration(initializers = BaseIntegrationTest.PdvInitializer.class)
+@ContextConfiguration(initializers = {BaseIntegrationTest.PdvInitializer.class, BaseIntegrationTest.PdndInitializer.class})
 public abstract class BaseIntegrationTest {
     @Autowired
     protected EmbeddedKafkaBroker kafkaBroker;
@@ -407,6 +407,7 @@ public abstract class BaseIntegrationTest {
     protected void checkPayload(String errorMessage, String expectedPayload){}
 
     //Setting WireMock
+    //region PDV settings
     @RegisterExtension
     static WireMockExtension pdvWireMock = WireMockExtension.newInstance()
             .options(RestTestUtils.getWireMockConfiguration("/stub/pdv"))
@@ -423,4 +424,24 @@ public abstract class BaseIntegrationTest {
             );
         }
     }
+    //endregion
+
+    //region PDND settings
+    @RegisterExtension
+    static WireMockExtension pdndWireMock = WireMockExtension.newInstance()
+            .options(RestTestUtils.getWireMockConfiguration("/stub/pdnd"))
+            .build();
+    public static class PdndInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @SneakyThrows
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdnd.access.token-base-url=%s", pdndWireMock.getRuntimeInfo().getHttpBaseUrl())
+            );
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdnd.properties.clientId=%s", "PDND_CLIENT_ID_TEST")
+            );
+        }
+    }
+    //endregion
 }
