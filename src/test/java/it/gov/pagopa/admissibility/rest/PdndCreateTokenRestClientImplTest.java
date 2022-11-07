@@ -22,6 +22,4 @@ class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
         Assertions.assertNotNull(response);
         Assertions.assertEquals("ACCESS_TOKEN_OK",response.getAccessToken());
     }
-
-    // TODO Add another case
 }

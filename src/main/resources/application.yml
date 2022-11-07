@@ -203,7 +203,7 @@ app:
     access.token-base-url: ${PDND_ACCESS_TOKEN_BASE_URL:https://uat.gateway.test.pdnd-interop.pagopa.it/authorization-server}
     time-expire-token: ${PDND_TIME_EXPIRE_TOKEN_SECONDS:0}
     properties:
-      clientAssertionType: ${PDND_CLIENT_ASSERTION_TYPE:=urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
+      clientAssertionType: ${PDND_CLIENT_ASSERTION_TYPE:urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
       grant-type: ${PDND_GRANT_TYPE:client_credentials}
       clientId: ${PDND_CLIENT_ID:} #TODO to send with initiative
     web-client:
