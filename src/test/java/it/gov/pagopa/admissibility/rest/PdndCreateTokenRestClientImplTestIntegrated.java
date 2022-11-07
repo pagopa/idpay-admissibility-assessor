@@ -29,7 +29,6 @@ class PdndCreateTokenRestClientImplTestIntegrated extends BaseIntegrationTest {
 
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);
-        System.out.println(result);
 
     }
 }
