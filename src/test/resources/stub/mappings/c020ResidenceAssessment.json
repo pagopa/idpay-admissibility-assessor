@@ -1,0 +1,23 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/anpr-service-e002"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "datiSoggetto": [
+        {
+          "generalita": {
+            "codiceFiscale": "FISCAL_CODE",
+            "cognome": "COGNOME",
+            "nome": "NOME"
+          }
+        }
+      ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

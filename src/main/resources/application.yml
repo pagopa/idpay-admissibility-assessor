@@ -211,3 +211,10 @@ app:
         connect-timeout-millis: ${PDND_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
         response-timeout-millis: ${PDND_RESPONSE_TIMEOUT_MILLIS:${RESPONSE_TIMEOUT:60000}}
         read-timeout-handler: ${PDND_READ_TIMEOUT_HANDLER_MILLIS:${READ_TIMEOUT_HANDLER:60000}}
+  c020-residenceAssessment:
+    base-url: ${C020_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C020-servizioAccertamentoResidenza/v1}
+    web-client:
+      timeouts:
+        connect-timeout-millis: ${C020_RESIDENCE_ASSESSMENT_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
+        response-timeout-millis: ${C020_RESIDENCE_ASSESSMENT_RESPONSE_TIMEOUT_MILLIS:${RESPONSE_TIMEOUT:60000}}
+        read-timeout-handler: ${C020_RESIDENCE_ASSESSMENT_READ_TIMEOUT_HANDLER_MILLIS:${READ_TIMEOUT_HANDLER:60000}}

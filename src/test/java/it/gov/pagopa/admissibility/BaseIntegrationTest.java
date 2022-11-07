@@ -427,6 +427,10 @@ public abstract class BaseIntegrationTest {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
                     String.format("app.pdnd.properties.clientId=%s", "PDND_CLIENT_ID_TEST")
             );
+            //C020 settings
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
+            );
         }
     }
 }

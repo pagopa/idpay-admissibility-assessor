@@ -210,6 +210,35 @@
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
 					</execution>
+					<execution>
+						<id>idpay-admissibility-assessor-pdnd-residence-assessment-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-resources</phase>
+						<configuration>
+							<inputSpec>${project.basedir}/docs/wsclient/pdnd/C020-servizioAccertamentoResidenza.yml</inputSpec>
+							<generatorName>java</generatorName>
+							<library>webclient</library>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<configOptions>
+								<swaggerAnnotations>false</swaggerAnnotations>
+								<openApiNullable>false</openApiNullable>
+								<basePackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client</basePackage>
+								<modelPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto
+								</modelPackage>
+								<apiPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.api
+								</apiPackage>
+								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.config
+								</configPackage>
+								<dateLibrary>java17</dateLibrary>
+							</configOptions>
+							<modelNameSuffix>DTO</modelNameSuffix>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 		</plugins>
