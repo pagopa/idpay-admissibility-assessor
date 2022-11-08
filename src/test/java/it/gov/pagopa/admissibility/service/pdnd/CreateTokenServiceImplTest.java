@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.admissibility.rest.PdndCreateTokenRestClient;
 import org.junit.jupiter.api.Assertions;
@@ -27,8 +28,8 @@ class CreateTokenServiceImplTest {
 
     private Field accessTokenCacheField;
 
-    private int expireInSeconds = 30;
-    private int deltaMillis = 10;
+    private final int expireInSeconds = 30;
+    private final int deltaMillis = 10;
 
     @BeforeEach
     void setUp() {
@@ -56,11 +57,7 @@ class CreateTokenServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals("accessToken_1", result);
 
-        try {
-            Thread.sleep((expireInSeconds*1000L)+deltaMillis); //TODO
-        } catch (InterruptedException e) {
-            Assertions.fail();
-        }
+        BaseIntegrationTest.wait((expireInSeconds*1000L)+deltaMillis, TimeUnit.MILLISECONDS);
 
         Cache<String, String> cacheChange = retrieveCache();
         Assertions.assertNull(cacheChange.getIfPresent(pdndTokenTest));
