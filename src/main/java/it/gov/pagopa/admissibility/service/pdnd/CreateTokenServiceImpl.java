@@ -14,13 +14,16 @@ import java.util.concurrent.TimeUnit;
 public class CreateTokenServiceImpl implements CreateTokenService{
 
     private final PdndCreateTokenRestClient pdndCreateTokenRestClient;
-    private Cache<String,String> cache = null;
+    private final Cache<String,String> cache;
 
     public CreateTokenServiceImpl(PdndCreateTokenRestClient pdndCreateTokenRestClient,
                                   @Value("${app.pdnd.time-expire-token}") int expireIn) {
         this.pdndCreateTokenRestClient = pdndCreateTokenRestClient;
         if (expireIn!=0){
             cache = CacheBuilder.newBuilder().expireAfterWrite(expireIn, TimeUnit.SECONDS).build();
+        }
+        else {
+            cache = null;
         }
     }
 
