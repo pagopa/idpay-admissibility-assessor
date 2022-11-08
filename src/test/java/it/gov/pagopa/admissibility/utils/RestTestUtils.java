@@ -5,9 +5,9 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
 public class RestTestUtils {
-    public static WireMockConfiguration getWireMockConfiguration(String stubPath){
+    public static WireMockConfiguration getWireMockConfiguration(){
         return wireMockConfig()
                 .dynamicPort()
-                .usingFilesUnderClasspath("src/test/resources"+stubPath);
+                .usingFilesUnderClasspath("src/test/resources/stub");
     }
 }
