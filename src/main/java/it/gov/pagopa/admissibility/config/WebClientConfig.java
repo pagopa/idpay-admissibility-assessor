@@ -24,17 +24,20 @@ public class WebClientConfig {
     @Value("${app.web-client.write.handler.timeout}")
     private int writeTimeoutHandlerMillis;
 
-    private HttpClient httpClientConfig(){
+    public static HttpClient getHttpClientWithReadTimeoutHandlerConfig(int connectTimeoutMillis, int responseTimeoutMillis, int readTimeoutHandlerMillis){
         return HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMillis)
                 .responseTimeout(Duration.ofMillis(responseTimeoutMillis))
-                .doOnConnected(connection -> connection.addHandlerLast(new ReadTimeoutHandler(readTimeoutHandlerMillis, TimeUnit.MILLISECONDS))
-                        .addHandlerLast(new WriteTimeoutHandler(writeTimeoutHandlerMillis, TimeUnit.MILLISECONDS)));
+                .doOnConnected(connection -> connection.addHandlerLast(new ReadTimeoutHandler(readTimeoutHandlerMillis, TimeUnit.MILLISECONDS)));
+    }
+    public static HttpClient httpClientConfig(int connectTimeoutMillis, int responseTimeoutMillis, int readTimeoutHandlerMillis, int writeTimeoutHandlerMillis){
+        return getHttpClientWithReadTimeoutHandlerConfig(connectTimeoutMillis,responseTimeoutMillis,readTimeoutHandlerMillis)
+                .doOnConnected( connection -> connection.addHandlerLast(new WriteTimeoutHandler(writeTimeoutHandlerMillis, TimeUnit.MILLISECONDS)));
     }
 
     @Bean
     public WebClient.Builder webClientConfigure(){
         return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(httpClientConfig()));
+                .clientConnector(new ReactorClientHttpConnector(httpClientConfig(connectTimeoutMillis, responseTimeoutMillis,readTimeoutHandlerMillis, writeTimeoutHandlerMillis)));
     }
 }

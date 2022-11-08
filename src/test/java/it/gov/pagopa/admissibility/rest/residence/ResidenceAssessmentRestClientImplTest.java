@@ -5,7 +5,11 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.rest.residence.ResidenceAssessmentRestClientImpl=WARN",
+})
 class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
 
     @Autowired
