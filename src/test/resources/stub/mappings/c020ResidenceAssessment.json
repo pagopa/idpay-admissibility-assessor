@@ -1,7 +1,12 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/anpr-service-e002"
+    "urlPathPattern": "/anpr-service-e002",
+    "headers": {
+      "Authorization": {
+        "matches": "BearerVALID_ACCESS_TOKEN_([0-9]?)+"
+      }
+    }
   },
   "response": {
     "status": "200",

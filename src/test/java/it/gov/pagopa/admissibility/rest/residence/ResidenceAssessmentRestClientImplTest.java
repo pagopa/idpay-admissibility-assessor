@@ -13,8 +13,14 @@ class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
 
     @Test
     void getResidenceAssessment(){
-        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment("ACCESS_TOKEN", "FISCAL_CODE").block();
+        // Given
+        String accessToken = "VALID_ACCESS_TOKEN_1";
+        String fiscalCode = "FISCAL_CODE";
 
+        // When
+        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode).block();
+
+        // Then
         Assertions.assertNotNull(result);
     }
 

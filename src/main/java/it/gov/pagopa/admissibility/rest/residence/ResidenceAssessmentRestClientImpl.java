@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoCriteriRicercaE002DTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiRichiestaE002DTO;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -22,9 +23,10 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
-    private E002ServiceApi e002ServiceApi;
+    private final WebClient.Builder webClientBuilder;
+    private final String residenceAssessmentBaseUrl;
 
-    public ResidenceAssessmentRestClientImpl(@Value("${app.c020-residenceAssessment.base-url}") String residenceAssesmentBaseUrl,
+    public ResidenceAssessmentRestClientImpl(@Value("${app.c020-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
 
                                              @Value("${app.c020-residenceAssessment.web-client.timeouts.connect-timeout-millis}") int residenceAssessmentConnectTimeOutMillis,
                                              @Value("${app.c020-residenceAssessment.web-client.timeouts.response-timeout-millis}") int residenceAssessmentResponseTimeoutMillis,
@@ -35,19 +37,25 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .doOnConnected( connection ->
                         connection.addHandlerLast(new ReadTimeoutHandler(residenceAssessmentReadTimeoutHandlerMillis, TimeUnit.MILLISECONDS)));
 
-        WebClient webClient = ApiClient.buildWebClientBuilder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
+        webClientBuilder = ApiClient.buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient));
 
-        ApiClient  newApiClient = new ApiClient(webClient);
-        newApiClient.setBasePath(residenceAssesmentBaseUrl);
-        e002ServiceApi = new E002ServiceApi(newApiClient);
+        this.residenceAssessmentBaseUrl = residenceAssessmentBaseUrl;
     }
 
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
-        //TODO AccessToken
+        E002ServiceApi e002ServiceApi = getE002ServiceApi(accessToken);
+
         return e002ServiceApi.e002(generateRequest(fiscalCode));//TODO define error code for retry
+    }
+
+    private E002ServiceApi getE002ServiceApi(String accessToken) {
+        WebClient webClient = webClientBuilder.defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer" + accessToken).build();
+
+        ApiClient  newApiClient = new ApiClient(webClient);
+        newApiClient.setBasePath(residenceAssessmentBaseUrl);
+        return new E002ServiceApi(newApiClient);
     }
 
     private RichiestaE002DTO generateRequest(String fiscalCode) {
@@ -59,8 +67,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
         datiRichiestaE002DTO.setCasoUso("C020");
         datiRichiestaE002DTO.setDataRiferimentoRichiesta(new SimpleDateFormat("yyyy-MM-dd").format(new Date()));
 
-        // TODO numero di riferimento della pratica
-
+        // TODO number reference practice
         RichiestaE002DTO richiestaE002DTO = new RichiestaE002DTO();
         richiestaE002DTO.setCriteriRicerca(criteriRicercaE002DTO);
         richiestaE002DTO.setDatiRichiesta(datiRichiestaE002DTO);
