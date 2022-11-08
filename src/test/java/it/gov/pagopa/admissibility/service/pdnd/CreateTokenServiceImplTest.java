@@ -29,7 +29,6 @@ class CreateTokenServiceImplTest {
     private Field accessTokenCacheField;
 
     private final int expireInSeconds = 30;
-    private final int deltaMillis = 10;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +56,8 @@ class CreateTokenServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals("accessToken_1", result);
 
-        BaseIntegrationTest.wait((expireInSeconds*1000L)+deltaMillis, TimeUnit.MILLISECONDS);
+        int deltaMillis = 10;
+        BaseIntegrationTest.wait((expireInSeconds*1000L)+ deltaMillis, TimeUnit.MILLISECONDS);
 
         Cache<String, String> cacheChange = retrieveCache();
         Assertions.assertNull(cacheChange.getIfPresent(pdndTokenTest));
@@ -89,6 +89,34 @@ class CreateTokenServiceImplTest {
         String retrievedTokenInCache = cacheChange.getIfPresent(pdndTokenTest);
         Assertions.assertNotNull(retrievedTokenInCache);
         Assertions.assertEquals("NEW_ACCESS_TOKEN", retrievedTokenInCache);
+    }
+
+    @Test
+    void getTokenPresentWithoutCache() {
+        // Given
+        createTokenService = new CreateTokenServiceImpl(pdndCreateTokenRestClientMock, 0);
+        String pdndTokenTest = "pdndToken_1";
+
+        String expectedToken = "NEW_ACCESS_TOKEN";
+        ClientCredentialsResponseDTO clientCredentialsResponseDTOMock = new ClientCredentialsResponseDTO();
+        clientCredentialsResponseDTOMock.setAccessToken(expectedToken);
+        Mockito.when(pdndCreateTokenRestClientMock.createToken(pdndTokenTest))
+                .thenReturn(Mono.just(clientCredentialsResponseDTOMock));
+
+        // When
+        String result = createTokenService.getToken(pdndTokenTest).block();
+
+        //Then
+        Field accessTokenCacheNullField = ReflectionUtils.findField(CreateTokenServiceImpl.class, "cache");
+        Assertions.assertNotNull(accessTokenCacheNullField);
+        ReflectionUtils.makeAccessible(accessTokenCacheNullField);
+        Object cacheInspect = ReflectionUtils.getField(accessTokenCacheNullField, createTokenService);
+        Assertions.assertNull(cacheInspect);
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals("NEW_ACCESS_TOKEN", result);
+
+        Mockito.verify(pdndCreateTokenRestClientMock).createToken(pdndTokenTest);
     }
 
     private Cache<String,String> retrieveCache() {
