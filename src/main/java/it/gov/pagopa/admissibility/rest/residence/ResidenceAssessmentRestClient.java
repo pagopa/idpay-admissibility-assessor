@@ -4,5 +4,5 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import reactor.core.publisher.Mono;
 
 public interface ResidenceAssessmentRestClient {
-    Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode);  //TODO check responseType
+    Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode);
 }

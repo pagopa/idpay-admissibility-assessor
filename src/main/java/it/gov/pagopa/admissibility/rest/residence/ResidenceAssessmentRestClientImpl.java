@@ -84,8 +84,8 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .tipoOperazione("C")
                 .tipoInvio(headRequestSendType);
 
-        TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO();
-        criteriRicercaE002DTO.setCodiceFiscale(fiscalCode);
+        TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
+                .codiceFiscale(fiscalCode);
 
         String dateWithoutHoursString = new  SimpleDateFormat("yyyy-MM-dd").format(dateNow);
         TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
