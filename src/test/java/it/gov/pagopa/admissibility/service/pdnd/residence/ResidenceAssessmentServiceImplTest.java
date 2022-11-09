@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.pdnd.residence;
 
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.rest.residence.ResidenceAssessmentRestClient;
+import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

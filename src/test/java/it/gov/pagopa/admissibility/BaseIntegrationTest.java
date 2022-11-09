@@ -429,7 +429,7 @@ public abstract class BaseIntegrationTest {
             );
             //C020 settings
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
+                    String.format("app.anpr.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
             );
         }
     }

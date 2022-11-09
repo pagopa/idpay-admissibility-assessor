@@ -1,13 +1,12 @@
-package it.gov.pagopa.admissibility.rest.residence;
+package it.gov.pagopa.admissibility.rest.anpr.residence;
 
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.ApiClient;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.api.E002ServiceApi;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
+import it.gov.pagopa.admissibility.rest.anpr.AnprWebClient;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -16,7 +15,7 @@ import java.util.Date;
 
 @Service
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
-    private final WebClient.Builder webClientBuilder;
+    private final E002ServiceApi e002ServiceApi;
 
     private final String headRequestSenderCode;
     private final String headRequestAddresseeCode;
@@ -28,6 +27,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public ResidenceAssessmentRestClientImpl(AnprWebClient anprWebClient,
 
+                                             @Value("${app.anpr.c020-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
                                              @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.senderCode}") String headRequestSenderCode,
                                              @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.addresseeCode}") String headRequestAddresseeCode,
                                              @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.operationRequest}") String headRequestOperationRequest,
@@ -37,8 +37,11 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
         HttpClient httpClient = anprWebClient.getHttpClientSecure();
 
-        webClientBuilder = ApiClient.buildWebClientBuilder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient));
+        ApiClient apiClient = new ApiClient(ApiClient.buildWebClientBuilder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient)).build())
+                .setBasePath(residenceAssessmentBaseUrl);
+
+        this.e002ServiceApi = new E002ServiceApi(apiClient);
 
         this.headRequestSenderCode = headRequestSenderCode;
         this.headRequestAddresseeCode = headRequestAddresseeCode;
@@ -49,19 +52,9 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
-        E002ServiceApi e002ServiceApi = getE002ServiceApi(accessToken);
-
         return e002ServiceApi.e002(generateRequest(fiscalCode));//TODO define error code for retry
     }
 
-    private E002ServiceApi getE002ServiceApi(String accessToken) {
-        WebClient webClient = webClientBuilder
-                .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer" + accessToken)
-                .build();
-
-        ApiClient  newApiClient = new ApiClient(webClient);
-        return new E002ServiceApi(newApiClient);
-    }
 
     private RichiestaE002DTO generateRequest(String fiscalCode) {
         Date dateNow = new Date();

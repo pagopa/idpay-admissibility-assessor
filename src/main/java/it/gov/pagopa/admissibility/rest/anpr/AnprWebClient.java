@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.rest.residence;
+package it.gov.pagopa.admissibility.rest.anpr;
 
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -11,7 +11,7 @@ import reactor.netty.http.client.HttpClient;
 import javax.net.ssl.SSLException;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class AnprWebClient {
@@ -20,10 +20,9 @@ public class AnprWebClient {
 
     private final HttpClient httpClientSecure;
 
-    public AnprWebClient(@Value("${app.anpr.secure.cert}") String stringCert,
-                         @Value("${app.anpr.secure.key}") String clientKeyPem,
+    public AnprWebClient(@Value("${app.anpr.web-client.secure.cert}") String stringCert,
+                         @Value("${app.anpr.web-client.secure.key}") String clientKeyPem,
 
-                         @Value("${app.anpr.c020-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
                          @Value("${app.anpr.web-client.timeouts.connect-timeout-millis}") int residenceAssessmentConnectTimeOutMillis,
                          @Value("${app.anpr.web-client.timeouts.response-timeout-millis}")  int residenceAssessmentResponseTimeoutMillis,
                          @Value("${app.anpr.web-client.timeouts.read-timeout-handler}") int residenceAssessmentReadTimeoutHandlerMillis) {
@@ -32,8 +31,7 @@ public class AnprWebClient {
 
         httpClientSecure = WebClientConfig
                 .getHttpClientWithReadTimeoutHandlerConfig(residenceAssessmentConnectTimeOutMillis, residenceAssessmentResponseTimeoutMillis, residenceAssessmentReadTimeoutHandlerMillis)
-                .secure(t -> t.sslContext(buildSSLHttpClient()))
-                .baseUrl(residenceAssessmentBaseUrl);
+                .secure(t -> t.sslContext(buildSSLHttpClient()));
     }
 
     public HttpClient getHttpClientSecure() {
@@ -55,10 +53,10 @@ public class AnprWebClient {
     }
 
     private InputStream getCertInputStream(String stringCert) {
-        return new ByteArrayInputStream(Base64.getDecoder().decode(stringCert));
+        return new ByteArrayInputStream(stringCert.getBytes(StandardCharsets.UTF_8));
     }
 
     private InputStream getKeyInputStream(String clientKeyPem) {
-        return new ByteArrayInputStream(Base64.getDecoder().decode(clientKeyPem));
+        return new ByteArrayInputStream(clientKeyPem.getBytes(StandardCharsets.UTF_8));
     }
 }
