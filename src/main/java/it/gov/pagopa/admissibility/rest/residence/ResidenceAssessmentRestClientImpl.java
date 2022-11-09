@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.rest.residence;
 
-import it.gov.pagopa.admissibility.config.WebClientConfig;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.ApiClient;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.api.E002ServiceApi;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
@@ -18,7 +17,6 @@ import java.util.Date;
 @Service
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
     private final WebClient.Builder webClientBuilder;
-    private final String residenceAssessmentBaseUrl;
 
     private final String headRequestSenderCode;
     private final String headRequestAddresseeCode;
@@ -28,25 +26,19 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     private final String dataRequestPersonalDetailsRequest;
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
-    public ResidenceAssessmentRestClientImpl(@Value("${app.c020-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
+    public ResidenceAssessmentRestClientImpl(AnprWebClient anprWebClient,
 
-                                             @Value("${app.c020-residenceAssessment.web-client.timeouts.connect-timeout-millis}") int residenceAssessmentConnectTimeOutMillis,
-                                             @Value("${app.c020-residenceAssessment.web-client.timeouts.response-timeout-millis}") int residenceAssessmentResponseTimeoutMillis,
-                                             @Value("${app.c020-residenceAssessment.web-client.timeouts.read-timeout-handler}") int residenceAssessmentReadTimeoutHandlerMillis,
+                                             @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.senderCode}") String headRequestSenderCode,
+                                             @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.addresseeCode}") String headRequestAddresseeCode,
+                                             @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.operationRequest}") String headRequestOperationRequest,
+                                             @Value("${app.anpr.c020-residenceAssessment.properties.headRequest.sendType}") String headRequestSendType,
 
-                                             @Value("${app.c020-residenceAssessment.properties.headRequest.senderCode}") String headRequestSenderCode,
-                                             @Value("${app.c020-residenceAssessment.properties.headRequest.addresseeCode}") String headRequestAddresseeCode,
-                                             @Value("${app.c020-residenceAssessment.properties.headRequest.operationRequest}") String headRequestOperationRequest,
-                                             @Value("${app.c020-residenceAssessment.properties.headRequest.sendType}") String headRequestSendType,
+                                             @Value("${app.anpr.c020-residenceAssessment.properties.dataRequest.personalDetailsRequest}") String dataRequestPersonalDetailsRequest) {
 
-                                             @Value("${app.c020-residenceAssessment.properties.dataRequest.personalDetailsRequest}") String dataRequestPersonalDetailsRequest) {
-
-        HttpClient httpClient = WebClientConfig.getHttpClientWithReadTimeoutHandlerConfig(residenceAssessmentConnectTimeOutMillis, residenceAssessmentResponseTimeoutMillis, residenceAssessmentReadTimeoutHandlerMillis);
+        HttpClient httpClient = anprWebClient.getHttpClientSecure();
 
         webClientBuilder = ApiClient.buildWebClientBuilder()
                 .clientConnector(new ReactorClientHttpConnector(httpClient));
-
-        this.residenceAssessmentBaseUrl = residenceAssessmentBaseUrl;
 
         this.headRequestSenderCode = headRequestSenderCode;
         this.headRequestAddresseeCode = headRequestAddresseeCode;
@@ -68,7 +60,6 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .build();
 
         ApiClient  newApiClient = new ApiClient(webClient);
-        newApiClient.setBasePath(residenceAssessmentBaseUrl);
         return new E002ServiceApi(newApiClient);
     }
 
