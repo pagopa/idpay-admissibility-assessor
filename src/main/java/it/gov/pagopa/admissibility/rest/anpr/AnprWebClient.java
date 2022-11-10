@@ -10,6 +10,7 @@ import reactor.netty.http.client.HttpClient;
 
 import javax.net.ssl.SSLException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -39,12 +40,15 @@ public class AnprWebClient {
     }
 
     private SslContext buildSSLHttpClient() {
-        try {
+        try(
+                InputStream certInputStream = getCertInputStream(stringCert);
+                InputStream keyInputStream = getKeyInputStream(clientKeyPem)
+        ) {
             SslContextBuilder sslContextBuilder = SslContextBuilder.forClient()
-                    .keyManager(getCertInputStream(stringCert), getKeyInputStream(clientKeyPem));
+                    .keyManager(certInputStream, keyInputStream);
             return getSslContext(sslContextBuilder);
-        } catch (SSLException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Something are wrong creating ssl context",e);
         }
     }
 

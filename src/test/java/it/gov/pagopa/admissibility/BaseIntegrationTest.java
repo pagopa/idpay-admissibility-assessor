@@ -407,9 +407,13 @@ public abstract class BaseIntegrationTest {
 
     //Setting WireMock
     @RegisterExtension
-    static WireMockExtension serverWireMock = WireMockExtension.newInstance()
-            .options(RestTestUtils.getWireMockConfiguration())
-            .build();
+    static WireMockExtension serverWireMock = initServerWiremock();
+
+    public static WireMockExtension initServerWiremock(){
+        return serverWireMock = WireMockExtension.newInstance()
+                .options(RestTestUtils.getWireMockConfiguration())
+                .build();
+    }
     public static class wireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(ConfigurableApplicationContext applicationContext) {
@@ -431,6 +435,16 @@ public abstract class BaseIntegrationTest {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
                     String.format("app.anpr.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
             );
+
+            System.out.printf("""
+                        ************************
+                        Server wiremock:
+                        http base url: %s
+                        https base url: %s
+                        ************************
+                        """,
+                    serverWireMock.getRuntimeInfo().getHttpBaseUrl(),
+                    serverWireMock.getRuntimeInfo().getHttpsBaseUrl());
         }
     }
 }

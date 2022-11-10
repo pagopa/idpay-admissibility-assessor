@@ -6,11 +6,13 @@ import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestCl
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.admissibility.rest.residence.ResidenceAssessmentRestClientImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClientImpl=WARN",
 })
+@DirtiesContext
 class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
 
     @Autowired
