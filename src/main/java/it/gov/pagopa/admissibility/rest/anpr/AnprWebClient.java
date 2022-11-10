@@ -48,7 +48,7 @@ public class AnprWebClient {
                     .keyManager(certInputStream, keyInputStream);
             return getSslContext(sslContextBuilder);
         } catch (IOException e) {
-            throw new IllegalStateException("Something are wrong creating ssl context",e);
+            throw new IllegalStateException("Something went wrong creating ssl context",e);
         }
     }
 

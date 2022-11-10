@@ -222,6 +222,19 @@ app:
           sendType: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_SEND_TYPE:PROD}
         dataRequest:
           personalDetailsRequest: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_PERSONAL_DETAILS_REQUEST:1}
+    digest:
+      header:
+        alg: ${ANPR_DIGEST_HEADER_ALG:ES256}
+        kid: ${ANPR_DIGEST_HEADER_KID:}
+        typ: ${ANPR_DIGEST_HEADER_TYP:JWT}
+      payload:
+        iss: #issuer
+        sub: #subject
+        aud: ${ANPR_DIGEST_PAYLOAD_AUD:localhost} #audience
+        jti: #TODO UUID.randomUUID().toString();
+        iat: #TODO long long nowSeconds = System.currentTimeMillis() / 1000L;
+        exp: #TODO long long expireSeconds = nowSeconds + 5000L;
+        purposeId: # ? clientId
     web-client:
       timeouts:
         connect-timeout-millis: ${ANPR_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
@@ -281,4 +294,15 @@ app:
           nYxeRASCj3GGmLupGshtfCtDBeysE2h7kj3Bo0d6g1Ye+j8BUZuZaZm6WNlo7cgE
           NLHn1k0IpmXFOiFa1Y1D6Bc=
           -----END PRIVATE KEY-----
+          }
+        pub: |-
+          ${ANPR_CLIENT_PUB:-----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
+          bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
+          res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
+          YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
+          kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
+          dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
+          5wIDAQAB
+          -----END PUBLIC KEY-----
           }
