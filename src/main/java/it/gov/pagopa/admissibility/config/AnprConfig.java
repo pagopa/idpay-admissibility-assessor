@@ -23,9 +23,5 @@ public class AnprConfig {
         private String iss;
         private String sub;
         private String aud;
-        private long jti; //#TODO UUID.randomUUID().toString();
-        private long iat; //TODO long long nowSeconds = System.currentTimeMillis() / 1000L;
-        private long exp; //TODO long long expireSeconds = nowSeconds + 5000L;
-        private String purposeID; // clientId
     }
 }

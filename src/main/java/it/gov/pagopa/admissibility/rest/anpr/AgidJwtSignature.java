@@ -33,9 +33,9 @@ public class AgidJwtSignature {
 
     public AgidJwtSignature(AnprConfig.TokenHeader tokenHeader,
                             AnprConfig.TokenPayload tokenPayload,
-                            @Value("${app.anpr.web-client.secure.cert}") String cert,
-                            @Value("${app.anpr.web-client.secure.key}") String key,
-                            @Value("${app.anpr.web-client.secure.pub}") String pub) {
+                            @Value("${app.anpr.web-client.agid.secure.cert}") String cert,
+                            @Value("${app.anpr.web-client.agid.secure.key}") String key,
+                            @Value("${app.anpr.web-client.agid.secure.pub}") String pub) {
         this.tokenHeader = tokenHeader;
         this.tokenPayload = tokenPayload;
         this.cert = cert;
@@ -44,34 +44,37 @@ public class AgidJwtSignature {
     }
 
     public String createAgidJwt(String digest) {
-        log.info("start to createAgidJwt with digest: {}",digest);
+        log.info("start to create AgidJwt with digest: {}",digest);
         try {
             return JWT.create()
-                    .withHeader(createHeaderMap(tokenHeader))
-                    .withPayload(createClaimMap(digest,tokenPayload))
+                    .withHeader(createHeaderMap())
+                    .withPayload(createClaimMap(digest))
                     .sign(Algorithm.RSA256(getPublicKey(), getPrivateKey()));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
             throw new IllegalStateException("Something went wrong creating AgidJwt",e);
         }
     }
 
-    private Map<String, Object> createHeaderMap(AnprConfig.TokenHeader th) {
+    private Map<String, Object> createHeaderMap() {
         Map<String, Object> map = new HashMap<>();
-        map.put(HeaderParams.TYPE, th.getTyp());
-        map.put(HeaderParams.ALGORITHM, th.getAlg());
+        map.put(HeaderParams.TYPE, tokenHeader.getTyp());
+        map.put(HeaderParams.ALGORITHM, tokenHeader.getAlg());
         map.put("x5c", List.of(cert));
         log.debug("HeaderMap: {}",map);
         return map;
     }
 
-    private Map<String, Object> createClaimMap(String digest, AnprConfig.TokenPayload tp) {
+    private Map<String, Object> createClaimMap(String digest) {
+        long nowSeconds = System.currentTimeMillis() / 1000L;
+        long expireSeconds = nowSeconds + 5000L;
+
         Map<String, Object> map = new HashMap<>();
-        map.put(RegisteredClaims.ISSUER, tp.getIss());
-        map.put(RegisteredClaims.SUBJECT, tp.getSub());
-        map.put(RegisteredClaims.EXPIRES_AT, tp.getExp());
-        map.put(RegisteredClaims.AUDIENCE, tp.getAud());
-        map.put(RegisteredClaims.ISSUED_AT, tp.getIat());
-        map.put(RegisteredClaims.JWT_ID, tp.getJti());
+        map.put(RegisteredClaims.ISSUER, tokenPayload.getIss());
+        map.put(RegisteredClaims.SUBJECT, tokenPayload.getSub());
+        map.put(RegisteredClaims.EXPIRES_AT, expireSeconds);
+        map.put(RegisteredClaims.AUDIENCE, tokenPayload.getAud());
+        map.put(RegisteredClaims.ISSUED_AT, nowSeconds);
+        map.put(RegisteredClaims.JWT_ID, UUID.randomUUID().toString());
         map.put("signed_headers", createSignedHeaders(digest));
         log.debug("ClaimMap: {}",map);
         return map;
@@ -93,28 +96,32 @@ public class AgidJwtSignature {
 
     protected RSAPublicKey getPublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException, IOException {
         log.debug("start getPublicKey");
-        String pubStringFormat =  pub.replace("-----BEGIN PUBLIC KEY-----", "")// TODO extract into utils
-                .replaceAll("\\n", "")
-                .replaceAll("\\r", "")
-                .replace("-----END PUBLIC KEY-----", "");
-
-        InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(pubStringFormat)); //TODO extract into utils
-        X509EncodedKeySpec encodedKeySpec = new X509EncodedKeySpec(is.readAllBytes());
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return (RSAPublicKey) kf.generatePublic(encodedKeySpec);
+        String pubStringFormat = pemToString(pub);
+        try(
+            InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(pubStringFormat))
+        ) {
+            X509EncodedKeySpec encodedKeySpec = new X509EncodedKeySpec(is.readAllBytes());
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPublicKey) kf.generatePublic(encodedKeySpec);
+        }
     }
+
 
     protected RSAPrivateKey getPrivateKey() throws InvalidKeySpecException, NoSuchAlgorithmException, IOException {
         log.debug("start getPrivateKey");
-        String keyStringFormat =  key.replace("-----BEGIN PRIVATE KEY-----", "")
-                .replaceAll("\\n", "")
-                .replaceAll("\\r", "")
-                .replace("-----END PRIVATE KEY-----", "");
-
-        InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(keyStringFormat));
-        PKCS8EncodedKeySpec encodedKeySpec = new PKCS8EncodedKeySpec(is.readAllBytes());
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return (RSAPrivateKey) kf.generatePrivate(encodedKeySpec);
+        String keyStringFormat =  pemToString(key);
+        try(
+            InputStream is = new ByteArrayInputStream(Base64.getDecoder().decode(keyStringFormat))
+        ) {
+            PKCS8EncodedKeySpec encodedKeySpec = new PKCS8EncodedKeySpec(is.readAllBytes());
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return (RSAPrivateKey) kf.generatePrivate(encodedKeySpec);
+        }
     }
 
+    private String pemToString(String target) {
+        return target.replaceAll("^-----BEGIN[A-Z|\\s]+-----", "")
+                .replaceAll("\\n+", "")
+                .replaceAll("-----END[A-Z|\\s]+-----$", "");
+    }
 }

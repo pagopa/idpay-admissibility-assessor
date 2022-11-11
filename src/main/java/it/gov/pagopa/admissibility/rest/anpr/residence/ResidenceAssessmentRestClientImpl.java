@@ -71,7 +71,6 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
-//        return e002ServiceApi.e002(generateRequest(fiscalCode));//TODO define error code for retry
         String requestDtoString = convertToJson(generateRequest(fiscalCode));
         String digest = createDigestFromPayload(requestDtoString);
         return webClient.post()
@@ -87,13 +86,14 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .bodyValue(requestDtoString)
                 .retrieve()
                 .bodyToMono(RispostaE002OKDTO.class);
+        //TODO define error code for retry
     }
 
     private String convertToJson(RichiestaE002DTO requestE002DTO) {
         try {
             return objectMapper.writeValueAsString(requestE002DTO);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Error converting request dto in JSON",e);
         }
     }
 
@@ -102,7 +102,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
             byte[] hash = MessageDigest.getInstance("SHA-256").digest(request.getBytes(StandardCharsets.UTF_8));
             return "SHA-256="+ Base64.getEncoder().encodeToString(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Something went wrong creating the token", e);
         }
     }
 

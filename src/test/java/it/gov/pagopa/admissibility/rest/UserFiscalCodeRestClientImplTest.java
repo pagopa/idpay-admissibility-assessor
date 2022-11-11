@@ -82,7 +82,6 @@ class UserFiscalCodeRestClientImplTest extends BaseIntegrationTest {
         try{
             userFiscalCodeRestClient.retrieveUserInfo(userId).block();
         }catch (Throwable e){
-            e.printStackTrace();
             Assertions.assertTrue(e instanceof WebClientException);
             Assertions.assertEquals(WebClientResponseException.Forbidden.class,e.getClass());
         }
