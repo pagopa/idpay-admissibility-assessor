@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.utils.json;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,22 +14,25 @@ import java.util.List;
 class PageModuleTest {
 
     @Test
-    void test() {
+    void test() throws JsonProcessingException {
         // Given
         String testString = "TEST";
         PageRequest pageRequest = PageRequest.of(0,1);
-        PageImpl<?> page = new PageImpl<>(List.of(testString), pageRequest, 1);
+        PageImpl<String> expectedPage = new PageImpl<>(List.of(testString), pageRequest, 1);
 
         // When
-        String result = TestUtils.jsonSerializer(page);
-        // TODO deserialize
+        String serialized = TestUtils.jsonSerializer(expectedPage);
+        Page<String> result = TestUtils.objectMapper.readValue(serialized, new TypeReference<>() {});
 
         // Then
-        Assertions.assertNotNull(result);
+        Assertions.assertNotNull(serialized);
         Assertions.assertEquals(
                 "{\"content\":[\"%s\"],\"pageable\":{\"page\":0,\"size\":1,\"sort\":{\"orders\":[]}},\"total\":%d}"
                         .formatted(testString, 1),
-                result
+                serialized
         );
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(expectedPage, result);
     }
 }
