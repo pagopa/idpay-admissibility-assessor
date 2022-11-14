@@ -129,6 +129,36 @@ class OnboardingConsensusCheckTest {
     }
 
     @Test
+    void testSelfDeclarationConsensusNull() {
+
+        // Given
+        LocalDateTime localDateTimeMock = LocalDateTime.now();
+
+        OnboardingDTO onboardingSelfDeclarationFalseMock = new OnboardingDTO(
+                "1",
+                "1",
+                true,
+                "OK",
+                true,
+                null,
+                localDateTimeMock,
+                localDateTimeMock,
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate()
+        );
+
+        OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
+
+        // When
+        OnboardingRejectionReason resultSelfDeclarationNull = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
+
+        // Then
+        assertNull(resultSelfDeclarationNull);
+
+    }
+
+    @Test
     void testConsensusTrue() {
         // Given
         Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
