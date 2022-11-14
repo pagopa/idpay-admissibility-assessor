@@ -236,9 +236,9 @@ app:
         connect-timeout-millis: ${ANPR_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
         response-timeout-millis: ${ANPR_RESPONSE_TIMEOUT_MILLIS:${RESPONSE_TIMEOUT:60000}}
         read-timeout-handler: ${ANPR_READ_TIMEOUT_HANDLER_MILLIS:${READ_TIMEOUT_HANDLER:60000}}
-      secure:
+      ssl:
         cert: |- 
-          ${ANPR_CLIENT_CERT_STRING:-----BEGIN CERTIFICATE-----
+          ${ANPR_CLIENT_SSL_CERT:-----BEGIN CERTIFICATE-----
           MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
           BQAwXzELMAkGA1UEBhMCSVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUx
           DjAMBgNVBAoMBUlEUEFZMQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxo
@@ -262,7 +262,7 @@ app:
           -----END CERTIFICATE-----
           }
         key: |-
-          ${ANPR_CLIENT_KEY_PEM:-----BEGIN PRIVATE KEY-----
+          ${ANPR_CLIENT_SSL_KEY:-----BEGIN PRIVATE KEY-----
           MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
           ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
           xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
@@ -294,7 +294,7 @@ app:
       agid:
         secure:
           cert: |-
-            ${ANPR_AGID_CERT:-----BEGIN CERTIFICATE-----
+            ${ANPR_AGID_JWT_CERT:-----BEGIN CERTIFICATE-----
             MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
             BQAwXzELMAkGA1UEBhMCSVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUx
             DjAMBgNVBAoMBUlEUEFZMQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxo
@@ -318,7 +318,7 @@ app:
             -----END CERTIFICATE-----
             }
           key: |-
-            ${ANPR_AGID_KEY_PEM:-----BEGIN PRIVATE KEY-----
+            ${ANPR_AGID_JWT_KEY:-----BEGIN PRIVATE KEY-----
             MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
             ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
             xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
@@ -348,7 +348,7 @@ app:
             -----END PRIVATE KEY-----
             }
           pub: |-
-            ${ANPR_AGID_PUB:-----BEGIN PUBLIC KEY-----
+            ${ANPR_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
             MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
             bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
             res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
