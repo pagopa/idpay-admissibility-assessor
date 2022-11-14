@@ -9,20 +9,15 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
-@WebFluxTest(controllers = {InitiativeStatusDTO.class})
-@Import(AdmissibilityControllerImpl.class)
+@WebFluxTest(controllers = {AdmissibilityControllerImpl.class})
 class AdmissibilityControllerImplTest {
 
     @MockBean
     InitiativeStatusService initiativeStatusService;
-
-    @MockBean
-    ErrorNotifierService errorNotifierService;
 
     @Autowired
     protected WebTestClient webClient;
