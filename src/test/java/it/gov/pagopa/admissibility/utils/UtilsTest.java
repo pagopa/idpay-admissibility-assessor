@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.utils;
 
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.ErrorDTO;
-import it.gov.pagopa.admissibility.exception.Severity;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -42,13 +41,13 @@ class UtilsTest {
 
     @Test
     void testDeserializeStringMessage(){
-        ErrorDTO expected = new ErrorDTO(Severity.ERROR, "TITLE", "MESSAGE");
+        ErrorDTO expected = new ErrorDTO("CODE", "MESSAGE");
         testDeserializeMessage(TestUtils.jsonSerializer(expected), expected);
     }
 
     @Test
     void testDeserializeBytesMessage(){
-        ErrorDTO expected = new ErrorDTO(Severity.ERROR, "TITLE", "MESSAGE");
+        ErrorDTO expected = new ErrorDTO("CODE", "MESSAGE");
         testDeserializeMessage(TestUtils.jsonSerializer(expected).getBytes(StandardCharsets.UTF_8), expected);
     }
 
