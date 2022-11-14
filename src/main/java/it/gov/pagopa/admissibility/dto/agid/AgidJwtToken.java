@@ -10,7 +10,6 @@ public class AgidJwtToken {
     @Data
     public static class AgidJwtTokenHeader {
         private String alg;
-        private String kid;
         private String typ;
     }
 
