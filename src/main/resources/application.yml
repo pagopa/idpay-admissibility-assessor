@@ -222,7 +222,7 @@ app:
           sendType: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_SEND_TYPE:PROD}
         dataRequest:
           personalDetailsRequest: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_PERSONAL_DETAILS_REQUEST:1}
-    digest:
+    digest: #TODO define fields for agid-token
       header:
         alg: ${ANPR_DIGEST_HEADER_ALG:ES256}
         typ: ${ANPR_DIGEST_HEADER_TYP:JWT}
