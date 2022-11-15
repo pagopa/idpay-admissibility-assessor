@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.utils.json;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonTokenId;
@@ -25,6 +27,10 @@ public class PageModule extends SimpleModule {
     static final String PAGE_SIZE = "pageSize";
     static final String TOTAL_ELEMENTS = "totalElements";
     static final String TOTAL = "total";
+    static final String SORT = "sort";
+    static final String ORDERS = "orders";
+    static final String DIRECTION = "direction";
+    static final String PROPERTY = "property";
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -48,6 +54,8 @@ class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDe
         int pageNumber = 0;
         int pageSize = 0;
         long total = 0;
+        Sort sort = Sort.unsorted();
+
         if (p.isExpectedStartObjectToken()) {
             p.nextToken();
             if (p.hasTokenId(JsonTokenId.ID_FIELD_NAME)) {
@@ -69,6 +77,9 @@ class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDe
                         case PageModule.TOTAL_ELEMENTS, PageModule.TOTAL:
                             total = ctxt.readValue(p, Long.class);
                             break;
+                        case PageModule.SORT:
+                            sort = ctxt.readValue(p, WrappedSort.class);
+                            break;
                         default:
                             p.skipChildren();
                             break;
@@ -83,7 +94,21 @@ class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDe
 
         //Note that Sort field of Page is ignored here.
         // Feel free to add more switch cases above to deserialize it as well.
-        return new PageImpl<>(list, PageRequest.of(pageNumber, pageSize), total);
+        return new PageImpl<>(list, PageRequest.of(pageNumber, pageSize, sort), total);
+    }
+
+    private static class WrappedSort extends Sort {
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        protected WrappedSort(@JsonProperty(PageModule.ORDERS) List<WrappedOrder> orders) {
+            super(orders.stream().map(Order.class::cast).toList());
+        }
+    }
+
+    private static class WrappedOrder extends Sort.Order {
+        @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+        public WrappedOrder(@JsonProperty(PageModule.DIRECTION) Sort.Direction direction, @JsonProperty(PageModule.PROPERTY) String property) {
+            super(direction, property);
+        }
     }
 
     /**
@@ -118,18 +143,26 @@ class  PageSerializer<T extends Page<?>> extends JsonSerializer<T> {
 
         Sort sort = page.getSort();
 
-        jsonGenerator.writeArrayFieldStart("sort");
+        jsonGenerator.writeObjectFieldStart(PageModule.SORT);
+
+        jsonGenerator.writeBooleanField("empty", sort.isEmpty());
+        jsonGenerator.writeBooleanField("sorted", sort.isSorted());
+        jsonGenerator.writeBooleanField("unsorted", sort.isUnsorted());
+
+        jsonGenerator.writeArrayFieldStart(PageModule.ORDERS);
 
         for (Sort.Order order : sort) {
             jsonGenerator.writeStartObject();
-            jsonGenerator.writeStringField("property", order.getProperty());
-            jsonGenerator.writeStringField("direction", order.getDirection().name());
+            jsonGenerator.writeStringField(PageModule.PROPERTY, order.getProperty());
+            jsonGenerator.writeStringField(PageModule.DIRECTION, order.getDirection().name());
             jsonGenerator.writeBooleanField("ignoreCase", order.isIgnoreCase());
             jsonGenerator.writeStringField("nullHandling", order.getNullHandling().name());
             jsonGenerator.writeEndObject();
         }
 
         jsonGenerator.writeEndArray();
+
+        jsonGenerator.writeEndObject();
         jsonGenerator.writeEndObject();
     }
 
