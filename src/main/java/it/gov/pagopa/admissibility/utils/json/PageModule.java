@@ -1,39 +1,43 @@
 package it.gov.pagopa.admissibility.utils.json;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonTokenId;
-import com.fasterxml.jackson.databind.BeanProperty;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PageModule extends SimpleModule {
+    static final String CONTENT = "content";
+    static final String NUMBER = "number";
+    static final String SIZE = "size";
+    static final String PAGE_NUMBER = "pageNumber";
+    static final String PAGE_SIZE = "pageSize";
+    static final String TOTAL_ELEMENTS = "totalElements";
+    static final String TOTAL = "total";
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public PageModule() {
         addDeserializer(Page.class, new PageDeserializer());
+        addSerializer(Page.class, new PageSerializer<>());
     }
 }
 
 class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDeserializer {
-    private static final String CONTENT = "content";
     private static final String PAGEABLE = "pageable";
-    private static final String NUMBER = "number";
-    private static final String SIZE = "size";
-    private static final String PAGE_NUMBER = "pageNumber";
-    private static final String PAGE_SIZE = "pageSize";
-    private static final String TOTAL_ELEMENTS = "totalElements";
-    private static final String TOTAL = "total";
+
     private JavaType valueType;
 
     @Override
@@ -51,18 +55,18 @@ class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDe
                 do {
                     p.nextToken();
                     switch (propName) {
-                        case CONTENT:
+                        case PageModule.CONTENT:
                             list = ctxt.readValue(p, valuesListType);
                             break;
                         case PAGEABLE:
                             break;
-                        case NUMBER, PAGE_NUMBER:
+                        case PageModule.NUMBER, PageModule.PAGE_NUMBER:
                             pageNumber = ctxt.readValue(p, Integer.class);
                             break;
-                        case SIZE, PAGE_SIZE:
+                        case PageModule.SIZE, PageModule.PAGE_SIZE:
                             pageSize = ctxt.readValue(p, Integer.class);
                             break;
-                        case TOTAL_ELEMENTS, TOTAL:
+                        case PageModule.TOTAL_ELEMENTS, PageModule.TOTAL:
                             total = ctxt.readValue(p, Long.class);
                             break;
                         default:
@@ -95,4 +99,38 @@ class PageDeserializer extends JsonDeserializer<Page<?>> implements ContextualDe
         deserializer.valueType = wrapperType.containedType(0);
         return deserializer;
     }
+
+}
+
+class  PageSerializer<T extends Page<?>> extends JsonSerializer<T> {
+    @Override
+    public void serialize(T page, JsonGenerator jsonGenerator, SerializerProvider serializers) throws IOException {
+        jsonGenerator.writeStartObject();
+        jsonGenerator.writeObjectField(PageModule.CONTENT, page.getContent());
+        jsonGenerator.writeBooleanField("first", page.isFirst());
+        jsonGenerator.writeBooleanField("last", page.isLast());
+        jsonGenerator.writeNumberField("totalPages", page.getTotalPages());
+        jsonGenerator.writeNumberField(PageModule.TOTAL_ELEMENTS, page.getTotalElements());
+        jsonGenerator.writeNumberField("numberOfElements", page.getNumberOfElements());
+
+        jsonGenerator.writeNumberField(PageModule.SIZE, page.getSize());
+        jsonGenerator.writeNumberField(PageModule.NUMBER, page.getNumber());
+
+        Sort sort = page.getSort();
+
+        jsonGenerator.writeArrayFieldStart("sort");
+
+        for (Sort.Order order : sort) {
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeStringField("property", order.getProperty());
+            jsonGenerator.writeStringField("direction", order.getDirection().name());
+            jsonGenerator.writeBooleanField("ignoreCase", order.isIgnoreCase());
+            jsonGenerator.writeStringField("nullHandling", order.getNullHandling().name());
+            jsonGenerator.writeEndObject();
+        }
+
+        jsonGenerator.writeEndArray();
+        jsonGenerator.writeEndObject();
+    }
+
 }
