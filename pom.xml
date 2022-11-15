@@ -278,6 +278,9 @@
 					<wsdlDirectory>${project.basedir}/docs/wsclient/inps/</wsdlDirectory>
 					<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client</packageName>
 					<sourceDestDir>${project.build.directory}/generated-sources/wsimport/</sourceDestDir>
+					<bindingFiles>
+						<bindingFile>${project.basedir}/docs/wsclient/inps/ConsultazioneISEE_async_mapping.xml</bindingFile>
+					</bindingFiles>
 				</configuration>
 			</plugin>
 		</plugins>

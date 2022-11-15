@@ -358,3 +358,6 @@ app:
             5wIDAQAB
             -----END PUBLIC KEY-----
             }
+  inps:
+    iseeConsultation:
+      base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:}
