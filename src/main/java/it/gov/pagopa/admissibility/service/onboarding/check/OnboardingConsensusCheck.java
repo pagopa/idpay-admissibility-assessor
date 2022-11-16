@@ -6,7 +6,6 @@ import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.util.Map;
@@ -37,12 +36,16 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
             return OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL;
         }
 
+        /*
         if (!CollectionUtils.isEmpty(onboardingRequest.getSelfDeclarationList())) {
             return selfDeclarationListCheck(onboardingRequest.getSelfDeclarationList());
         }
+        */
         return null;
     }
 
+    //Handle multi and boolean criteria
+    /*
     private String selfDeclarationListCheck(Map<String, Boolean> selfDeclarationList) {
         for (Map.Entry<String, Boolean> selfDeclaration : selfDeclarationList.entrySet()) {
             if (Boolean.FALSE.equals(selfDeclaration.getValue())) {
@@ -51,5 +54,6 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
         }
         return null;
     }
+    */
 
 }

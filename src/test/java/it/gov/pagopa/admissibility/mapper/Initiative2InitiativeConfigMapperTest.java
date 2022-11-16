@@ -21,6 +21,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
         initiative2BuildDTO.setStatus("STATUS");
         initiative2BuildDTO.setPdndToken("PDNDTOKEN");
+        initiative2BuildDTO.setRankingInitiative(Boolean.TRUE);
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                         .startDate(LocalDate.MIN)
@@ -34,6 +35,10 @@ class Initiative2InitiativeConfigMapperTest {
                                 AutomatedCriteriaDTO.builder().code("CODE1").build(),
                                 AutomatedCriteriaDTO.builder().code("CODE2").build(),
                                 AutomatedCriteriaDTO.builder().code("CODE3").build()
+                        ))
+                        .selfDeclarationCriteria(List.of(
+                                SelfCriteriaBoolDTO.builder().code("CODE1").value(Boolean.TRUE).build(),
+                                SelfCriteriaBoolDTO.builder().code("CODE2").value(Boolean.TRUE).build()
                         ))
                 .build());
 
@@ -62,6 +67,8 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
+        Assertions.assertEquals(Boolean.TRUE, result.getRankingInitiative());
+        Assertions.assertEquals(List.of("CODE1", "CODE2"), result.getRankingFieldCodes());
 
         TestUtils.checkNotNullFields(result);
     }

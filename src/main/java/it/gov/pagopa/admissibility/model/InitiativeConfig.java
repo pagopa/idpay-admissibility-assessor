@@ -28,4 +28,6 @@ public class InitiativeConfig {
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;
     private String serviceId;
+    private Boolean rankingInitiative;
+    private List<String> rankingFieldCodes;
 }
