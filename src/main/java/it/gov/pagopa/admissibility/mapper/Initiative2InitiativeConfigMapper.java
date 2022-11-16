@@ -15,7 +15,7 @@ import java.util.function.Function;
 public class Initiative2InitiativeConfigMapper implements Function<Initiative2BuildDTO, InitiativeConfig> {
     @Override
     public InitiativeConfig apply(Initiative2BuildDTO initiative) {
-        InitiativeConfig out = InitiativeConfig.builder()
+        return InitiativeConfig.builder()
                 .initiativeId(initiative.getInitiativeId())
                 .initiativeName(initiative.getInitiativeName())
                 .organizationId(initiative.getOrganizationId())
@@ -28,30 +28,27 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
                 .serviceId(initiative.getAdditionalInfo() != null ? initiative.getAdditionalInfo().getServiceId() : null)
                 .rankingInitiative(initiative.getRankingInitiative())
+                .rankingFieldCodes(Boolean.TRUE.equals(initiative.getRankingInitiative()) ? retrieveRankingFieldCodes(initiative) : null)
                 .build();
-
-        if(Boolean.TRUE.equals(initiative.getRankingInitiative())){
-            setRankingFieldCodes(out,initiative);
-        }
-
-        return out;
     }
 
-    private void setRankingFieldCodes(InitiativeConfig out, Initiative2BuildDTO initiative) {
+    private List<String> retrieveRankingFieldCodes(Initiative2BuildDTO initiative) {
+        List<String> outListCode = null;
+
         List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria = initiative.getBeneficiaryRule()
                 .getSelfDeclarationCriteria();
-
         if(selfDeclarationCriteria != null) {
             List<String> codeTrue = selfDeclarationCriteria.stream()
                     .filter(item -> item instanceof SelfCriteriaBoolDTO selfCriteriaBoolDTO && Boolean.TRUE.equals(selfCriteriaBoolDTO.getValue()))
                     .map(selfCriteria -> ((SelfCriteriaBoolDTO) selfCriteria).getCode())
                     .toList();
 
-            out.setRankingFieldCodes(initiative.getBeneficiaryRule().getAutomatedCriteria()
+            outListCode = initiative.getBeneficiaryRule().getAutomatedCriteria()
                     .stream().map(AutomatedCriteriaDTO::getCode)
                     .filter(codeTrue::contains)
-                    .toList()
-            );
+                    .toList();
         }
+
+        return outListCode;
     }
 }
