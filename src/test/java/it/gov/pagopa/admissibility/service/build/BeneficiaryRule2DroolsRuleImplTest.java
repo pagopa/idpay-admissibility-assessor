@@ -219,7 +219,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                         .beneficiaryBudget(new BigDecimal("1000.00"))
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
-                        .build() //TODO
+                        .build()
     );
 
         dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
