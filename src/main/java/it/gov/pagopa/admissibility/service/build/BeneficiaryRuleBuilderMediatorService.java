@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service;
+package it.gov.pagopa.admissibility.service.build;
 
 
 import org.springframework.messaging.Message;

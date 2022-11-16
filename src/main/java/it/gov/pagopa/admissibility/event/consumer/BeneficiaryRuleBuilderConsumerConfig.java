@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.event.consumer;
 
-import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
-import it.gov.pagopa.admissibility.service.BeneficiaryRuleBuilderMediatorService;
+import it.gov.pagopa.admissibility.service.build.BeneficiaryRuleBuilderMediatorService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
