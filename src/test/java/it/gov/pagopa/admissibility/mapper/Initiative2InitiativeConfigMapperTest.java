@@ -89,8 +89,9 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.TRUE, result.getRankingInitiative());
+        Assertions.assertTrue(result.getRankingFieldCodes().isEmpty());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes", "rankingFieldCodes" );
+        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes");
     }
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {

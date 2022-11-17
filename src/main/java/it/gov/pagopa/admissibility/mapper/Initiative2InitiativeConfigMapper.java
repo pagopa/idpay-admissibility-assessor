@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 
@@ -36,6 +37,6 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                     .stream().filter(item -> Boolean.TRUE.equals(item.getOrderEnabled()))
                     .map(AutomatedCriteriaDTO::getCode)
                     .toList()
-                : null;
+                : Collections.emptyList();
     }
 }
