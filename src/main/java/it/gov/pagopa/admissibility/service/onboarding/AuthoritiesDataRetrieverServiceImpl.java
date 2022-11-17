@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -8,13 +7,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.*;
 
 @Service
 @Slf4j
@@ -47,12 +43,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        if(initiativeConfig.getAutomatedCriteriaCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)) {
+        if(initiativeConfig.getAutomatedCriteriaCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)
+            || initiativeConfig.getRankingFieldCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)) {
             onboardingRequest.setIsee(new BigDecimal("10000"));
         }
         return Mono.just(onboardingRequest);
     }
 
+    /* TODO send message with schedule delay for servicebus
     private void rischeduleOnboardingRequest(OnboardingDTO onboardingRequest, Message<String> message) {
         log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
         MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
@@ -70,4 +68,5 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
         }
     }
+    */
 }
