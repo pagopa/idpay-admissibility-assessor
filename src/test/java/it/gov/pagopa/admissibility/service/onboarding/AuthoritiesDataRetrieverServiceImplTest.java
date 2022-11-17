@@ -1,0 +1,117 @@
+package it.gov.pagopa.admissibility.service.onboarding;
+
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.utils.TestUtils;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+class AuthoritiesDataRetrieverServiceImplTest {
+
+    @Mock
+    private OnboardingContextHolderService onboardingContextHolderServiceMock;
+
+    private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
+
+    private OnboardingDTO onboardingDTO;
+    private InitiativeConfig initiativeConfig;
+    private Message<String> message;
+
+    @BeforeEach
+    void setUp() {
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false);
+
+        onboardingDTO =OnboardingDTO.builder()
+                .userId("USERID")
+                .initiativeId("INITIATIVEID")
+                .tc(true)
+                .status("STATUS")
+                .pdndAccept(true)
+                .selfDeclarationList(Map.of("ISEE",true,"BIRTHDATE", true))
+                .tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
+                .criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
+                .build();
+
+        LocalDate now = LocalDate.now();
+        initiativeConfig = InitiativeConfig.builder()
+                .initiativeId("INITIATIVEID")
+                .initiativeName("INITITIATIVE_NAME")
+                .organizationId("ORGANIZATIONID")
+                .serviceId("STATUS")
+                .startDate(now)
+                .endDate(now)
+                .pdndToken("PDND_TOKEN")
+                .initiativeBudget(new BigDecimal("100"))
+                .beneficiaryInitiativeBudget(BigDecimal.TEN)
+                .serviceId("SERVICEID")
+                .rankingInitiative(Boolean.TRUE)
+                .build();
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+    }
+
+    @Test
+    void retrieveIseeAutomatedCriteriaAndRanking() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
+        initiativeConfig.setRankingFieldCodes(List.of("ISEE"));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+    }
+
+    @Test
+    void retrieveIseeAutomatedCriteriaAndNotRanking() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
+        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE"));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+    }
+
+    @Test
+    void retrieveIseeNotAutomatedCriteriaNotRanking() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
+        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE"));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertNotNull(result);
+        Assertions.assertNull(result.getIsee());
+    }
+
+    @Test
+    void retrieveIseeRankingAndNotAutomatedCriteria() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
+        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE","ISEE"));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+    }
+}
