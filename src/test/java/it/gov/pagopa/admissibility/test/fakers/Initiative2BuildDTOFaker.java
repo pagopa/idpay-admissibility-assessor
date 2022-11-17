@@ -31,7 +31,7 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
-        out.rankingInitiative(Boolean.TRUE);
+        out.rankingInitiative(Boolean.FALSE);
 
         final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
         beneficiaryRule.setAutomatedCriteria(new ArrayList<>());

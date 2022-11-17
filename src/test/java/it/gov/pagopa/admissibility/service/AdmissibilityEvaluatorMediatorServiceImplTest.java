@@ -5,6 +5,7 @@ import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.mapper.Evaluation2RankingRequestMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.service.onboarding.*;
 import it.gov.pagopa.admissibility.utils.TestUtils;
@@ -34,10 +35,12 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         AuthoritiesDataRetrieverService authoritiesDataRetrieverServiceMock = Mockito.mock(AuthoritiesDataRetrieverService.class);
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
+        Evaluation2RankingRequestMapper evaluation2RankingRequestMapperMock = Mockito.mock(Evaluation2RankingRequestMapper.class);
         ErrorNotifierService errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
         OnboardingNotifierService onboardingNotifierServiceMock = Mockito.mock(OnboardingNotifierService.class);
+        RankingNotifierService rankingNotifierServiceMock = Mockito.mock(RankingNotifierService.class);
 
-        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, evaluation2RankingRequestMapperMock, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
 
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
         OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();
@@ -88,10 +91,12 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         AuthoritiesDataRetrieverService authoritiesDataRetrieverServiceMock = Mockito.mock(AuthoritiesDataRetrieverService.class);
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
+        Evaluation2RankingRequestMapper evaluation2RankingRequestMapperMock = Mockito.mock(Evaluation2RankingRequestMapper.class);
         ErrorNotifierService errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
         OnboardingNotifierService onboardingNotifierServiceMock = Mockito.mock(OnboardingNotifierService.class);
+        RankingNotifierService rankingNotifierServiceMock = Mockito.mock(RankingNotifierService.class);
 
-        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, evaluation2RankingRequestMapperMock, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
 
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
         OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();

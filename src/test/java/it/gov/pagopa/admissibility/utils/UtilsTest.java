@@ -9,6 +9,7 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
@@ -63,5 +64,12 @@ class UtilsTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(expectedDeserialized, result);
         Mockito.verifyNoInteractions(onErrorMock);
+    }
+
+    @Test
+    void testEuro2Cents(){
+        Assertions.assertNull(Utils.euro2Cents(null));
+        Assertions.assertEquals(100L, Utils.euro2Cents(BigDecimal.ONE));
+        Assertions.assertEquals(325L, Utils.euro2Cents(BigDecimal.valueOf(3.25)));
     }
 }
