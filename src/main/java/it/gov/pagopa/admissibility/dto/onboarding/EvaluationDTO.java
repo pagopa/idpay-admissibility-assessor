@@ -32,5 +32,6 @@ public class EvaluationDTO {
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
     private BigDecimal beneficiaryBudget;
     private String serviceId;
+    private LocalDateTime criteriaConsensusTimestamp;
 
 }

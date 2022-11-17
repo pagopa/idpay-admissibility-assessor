@@ -72,6 +72,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(endDate, result.getInitiativeEndDate());
         Assertions.assertEquals(0, BigDecimal.TEN.compareTo(result.getBeneficiaryBudget()));
         Assertions.assertTrue(CollectionUtils.isEmpty(result.getOnboardingRejectionReasons()));
+        Assertions.assertEquals(acceptanceDateTime, result.getCriteriaConsensusTimestamp());
 
         TestUtils.checkNotNullFields(result);
     }
@@ -119,6 +120,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(result.getServiceId());
 
         Assertions.assertEquals(rejectReasons, result.getOnboardingRejectionReasons());
+        Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
 
         TestUtils.checkNotNullFields(result, "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget");
     }

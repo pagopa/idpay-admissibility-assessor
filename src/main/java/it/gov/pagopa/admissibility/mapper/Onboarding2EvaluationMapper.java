@@ -21,6 +21,7 @@ public class Onboarding2EvaluationMapper {
         out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingConstants.ONBOARDING_STATUS_OK : OnboardingConstants.ONBOARDING_STATUS_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setOnboardingRejectionReasons(rejectionReasons);
+        out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
         if(initiative!=null){
             out.setInitiativeName(initiative.getInitiativeName());
