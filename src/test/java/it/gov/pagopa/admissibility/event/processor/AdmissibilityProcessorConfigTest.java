@@ -282,9 +282,14 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
             ),
             // AUTOMATED_CRITERIA fail
             Pair.of(
-                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                            .isee(BigDecimal.TEN)
-                            .build(),
+                    bias -> {
+                        OnboardingDTO onboardingAutomaticCriteriaFail = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .isee(BigDecimal.TEN)
+                                .build();
+                        Mockito.doReturn(Mono.just(onboardingAutomaticCriteriaFail))
+                                        .when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.eq(onboardingAutomaticCriteriaFail),Mockito.any(),Mockito.any());
+                        return onboardingAutomaticCriteriaFail;
+                    },
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
