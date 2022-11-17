@@ -17,4 +17,5 @@ public class AutomatedCriteriaDTO   {
     private FilterOperator operator;
     private String value;
     private String value2;
+    private Boolean orderEnabled;
 }

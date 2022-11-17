@@ -1,14 +1,12 @@
-package it.gov.pagopa.admissibility.service;
+package it.gov.pagopa.admissibility.service.build;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRule;
-import it.gov.pagopa.admissibility.service.build.BeneficiaryRuleFilterService;
-import it.gov.pagopa.admissibility.service.build.InitInitiativeCounterService;
-import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
+import it.gov.pagopa.admissibility.service.BaseKafkaConsumer;
+import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

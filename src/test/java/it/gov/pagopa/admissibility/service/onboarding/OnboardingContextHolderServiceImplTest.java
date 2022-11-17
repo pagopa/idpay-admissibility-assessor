@@ -119,6 +119,8 @@ class OnboardingContextHolderServiceImplTest {
                 .pdndToken("PDND-TOKEN")
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
+                .rankingInitiative(Boolean.TRUE)
+                .rankingFieldCodes(List.of("CODE1"))
                 .build();
 
 

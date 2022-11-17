@@ -205,15 +205,22 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
-        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null));
+        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Boolean.TRUE));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, Boolean.TRUE));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");
-        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE, new BigDecimal("1000.00"),
-                LocalDate.of(2021, 1, 1), LocalDate.of(2025, 12, 1),
-                null, null));
+        dto.setGeneral(
+                InitiativeGeneralDTO.builder()
+                        .name("NAME")
+                        .budget(new BigDecimal("100000.00"))
+                        .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                        .beneficiaryKnown(Boolean.TRUE)
+                        .beneficiaryBudget(new BigDecimal("1000.00"))
+                        .startDate(LocalDate.of(2021, 1, 1))
+                        .endDate(LocalDate.of(2025, 12, 1))
+                        .build()
+    );
 
         dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
                 "SERVICEID",
