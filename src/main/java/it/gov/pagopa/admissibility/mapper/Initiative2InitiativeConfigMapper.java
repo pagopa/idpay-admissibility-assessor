@@ -34,7 +34,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
 
     private List<String> retrieveRankingFieldCodes(List<AutomatedCriteriaDTO> automatedCriteriaList) {
         return automatedCriteriaList != null ? automatedCriteriaList
-                    .stream().filter(item -> Boolean.TRUE.equals(item.getOrderEnabled()))
+                    .stream().filter(item -> item.getOrderDirection()!= null)
                     .map(AutomatedCriteriaDTO::getCode)
                     .toList()
                 : Collections.emptyList();

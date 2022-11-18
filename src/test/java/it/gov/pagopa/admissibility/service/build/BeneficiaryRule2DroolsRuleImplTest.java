@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.api.KieBase;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Sort;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
@@ -205,8 +206,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
-        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Boolean.TRUE));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, Boolean.TRUE));
+        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, null));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");

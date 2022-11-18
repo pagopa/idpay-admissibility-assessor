@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -123,9 +124,9 @@ class Initiative2InitiativeConfigMapperTest {
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                 .automatedCriteria(List.of(
-                        AutomatedCriteriaDTO.builder().code("CODE1").orderEnabled(Boolean.TRUE).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE2").orderEnabled(Boolean.TRUE).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE3").orderEnabled(Boolean.FALSE).build()
+                        AutomatedCriteriaDTO.builder().code("CODE1").orderDirection(Sort.Direction.ASC).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE3").build()
                 ))
                 .build());
 

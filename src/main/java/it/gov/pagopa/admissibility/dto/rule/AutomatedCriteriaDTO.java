@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.dto.rule;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import lombok.*;
+import org.springframework.data.domain.Sort;
 
 /**
  * AutomatedCriteriaDTO
@@ -17,5 +18,5 @@ public class AutomatedCriteriaDTO   {
     private FilterOperator operator;
     private String value;
     private String value2;
-    private Boolean orderEnabled;
+    private Sort.Direction orderDirection;
 }
