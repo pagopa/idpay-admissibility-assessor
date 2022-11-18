@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Evaluation2RankingRequestMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.service.onboarding.*;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .code("Rejected")
                 .build());
 
-        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").build();
+        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
@@ -119,8 +120,8 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.any())).thenReturn(null);
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding2), Mockito.any())).thenReturn(null);
 
-        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").build();
-        EvaluationDTO evaluationDTO2 = EvaluationDTO.builder().userId("USER2").build();
+        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationDTO evaluationDTO2 = EvaluationDTO.builder().userId("USER2").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenReturn(Mono.just(evaluationDTO1));
