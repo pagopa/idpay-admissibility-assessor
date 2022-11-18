@@ -39,7 +39,7 @@ spring:
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
         admissibilityProcessor-out-1:
-          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-ranking-request}
+          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-onboarding-ranking-request}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-ranking-request
         admissibilityDelayProducer-out-0:
@@ -80,7 +80,7 @@ spring:
               brokers: ${KAFKA_RANKING_REQUEST_BROKER:${KAFKA_BROKER:}}
               configuration:
                 sasl.jaas.config: ${KAFKA_RANKING_REQUEST_SASL_JAAS_CONFIG:}
-                key.serializer: org.apache.kafka.common.serialization.StringSerializer #TODO TBV
+                key.serializer: org.apache.kafka.common.serialization.StringSerializer
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
