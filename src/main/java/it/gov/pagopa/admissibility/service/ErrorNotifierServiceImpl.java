@@ -43,9 +43,9 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     private final String admissibilityOutServer;
     private final String admissibilityOutTopic;
 
-    private final String admissibilityOutRankingRequestServiceType;
-    private final String admissibilityOutRankingRequestServer;
-    private final String admissibilityOutRankingRequestTopic;
+    private final String admissibilityRankingRequestServiceType;
+    private final String admissibilityRankingRequestServer;
+    private final String admissibilityRankingRequestTopic;
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public ErrorNotifierServiceImpl(StreamBridge streamBridge,
@@ -65,9 +65,9 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityOutServer,
                                     @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}") String admissibilityOutTopic,
 
-                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityOutRankingRequestServiceType,
-                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.type.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityOutRankingRequestServer,
-                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-1.destination}") String admissibilityOutRankingRequestTopic) {
+                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityRankingRequestServiceType,
+                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityRankingRequestServer,
+                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-1.destination}") String admissibilityRankingRequestTopic) {
         this.streamBridge = streamBridge;
         this.applicationName = applicationName;
 
@@ -85,9 +85,9 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
         this.admissibilityOutServer = admissibilityOutServer;
         this.admissibilityOutTopic = admissibilityOutTopic;
 
-        this.admissibilityOutRankingRequestServiceType = admissibilityOutRankingRequestServiceType;
-        this.admissibilityOutRankingRequestServer = admissibilityOutRankingRequestServer;
-        this.admissibilityOutRankingRequestTopic = admissibilityOutRankingRequestTopic;
+        this.admissibilityRankingRequestServiceType = admissibilityRankingRequestServiceType;
+        this.admissibilityRankingRequestServer = admissibilityRankingRequestServer;
+        this.admissibilityRankingRequestTopic = admissibilityRankingRequestTopic;
     }
 
     private final Pattern serviceBusEndpointPattern = Pattern.compile("Endpoint=sb://([^;]+)/?;");
@@ -113,7 +113,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
     @Override
     public void notifyRankingRequest(Message<?> message, String description, boolean retryable, Throwable exception) {
-        notify(admissibilityOutRankingRequestServiceType, admissibilityOutRankingRequestServer, admissibilityOutRankingRequestTopic,null, message, description, retryable, false, exception);
+        notify(admissibilityRankingRequestServiceType, admissibilityRankingRequestServer, admissibilityRankingRequestTopic,null, message, description, retryable, false, exception);
     }
 
     @Override

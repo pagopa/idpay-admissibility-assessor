@@ -39,7 +39,7 @@ spring:
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
         admissibilityProcessor-out-1:
-          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-onboarding-outcome}
+          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-ranking-request}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-ranking-request
         admissibilityDelayProducer-out-0:
@@ -131,7 +131,7 @@ spring:
           admissibilityProcessor-out-1:
             producer:
               configuration:
-                client.id: admissibilityProcessor
+                client.id: admissibilityProcessor-ranking
                 connections.max.idle.ms: ${KAFKA_RANKING_REQUEST_CONNECTION_MAX_IDLE_TIME:180000}
                 retry.backoff.ms: ${KAFKA_RANKING_REQUEST_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
                 linger.ms: ${KAFKA_RANKING_REQUEST_LINGER_MS:${KAFKA_LINGER_MS:2}}

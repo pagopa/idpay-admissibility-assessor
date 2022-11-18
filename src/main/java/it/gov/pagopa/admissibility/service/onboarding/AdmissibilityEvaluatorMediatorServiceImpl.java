@@ -15,8 +15,8 @@ import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.ImmutableTriple;
-import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -97,7 +97,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 });
     }
 
-    private Mono<ImmutableTriple<EvaluationDTO, InitiativeConfig,OnboardingDTO>> execute(Message<String> message) { //TODO
+    private Mono<ImmutableTriple<EvaluationDTO, InitiativeConfig,OnboardingDTO>> execute(Message<String> message) {
         Map<String, Object> onboardingContext = new HashMap<>();
 
         log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", message.getPayload());
@@ -107,11 +107,11 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         if(onboardingRequest!=null) {
             EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, onboardingContext);
             if (rejectedRequest != null) {
-                return Mono.just(ImmutableTriple.of(rejectedRequest,null,onboardingRequest)); //TODO check response
+                return Mono.just(ImmutableTriple.of(rejectedRequest,null,onboardingRequest));
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext, message)
-                        .flatMap(r -> Mono.just(ImmutableTriple.of(r.getFirst(),r.getSecond(),onboardingRequest)));
+                        .flatMap(r -> Mono.just(ImmutableTriple.of(r.getLeft(),r.getRight(),onboardingRequest)));
             }
         } else {
             return Mono.empty();
@@ -130,12 +130,12 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } else return null;
     }
 
-    private Mono<Pair<EvaluationDTO, InitiativeConfig>> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext, Message<String> message) {
+    private Mono<ImmutablePair<EvaluationDTO, InitiativeConfig>> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext, Message<String> message) {
         final InitiativeConfig initiativeConfig = readInitiativeConfigFromContext(onboardingContext);
 
         return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig))
-                .flatMap(n -> Mono.just(Pair.of(n, initiativeConfig)));
+                .flatMap(n -> Mono.just(ImmutablePair.of(n, initiativeConfig)));
     }
 
     private InitiativeConfig readInitiativeConfigFromContext(Map<String, Object> onboardingContext) {
@@ -154,7 +154,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void callRankingNotifier(ImmutableTriple<EvaluationDTO, InitiativeConfig, OnboardingDTO> triple) {
-        RankingRequestDTO rankingRequestDTO = evaluation2RankingRequestMapper.apply(triple);try {
+        RankingRequestDTO rankingRequestDTO = evaluation2RankingRequestMapper.apply(triple);
+        try {
             if (!rankingNotifierService.notify(rankingRequestDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");
             }

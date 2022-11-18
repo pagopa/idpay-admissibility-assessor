@@ -26,7 +26,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
     public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
-        if(OnboardingConstants.ONBOARDING_STATUS_OK.equals(result.getStatus())){
+        if(OnboardingConstants.ONBOARDING_STATUS_OK.equals(result.getStatus()) && !Boolean.TRUE.equals(initiativeConfig.getRankingInitiative())){
             log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
             return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
