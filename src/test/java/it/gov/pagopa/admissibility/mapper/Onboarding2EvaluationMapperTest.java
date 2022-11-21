@@ -75,15 +75,14 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
-        Assertions.assertEquals("USERID", resultCompleted.getUserId());
-        Assertions.assertEquals("INITIATIVEID", resultCompleted.getInitiativeId());
-        Assertions.assertEquals("INITIATIVENAME", resultCompleted.getInitiativeName());
-        Assertions.assertEquals("ORGANIZATIONID", resultCompleted.getOrganizationId());
+        commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
+
+        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted);
+
+
         Assertions.assertEquals("ONBOARDING_OK", resultCompleted.getStatus());
-        Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
         Assertions.assertEquals(0, BigDecimal.TEN.compareTo(resultCompleted.getBeneficiaryBudget()));
         Assertions.assertTrue(CollectionUtils.isEmpty(resultCompleted.getOnboardingRejectionReasons()));
-        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
 
         TestUtils.checkNotNullFields(resultCompleted);
     }
@@ -105,8 +104,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
-        Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
-        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
+        commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
         Assertions.assertEquals("ONBOARDING_KO", resultCompleted.getStatus());
 
         Assertions.assertNull(resultCompleted.getInitiativeName());
@@ -115,7 +113,6 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
-        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
 
         TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget");
     }
@@ -137,15 +134,27 @@ class Onboarding2EvaluationMapperTest {
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
 
         // THEN
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof RankingRequestDTO);
+        commonAssertionRankingRequestOk(result, false);
+    }
 
-        RankingRequestDTO resultRankingRequest = (RankingRequestDTO) result;
-        Assertions.assertEquals(onboardingRequest.getUserId(), resultRankingRequest.getUserId());
-        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultRankingRequest.getInitiativeId());
-        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
+    @Test
+    void onboarding2EvaluationOnboardingOkRankingInitiativeEmptyFieldCodesTest() {
 
-        TestUtils.checkNotNullFields(resultRankingRequest);
+        // GIVEN
+        List<OnboardingRejectionReason> rejectReasons = new ArrayList<>();
+
+        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_RESIDENCE, OnboardingConstants.CRITERIA_CODE_ISEE));
+
+        LocalDate endDate = LocalDate.now();
+        initiativeConfig.setEndDate(endDate);
+
+
+        // WHEN
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
+
+        // THEN
+        commonAssertionRankingRequestOk(result, false);
     }
 
     @Test
@@ -169,18 +178,74 @@ class Onboarding2EvaluationMapperTest {
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         System.out.println(resultCompleted);
-        Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
-        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
+        commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
         Assertions.assertEquals("ONBOARDING_KO", resultCompleted.getStatus());
 
-        Assertions.assertEquals(initiativeConfig.getInitiativeName(),resultCompleted.getInitiativeName());
-        Assertions.assertEquals(initiativeConfig.getOrganizationId(),resultCompleted.getOrganizationId());
+
+        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted);
         Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudget(), resultCompleted.getBeneficiaryBudget());
         Assertions.assertNotNull(resultCompleted.getInitiativeEndDate());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
-        Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
 
         TestUtils.checkNotNullFields(resultCompleted);
+    }
+    @Test
+    void onboarding2EvaluationOnboardingOkRankingEmptyRejectionsTest() {
+        // GIVEN
+        List<OnboardingRejectionReason> rejectReasons = Collections.emptyList();
+
+        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setEndDate(LocalDate.now());
+
+        // WHEN
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
+
+        // THEN
+        commonAssertionRankingRequestOk(result, true);
+    }
+
+    @Test
+    void onboarding2EvaluationOnboardingOkRankingNullRejectionsTest() {
+        // GIVEN
+        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setEndDate(LocalDate.now());
+
+        // WHEN
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, null);
+
+        // THEN
+        commonAssertionRankingRequestOk(result,true);
+    }
+
+    private void commonAssertionRankingRequestOk(EvaluationDTO result, boolean isRankingValue) {
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result instanceof RankingRequestDTO);
+
+        RankingRequestDTO resultRankingRequest = (RankingRequestDTO) result;
+        Assertions.assertEquals(onboardingRequest.getUserId(), resultRankingRequest.getUserId());
+        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultRankingRequest.getInitiativeId());
+        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
+        if(isRankingValue){
+            TestUtils.checkNotNullFields(resultRankingRequest);
+        }
+        else {
+            TestUtils.checkNotNullFields(resultRankingRequest, "rankingValue");
+        }
+    }
+
+    private void commonAssertionsInitiativeConfig2EvaluationCompleted(EvaluationCompletedDTO resultCompleted) {
+        Assertions.assertEquals(initiativeConfig.getInitiativeName(),resultCompleted.getInitiativeName());
+        Assertions.assertEquals(initiativeConfig.getInitiativeId(), resultCompleted.getInitiativeId());
+        Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultCompleted.getOrganizationId());
+        Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
+    }
+
+    private void commonAssertionsOnboarding2EvaluationCompleted(EvaluationCompletedDTO resultCompleted) {
+        Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
+        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
+        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
     }
 }

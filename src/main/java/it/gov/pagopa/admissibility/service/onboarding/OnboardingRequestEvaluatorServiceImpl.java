@@ -24,7 +24,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
     }
 
     @Override
-    public Mono<? extends EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+    public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
         if(result instanceof EvaluationCompletedDTO evaluationCompletedDTO){
@@ -41,7 +41,8 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                                      .build());
                              evaluationCompletedDTO.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
                              return Mono.just(evaluationCompletedDTO);
-                           }));
+                           }))
+                             .map(EvaluationDTO.class::cast);
                 } else {
                     log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [RULE_ENGINE] Onboarding request of user {} into initiative {} failed: {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), evaluationCompletedDTO.getOnboardingRejectionReasons());
                 }
