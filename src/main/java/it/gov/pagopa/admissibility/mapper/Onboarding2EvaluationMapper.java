@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.admissibility.utils.Utils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -46,7 +47,7 @@ public class Onboarding2EvaluationMapper {
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
-        out.setRankingValue(initiative.getRankingFieldCodes().get(0).equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? onboardingDTO.getIsee() : null);
+        out.setRankingValue(initiative.getRankingFieldCodes().get(0).equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
         return out;
     }
 

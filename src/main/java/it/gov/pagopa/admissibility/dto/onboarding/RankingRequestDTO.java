@@ -1,9 +1,10 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-
-import java.math.BigDecimal;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -11,5 +12,5 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @SuperBuilder
 public class RankingRequestDTO extends EvaluationDTO {
-    private BigDecimal rankingValue;
+    private long rankingValue;
 }
