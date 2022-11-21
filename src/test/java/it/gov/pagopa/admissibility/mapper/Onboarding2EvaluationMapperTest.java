@@ -118,6 +118,24 @@ class Onboarding2EvaluationMapperTest {
     }
 
     @Test
+    void onboarding2EvaluationOnboardingOkNullRejectedReasonTest() {
+        // WHEN
+        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, null);
+
+        // THEN
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+
+        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+        commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
+        Assertions.assertEquals("ONBOARDING_OK", resultCompleted.getStatus());
+
+        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted);
+
+        TestUtils.checkNotNullFields(resultCompleted,"onboardingRejectionReasons");
+    }
+
+    @Test
     void onboarding2EvaluationOnboardingOkRankingInitiativeTest() {
 
         // GIVEN
@@ -138,8 +156,7 @@ class Onboarding2EvaluationMapperTest {
     }
 
     @Test
-    void onboarding2EvaluationOnboardingOkRankingInitiativeEmptyFieldCodesTest() {
-
+    void onboarding2EvaluationOnboardingOkRankingInitiativeEmptyRejectionReasonTest() {
         // GIVEN
         List<OnboardingRejectionReason> rejectReasons = new ArrayList<>();
 
