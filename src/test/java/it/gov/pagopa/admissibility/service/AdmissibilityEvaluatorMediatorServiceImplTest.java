@@ -2,10 +2,9 @@ package it.gov.pagopa.admissibility.service;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.mapper.Evaluation2RankingRequestMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.service.onboarding.*;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -27,7 +26,6 @@ import java.util.stream.Stream;
 
 @ExtendWith(MockitoExtension.class)
 class AdmissibilityEvaluatorMediatorServiceImplTest {
-
     @Test
     void mediatorTest() {
 
@@ -36,12 +34,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         AuthoritiesDataRetrieverService authoritiesDataRetrieverServiceMock = Mockito.mock(AuthoritiesDataRetrieverService.class);
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
-        Evaluation2RankingRequestMapper evaluation2RankingRequestMapperMock = Mockito.mock(Evaluation2RankingRequestMapper.class);
         ErrorNotifierService errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
         OnboardingNotifierService onboardingNotifierServiceMock = Mockito.mock(OnboardingNotifierService.class);
         RankingNotifierService rankingNotifierServiceMock = Mockito.mock(RankingNotifierService.class);
 
-        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, evaluation2RankingRequestMapperMock, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
 
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
         OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();
@@ -67,7 +64,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .code("Rejected")
                 .build());
 
-        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
@@ -92,12 +89,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         AuthoritiesDataRetrieverService authoritiesDataRetrieverServiceMock = Mockito.mock(AuthoritiesDataRetrieverService.class);
         OnboardingRequestEvaluatorService onboardingRequestEvaluatorServiceMock = Mockito.mock(OnboardingRequestEvaluatorService.class);
         Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
-        Evaluation2RankingRequestMapper evaluation2RankingRequestMapperMock = Mockito.mock(Evaluation2RankingRequestMapper.class);
         ErrorNotifierService errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
         OnboardingNotifierService onboardingNotifierServiceMock = Mockito.mock(OnboardingNotifierService.class);
         RankingNotifierService rankingNotifierServiceMock = Mockito.mock(RankingNotifierService.class);
 
-        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, evaluation2RankingRequestMapperMock, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
+        AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingCheckServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
 
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").build();
         OnboardingDTO onboarding2 = OnboardingDTO.builder().userId("USER2").build();
@@ -120,14 +116,14 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.any())).thenReturn(null);
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding2), Mockito.any())).thenReturn(null);
 
-        EvaluationDTO evaluationDTO1 = EvaluationDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
-        EvaluationDTO evaluationDTO2 = EvaluationDTO.builder().userId("USER2").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO2 = EvaluationCompletedDTO.builder().userId("USER2").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
-        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenReturn(Mono.just(evaluationDTO1));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding2), Mockito.any(), Mockito.eq(msgs.get(1)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
-        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding2), Mockito.any())).thenReturn(Mono.just(evaluationDTO2));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding2), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO2));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO1))).thenReturn(false);
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO2))).thenThrow(new RuntimeException());

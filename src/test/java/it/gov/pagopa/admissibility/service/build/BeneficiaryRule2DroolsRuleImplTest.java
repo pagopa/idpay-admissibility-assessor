@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
@@ -167,13 +168,12 @@ class BeneficiaryRule2DroolsRuleImplTest {
         // then
         Assertions.assertNotNull(rule);
 
-        EvaluationDTO expectedEvaluationResult = new EvaluationDTO();
+        EvaluationCompletedDTO expectedEvaluationResult = new EvaluationCompletedDTO();
         expectedEvaluationResult.setInitiativeId(initiative.getInitiativeId());
         expectedEvaluationResult.setInitiativeName("NAME");
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
-        expectedEvaluationResult.setServiceId("SERVICEID");
         expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
