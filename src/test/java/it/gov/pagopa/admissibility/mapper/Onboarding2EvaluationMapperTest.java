@@ -63,7 +63,7 @@ class Onboarding2EvaluationMapperTest {
     void onboarding2EvaluationOnboardingOkTest() {
 
         // GIVEN
-        initiativeConfig.setRankingInitiative(Boolean.FALSE);
+        initiativeConfig.setRankingInitiative(false);
 
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.emptyList());
@@ -123,7 +123,7 @@ class Onboarding2EvaluationMapperTest {
                 .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
                 .code("InitiativeId NULL")
                 .build());
-        initiativeConfig.setRankingInitiative(Boolean.FALSE);
+        initiativeConfig.setRankingInitiative(false);
 
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
@@ -147,7 +147,7 @@ class Onboarding2EvaluationMapperTest {
     void onboarding2EvaluationOnboardingOkRankingInitiativeTest() {
 
         // GIVEN
-        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingInitiative(true);
         initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
 
         LocalDate endDate = LocalDate.now();
@@ -164,7 +164,7 @@ class Onboarding2EvaluationMapperTest {
     @Test
     void onboarding2EvaluationOnboardingOkRankingEmptyRejectionReasonFirstRankingCodeNotISEETest() {
         // GIVEN
-        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingInitiative(true);
         initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_RESIDENCE, OnboardingConstants.CRITERIA_CODE_ISEE));
 
         LocalDate endDate = LocalDate.now();
@@ -186,7 +186,7 @@ class Onboarding2EvaluationMapperTest {
                 .code("InitiativeId NULL")
                 .build());
 
-        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingInitiative(true);
         initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
         initiativeConfig.setEndDate(LocalDate.now());
 
@@ -214,7 +214,7 @@ class Onboarding2EvaluationMapperTest {
     @Test
     void onboarding2EvaluationOnboardingOkRankingEmptyRejectionReasonTest() {
         // GIVEN
-        initiativeConfig.setRankingInitiative(Boolean.TRUE);
+        initiativeConfig.setRankingInitiative(true);
         initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
         initiativeConfig.setEndDate(LocalDate.now());
 
