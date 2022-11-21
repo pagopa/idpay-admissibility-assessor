@@ -67,7 +67,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
                                     @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityRankingRequestServiceType,
                                     @Value("${spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityRankingRequestServer,
-                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-1.destination}") String admissibilityRankingRequestTopic) {
+                                    @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}") String admissibilityRankingRequestTopic) {
         this.streamBridge = streamBridge;
         this.applicationName = applicationName;
 

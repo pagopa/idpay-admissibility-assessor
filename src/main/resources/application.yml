@@ -38,8 +38,8 @@ spring:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
-        admissibilityProcessor-out-1:
-          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-ranking-request}
+        rankingRequest-out-0:
+          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-onboarding-ranking-request}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-ranking-request
         admissibilityDelayProducer-out-0:
@@ -80,7 +80,6 @@ spring:
               brokers: ${KAFKA_RANKING_REQUEST_BROKER:${KAFKA_BROKER:}}
               configuration:
                 sasl.jaas.config: ${KAFKA_RANKING_REQUEST_SASL_JAAS_CONFIG:}
-                key.serializer: org.apache.kafka.common.serialization.StringSerializer #TODO TBV
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
@@ -128,7 +127,7 @@ spring:
                 retry.backoff.ms: ${KAFKA_ONBOARDING_OUTCOME_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
                 linger.ms: ${KAFKA_ONBOARDING_OUTCOME_LINGER_MS:${KAFKA_LINGER_MS:2}}
                 batch.size: ${KAFKA_ONBOARDING_OUTCOME_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
-          admissibilityProcessor-out-1:
+          rankingRequest-out-0:
             producer:
               configuration:
                 client.id: admissibilityProcessor-ranking

@@ -2,10 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.config.EmbeddedRedisTestConfiguration;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
@@ -112,7 +109,11 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
         OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, 1);
         EvaluationDTO result = executeRules(onboardingMock);
 
-        Assertions.assertEquals(expectedRejectionReason, result.getOnboardingRejectionReasons());
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+
+        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+        Assertions.assertEquals(expectedRejectionReason, resultCompleted.getOnboardingRejectionReasons());
 
         // Set a null kieBase
         onboardingContextHolderService.setBeneficiaryRulesKieBase(null);

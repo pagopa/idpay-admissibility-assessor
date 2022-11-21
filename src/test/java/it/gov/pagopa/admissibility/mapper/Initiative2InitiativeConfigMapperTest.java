@@ -28,7 +28,7 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
-        Assertions.assertEquals(Boolean.TRUE, result.getRankingInitiative());
+        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertEquals(List.of("CODE1", "CODE2"), result.getRankingFieldCodes());
 
         TestUtils.checkNotNullFields(result);
@@ -45,7 +45,7 @@ class Initiative2InitiativeConfigMapperTest {
 
         commonAssertions(initiative2BuildDTO, result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertEquals(Boolean.TRUE, result.getRankingInitiative());
+        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertEquals(List.of("CODE1", "CODE2"), result.getRankingFieldCodes());
 
         TestUtils.checkNotNullFields(result,"serviceId");
@@ -65,7 +65,7 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
-        Assertions.assertEquals(Boolean.FALSE, result.getRankingInitiative());
+        Assertions.assertEquals(Boolean.FALSE, result.isRankingInitiative());
 
         TestUtils.checkNotNullFields(result, "rankingFieldCodes" );
     }
@@ -89,7 +89,7 @@ class Initiative2InitiativeConfigMapperTest {
 
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
-        Assertions.assertEquals(Boolean.TRUE, result.getRankingInitiative());
+        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertTrue(result.getRankingFieldCodes().isEmpty());
 
         TestUtils.checkNotNullFields(result, "automatedCriteriaCodes");

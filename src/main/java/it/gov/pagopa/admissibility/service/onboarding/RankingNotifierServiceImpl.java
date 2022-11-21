@@ -15,7 +15,7 @@ public class RankingNotifierServiceImpl implements RankingNotifierService{
     }
     @Override
     public boolean notify(RankingRequestDTO rankingRequestDTO) {
-        return streamBridge.send("admissibilityProcessor-out-1",
+        return streamBridge.send("rankingRequest-out-0",
                 buildMessage(rankingRequestDTO));
     }
     public static Message<RankingRequestDTO> buildMessage(RankingRequestDTO rankingRequestDTO){
