@@ -44,7 +44,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         * if all the calls were successful return a Mono with the request
         */
         if(initiativeConfig.getAutomatedCriteriaCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)
-            || initiativeConfig.getRankingFieldCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)) {
+            || initiativeConfig.getRankingFields().stream().anyMatch(rankingFieldCodes -> OnboardingConstants.CRITERIA_CODE_ISEE.equals(rankingFieldCodes.getFieldCode()))) {
             onboardingRequest.setIsee(new BigDecimal("10000"));
         }
         return Mono.just(onboardingRequest);

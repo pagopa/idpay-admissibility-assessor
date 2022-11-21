@@ -29,5 +29,5 @@ public class InitiativeConfig {
     private BigDecimal beneficiaryInitiativeBudget;
     private String serviceId;
     private boolean rankingInitiative;
-    private List<String> rankingFieldCodes;
+    private List<Order> rankingFields;
 }

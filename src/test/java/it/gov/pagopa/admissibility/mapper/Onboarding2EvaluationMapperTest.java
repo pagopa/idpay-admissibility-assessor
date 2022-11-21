@@ -4,11 +4,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -148,7 +150,8 @@ class Onboarding2EvaluationMapperTest {
 
         // GIVEN
         initiativeConfig.setRankingInitiative(true);
-        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         LocalDate endDate = LocalDate.now();
         initiativeConfig.setEndDate(endDate);
@@ -165,7 +168,9 @@ class Onboarding2EvaluationMapperTest {
     void onboarding2EvaluationOnboardingOkRankingEmptyRejectionReasonFirstRankingCodeNotISEETest() {
         // GIVEN
         initiativeConfig.setRankingInitiative(true);
-        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_RESIDENCE, OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.DESC).build(),
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         LocalDate endDate = LocalDate.now();
         initiativeConfig.setEndDate(endDate);
@@ -187,7 +192,8 @@ class Onboarding2EvaluationMapperTest {
                 .build());
 
         initiativeConfig.setRankingInitiative(true);
-        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
         initiativeConfig.setEndDate(LocalDate.now());
 
         // WHEN
@@ -215,7 +221,8 @@ class Onboarding2EvaluationMapperTest {
     void onboarding2EvaluationOnboardingOkRankingEmptyRejectionReasonTest() {
         // GIVEN
         initiativeConfig.setRankingInitiative(true);
-        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
         initiativeConfig.setEndDate(LocalDate.now());
 
         // WHEN

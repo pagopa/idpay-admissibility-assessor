@@ -2,9 +2,11 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,7 +30,10 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertEquals(List.of("CODE1", "CODE2"), result.getRankingFieldCodes());
+        Assertions.assertEquals(List.of(
+                        Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
+                        Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
+                result.getRankingFields());
 
         TestUtils.checkNotNullFields(result);
     }
@@ -41,11 +46,14 @@ class Initiative2InitiativeConfigMapperTest {
         final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
 
         Assertions.assertNotNull(result);
-
         commonAssertions(initiative2BuildDTO, result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertEquals(List.of("CODE1", "CODE2"), result.getRankingFieldCodes());
+        Assertions.assertEquals(
+                List.of(
+                        Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
+                        Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
+                result.getRankingFields());
 
         TestUtils.checkNotNullFields(result,"serviceId");
     }
@@ -66,7 +74,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.FALSE, result.isRankingInitiative());
 
-        TestUtils.checkNotNullFields(result, "rankingFieldCodes" );
+        TestUtils.checkNotNullFields(result, "rankingFields" );
     }
 
     @Test
@@ -89,7 +97,7 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertTrue(result.getRankingFieldCodes().isEmpty());
+        Assertions.assertTrue(result.getRankingFields().isEmpty());
 
         TestUtils.checkNotNullFields(result, "automatedCriteriaCodes");
     }
@@ -123,9 +131,9 @@ class Initiative2InitiativeConfigMapperTest {
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                 .automatedCriteria(List.of(
-                        AutomatedCriteriaDTO.builder().code("CODE1").orderEnabled(Boolean.TRUE).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE2").orderEnabled(Boolean.TRUE).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE3").orderEnabled(Boolean.FALSE).build()
+                        AutomatedCriteriaDTO.builder().code("CODE1").orderDirection(Sort.Direction.ASC).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE3").build()
                 ))
                 .build());
 

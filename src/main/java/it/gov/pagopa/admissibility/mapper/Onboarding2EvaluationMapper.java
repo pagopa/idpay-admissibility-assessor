@@ -47,7 +47,7 @@ public class Onboarding2EvaluationMapper {
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
-        out.setRankingValue(initiative.getRankingFieldCodes().get(0).equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
+        out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
         return out;
     }
 
