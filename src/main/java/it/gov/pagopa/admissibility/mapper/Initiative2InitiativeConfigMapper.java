@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +29,17 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
                 .serviceId(initiative.getAdditionalInfo() != null ? initiative.getAdditionalInfo().getServiceId() : null)
                 .rankingInitiative(initiative.isRankingInitiative())
-                .rankingFieldCodes(Boolean.TRUE.equals(initiative.isRankingInitiative()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
+                .rankingFields(Boolean.TRUE.equals(initiative.isRankingInitiative()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .build();
     }
 
-    private List<String> retrieveRankingFieldCodes(List<AutomatedCriteriaDTO> automatedCriteriaList) {
+    private List<Order> retrieveRankingFieldCodes(List<AutomatedCriteriaDTO> automatedCriteriaList) {
         return automatedCriteriaList != null ? automatedCriteriaList
                     .stream().filter(item -> item.getOrderDirection()!= null)
-                    .map(AutomatedCriteriaDTO::getCode)
+                    .map(automatedCriteria-> Order.builder()
+                            .fieldCode(automatedCriteria.getCode())
+                            .direction(automatedCriteria.getOrderDirection())
+                            .build())
                     .toList()
                 : Collections.emptyList();
     }

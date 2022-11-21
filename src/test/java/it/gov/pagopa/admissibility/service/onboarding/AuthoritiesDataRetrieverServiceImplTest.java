@@ -2,11 +2,14 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
@@ -63,7 +66,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     void retrieveIseeAutomatedCriteriaAndRanking() {
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
-        initiativeConfig.setRankingFieldCodes(List.of("ISEE"));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -77,7 +81,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     void retrieveIseeAutomatedCriteriaAndNotRanking() {
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
-        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE"));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -91,7 +96,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     void retrieveIseeNotAutomatedCriteriaNotRanking() {
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
-        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE"));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -105,7 +111,11 @@ class AuthoritiesDataRetrieverServiceImplTest {
     void retrieveIseeRankingAndNotAutomatedCriteria() {
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
-        initiativeConfig.setRankingFieldCodes(List.of("RESIDENCE","ISEE"));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()
+
+        ));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();

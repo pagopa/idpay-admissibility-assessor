@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
@@ -16,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
@@ -120,7 +122,8 @@ class OnboardingContextHolderServiceImplTest {
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .rankingInitiative(Boolean.TRUE)
-                .rankingFieldCodes(List.of("CODE1"))
+                .rankingFields(List.of(
+                        Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
                 .build();
 
 
