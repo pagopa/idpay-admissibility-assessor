@@ -118,24 +118,6 @@ class Onboarding2EvaluationMapperTest {
     }
 
     @Test
-    void onboarding2EvaluationOnboardingOkNullRejectedReasonTest() {
-        // WHEN
-        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, null);
-
-        // THEN
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
-
-        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
-        commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
-        Assertions.assertEquals("ONBOARDING_OK", resultCompleted.getStatus());
-
-        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted);
-
-        TestUtils.checkNotNullFields(resultCompleted,"onboardingRejectionReasons");
-    }
-
-    @Test
     void onboarding2EvaluationOnboardingOkRankingInitiativeTest() {
 
         // GIVEN
@@ -221,20 +203,6 @@ class Onboarding2EvaluationMapperTest {
 
         // THEN
         commonAssertionRankingRequestOk(result, true);
-    }
-
-    @Test
-    void onboarding2EvaluationOnboardingOkRankingNullRejectionsTest() {
-        // GIVEN
-        initiativeConfig.setRankingInitiative(Boolean.TRUE);
-        initiativeConfig.setRankingFieldCodes(List.of(OnboardingConstants.CRITERIA_CODE_ISEE));
-        initiativeConfig.setEndDate(LocalDate.now());
-
-        // WHEN
-        EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, null);
-
-        // THEN
-        commonAssertionRankingRequestOk(result,true);
     }
 
     private void commonAssertionRankingRequestOk(EvaluationDTO result, boolean isRankingValue) {

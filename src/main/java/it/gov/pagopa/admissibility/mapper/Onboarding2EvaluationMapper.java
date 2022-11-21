@@ -15,7 +15,7 @@ public class Onboarding2EvaluationMapper {
     public EvaluationDTO apply(OnboardingDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
         if(initiative==null
                 || !Boolean.TRUE.equals(initiative.getRankingInitiative())
-                || (Boolean.TRUE.equals(initiative.getRankingInitiative()) && rejectionReasons != null && !rejectionReasons.isEmpty())){
+                || (Boolean.TRUE.equals(initiative.getRankingInitiative()) && !rejectionReasons.isEmpty())){
             return getEvaluationCompletedDTO(onboardingDTO, initiative, rejectionReasons);
         } else {
             return getRankingRequestDTO(onboardingDTO, initiative);
