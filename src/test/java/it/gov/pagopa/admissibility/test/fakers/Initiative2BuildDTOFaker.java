@@ -31,12 +31,12 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
-        out.rankingInitiative(Boolean.TRUE);
+        out.rankingInitiative(false);
 
         final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
         beneficiaryRule.setAutomatedCriteria(new ArrayList<>());
         beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null, Boolean.TRUE));
-        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null, Boolean.TRUE));
+        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null, Boolean.FALSE));
 
         out.beneficiaryRule(beneficiaryRule);
 

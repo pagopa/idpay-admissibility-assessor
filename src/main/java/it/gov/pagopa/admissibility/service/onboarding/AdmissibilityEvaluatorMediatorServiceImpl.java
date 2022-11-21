@@ -4,9 +4,7 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
@@ -36,8 +34,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final ObjectReader objectReader;
 
     private final OnboardingNotifierService onboardingNotifierService;
+    private final RankingNotifierService rankingNotifierService;
 
-    public AdmissibilityEvaluatorMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper, OnboardingNotifierService onboardingNotifierService) {
+    @SuppressWarnings("squid:S00107") // suppressing too many parameters alert
+    public AdmissibilityEvaluatorMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper, OnboardingNotifierService onboardingNotifierService, RankingNotifierService rankingNotifierService) {
         this.onboardingCheckService = onboardingCheckService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
@@ -46,6 +46,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
         this.onboardingNotifierService = onboardingNotifierService;
+        this.rankingNotifierService = rankingNotifierService;
     }
 
     /**
@@ -64,15 +65,11 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         return Mono.just(message)
                 .flatMap(this::execute)
                 .doOnNext(evaluationDTO -> {
-                    try {
-                        if (!onboardingNotifierService.notify(evaluationDTO)) {
-                            throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while onboarding notify");
-                        }
-                    } catch (Exception e){
-                        log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationDTO);
-                        errorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
-                    }
-                })
+                    if(evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
+                        callOnboardingNotifier(evaluation);
+                    } else {
+                        callRankingNotifier((RankingRequestDTO) evaluationDTO);
+                    }})
                 .onErrorResume(e -> {
                     // TODO we should send it as ONBOARDING_KO (instead or rescheduling)?
                     errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
@@ -131,6 +128,28 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private InitiativeConfig readInitiativeConfigFromContext(Map<String, Object> onboardingContext) {
         return (InitiativeConfig) onboardingContext.get(ONBOARDING_CONTEXT_INITIATIVE_KEY);
+    }
+
+    private void callOnboardingNotifier(EvaluationCompletedDTO evaluationCompletedDTO) {
+        try {
+            if (!onboardingNotifierService.notify(evaluationCompletedDTO)) {
+                throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while onboarding notify");
+            }
+        } catch (Exception e) {
+            log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationCompletedDTO);
+            errorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
+        }
+    }
+
+    private void callRankingNotifier(RankingRequestDTO rankingRequestDTO) {
+        try {
+            if (!rankingNotifierService.notify(rankingRequestDTO)) {
+                throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");
+            }
+        } catch (Exception e) {
+            log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
+            errorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
+        }
     }
 
 }
