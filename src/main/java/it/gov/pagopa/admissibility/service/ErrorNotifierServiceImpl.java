@@ -43,6 +43,10 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     private final String admissibilityOutServer;
     private final String admissibilityOutTopic;
 
+    private final String admissibilityRankingRequestServiceType;
+    private final String admissibilityRankingRequestServer;
+    private final String admissibilityRankingRequestTopic;
+
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public ErrorNotifierServiceImpl(StreamBridge streamBridge,
                                     @Value("${spring.application.name}") String applicationName,
@@ -59,7 +63,11 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-outcome.type}") String admissibilityOutServiceType,
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityOutServer,
-                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}") String admissibilityOutTopic) {
+                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}") String admissibilityOutTopic,
+
+                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityRankingRequestServiceType,
+                                    @Value("${spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityRankingRequestServer,
+                                    @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}") String admissibilityRankingRequestTopic) {
         this.streamBridge = streamBridge;
         this.applicationName = applicationName;
 
@@ -76,6 +84,10 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
         this.admissibilityOutServiceType = admissibilityOutServiceType;
         this.admissibilityOutServer = admissibilityOutServer;
         this.admissibilityOutTopic = admissibilityOutTopic;
+
+        this.admissibilityRankingRequestServiceType = admissibilityRankingRequestServiceType;
+        this.admissibilityRankingRequestServer = admissibilityRankingRequestServer;
+        this.admissibilityRankingRequestTopic = admissibilityRankingRequestTopic;
     }
 
     private final Pattern serviceBusEndpointPattern = Pattern.compile("Endpoint=sb://([^;]+)/?;");
@@ -97,6 +109,11 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     @Override
     public void notifyAdmissibilityOutcome(Message<?> message, String description, boolean retryable, Throwable exception) {
         notify(admissibilityOutServiceType, admissibilityOutServer, admissibilityOutTopic, null, message, description, retryable, false, exception);
+    }
+
+    @Override
+    public void notifyRankingRequest(Message<?> message, String description, boolean retryable, Throwable exception) {
+        notify(admissibilityRankingRequestServiceType, admissibilityRankingRequestServer, admissibilityRankingRequestTopic,null, message, description, retryable, false, exception);
     }
 
     @Override

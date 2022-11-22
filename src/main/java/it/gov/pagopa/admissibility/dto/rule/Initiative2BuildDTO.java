@@ -18,4 +18,5 @@ public class Initiative2BuildDTO {
     private InitiativeBeneficiaryRuleDTO beneficiaryRule;
     private InitiativeGeneralDTO general;
     private InitiativeAdditionalInfoDTO additionalInfo;
+    private boolean rankingInitiative;
 }

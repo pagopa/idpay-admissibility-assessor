@@ -27,4 +27,6 @@ public class InitiativeConfig {
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;
+    private boolean rankingInitiative;
+    private List<Order> rankingFields;
 }

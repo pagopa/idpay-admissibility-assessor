@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.kie.api.KieBase;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Sort;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
@@ -166,7 +168,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         // then
         Assertions.assertNotNull(rule);
 
-        EvaluationDTO expectedEvaluationResult = new EvaluationDTO();
+        EvaluationCompletedDTO expectedEvaluationResult = new EvaluationCompletedDTO();
         expectedEvaluationResult.setInitiativeId(initiative.getInitiativeId());
         expectedEvaluationResult.setInitiativeName("NAME");
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
@@ -203,15 +205,22 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.setBeneficiaryRule(new InitiativeBeneficiaryRuleDTO());
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
-        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null));
+        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, null));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
         dto.setPdndToken("PDND_TOKEN");
-        dto.setGeneral(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE, new BigDecimal("1000.00"),
-                LocalDate.of(2021, 1, 1), LocalDate.of(2025, 12, 1),
-                null, null));
+        dto.setGeneral(
+                InitiativeGeneralDTO.builder()
+                        .name("NAME")
+                        .budget(new BigDecimal("100000.00"))
+                        .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                        .beneficiaryKnown(Boolean.TRUE)
+                        .beneficiaryBudget(new BigDecimal("1000.00"))
+                        .startDate(LocalDate.of(2021, 1, 1))
+                        .endDate(LocalDate.of(2025, 12, 1))
+                        .build()
+    );
 
         dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
                 "SERVICENAME",

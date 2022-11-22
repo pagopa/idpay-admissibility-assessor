@@ -1,18 +1,12 @@
 package it.gov.pagopa.admissibility.event.processor;
 
-import com.azure.spring.messaging.AzureHeaders;
-import com.azure.spring.messaging.checkpoint.Checkpointer;
-import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorService;
-import it.gov.pagopa.admissibility.service.onboarding.*;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -20,98 +14,38 @@ import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
-import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
-import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.TestPropertySource;
-import reactor.core.Scannable;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 @Slf4j
-@TestPropertySource(properties = {
-        "app.beneficiary-rule.build-delay-duration=PT1S",
-        "logging.level.it.gov.pagopa.admissibility.service.build=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.onboarding=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
-})
-class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
+class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
-    @SpyBean
-    private OnboardingContextHolderService onboardingContextHolderServiceSpy;
-    @SpyBean
-    private OnboardingCheckService onboardingCheckServiceSpy;
-    @SpyBean
-    private AuthoritiesDataRetrieverService authoritiesDataRetrieverServiceSpy;
-    @SpyBean
-    private RuleEngineService ruleEngineServiceSpy;
-    @SpyBean
-    private InitiativeCountersRepository initiativeCountersRepositorySpy;
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
 
     private final int initiativesNumber = 7;
-    private static List<Checkpointer> checkpointers;
 
     @TestConfiguration
-    static class MediatorSpyConfiguration {
-        @SpyBean
-        private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorServiceSpy;
+    static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{}
 
-        @PostConstruct
-        void init() {
-            checkpointers = configureSpies();
-        }
-
-        private List<Checkpointer> configureSpies(){
-            List<Checkpointer> checkpoints = Collections.synchronizedList(new ArrayList<>(1100));
-
-            Mockito.doAnswer(args-> {
-                        Flux<Message<String>> messageFlux = args.getArgument(0);
-                        messageFlux = messageFlux.map(m -> {
-                            if(m.getHeaders().get(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME) == null) { //TODO verify commit on reschedule message when PDND integration will be test
-                                Checkpointer mock = Mockito.mock(Checkpointer.class);
-                                Mockito.when(mock.success()).thenReturn(Mono.empty());
-                                checkpoints.add(mock);
-                                return MessageBuilder.withPayload(m.getPayload())
-                                        .copyHeaders(m.getHeaders())
-                                        .setHeader(AzureHeaders.CHECKPOINTER, mock)
-                                        .build();
-                            }else {
-                                return  m;
-                            }
-                        })
-                                .name("spy");
-                        admissibilityEvaluatorMediatorServiceSpy.execute(messageFlux);
-                        return null;
-                    })
-                    .when(admissibilityEvaluatorMediatorServiceSpy).execute(Mockito.argThat(a -> !Scannable.from(a).name().equals("spy")));
-
-            return  checkpoints;
-        }
-    }
     @Test
     void testAdmissibilityOnboarding() throws IOException {
         int validOnboardings = 1000; // use even number
@@ -120,9 +54,9 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
 
         publishOnboardingRules(validOnboardings);
 
-        List<String> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2));
+        List<String> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
         onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).toList());
-        onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2));
+        onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
@@ -136,8 +70,8 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         Assertions.assertEquals(validOnboardings, payloadConsumed.size());
 
         for (ConsumerRecord<String, String> p : payloadConsumed) {
-            EvaluationDTO evaluation = objectMapper.readValue(p.value(), EvaluationDTO.class);
-            checkResponse(evaluation);
+            EvaluationCompletedDTO evaluation = objectMapper.readValue(p.value(), EvaluationCompletedDTO.class);
+            checkResponse(evaluation, useCases);
         }
 
         checkErrorsPublished(notValidOnboarding, maxWaitingMs, errorUseCases);
@@ -158,7 +92,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 timeEnd - timePublishOnboardingStart
         );
 
-        checkOffsets(onboardings.size(), validOnboardings);
+        checkOffsets(onboardings.size(), validOnboardings, topicAdmissibilityProcessorOutcome);
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
@@ -184,29 +118,11 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
                 .forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
-
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
     }
 
-    private List<String> buildValidPayloads(int bias, int validOnboardings) {
-        return IntStream.range(bias, bias + validOnboardings)
-                .mapToObj(this::mockInstance)
-                .map(TestUtils::jsonSerializer)
-                .toList();
-    }
-
-    private OnboardingDTO mockInstance(int bias) {
-        return useCases.get(bias % useCases.size()).getFirst().apply(bias);
-    }
-
-    private void checkResponse(EvaluationDTO evaluation) {
-        String userId = evaluation.getUserId();
-        int biasRetrieve = Integer.parseInt(userId.substring(7));
-        useCases.get(biasRetrieve % useCases.size()).getSecond().accept(evaluation);
-    }
-
     //region useCases
-    private final List<Pair<Function<Integer, OnboardingDTO>, java.util.function.Consumer<EvaluationDTO>>> useCases = List.of(
+    private final List<Pair<Function<Integer, OnboardingDTO>, java.util.function.Consumer<EvaluationCompletedDTO>>> useCases = List.of(
             //successful case
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
@@ -241,6 +157,8 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                             , false)
             ),
             // self declaration fail
+            // Handle multi and boolean criteria
+            /*
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .selfDeclarationList(Map.of("DUMMY", false))
@@ -252,6 +170,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                                     .build()
                             , false)
             ),
+            */
             // TC acceptance timestamp fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -279,9 +198,14 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
             ),
             // AUTOMATED_CRITERIA fail
             Pair.of(
-                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                            .isee(BigDecimal.TEN)
-                            .build(),
+                    bias -> {
+                        OnboardingDTO onboardingAutomaticCriteriaFail = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .isee(BigDecimal.TEN)
+                                .build();
+                        Mockito.doReturn(Mono.just(onboardingAutomaticCriteriaFail))
+                                        .when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.eq(onboardingAutomaticCriteriaFail),Mockito.any(),Mockito.any());
+                        return onboardingAutomaticCriteriaFail;
+                    },
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
@@ -305,7 +229,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
             )
     );
 
-    private void assertEvaluationFields(EvaluationDTO evaluation, boolean expectedInitiativeFieldFilled){
+    private void assertEvaluationFields(EvaluationCompletedDTO evaluation, boolean expectedInitiativeFieldFilled){
         Assertions.assertNotNull(evaluation.getUserId());
         Assertions.assertNotNull(evaluation.getInitiativeId());
         Assertions.assertNotNull(evaluation.getStatus());
@@ -321,7 +245,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         }
     }
 
-    private void checkKO(EvaluationDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
+    private void checkKO(EvaluationCompletedDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
         Assertions.assertEquals("ONBOARDING_KO", evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
         Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().contains(expectedRejectionReason),
@@ -402,7 +326,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     return TestUtils.jsonSerializer(onboardingFailinPublishing);
                 },
                 errorMessage-> {
-                    EvaluationDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
+                    EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
                     checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
                 }
         ));
@@ -418,7 +342,7 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                     return TestUtils.jsonSerializer(exceptionWhenOnboardingPublishing);
                 },
                 errorMessage-> {
-                    EvaluationDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
+                    EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
                     checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
                 }
         ));
@@ -437,9 +361,9 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
         ));
     }
 
-    private EvaluationDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO, int bias) {
+    private EvaluationCompletedDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO, int bias) {
         Initiative2BuildDTO initiativeExceptionWhenOnboardingPublishing = Initiative2BuildDTOFaker.mockInstance(bias);
-        return EvaluationDTO.builder()
+        return EvaluationCompletedDTO.builder()
                 .userId(onboardingDTO.getUserId())
                 .initiativeId(onboardingDTO.getInitiativeId())
                 .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
@@ -448,7 +372,6 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
                 .status("ONBOARDING_OK")
                 .onboardingRejectionReasons(Collections.emptyList())
                 .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
-                .serviceId(initiativeExceptionWhenOnboardingPublishing.getAdditionalInfo().getServiceId())
                 .build();
     }
 
@@ -457,34 +380,10 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
     }
     //endregion
 
-    protected void checkOffsets(long expectedReadMessages, long exptectedPublishedResults) {
-        Assertions.assertEquals(expectedReadMessages, checkpointers.size());
-        checkpointers.forEach(checkpointer -> Mockito.verify(checkpointer).success());
-
-        long timeCommitChecked = System.currentTimeMillis();
-        final Map<TopicPartition, Long> destPublishedOffsets = checkPublishedOffsets(topicAdmissibilityProcessorOutcome, exptectedPublishedResults);
-        long timePublishChecked = System.currentTimeMillis();
-        System.out.printf("""
-                        ************************
-                        Time occurred to check published offset: %d millis
-                        ************************
-                        Source Topic Committed Offsets: %s
-                        Dest Topic Published Offsets: %s
-                        ************************
-                        """,
-                timePublishChecked - timeCommitChecked,
-                expectedReadMessages,
-                destPublishedOffsets
-        );
-    }
-
     protected void checkPayload(String errorMessage, String expectedPayload) {
         try {
-            EvaluationDTO actual = objectMapper.readValue(errorMessage, EvaluationDTO.class);
-            EvaluationDTO expected = objectMapper.readValue(expectedPayload, EvaluationDTO.class);
-
-            System.out.println(actual);
-            System.out.println(expected);
+            EvaluationCompletedDTO actual = objectMapper.readValue(errorMessage, EvaluationCompletedDTO.class);
+            EvaluationCompletedDTO expected = objectMapper.readValue(expectedPayload, EvaluationCompletedDTO.class);
 
             TestUtils.checkNotNullFields(actual);
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
@@ -494,7 +393,6 @@ class AdmissibilityProcessorConfigTest extends BaseIntegrationTest {
             Assertions.assertEquals(expected.getStatus(), actual.getStatus());
             Assertions.assertEquals(expected.getOnboardingRejectionReasons(), actual.getOnboardingRejectionReasons());
             Assertions.assertEquals(expected.getBeneficiaryBudget(), actual.getBeneficiaryBudget());
-            Assertions.assertEquals(expected.getServiceId(),actual.getServiceId());
         } catch (JsonProcessingException e) {
             Assertions.fail("Error check in payload");
         }
