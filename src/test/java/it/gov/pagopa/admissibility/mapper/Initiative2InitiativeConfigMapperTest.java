@@ -18,7 +18,7 @@ class Initiative2InitiativeConfigMapperTest {
     @Test
     void testAllField() {
         Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.setRankingInitiative(Boolean.TRUE);
+        initiative2BuildDTO.setBeneficiaryRanking(Boolean.TRUE);
 
         setAdditionalInfo(initiative2BuildDTO);
 
@@ -40,7 +40,7 @@ class Initiative2InitiativeConfigMapperTest {
     @Test
     void testAdditionalInfoNull() {
         Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.setRankingInitiative(Boolean.TRUE);
+        initiative2BuildDTO.setBeneficiaryRanking(Boolean.TRUE);
 
         final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
 
@@ -60,7 +60,7 @@ class Initiative2InitiativeConfigMapperTest {
     @Test
     void testRankingFalse() {
         Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.setRankingInitiative(Boolean.FALSE);
+        initiative2BuildDTO.setBeneficiaryRanking(Boolean.FALSE);
 
         setAdditionalInfo(initiative2BuildDTO);
 
@@ -78,7 +78,7 @@ class Initiative2InitiativeConfigMapperTest {
     @Test
     void testAutomatedCriteriaNull() {
         Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.setRankingInitiative(Boolean.TRUE);
+        initiative2BuildDTO.setBeneficiaryRanking(Boolean.TRUE);
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                         .selfDeclarationCriteria(List.of(

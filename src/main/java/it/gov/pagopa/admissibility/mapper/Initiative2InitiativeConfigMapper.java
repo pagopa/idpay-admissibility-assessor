@@ -27,8 +27,8 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())
                 .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
-                .rankingInitiative(initiative.isRankingInitiative())
-                .rankingFields(Boolean.TRUE.equals(initiative.isRankingInitiative()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
+                .rankingInitiative(initiative.isBeneficiaryRanking())
+                .rankingFields(Boolean.TRUE.equals(initiative.isBeneficiaryRanking()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .build();
     }
 
