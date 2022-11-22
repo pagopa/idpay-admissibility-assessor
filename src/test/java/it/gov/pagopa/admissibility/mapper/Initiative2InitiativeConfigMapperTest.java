@@ -28,7 +28,6 @@ class Initiative2InitiativeConfigMapperTest {
 
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertEquals(List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
@@ -71,7 +70,6 @@ class Initiative2InitiativeConfigMapperTest {
 
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.FALSE, result.isRankingInitiative());
 
         TestUtils.checkNotNullFields(result, "rankingFields" );
@@ -95,7 +93,6 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertNotNull(result);
 
         commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertSame(initiative2BuildDTO.getAdditionalInfo().getServiceId(), result.getServiceId());
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertTrue(result.getRankingFields().isEmpty());
 
@@ -104,7 +101,6 @@ class Initiative2InitiativeConfigMapperTest {
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
         initiative2BuildDTO.setAdditionalInfo(InitiativeAdditionalInfoDTO.builder()
-                .serviceId("SERVICEID")
                 .serviceName("SERVICENAME")
                 .argument("ARGUMENT")
                 .description("DESCRIPTION")

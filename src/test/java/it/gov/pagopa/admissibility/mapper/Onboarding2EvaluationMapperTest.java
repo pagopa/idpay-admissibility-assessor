@@ -55,7 +55,6 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
         initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.TEN);
-        initiativeConfig.setServiceId("SERVICEID");
 
         LocalDate endDate = LocalDate.now();
         initiativeConfig.setEndDate(endDate);

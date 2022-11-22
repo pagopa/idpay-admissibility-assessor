@@ -50,13 +50,12 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .initiativeId("INITIATIVEID")
                 .initiativeName("INITITIATIVE_NAME")
                 .organizationId("ORGANIZATIONID")
-                .serviceId("STATUS")
+                .status("STATUS")
                 .startDate(now)
                 .endDate(now)
                 .pdndToken("PDND_TOKEN")
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
-                .serviceId("SERVICEID")
                 .rankingInitiative(Boolean.TRUE)
                 .build();
         Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();

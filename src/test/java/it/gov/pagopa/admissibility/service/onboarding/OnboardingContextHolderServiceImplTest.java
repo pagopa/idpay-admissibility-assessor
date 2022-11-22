@@ -115,7 +115,6 @@ class OnboardingContextHolderServiceImplTest {
                 .endDate(LocalDate.MAX)
                 .initiativeName("NAME")
                 .initiativeBudget(BigDecimal.valueOf(100))
-                .serviceId("SERVICE-ID")
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .pdndToken("PDND-TOKEN")
