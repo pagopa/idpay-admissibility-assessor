@@ -120,7 +120,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
-                .serviceId("SERVICEID")
                 .build());
 
         Assertions.assertEquals(expected, result);
@@ -224,7 +223,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
     );
 
         dto.setAdditionalInfo(new InitiativeAdditionalInfoDTO(
-                "SERVICEID",
                 "SERVICENAME",
                 "ARGUMENT",
                 "DESCRIPTION",

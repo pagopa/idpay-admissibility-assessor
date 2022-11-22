@@ -55,7 +55,6 @@ public final class Initiative2BuildDTOFaker {
 
 
         out.additionalInfo(new InitiativeAdditionalInfoDTO(
-                "SERVICEID%s".formatted(bias),
                 "SERVICENAME%s".formatted(bias),
                 "ARGUMENT%s".formatted(bias),
                 "DESCRIPTION%s".formatted(bias),
