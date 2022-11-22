@@ -91,7 +91,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         IntStream.range(0, initiativesNumber)
                 .mapToObj(i -> {
                     final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstanceBuilder(i)
-                            .rankingInitiative(Boolean.TRUE)
+                            .beneficiaryRanking(Boolean.TRUE)
                             .build();
 
                     BigDecimal budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
