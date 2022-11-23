@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.util.List;
 
@@ -17,7 +18,7 @@ class PageModuleTest {
     void test() throws JsonProcessingException {
         // Given
         String testString = "TEST";
-        PageRequest pageRequest = PageRequest.of(0,1);
+        PageRequest pageRequest = PageRequest.of(0,1, Sort.by("PROVA"));
         PageImpl<String> expectedPage = new PageImpl<>(List.of(testString), pageRequest, 1);
 
         // When
@@ -27,8 +28,8 @@ class PageModuleTest {
         // Then
         Assertions.assertNotNull(serialized);
         Assertions.assertEquals(
-                "{\"content\":[\"%s\"],\"pageable\":{\"page\":0,\"size\":1,\"sort\":{\"orders\":[]}},\"total\":%d}"
-                        .formatted(testString, 1),
+                "{\"content\":[\"%s\"],\"first\":true,\"last\":true,\"totalPages\":1,\"totalElements\":1,\"numberOfElements\":1,\"size\":1,\"number\":0,\"sort\":{\"empty\":false,\"sorted\":true,\"unsorted\":false,\"orders\":[{\"property\":\"PROVA\",\"direction\":\"ASC\",\"ignoreCase\":false,\"nullHandling\":\"NATIVE\"}]}}"
+                        .formatted(testString),
                 serialized
         );
 

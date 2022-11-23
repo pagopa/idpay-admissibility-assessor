@@ -5,6 +5,7 @@ import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.utils.TestUtils;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,22 +32,29 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
+        out.beneficiaryRanking(false);
 
         final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
         beneficiaryRule.setAutomatedCriteria(new ArrayList<>());
-        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null));
-        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null));
+        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null, Sort.Direction.ASC));
+        beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null, null));
 
         out.beneficiaryRule(beneficiaryRule);
 
         out.pdndToken("PDND_TOKEN");
-        out.general(new InitiativeGeneralDTO("NAME", new BigDecimal("100000.00"),
-                InitiativeGeneralDTO.BeneficiaryTypeEnum.PF, Boolean.TRUE,new BigDecimal("1000.00"),
-                LocalDate.of(2021,1,1),LocalDate.of(2025,12,1),
-                null,null));
+        out.general(
+                InitiativeGeneralDTO.builder()
+                        .name("NAME")
+                        .budget(new BigDecimal("100000.00"))
+                        .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                        .beneficiaryKnown(Boolean.TRUE)
+                        .beneficiaryBudget(new BigDecimal("1000.00"))
+                        .startDate(LocalDate.of(2021, 1, 1))
+                        .endDate(LocalDate.of(2025, 12, 1))
+                        .build());
+
 
         out.additionalInfo(new InitiativeAdditionalInfoDTO(
-                "SERVICEID%s".formatted(bias),
                 "SERVICENAME%s".formatted(bias),
                 "ARGUMENT%s".formatted(bias),
                 "DESCRIPTION%s".formatted(bias),

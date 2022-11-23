@@ -1,25 +1,20 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.*;
+import java.math.BigDecimal;
 
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService{
-
-    private int counter = 0;
-
     private final Long delaySeconds;
     private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
@@ -48,19 +43,20 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        if (counter == 2) {
-            log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
-            MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
-                    .setHeaders(new MessageHeaderAccessor(message))
-                    .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
-            streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
-            counter = 0;
-            return Mono.empty();
-        } else {
-            counter++;
-            return Mono.just(onboardingRequest);    // TODO
+        if(initiativeConfig.getAutomatedCriteriaCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)
+            || initiativeConfig.getRankingFields().stream().anyMatch(rankingFieldCodes -> OnboardingConstants.CRITERIA_CODE_ISEE.equals(rankingFieldCodes.getFieldCode()))) {
+            onboardingRequest.setIsee(new BigDecimal("10000"));
         }
+        return Mono.just(onboardingRequest);
+    }
 
+    /* TODO send message with schedule delay for servicebus
+    private void rischeduleOnboardingRequest(OnboardingDTO onboardingRequest, Message<String> message) {
+        log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
+        MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
+                .setHeaders(new MessageHeaderAccessor(message))
+                .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
+        streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
     }
 
     private OffsetDateTime calcDelay() {
@@ -72,4 +68,5 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
         }
     }
+    */
 }
