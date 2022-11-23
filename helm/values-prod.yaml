@@ -1,11 +1,11 @@
 microservice-chart:
   image:
-    repository: cstarucommonacr.azurecr.io/idpayadmissibilityassessor
+    repository: cstarpcommonacr.azurecr.io/idpayadmissibilityassessor
     tag: latest
     pullPolicy: Always
 
   ingress:
-    host: "uat01.idpay.internal.uat.cstar.pagopa.it"
+    host: "prod01.idpay.internal.cstar.pagopa.it"
 
   resources:
     requests:
@@ -36,13 +36,13 @@ microservice-chart:
 #          targetValue: "30"
 
   envSecret:
-    aks-api-url: cstar-u-weu-uat01-aks-apiserver-url
+    aks-api-url: cstar-p-weu-prod01-aks-apiserver-url
 
   keyvault:
-    name: "cstar-u-idpay-kv"
+    name: "cstar-p-idpay-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
 
   envConfig:
-    JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -javaagent:/app/applicationinsights-agent.jar -agentlib:jdwp=transport=dt_socket,server=y,address=8001,suspend=n -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=3002 -Dcom.sun.management.jmxremote.rmi.port=3003 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+    JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -javaagent:/app/applicationinsights-agent.jar"
     CACHE_REFRESH_MS_RATE: "900000"
     REDIS_CACHE_ENABLED: "true"
