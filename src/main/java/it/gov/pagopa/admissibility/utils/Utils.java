@@ -13,17 +13,22 @@ public final class Utils {
     /** It will try to deserialize a message, eventually notifying the error  */
     public static <T> T deserializeMessage(Message<?> message, ObjectReader objectReader, Consumer<Throwable> onError) {
         try {
-            String payload;
-            if(message.getPayload() instanceof byte[] bytes){
-                payload=new String(bytes);
-            } else {
-                payload=message.getPayload().toString();
-            }
+            String payload = readMessagePayload(message);
             return objectReader.readValue(payload);
         } catch (JsonProcessingException e) {
             onError.accept(e);
             return null;
         }
+    }
+
+    public static String readMessagePayload(Message<?> message) {
+        String payload;
+        if(message.getPayload() instanceof byte[] bytes){
+            payload=new String(bytes);
+        } else {
+            payload= message.getPayload().toString();
+        }
+        return payload;
     }
 
     public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);

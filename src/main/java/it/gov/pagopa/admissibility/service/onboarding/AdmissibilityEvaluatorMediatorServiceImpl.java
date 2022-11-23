@@ -90,7 +90,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private Mono<EvaluationDTO> execute(Message<String> message) {
         Map<String, Object> onboardingContext = new HashMap<>();
 
-        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", message.getPayload());
+        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
 
         OnboardingDTO onboardingRequest = deserializeMessage(message);
 
