@@ -9,19 +9,14 @@ import it.gov.pagopa.admissibility.drools.model.aggregator.AggregatorOr;
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import lombok.Data;
-import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.kie.api.KieBase;
-import org.kie.api.command.Command;
-import org.kie.internal.command.CommandFactory;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -30,7 +25,6 @@ import java.math.BigDecimal;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class ExtraFilter2DroolsTransformerFacadeImplTest {
     public static final String STRINGVALUE = "STRINGVALUE";
@@ -241,83 +235,6 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         String result = extraFilter2DroolsTransformerFacade.apply(new Filter("(" + LocalDateTime.class.getName() + ")criteriaConsensusTimestamp.(java.time.Month)month", FilterOperator.EQ, "JANUARY"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("((criteriaConsensusTimestamp instanceof " + LocalDateTime.class.getName() + ") && (criteriaConsensusTimestamp.month instanceof java.time.Month) && criteriaConsensusTimestamp.month == java.time.Month.valueOf(\"JANUARY\"))", result);
     }
-
-    @Test
-    void testCollection() {
-        OnboardingDroolsDTO onboarding = new OnboardingDroolsDTO();
-        onboarding.setInitiativeId("id");
-        onboarding.setSelfDeclarationList(new HashMap<>());
-        onboarding.getSelfDeclarationList().put("KEY1", true);
-        onboarding.getSelfDeclarationList().put("KEY2", false);
-        onboarding.getSelfDeclarationList().put("KEY3", null);
-
-        DroolsRule rule = new DroolsRule();
-        rule.setId(onboarding.getInitiativeId());
-        rule.setName("CollectionTest");
-        String ruleConsequence = "$onboarding.getOnboardingRejectionReasons().add(%s.builder().code(\"OK\").build());".formatted(OnboardingRejectionReason.class.getName());
-
-        System.out.println("Testing Collection EQ value matching");
-        String result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY1"), OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("selfDeclarationList.keySet() contains \"KEY1\"", result);
-        String ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
-        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
-        checkCollectionResult(onboarding, rule, true);
-        onboarding.setOnboardingRejectionReasons(new ArrayList<>());
-
-        System.out.println("Testing Collection EQ value not matching");
-        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "KEY4"), OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("selfDeclarationList.keySet() contains \"KEY4\"", result);
-        ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
-        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
-        checkCollectionResult(onboarding, rule, false);
-        onboarding.setOnboardingRejectionReasons(new ArrayList<>());
-
-        System.out.println("Testing Collection EQ collection matching");
-        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY3)"), OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY2\",\"KEY1\",\"KEY3\"))", result);
-        ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
-        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
-        checkCollectionResult(onboarding, rule, true);
-        onboarding.setOnboardingRejectionReasons(new ArrayList<>());
-
-        System.out.println("Testing Collection EQ collection not matching");
-        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1)"), OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY1\"))", result);
-        ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
-        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
-        checkCollectionResult(onboarding, rule, false);
-        onboarding.setOnboardingRejectionReasons(new ArrayList<>());
-
-        result = extraFilter2DroolsTransformerFacade.apply(new Filter("selfDeclarationList.keySet()", FilterOperator.EQ, "(KEY1,KEY2,KEY4)"), OnboardingDroolsDTO.class, null);
-        Assertions.assertEquals("selfDeclarationList.keySet() == new java.util.HashSet(java.util.Arrays.asList(\"KEY2\",\"KEY1\",\"KEY4\"))", result);
-        ruleCondition = String.format("$onboarding: %s(%s)", OnboardingDroolsDTO.class.getName(), result);
-        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
-        checkCollectionResult(onboarding, rule, false);
-        onboarding.setOnboardingRejectionReasons(new ArrayList<>());
-    }
-
-    void checkCollectionResult(OnboardingDroolsDTO onboardingDroolsDTO, DroolsRule rule, boolean success) {
-        DroolsRule ignoredRule = new DroolsRule();
-        ignoredRule.setId("IGNORED");
-        ignoredRule.setName("IGNOREDRULE");
-        ignoredRule.setRule(applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
-
-        KieBase kieBase = new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
-        Assertions.assertNotNull(kieBase);
-
-        @SuppressWarnings("unchecked")
-        List<Command<?>> commands = Arrays.asList(
-                CommandFactory.newInsert(onboardingDroolsDTO),
-                new AgendaGroupSetFocusCommand(onboardingDroolsDTO.getInitiativeId())
-        );
-        kieBase.newStatelessKieSession().execute(CommandFactory.newBatchExecution(commands));
-
-        Assertions.assertEquals(success,
-                onboardingDroolsDTO.getOnboardingRejectionReasons().stream()
-                        .map(OnboardingRejectionReason::getCode).collect(Collectors.toList())
-                        .contains("OK"), "Unexpected result applying rule%n%s%non object:%n%s".formatted(rule.getRule(), onboardingDroolsDTO));
-    }
-
     public static String applyRuleTemplate(String agendaGroup, String ruleName, String ruleCondition, String ruleConsequence) {
         return """
                 package dummy;
