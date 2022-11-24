@@ -5,7 +5,6 @@ import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.utils.TestUtils;
-import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,7 +31,6 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
-        out.beneficiaryRanking(false);
 
         final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
         beneficiaryRule.setAutomatedCriteria(new ArrayList<>());
@@ -51,6 +49,7 @@ public final class Initiative2BuildDTOFaker {
                         .beneficiaryBudget(new BigDecimal("1000.00"))
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
+                        .rankingEnabled(false)
                         .build());
 
 
