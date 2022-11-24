@@ -1,12 +1,16 @@
 package it.gov.pagopa.admissibility.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
+import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import reactor.core.publisher.Mono;
 
@@ -32,6 +37,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 @Slf4j
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
@@ -97,24 +103,43 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     private void publishOnboardingRules(int onboardingsNumber) {
         int[] expectedRules = {0};
-        IntStream.range(0, initiativesNumber + 2)
-                .mapToObj(i -> {
-                    final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstance(i);
+        Stream.concat(IntStream.range(0, initiativesNumber + 2)
+                                .mapToObj(i -> {
+                                    final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstance(i);
 
-                    BigDecimal budget;
-                    if (initiative.getInitiativeId().endsWith("_" + initiativesNumber)) {
-                        initiative.setInitiativeId(EXHAUSTED_INITIATIVE_ID);
-                        budget = BigDecimal.ZERO;
-                    } else if (initiative.getInitiativeId().endsWith("_" + (initiativesNumber+1))) {
-                        initiative.setInitiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID);
-                        budget = BigDecimal.TEN;
-                    } else {
-                        budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
-                    }
-                    initiative.getGeneral().setBudget(budget);
+                                    BigDecimal budget;
+                                    if (initiative.getInitiativeId().endsWith("_" + initiativesNumber)) {
+                                        initiative.setInitiativeId(EXHAUSTED_INITIATIVE_ID);
+                                        budget = BigDecimal.ZERO;
+                                    } else if (initiative.getInitiativeId().endsWith("_" + (initiativesNumber + 1))) {
+                                        initiative.setInitiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID);
+                                        budget = BigDecimal.TEN;
+                                    } else {
+                                        budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
+                                    }
+                                    initiative.getGeneral().setBudget(budget);
 
-                    return initiative;
-                })
+                                    return initiative;
+                                }),
+
+                        Stream.of(
+                                Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
+                                        .initiativeId("NEVERSELECTEDINITIATIVE")
+                                        .initiativeName("NEVERSELECTEDINITIATIVE_NAME")
+                                        .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                                .automatedCriteria(List.of(
+                                                        AutomatedCriteriaDTO.builder()
+                                                                .authority("AUTH1")
+                                                                .code(CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE)
+                                                                .field("city")
+                                                                .operator(FilterOperator.EQ)
+                                                                .value("Rome")
+                                                                .build()
+                                                ))
+                                                .build())
+                                        .build()
+                        )
+                )
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
                 .forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
