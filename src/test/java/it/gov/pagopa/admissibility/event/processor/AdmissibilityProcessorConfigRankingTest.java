@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 
 import java.io.IOException;
@@ -38,7 +39,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration {}
 
     @Test
-    void testAdmissibilityOnboarding() throws IOException {
+    void testRankingAdmissibilityOnboarding() throws IOException {
         int validOnboardings = 30;// 1000; // use even number
         int notValidOnboarding = errorUseCases.size();
         long maxWaitingMs = 30000;
@@ -93,6 +94,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                     final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstanceBuilder(i)
                             .beneficiaryRanking(Boolean.TRUE)
                             .build();
+
+                    initiative.getBeneficiaryRule().getAutomatedCriteria().get(0).setOrderDirection(Sort.Direction.ASC);
 
                     BigDecimal budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
 

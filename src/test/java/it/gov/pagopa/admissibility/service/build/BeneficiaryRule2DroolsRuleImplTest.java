@@ -88,10 +88,11 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 package it.gov.pagopa.admissibility.drools.buildrules;
                                         
                 rule "ID-NAME-ISEE"
+                no-loop true
                 agenda-group "ID"
                 when
                    $criteriaCodeService: it.gov.pagopa.admissibility.service.CriteriaCodeService()
-                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(isee == new java.math.BigDecimal("1")))
+                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(initiativeId == "ID", !(isee == new java.math.BigDecimal("1")))
                 then
                    it.gov.pagopa.admissibility.model.CriteriaCodeConfig criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("ISEE");
                    $onboarding.getOnboardingRejectionReasons().add(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.builder().type(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.valueOf("AUTOMATED_CRITERIA_FAIL")).code("AUTOMATED_CRITERIA_ISEE_FAIL").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
@@ -99,10 +100,11 @@ class BeneficiaryRule2DroolsRuleImplTest {
                                         
                                         
                 rule "ID-NAME-BIRTHDATE"
+                no-loop true
                 agenda-group "ID"
                 when
                    $criteriaCodeService: it.gov.pagopa.admissibility.service.CriteriaCodeService()
-                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(!(birthDate.year > "2000"))
+                   $onboarding: it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO(initiativeId == "ID", !(birthDate.year > "2000"))
                 then
                    it.gov.pagopa.admissibility.model.CriteriaCodeConfig criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("BIRTHDATE");
                    $onboarding.getOnboardingRejectionReasons().add(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.builder().type(it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.valueOf("AUTOMATED_CRITERIA_FAIL")).code("AUTOMATED_CRITERIA_BIRTHDATE_FAIL").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());

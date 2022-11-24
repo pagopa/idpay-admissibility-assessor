@@ -76,10 +76,11 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         }
         return """
                 rule "%s"
+                no-loop true
                 agenda-group "%s"
                 when
                    $criteriaCodeService: %s()
-                   $onboarding: %s(%s)
+                   $onboarding: %s(initiativeId == "%s", %s)
                 then
                    %s criteriaCodeConfig = $criteriaCodeService.getCriteriaCodeConfig("%s");
                    $onboarding.getOnboardingRejectionReasons().add(%s.builder().type(%s).code("%s").authority(criteriaCodeConfig.getAuthority()).authorityLabel(criteriaCodeConfig.getAuthorityLabel()).build());
@@ -89,6 +90,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
                 initiativeId,
                 CriteriaCodeService.class.getName(),
                 OnboardingDroolsDTO.class.getName(),
+                initiativeId,
                 extraFilter2DroolsTransformerFacade.apply(
                         automatedCriteria2ExtraFilterMapper.apply(automatedCriteriaDTO, criteriaCodeConfig)
                         , OnboardingDTO.class, null),
