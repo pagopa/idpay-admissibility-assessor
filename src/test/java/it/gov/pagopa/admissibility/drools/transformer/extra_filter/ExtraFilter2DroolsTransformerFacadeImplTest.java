@@ -14,9 +14,13 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import lombok.Data;
+import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.kie.api.KieBase;
+import org.kie.api.command.Command;
+import org.kie.internal.command.CommandFactory;
 import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -177,8 +181,9 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
 
     @Test
     void testErrors() {
+        Filter filter = new Filter("DUMMY", FilterOperator.EQ, "");
         try {
-            extraFilter2DroolsTransformerFacade.apply(new Filter("DUMMY", FilterOperator.EQ, ""), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Cannot find field DUMMY on %s", OnboardingDroolsDTO.class), e.getMessage());
@@ -186,9 +191,10 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         }
 
         String expectedClassLogginError = "it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op.ScalarOpValueBuilder";
+        filter = new Filter("isee", FilterOperator.EQ, "abc");
+        ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.OFF);
         try {
-            ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.OFF);
-            extraFilter2DroolsTransformerFacade.apply(new Filter("isee", FilterOperator.EQ, "abc"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Unsupported value provided for the field isee: it is supposed to be a %s", BigDecimal.class), e.getMessage());
@@ -197,32 +203,36 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
             ((Logger) LoggerFactory.getLogger(expectedClassLogginError)).setLevel(Level.INFO);
         }
 
+        filter = new Filter("isee()", FilterOperator.EQ, "123");
         try {
-            extraFilter2DroolsTransformerFacade.apply(new Filter("isee()", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("Cannot find field isee() on %s", OnboardingDroolsDTO.class), e.getMessage());
             System.out.println("Method not found tested");
         }
 
+        filter = new Filter("(java.lang.String)isee", FilterOperator.EQ, "123");
         try {
-            extraFilter2DroolsTransformerFacade.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "123"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals(String.format("The Class defined as cast of the field isee of %s is not assignable to field type %s", OnboardingDroolsDTO.class, BigDecimal.class.getName()), e.getMessage());
             System.out.println("Class cast exception during implicit cast tested");
         }
 
+        filter = new Filter("isee", FilterOperator.INSTANCE_OF, String.class.getName());
         try {
-            extraFilter2DroolsTransformerFacade.apply(new Filter("isee", FilterOperator.INSTANCE_OF, String.class.getName()), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals("Unsupported Class provided for the field isee", e.getMessage());
             System.out.println("Explicit Class cast exception tested");
         }
 
+        filter = new Filter("(java.lang.String)isee", FilterOperator.EQ, "DUMMY");
         try {
-            extraFilter2DroolsTransformerFacade.apply(new Filter("(java.lang.String)isee", FilterOperator.EQ, "DUMMY"), OnboardingDroolsDTO.class, null);
+            extraFilter2DroolsTransformerFacade.apply(filter, OnboardingDroolsDTO.class, null);
             Assertions.fail("Exception not thrown");
         } catch (IllegalArgumentException e) {
             Assertions.assertEquals("The Class defined as cast of the field isee of " + OnboardingDroolsDTO.class + " is not assignable to field type java.math.BigDecimal", e.getMessage());
@@ -235,6 +245,82 @@ public class ExtraFilter2DroolsTransformerFacadeImplTest {
         String result = extraFilter2DroolsTransformerFacade.apply(new Filter("(" + LocalDateTime.class.getName() + ")criteriaConsensusTimestamp.(java.time.Month)month", FilterOperator.EQ, "JANUARY"), OnboardingDroolsDTO.class, null);
         Assertions.assertEquals("((criteriaConsensusTimestamp instanceof " + LocalDateTime.class.getName() + ") && (criteriaConsensusTimestamp.month instanceof java.time.Month) && criteriaConsensusTimestamp.month == java.time.Month.valueOf(\"JANUARY\"))", result);
     }
+
+    @Test
+    void testCollection() {
+        ExtraFilterTestModelSample sample = new ExtraFilterTestModelSample();
+        sample.setStringObject("AGENDAGROUP");
+        sample.setBooleanObject(false);
+        sample.setCollectionObject(new ArrayList<>());
+        sample.getCollectionObject().add("KEY1");
+        sample.getCollectionObject().add("KEY2");
+        sample.getCollectionObject().add("KEY3");
+
+        DroolsRule rule = new DroolsRule();
+        rule.setId(sample.getStringObject());
+        rule.setName("CollectionTest");
+        String ruleConsequence = "$sample.setBooleanObject(true);";
+
+        System.out.println("Testing Collection EQ value matching");
+        String result = extraFilter2DroolsTransformerFacade.apply(new Filter("collectionObject", FilterOperator.EQ, "KEY1"), ExtraFilterTestModelSample.class, null);
+        Assertions.assertEquals("collectionObject contains \"KEY1\"", result);
+        String ruleCondition = String.format("$sample: %s(%s)", ExtraFilterTestModelSample.class.getName(), result);
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
+        checkCollectionResult(sample, rule, true);
+        sample.setBooleanObject(false);
+
+        System.out.println("Testing Collection EQ value not matching");
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("collectionObject", FilterOperator.EQ, "KEY4"), ExtraFilterTestModelSample.class, null);
+        Assertions.assertEquals("collectionObject contains \"KEY4\"", result);
+        ruleCondition = String.format("$sample: %s(%s)", ExtraFilterTestModelSample.class.getName(), result);
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
+        checkCollectionResult(sample, rule, false);
+        sample.setBooleanObject(false);
+
+        System.out.println("Testing Collection EQ collection matching");
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("(java.util.ArrayList)collectionObject", FilterOperator.EQ, "(KEY1,KEY2,KEY3)"), ExtraFilterTestModelSample.class, null);
+        Assertions.assertEquals("((collectionObject instanceof java.util.ArrayList) && collectionObject == new java.util.ArrayList(java.util.Arrays.asList(\"KEY1\",\"KEY2\",\"KEY3\")))", result);
+        ruleCondition = String.format("$sample: %s(%s)", ExtraFilterTestModelSample.class.getName(), result);
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
+        checkCollectionResult(sample, rule, true);
+        sample.setBooleanObject(false);
+
+        System.out.println("Testing Collection EQ collection not matching");
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("(java.util.ArrayList)collectionObject", FilterOperator.EQ, "(KEY1)"), ExtraFilterTestModelSample.class, null);
+        Assertions.assertEquals("((collectionObject instanceof java.util.ArrayList) && collectionObject == new java.util.ArrayList(java.util.Arrays.asList(\"KEY1\")))", result);
+        ruleCondition = String.format("$sample: %s(%s)", ExtraFilterTestModelSample.class.getName(), result);
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
+        checkCollectionResult(sample, rule, false);
+        sample.setBooleanObject(false);
+
+        result = extraFilter2DroolsTransformerFacade.apply(new Filter("(java.util.ArrayList)collectionObject", FilterOperator.EQ, "(KEY1,KEY2,KEY4)"), ExtraFilterTestModelSample.class, null);
+        Assertions.assertEquals("((collectionObject instanceof java.util.ArrayList) && collectionObject == new java.util.ArrayList(java.util.Arrays.asList(\"KEY1\",\"KEY2\",\"KEY4\")))", result);
+        ruleCondition = String.format("$sample: %s(%s)", ExtraFilterTestModelSample.class.getName(), result);
+        rule.setRule(applyRuleTemplate(rule.getId(), rule.getName(), ruleCondition, ruleConsequence));
+        checkCollectionResult(sample, rule, false);
+        sample.setBooleanObject(false);
+    }
+
+    void checkCollectionResult(ExtraFilterTestModelSample sample, DroolsRule rule, boolean success) {
+        DroolsRule ignoredRule = new DroolsRule();
+        ignoredRule.setId("IGNORED");
+        ignoredRule.setName("IGNOREDRULE");
+        ignoredRule.setRule(applyRuleTemplate(ignoredRule.getId(), ignoredRule.getName(), "eval(true)", "throw new RuntimeException(\"This should not occur\");"));
+
+        KieBase kieBase = new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
+        Assertions.assertNotNull(kieBase);
+
+        @SuppressWarnings("unchecked")
+        List<Command<?>> commands = Arrays.asList(
+                CommandFactory.newInsert(sample),
+                new AgendaGroupSetFocusCommand(sample.getStringObject())
+        );
+        kieBase.newStatelessKieSession().execute(CommandFactory.newBatchExecution(commands));
+
+        Assertions.assertEquals(success,
+                sample.getBooleanObject(), "Unexpected result applying rule%n%s%non object:%n%s".formatted(rule.getRule(), sample));
+    }
+
     public static String applyRuleTemplate(String agendaGroup, String ruleName, String ruleCondition, String ruleConsequence) {
         return """
                 package dummy;
