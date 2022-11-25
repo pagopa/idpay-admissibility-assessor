@@ -43,11 +43,16 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        if(initiativeConfig.getAutomatedCriteriaCodes().contains(OnboardingConstants.CRITERIA_CODE_ISEE)
-            || initiativeConfig.getRankingFields().stream().anyMatch(rankingFieldCodes -> OnboardingConstants.CRITERIA_CODE_ISEE.equals(rankingFieldCodes.getFieldCode()))) {
+        if(is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
             onboardingRequest.setIsee(new BigDecimal("10000"));
         }
         return Mono.just(onboardingRequest);
+    }
+
+    private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {
+        return (initiativeConfig.getAutomatedCriteriaCodes()!=null && initiativeConfig.getAutomatedCriteriaCodes().contains(criteriaCode))
+                ||
+                (initiativeConfig.getRankingFields()!=null && initiativeConfig.getRankingFields().stream().anyMatch(rankingFieldCodes -> criteriaCode.equals(rankingFieldCodes.getFieldCode())));
     }
 
     /* TODO send message with schedule delay for servicebus

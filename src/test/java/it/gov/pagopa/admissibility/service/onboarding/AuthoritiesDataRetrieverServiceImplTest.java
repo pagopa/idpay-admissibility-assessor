@@ -40,7 +40,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .tc(true)
                 .status("STATUS")
                 .pdndAccept(true)
-                .selfDeclarationList(Map.of("ISEE",true,"BIRTHDATE", true))
                 .tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
                 .criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
                 .build();
