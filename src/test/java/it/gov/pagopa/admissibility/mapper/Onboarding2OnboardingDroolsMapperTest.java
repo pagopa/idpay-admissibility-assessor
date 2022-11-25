@@ -30,7 +30,6 @@ class Onboarding2OnboardingDroolsMapperTest {
                 true,
                 "OK",
                 true,
-                selfDeclarationListMock1,
                 localDateTimeMock1,
                 localDateTimeMock1,
                 new BigDecimal(100),
@@ -49,7 +48,6 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertTrue(result.isTc());
         Assertions.assertEquals("OK", result.getStatus());
         Assertions.assertEquals(true, result.getPdndAccept());
-        Assertions.assertEquals(selfDeclarationListMock1, result.getSelfDeclarationList());
         Assertions.assertEquals(localDateTimeMock1, result.getTcAcceptTimestamp());
         Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());

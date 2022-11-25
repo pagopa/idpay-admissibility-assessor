@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Map;
 
 @Data
 @Builder
@@ -21,7 +20,6 @@ public class OnboardingDTO {
     private boolean tc;
     private String status;
     private Boolean pdndAccept;
-    private Map<String, Boolean> selfDeclarationList;
     private LocalDateTime tcAcceptTimestamp;
     private LocalDateTime criteriaConsensusTimestamp;
 

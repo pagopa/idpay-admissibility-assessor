@@ -41,7 +41,6 @@ class Onboarding2EvaluationMapperTest {
                 true,
                 "OK",
                 true,
-                selfDeclarationList,
                 acceptanceDateTime,
                 acceptanceDateTime,
                 new BigDecimal(100),

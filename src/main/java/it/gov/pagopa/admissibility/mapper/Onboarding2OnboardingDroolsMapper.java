@@ -19,7 +19,6 @@ public class Onboarding2OnboardingDroolsMapper implements Function<OnboardingDTO
         out.setTc(onboardingDTO.isTc());
         out.setStatus(onboardingDTO.getStatus());
         out.setPdndAccept(onboardingDTO.getPdndAccept());
-        out.setSelfDeclarationList(onboardingDTO.getSelfDeclarationList());
         out.setTcAcceptTimestamp(onboardingDTO.getTcAcceptTimestamp());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 

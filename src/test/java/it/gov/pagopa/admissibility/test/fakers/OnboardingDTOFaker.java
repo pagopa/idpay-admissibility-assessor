@@ -30,7 +30,6 @@ public final class OnboardingDTOFaker {
         out.tc(true);
         out.status(bias!=null? "status_%d".formatted(bias) : "?????");
         out.pdndAccept(true);
-        out.selfDeclarationList(Map.of("ISEE",true,"BIRTHDATE", true));
         out.tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0));
         out.criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0));
         out.isee(new BigDecimal(20));
