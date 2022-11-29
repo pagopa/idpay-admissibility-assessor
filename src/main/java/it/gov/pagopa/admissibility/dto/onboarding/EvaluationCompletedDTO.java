@@ -17,7 +17,6 @@ import java.util.List;
 public class EvaluationCompletedDTO extends EvaluationDTO{
     private String initiativeName;
     private LocalDate initiativeEndDate;
-    private String organizationId;
     @NotEmpty
     private String status;
     @NotNull
