@@ -237,6 +237,7 @@ class Onboarding2EvaluationMapperTest {
         RankingRequestDTO resultRankingRequest = (RankingRequestDTO) result;
         Assertions.assertEquals(onboardingRequest.getUserId(), resultRankingRequest.getUserId());
         Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultRankingRequest.getInitiativeId());
+        Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultRankingRequest.getOrganizationId());
         Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
         if(isRankingValue){
             TestUtils.checkNotNullFields(resultRankingRequest);

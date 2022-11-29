@@ -18,6 +18,8 @@ public class EvaluationDTO {
     private String userId;
     @NotEmpty
     private String initiativeId;
+    @NotEmpty
+    private String organizationId;
     @NotNull
     private LocalDateTime admissibilityCheckDate;
     private LocalDateTime criteriaConsensusTimestamp;
