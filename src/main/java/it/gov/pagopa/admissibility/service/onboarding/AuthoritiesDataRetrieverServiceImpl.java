@@ -43,7 +43,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         *           if the call gave threshold error postpone the message and short circuit for the other invocation for the current date
         * if all the calls were successful return a Mono with the request
         */
-        if(is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
+        if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
             onboardingRequest.setIsee(new BigDecimal("10000"));
         }
         return Mono.just(onboardingRequest);

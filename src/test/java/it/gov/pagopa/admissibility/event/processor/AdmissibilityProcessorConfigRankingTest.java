@@ -55,11 +55,11 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
-        List<ConsumerRecord<String, String>> payloadConsumed = consumeMessages(topicAdmissibilityProcessorOutRankingRequest, validOnboardings/useCases.size(), maxWaitingMs);
+        List<ConsumerRecord<String, String>> payloadConsumed = consumeMessages(topicAdmissibilityProcessorOutRankingRequest, validOnboardings, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
-        Assertions.assertEquals(validOnboardings/useCases.size(), payloadConsumed.size());
+        Assertions.assertEquals(validOnboardings, payloadConsumed.size());
 
         for (ConsumerRecord<String, String> p : payloadConsumed) {
             RankingRequestDTO rankingRequest = objectMapper.readValue(p.value(), RankingRequestDTO.class);
@@ -118,6 +118,22 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                         Assertions.assertNotNull(rankingRequest.getUserId());
                         Assertions.assertNotNull(rankingRequest.getInitiativeId());
                         Assertions.assertNotNull(rankingRequest.getAdmissibilityCheckDate());
+                        Assertions.assertNotNull(rankingRequest.getRankingValue());
+                        Assertions.assertFalse(rankingRequest.isOnboardingKo());
+                    }
+            ),
+
+            //onboardingKo case
+            Pair.of(
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                            .isee(BigDecimal.ZERO)
+                            .build(),
+                    rankingRequest -> {
+                        Assertions.assertNotNull(rankingRequest.getUserId());
+                        Assertions.assertNotNull(rankingRequest.getInitiativeId());
+                        Assertions.assertNotNull(rankingRequest.getAdmissibilityCheckDate());
+                        Assertions.assertNotNull(rankingRequest.getRankingValue());
+                        Assertions.assertTrue(rankingRequest.isOnboardingKo());
                     }
             )
     );
