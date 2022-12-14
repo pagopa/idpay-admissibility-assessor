@@ -67,6 +67,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 .doOnNext(evaluationDTO -> {
                     if(evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
                         callOnboardingNotifier(evaluation);
+                        if(evaluation.getRankingValue()!=null) {
+                            callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));
+                        }
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }})

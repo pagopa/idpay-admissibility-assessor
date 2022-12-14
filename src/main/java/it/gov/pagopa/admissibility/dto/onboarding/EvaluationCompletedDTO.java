@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.dto.onboarding;
 
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import net.minidev.json.annotate.JsonIgnore;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -22,4 +23,6 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     @NotNull
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
     private BigDecimal beneficiaryBudget;
+    @JsonIgnore
+    private Long rankingValue;
 }

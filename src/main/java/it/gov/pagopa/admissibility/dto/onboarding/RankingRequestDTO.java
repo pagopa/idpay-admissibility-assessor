@@ -13,4 +13,14 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class RankingRequestDTO extends EvaluationDTO {
     private long rankingValue;
+    private boolean onboardingKo;
+
+    @Override
+    public void setRankingValue(Long rankingValue) {
+        this.rankingValue=rankingValue;
+    }
+
+    public Long getRankingValue() {
+        return rankingValue;
+    }
 }

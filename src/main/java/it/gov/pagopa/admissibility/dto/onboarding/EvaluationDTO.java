@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
-public class EvaluationDTO {
+public abstract class EvaluationDTO {
     @NotEmpty
     private String userId;
     @NotEmpty
@@ -24,4 +24,6 @@ public class EvaluationDTO {
     private LocalDateTime admissibilityCheckDate;
     private LocalDateTime criteriaConsensusTimestamp;
 
+    public abstract Long getRankingValue();
+    public abstract void setRankingValue(Long rankingValue);
 }
