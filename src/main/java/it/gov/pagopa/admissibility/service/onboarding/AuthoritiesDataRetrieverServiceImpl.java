@@ -54,14 +54,6 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             onboardingRequest.setResidence(
                     userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
                             ? Residence.builder()
-                                .city("Roma")
-                                .cityCouncil("Roma")
-                                .province("Roma")
-                                .region("Lazio")
-                                .postalCode("00187")
-                                .nation("Italia")
-                                .build()
-                            : Residence.builder()
                                 .city("Milano")
                                 .cityCouncil("Milano")
                                 .province("Milano")
@@ -69,6 +61,15 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                 .postalCode("20124")
                                 .nation("Italia")
                                 .build()
+                            : Residence.builder()
+                                .city("Roma")
+                                .cityCouncil("Roma")
+                                .province("Roma")
+                                .region("Lazio")
+                                .postalCode("00187")
+                                .nation("Italia")
+                                .build()
+
             );
         }
         if(onboardingRequest.getBirthDate()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
