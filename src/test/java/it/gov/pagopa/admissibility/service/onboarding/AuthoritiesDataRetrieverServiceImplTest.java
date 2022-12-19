@@ -27,6 +27,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     private OnboardingDTO onboardingDTO;
     private InitiativeConfig initiativeConfig;
+    private Message<String> message;
 
     @BeforeEach
     void setUp() {
@@ -55,7 +56,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
                 .build();
-        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+
+        message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
     }
 
     @Test
