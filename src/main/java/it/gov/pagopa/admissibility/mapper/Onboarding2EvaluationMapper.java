@@ -9,6 +9,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class Onboarding2EvaluationMapper {
@@ -37,7 +38,10 @@ public class Onboarding2EvaluationMapper {
             out.setInitiativeEndDate(initiative.getEndDate());
             out.setOrganizationId(initiative.getOrganizationId());
             out.setBeneficiaryBudget(initiative.getBeneficiaryInitiativeBudget());
+
+            setRankingValue(onboardingDTO, initiative, out);
         }
+
         return out;
     }
 
@@ -45,9 +49,34 @@ public class Onboarding2EvaluationMapper {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setInitiativeId(onboardingDTO.getInitiativeId());
+        out.setOrganizationId(initiative.getOrganizationId());
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
-        out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
+
+        setRankingValue(onboardingDTO, initiative, out);
+
+        out.setOnboardingKo(false);
+
+        return out;
+    }
+
+    private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
+        if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
+            out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
+        }
+    }
+
+    public RankingRequestDTO apply(EvaluationCompletedDTO evaluationCompletedDTO) {
+        RankingRequestDTO out = new RankingRequestDTO();
+        out.setUserId(evaluationCompletedDTO.getUserId());
+        out.setInitiativeId(evaluationCompletedDTO.getInitiativeId());
+        out.setOrganizationId(evaluationCompletedDTO.getOrganizationId());
+        out.setAdmissibilityCheckDate(evaluationCompletedDTO.getAdmissibilityCheckDate());
+        out.setCriteriaConsensusTimestamp(evaluationCompletedDTO.getCriteriaConsensusTimestamp());
+        out.setRankingValue(Optional.ofNullable(evaluationCompletedDTO.getRankingValue()).orElse(-1L));
+
+        out.setOnboardingKo(OnboardingConstants.ONBOARDING_STATUS_KO.equals(evaluationCompletedDTO.getStatus()));
+
         return out;
     }
 

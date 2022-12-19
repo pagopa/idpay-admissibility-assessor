@@ -410,7 +410,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             EvaluationCompletedDTO actual = objectMapper.readValue(errorMessage, EvaluationCompletedDTO.class);
             EvaluationCompletedDTO expected = objectMapper.readValue(expectedPayload, EvaluationCompletedDTO.class);
 
-            TestUtils.checkNotNullFields(actual);
+            TestUtils.checkNotNullFields(actual, "rankingValue");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
             Assertions.assertEquals(expected.getInitiativeName(), actual.getInitiativeName());
@@ -418,6 +418,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             Assertions.assertEquals(expected.getStatus(), actual.getStatus());
             Assertions.assertEquals(expected.getOnboardingRejectionReasons(), actual.getOnboardingRejectionReasons());
             Assertions.assertEquals(expected.getBeneficiaryBudget(), actual.getBeneficiaryBudget());
+            Assertions.assertEquals(expected.getRankingValue(), actual.getRankingValue());
         } catch (JsonProcessingException e) {
             Assertions.fail("Error check in payload");
         }
