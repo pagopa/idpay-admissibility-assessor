@@ -48,11 +48,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         * if all the calls were successful return a Mono with the request
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
-            onboardingRequest.setIsee(new BigDecimal(new Random(onboardingRequest.getUserId().hashCode()).nextInt(1_000, 100_000)));
+            onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));
         }
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
             onboardingRequest.setResidence(
-                    new Random(onboardingRequest.getUserId().hashCode()).nextInt(0, 1) == 0
+                    userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
                             ? Residence.builder()
                                 .city("Roma")
                                 .cityCouncil("Roma")
@@ -72,13 +72,19 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             );
         }
         if(onboardingRequest.getBirthDate()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
-            int age = new Random(onboardingRequest.getUserId().hashCode()).nextInt(18, 99);
+            int age = userIdBasedIntegerGenerator(onboardingRequest).nextInt(18, 99);
             onboardingRequest.setBirthDate(BirthDate.builder()
                     .age(age)
                     .year((LocalDate.now().getYear()-age)+"")
                     .build());
         }
         return Mono.just(onboardingRequest);
+    }
+
+    private static Random userIdBasedIntegerGenerator(OnboardingDTO onboardingRequest) {
+        @SuppressWarnings("squid:S2245")
+        Random random = new Random(onboardingRequest.getUserId().hashCode());
+        return random;
     }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {

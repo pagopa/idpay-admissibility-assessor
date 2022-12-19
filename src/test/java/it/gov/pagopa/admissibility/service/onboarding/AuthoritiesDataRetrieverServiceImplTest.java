@@ -108,6 +108,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Test
     void retrieveIseeRankingAndNotAutomatedCriteria() {
         // Given
+        onboardingDTO.setUserId("USERID02");
+
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
@@ -120,6 +122,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("80303"), result.getIsee());
+        Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
