@@ -1,6 +1,8 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Random;
 
 @Service
 @Slf4j
@@ -44,7 +48,35 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         * if all the calls were successful return a Mono with the request
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
-            onboardingRequest.setIsee(new BigDecimal("10000"));
+            onboardingRequest.setIsee(new BigDecimal(new Random(onboardingRequest.getUserId().hashCode()).nextInt(1_000, 100_000)));
+        }
+        if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
+            onboardingRequest.setResidence(
+                    new Random(onboardingRequest.getUserId().hashCode()).nextInt(0, 1) == 0
+                            ? Residence.builder()
+                                .city("Roma")
+                                .cityCouncil("Roma")
+                                .province("Roma")
+                                .region("Lazio")
+                                .postalCode("00187")
+                                .nation("Italia")
+                                .build()
+                            : Residence.builder()
+                                .city("Milano")
+                                .cityCouncil("Milano")
+                                .province("Milano")
+                                .region("Lombardia")
+                                .postalCode("20124")
+                                .nation("Italia")
+                                .build()
+            );
+        }
+        if(onboardingRequest.getBirthDate()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
+            int age = new Random(onboardingRequest.getUserId().hashCode()).nextInt(18, 99);
+            onboardingRequest.setBirthDate(BirthDate.builder()
+                    .age(age)
+                    .year((LocalDate.now().getYear()-age)+"")
+                    .build());
         }
         return Mono.just(onboardingRequest);
     }

@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 class AuthoritiesDataRetrieverServiceImplTest {
 
@@ -28,7 +27,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     private OnboardingDTO onboardingDTO;
     private InitiativeConfig initiativeConfig;
-    private Message<String> message;
 
     @BeforeEach
     void setUp() {
@@ -63,7 +61,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Test
     void retrieveIseeAutomatedCriteriaAndRanking() {
         // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
@@ -72,7 +70,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
     }
 
     @Test
@@ -87,7 +85,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
     }
 
     @Test
@@ -120,6 +118,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
     }
 }
