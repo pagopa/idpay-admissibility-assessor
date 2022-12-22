@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 class AuthoritiesDataRetrieverServiceImplTest {
 
@@ -57,13 +56,14 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
                 .build();
-        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+
+        message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
     }
 
     @Test
     void retrieveIseeAutomatedCriteriaAndRanking() {
         // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
@@ -72,7 +72,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
     }
 
     @Test
@@ -87,7 +87,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
     }
 
     @Test
@@ -103,11 +103,14 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getIsee());
+        Assertions.assertEquals("Roma", result.getResidence().getCity());
     }
 
     @Test
     void retrieveIseeRankingAndNotAutomatedCriteria() {
         // Given
+        onboardingDTO.setUserId("USERID2");
+
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
@@ -120,6 +123,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("25729"), result.getIsee());
+        Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
