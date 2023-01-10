@@ -25,6 +25,12 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
+import reactor.core.Scannable;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -40,6 +46,14 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Slf4j
+@TestPropertySource(properties = {
+        "app.beneficiary-rule.build-delay-duration=PT1S",
+        "logging.level.it.gov.pagopa.admissibility.service.build=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.onboarding=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
+})
+@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
@@ -50,7 +64,12 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private final int initiativesNumber = 7;
 
     @TestConfiguration
-    static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{}
+    static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{
+        @SpyBean
+        private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorServiceSpy;
+
+        @PostConstruct
+        void init() {checkpointers = configureSpies();}
 
     @Test
     void testAdmissibilityOnboarding() throws IOException {

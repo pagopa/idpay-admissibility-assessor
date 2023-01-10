@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility;
 import com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.config.MongodConfig;
 import de.flapdoodle.embed.mongo.config.Net;
@@ -11,6 +12,7 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.StreamsHealthIndicator;
+import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -26,6 +28,7 @@ import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
@@ -34,13 +37,17 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.data.util.Pair;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.ReflectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -110,9 +117,15 @@ import static org.awaitility.Awaitility.await;
                 "logging.level.org.springframework.boot.autoconfigure.mongo.embedded=WARN",
                 "spring.mongodb.embedded.version=4.0.21",
                 //endregion
+
+                //region pdv
+                "app.pdv.retry.delay-millis=5000",
+                "app.pdv.retry.max-attempts=3",
+                //endregion
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
+@ContextConfiguration(initializers = {BaseIntegrationTest.wireMockInitializer.class})
 public abstract class BaseIntegrationTest {
     @Autowired
     protected EmbeddedKafkaBroker kafkaBroker;
@@ -395,4 +408,29 @@ public abstract class BaseIntegrationTest {
         }
     }
     protected void checkPayload(String errorMessage, String expectedPayload){}
+
+    //Setting WireMock
+    @RegisterExtension
+    static WireMockExtension serverWireMock = WireMockExtension.newInstance()
+            .options(RestTestUtils.getWireMockConfiguration())
+            .build();
+    public static class wireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(ConfigurableApplicationContext applicationContext) {
+            //pdv settings
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdv.base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
+            );
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdv.headers.x-api-key=%s", "x_api_key")
+            );
+            //pdnd settings
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdnd.access.token-base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
+            );
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.pdnd.properties.clientId=%s", "PDND_CLIENT_ID_TEST")
+            );
+        }
+    }
 }

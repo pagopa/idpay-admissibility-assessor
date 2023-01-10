@@ -1,0 +1,22 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/token.oauth2",
+    "headers": {
+      "Content-Type": {
+        "contains": "application/x-www-form-urlencoded"
+      }
+    }
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "access_token": "ACCESS_TOKEN_OK",
+      "expires_in": 600,
+      "token_type": "Bearer"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
