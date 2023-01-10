@@ -5,9 +5,11 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCr
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
-import static org.junit.jupiter.api.Assertions.*;
-
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.rest.PdndCreateTokenRestClientImpl=WARN",
+})
 class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
 
     @Autowired

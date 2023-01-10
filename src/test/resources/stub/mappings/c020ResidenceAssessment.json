@@ -1,0 +1,28 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/anpr-service-e002",
+    "headers": {
+      "Authorization": {
+        "matches": "Bearer VALID_ACCESS_TOKEN_([0-9]?)+"
+      }
+    }
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "datiSoggetto": [
+        {
+          "generalita": {
+            "codiceFiscale": "FISCAL_CODE",
+            "cognome": "COGNOME",
+            "nome": "NOME"
+          }
+        }
+      ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
