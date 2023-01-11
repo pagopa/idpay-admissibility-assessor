@@ -5,13 +5,6 @@ reactor:
   bufferSize:
     small: ${REACTOR_BUFFER_SIZE:256}
 
-info:
-  build:
-    artifact: "@project.artifactId@"
-    name: "@project.artifactId@"
-    description: "@project.description@"
-    version: "@project.version@"
-
 spring:
   application:
     name: "@project.artifactId@"
@@ -165,8 +158,8 @@ spring:
     url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
 
 management.endpoints:
-  jmx:
-    exposure.include: bindings
+  web:
+    exposure.include: info, health
 
 logging:
   level:
