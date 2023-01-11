@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.rest.agid.AnprJwtSignature;
 import it.gov.pagopa.admissibility.rest.anpr.AnprWebClient;
+import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,15 +77,19 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 })
                 .bodyValue(requestDtoString)
                 .retrieve()
-                .bodyToMono(RispostaE002OKDTO.class);
+                .bodyToMono(RispostaE002OKDTO.class)
+                .doOnError(e -> {
+                    throw new AnprDailyRequestLimitException(e);
+                });
         //TODO define error code for retry
+
     }
 
     private RichiestaE002DTO generateRequest(String fiscalCode) {
         Date dateNow = new Date();
         String dateWithHoursString = new  SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
         TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
-                .idOperazioneClient(fiscalCode.concat(dateWithHoursString))
+                .idOperazioneClient(fiscalCode.concat(dateWithHoursString)) // TODO Identificativo univoco attribuito all'operazione dall'ente. Deve essere numerico e crescente. Se esiste in ANPR, l'ente riceve come esito la risposta in precedenza fornita da ANPR con lo stesso ID; se non esiste ed è inferiore all'ultimo inviato, l'elaborazione termina con errore
                 .codMittente(headRequestSenderCode)
                 .codDestinatario(headRequestAddresseeCode)
                 .operazioneRichiesta(headRequestOperationRequest)

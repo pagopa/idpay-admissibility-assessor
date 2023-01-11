@@ -1,39 +1,63 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
+import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
+import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
+import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
+
+    private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
+    private static final String FISCAL_CODE = "FISCAL_CODE";
 
     @Mock
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
+
+    @Mock
+    private CreateTokenService createTokenServiceMock;
+    @Mock
+    private UserFiscalCodeService userFiscalCodeServiceMock;
+    @Mock
+    private ResidenceAssessmentService residenceAssessmentServiceMock;
+    private final TipoResidenzaDTO2ResidenceMapper tipoResidenzaDTO2ResidenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
     private OnboardingDTO onboardingDTO;
     private InitiativeConfig initiativeConfig;
+    private RispostaE002OKDTO anprAnswer;
     private Message<String> message;
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(null, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper);
 
-        onboardingDTO =OnboardingDTO.builder()
+        onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
                 .initiativeId("INITIATIVEID")
                 .tc(true)
@@ -57,7 +81,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .rankingInitiative(Boolean.TRUE)
                 .build();
 
+        anprAnswer = buildAnprAnswer();
+
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+
+        Mockito.when(createTokenServiceMock.getToken(initiativeConfig.getPdndToken())).thenReturn(Mono.just(ACCESS_TOKEN));
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingDTO.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
+        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
     }
 
     @Test
@@ -72,7 +102,16 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(BigDecimal.TEN, result.getIsee()); // TODO
+
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Assertions.assertEquals(expectedResidence, result.getResidence());
+
+        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
+        Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
+
+        //TODO verify call INPS
+        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -87,7 +126,15 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(BigDecimal.TEN, result.getIsee());
+
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Assertions.assertEquals(expectedResidence, result.getResidence());
+
+        Assertions.assertNull(result.getBirthDate());
+
+        // TODO verify call INPS
+        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -103,14 +150,19 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getIsee());
-        Assertions.assertEquals("Roma", result.getResidence().getCity());
+
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Assertions.assertEquals(expectedResidence, result.getResidence());
+
+        Assertions.assertNull(result.getBirthDate());
+
+        // TODO verify not call INPS
+        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
     void retrieveIseeRankingAndNotAutomatedCriteria() {
         // Given
-        onboardingDTO.setUserId("USERID2");
-
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
@@ -123,7 +175,47 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("25729"), result.getIsee());
-        Assertions.assertEquals("Milano", result.getResidence().getCity());
+        Assertions.assertEquals(BigDecimal.TEN, result.getIsee());
+
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Assertions.assertEquals(expectedResidence, result.getResidence());
+
+        Assertions.assertNull(result.getBirthDate());
+
+        // TODO verify call INPS
+        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+    }
+
+    // TODO test that only calls INPS and not ANPR
+
+    private RispostaE002OKDTO buildAnprAnswer() {
+
+        return new RispostaE002OKDTO().listaSoggetti(buildListaSoggetti());
+    }
+
+    private TipoListaSoggettiDTO buildListaSoggetti() {
+        TipoGeneralitaDTO generalita = new TipoGeneralitaDTO();
+        generalita.setDataNascita("2001-02-04");
+        generalita.setSenzaGiornoMese("2001");
+
+        TipoComuneDTO comune = new TipoComuneDTO();
+        comune.setNomeComune("Milano");
+        comune.setSiglaProvinciaIstat("MI");
+
+        TipoIndirizzoDTO indirizzo = new TipoIndirizzoDTO();
+        indirizzo.setCap("20173");
+        indirizzo.setComune(comune);
+
+        TipoResidenzaDTO residenza = new TipoResidenzaDTO();
+        residenza.setIndirizzo(indirizzo);
+
+        TipoDatiSoggettiEnteDTO datiSoggetto = new TipoDatiSoggettiEnteDTO();
+        datiSoggetto.setGeneralita(generalita);
+        datiSoggetto.setResidenza(List.of(residenza));
+
+        TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
+        listaSoggetti.setDatiSoggetto(List.of(datiSoggetto));
+
+        return listaSoggetti;
     }
 }
