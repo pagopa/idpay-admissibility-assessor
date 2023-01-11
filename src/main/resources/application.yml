@@ -160,8 +160,6 @@ spring:
 management.endpoints:
   web:
     exposure.include: info, health
-  jmx:
-    exposure.include: bindings
 
 logging:
   level:
