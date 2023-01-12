@@ -50,7 +50,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     private OnboardingDTO onboardingDTO;
     private InitiativeConfig initiativeConfig;
-    private RispostaE002OKDTO anprAnswer;
     private Message<String> message;
 
     @BeforeEach
@@ -81,13 +80,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .rankingInitiative(Boolean.TRUE)
                 .build();
 
-        anprAnswer = buildAnprAnswer();
+        RispostaE002OKDTO anprAnswer = buildAnprAnswer();
 
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
 
         Mockito.when(createTokenServiceMock.getToken(initiativeConfig.getPdndToken())).thenReturn(Mono.just(ACCESS_TOKEN));
         Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingDTO.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.lenient().when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
     }
 
     @Test
@@ -138,7 +137,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     }
 
     @Test
-    void retrieveIseeNotAutomatedCriteriaNotRanking() {
+    void retrieveResidenceNotAutomatedCriteriaNotRanking() {
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
@@ -186,7 +185,26 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
     }
 
-    // TODO test that only calls INPS and not ANPR
+    @Test
+    void retrieveIseeNotAutomatedCriteriaNotRanking() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE"));
+        initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(BigDecimal.TEN, result.getIsee());
+
+        Assertions.assertNull(result.getResidence());
+        Assertions.assertNull(result.getBirthDate());
+
+        // TODO verify call INPS
+        Mockito.verify(residenceAssessmentServiceMock, Mockito.never()).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+    }
 
     private RispostaE002OKDTO buildAnprAnswer() {
 
