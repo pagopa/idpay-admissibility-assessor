@@ -4,21 +4,20 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
-import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
-import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.domain.Sort;
@@ -30,6 +29,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
@@ -44,12 +44,10 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private CreateTokenService createTokenServiceMock;
     @Mock
     private UserFiscalCodeService userFiscalCodeServiceMock;
-    @Mock
-    private ResidenceAssessmentService residenceAssessmentServiceMock;
+    @Spy
+    private AnprInvocationService anprInvocationServiceSpy;
     @Mock
     private StreamBridge streamBridgeMock;
-
-    private final TipoResidenzaDTO2ResidenceMapper tipoResidenzaDTO2ResidenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -60,7 +58,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(streamBridgeMock, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(streamBridgeMock, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, anprInvocationServiceSpy);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
@@ -101,7 +99,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
+        Mockito.doAnswer(Answers.CALLS_REAL_METHODS).when(anprInvocationServiceSpy).extract(anprAnswer, true, true, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -110,14 +109,14 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("74585"), result.getIsee()); // TODO
 
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
 
         BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
         Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
 
         //TODO verify call INPS
-        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -127,7 +126,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
+        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -136,13 +136,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
 
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
 
         Assertions.assertNull(result.getBirthDate());
 
         // TODO verify call INPS
-        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -152,7 +152,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
+        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -161,13 +162,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getIsee());
 
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
 
         Assertions.assertNull(result.getBirthDate());
 
         // TODO verify not call INPS
-        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -178,7 +179,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
+        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -187,13 +189,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
 
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20173").build();
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
 
         Assertions.assertNull(result.getBirthDate());
 
         // TODO verify call INPS
-        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -214,7 +216,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result.getBirthDate());
 
         // TODO verify call INPS
-        Mockito.verify(residenceAssessmentServiceMock, Mockito.never()).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy, Mockito.never()).invoke(ACCESS_TOKEN, FISCAL_CODE);
     }
 
     @Test
@@ -224,7 +226,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.empty()));
         Mockito.when(streamBridgeMock.send(Mockito.anyString(), Mockito.any())).thenReturn(true);
 
         // When
@@ -234,7 +236,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result);
 
         // TODO verify call INPS
-        Mockito.verify(residenceAssessmentServiceMock).getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(streamBridgeMock).send(Mockito.anyString(), Mockito.any());
     }
 
     private RispostaE002OKDTO buildAnprAnswer() {
@@ -252,7 +255,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         comune.setSiglaProvinciaIstat("MI");
 
         TipoIndirizzoDTO indirizzo = new TipoIndirizzoDTO();
-        indirizzo.setCap("20173");
+        indirizzo.setCap("20143");
         indirizzo.setComune(comune);
 
         TipoResidenzaDTO residenza = new TipoResidenzaDTO();
