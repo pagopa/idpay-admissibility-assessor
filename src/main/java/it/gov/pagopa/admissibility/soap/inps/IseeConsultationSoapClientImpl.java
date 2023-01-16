@@ -34,6 +34,7 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
     public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode) {
         return Mono.create(
                 sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode), into(sink))); //TODO confirm operation to call
+        //TODO Define what to do when result is different from ok
     }
 
     private ConsultazioneIndicatoreRequestType getRequest(String fiscalCode) {

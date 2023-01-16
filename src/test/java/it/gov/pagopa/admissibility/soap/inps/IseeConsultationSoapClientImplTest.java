@@ -2,14 +2,18 @@ package it.gov.pagopa.admissibility.soap.inps;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponse;
+import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.soap.inps.utils=DEBUG",
 })
+@DirtiesContext
 class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
 
     @SpyBean
