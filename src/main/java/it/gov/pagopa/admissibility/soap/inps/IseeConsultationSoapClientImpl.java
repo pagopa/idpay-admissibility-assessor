@@ -32,7 +32,6 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
     @Override
     public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode) {
-        //set sslContext
         return Mono.create(
                 sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode), into(sink))); //TODO confirm operation to call
     }

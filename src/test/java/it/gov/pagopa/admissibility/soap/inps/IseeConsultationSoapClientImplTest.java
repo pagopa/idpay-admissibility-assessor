@@ -15,7 +15,6 @@ class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
     @SpyBean
     private IseeConsultationSoapClient iseeConsultationSoapClient;
 
-
     @Test
     void callService() {
         ConsultazioneIndicatoreResponse result = iseeConsultationSoapClient.callService("RSSMRA70A01H501S").block();
