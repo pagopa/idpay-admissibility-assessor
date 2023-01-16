@@ -18,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,6 +26,9 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.service.AuthoritiesDataRetrieverServiceImpl=WARN",
+})
 class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest {
 
     @Autowired

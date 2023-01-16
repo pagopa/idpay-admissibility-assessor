@@ -8,7 +8,6 @@ import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
-import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClient;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
@@ -18,7 +17,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -32,7 +30,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
@@ -49,6 +46,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private UserFiscalCodeService userFiscalCodeServiceMock;
     @Mock
     private ResidenceAssessmentService residenceAssessmentServiceMock;
+    @Mock
+    private StreamBridge streamBridgeMock;
 
     private final TipoResidenzaDTO2ResidenceMapper tipoResidenzaDTO2ResidenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
@@ -61,7 +60,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(null, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(streamBridgeMock, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
@@ -226,6 +225,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
+        Mockito.when(streamBridgeMock.send(Mockito.anyString(), Mockito.any())).thenReturn(true);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
