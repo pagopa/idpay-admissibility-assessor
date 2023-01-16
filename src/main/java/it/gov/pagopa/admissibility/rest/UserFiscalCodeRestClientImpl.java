@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.rest;
 
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient{
     private static final String API_KEY_HEADER = "x-api-key";
     private static final String URI = "/tokens/{token}/pii";
@@ -44,7 +46,22 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient{
                 .retrieve()
                 .bodyToMono(UserInfoPDV.class)
                 .retryWhen(Retry.fixedDelay(pdvMaxAttempts, Duration.ofMillis(pdvRetryDelay))
-                        .filter(ex -> ex instanceof WebClientResponseException.TooManyRequests)
-                );
+                        .filter(ex -> {
+                            boolean retry = (ex instanceof WebClientResponseException.TooManyRequests) || ex.getMessage().startsWith("Connection refused");
+                            if(retry){
+                                log.info("[PDV_INTEGRATION] Retrying invocation due to exception: {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+                            }
+                            return retry;
+                        })
+                )
+
+        .onErrorResume(WebClientResponseException.NotFound.class, x -> {
+            log.warn("userId not found into pdv: {}", userId);
+            return Mono.empty();
+        })
+                .onErrorResume(WebClientResponseException.BadRequest.class, x -> {
+                    log.warn("userId not valid: {}", userId);
+                    return Mono.empty();
+                });
     }
 }

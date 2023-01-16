@@ -22,6 +22,6 @@ class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
         ClientCredentialsResponseDTO response = pdndCreateTokenRestClient.createToken(pdndToken).block();
 
         Assertions.assertNotNull(response);
-        Assertions.assertEquals("ACCESS_TOKEN_OK",response.getAccessToken());
+        Assertions.assertEquals("VALID_ACCESS_TOKEN_1",response.getAccessToken());
     }
 }
