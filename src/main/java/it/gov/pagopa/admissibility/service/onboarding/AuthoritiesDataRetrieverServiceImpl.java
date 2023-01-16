@@ -27,6 +27,7 @@ import reactor.util.function.Tuple2;
 import java.math.BigDecimal;
 import java.time.*;
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 @Slf4j
@@ -93,7 +94,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
                 ? residenceAssessmentService.getResidenceAssessment(accessToken, fiscalCode).map(Optional::of)
                 .onErrorResume(AnprDailyRequestLimitException.class, e -> {
-                    log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] ", e);
+                    log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] Daily limit occurred when calling ANPR service", e);
+                    // TODO Short circuit all calls on that date
                     return Mono.just(Optional.empty());
                 })
                 : Mono.just(Optional.empty());
@@ -121,18 +123,27 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, Object inpsResponse, RispostaE002OKDTO anprResponse) {
         if (inpsResponse != null && pdndServicesInvocation.getIsee) {
-            onboardingRequest.setIsee(BigDecimal.TEN);  // TODO
+            onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));  // TODO
         }
         if (anprResponse != null) {
-            TipoResidenzaDTO residenza = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0);
-            TipoGeneralitaDTO generalita = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita();
+            TipoResidenzaDTO residence = new TipoResidenzaDTO();
+            TipoGeneralitaDTO personalInfo = new TipoGeneralitaDTO();
+
+            // TODO what to do if these don't exist?
+            if (checkResidenceDataPresence(anprResponse))
+                residence = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0);
+            if (checkPersonalInfoPresence(anprResponse))
+                personalInfo = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita();
 
             if (pdndServicesInvocation.getResidence) {
-                onboardingRequest.setResidence(residenceMapper.apply(residenza));
+                // TODO log userId and residence obtained from ANPR
+                onboardingRequest.setResidence(residenceMapper.apply(residence));
             }
             if (pdndServicesInvocation.getBirthDate) {
-                onboardingRequest.setBirthDate(getBirthDateFromAnpr(generalita));
+                // TODO log userId and birth date obtained from ANPR
+                onboardingRequest.setBirthDate(getBirthDateFromAnpr(personalInfo));
             }
+
         }
     }
 
@@ -160,14 +171,42 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
 
-    private BirthDate getBirthDateFromAnpr(TipoGeneralitaDTO generalita) {
+    private BirthDate getBirthDateFromAnpr(TipoGeneralitaDTO personalInfo) {
         return BirthDate.builder()
                 .age(Period.between(
-                        LocalDate.parse(generalita.getDataNascita()),
+                        LocalDate.parse(personalInfo.getDataNascita()),
                         LocalDate.now())
                         .getYears())
-                .year(generalita.getSenzaGiornoMese())
+                .year(personalInfo.getSenzaGiornoMese())
                 .build();
+    }
+
+    private boolean checkResidenceDataPresence(RispostaE002OKDTO anprResponse) {
+        return anprResponse.getListaSoggetti() != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto() != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto().get(0) != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza() != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0) != null;
+    }
+
+    private boolean checkPersonalInfoPresence(RispostaE002OKDTO anprResponse) {
+        return anprResponse.getListaSoggetti() != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto() != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto().get(0) != null
+                &&
+                anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita() != null;
+    }
+
+    private static Random userIdBasedIntegerGenerator(OnboardingDTO onboardingRequest) {
+        @SuppressWarnings("squid:S2245")
+        Random random = new Random(onboardingRequest.getUserId().hashCode());
+        return random;
     }
 
     @AllArgsConstructor
