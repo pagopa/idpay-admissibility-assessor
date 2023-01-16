@@ -368,6 +368,11 @@ app:
     header: #TODO TBV default values
       officeCode: ${INPS_OFFICE_CODE_ENTE:001}
       userId: ${INPS_USERID_ENTE:OperationBatchIDPay}
+    request: #TODO values of fields
+      service-to-be-provided: A1.01
+      request-protocol-ente: Protocol
+      request-state: Da Erogare
+      request-indicator-type: Ordinario
     secure:
       cert: |-
         ${INPS_CLIENT_CERT_STRING:-----BEGIN CERTIFICATE-----

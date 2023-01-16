@@ -9,7 +9,7 @@
     },
     "bodyPatterns": [
       {
-        "equalToXml": "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Header><ns3:Identity xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><UserId>OperationBatchIDPay</UserId><CodiceUfficio>001</CodiceUfficio></ns3:Identity></S:Header><S:Body><ns2:ConsultazioneIndicatore xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><ns2:request><ns2:TipoIndicatore>Ordinario</ns2:TipoIndicatore><ns2:RicercaCF><ns2:CodiceFiscale>RSSMRA70A01H501S</ns2:CodiceFiscale></ns2:RicercaCF></ns2:request></ns2:ConsultazioneIndicatore></S:Body></S:Envelope>"
+        "equalToXml": "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Header><ns3:Identity xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><UserId>OperationBatchIDPay</UserId><CodiceUfficio>001</CodiceUfficio></ns3:Identity></S:Header><S:Body><ns2:ConsultazioneIndicatore xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><ns2:request><ns2:TipoIndicatore>Ordinario</ns2:TipoIndicatore><ns2:RicercaCF><ns2:CodiceFiscale>RSSMRA70A01H501S</ns2:CodiceFiscale><ns2:PrestazioneDaErogare>A1.01</ns2:PrestazioneDaErogare><ns2:ProtocolloDomandaEnteErogatore>Protocol</ns2:ProtocolloDomandaEnteErogatore><ns2:StatodomandaPrestazione>Da Erogare</ns2:StatodomandaPrestazione></ns2:RicercaCF></ns2:request></ns2:ConsultazioneIndicatore></S:Body></S:Envelope>"
       }
     ]
   },
