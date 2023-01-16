@@ -435,10 +435,10 @@ public abstract class BaseIntegrationTest {
             TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
                     String.format("app.anpr.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
             );
-//            //INPS settings
-//            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-//                    String.format("app.inps.iseeConsultation.base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
-//            );
+            //INPS settings
+            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("app.inps.iseeConsultation.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
+            );
 
             System.out.printf("""
                         ************************

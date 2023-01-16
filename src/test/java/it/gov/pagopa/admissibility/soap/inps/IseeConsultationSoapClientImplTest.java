@@ -14,7 +14,7 @@ class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
 
 
     @Test
-    void callService() { //TODO integrate with mockServer
+    void callService() {
 //        IseeConsultationSoapClient iseeConsultationSoapClient = new IseeConsultationSoapClientImpl("001","OperationBatchIDPay","https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1", certInps);
 
         ConsultazioneIndicatoreResponse result = iseeConsultationSoapClient.callService("RSSMRA70A01H501S").block();
