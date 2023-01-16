@@ -5,8 +5,11 @@ import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicat
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.TestPropertySource;
 
-//class IseeConsultationSoapClientImplTest {
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.soap.inps.utils=DEBUG",
+})
 class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
 
     @SpyBean
@@ -15,8 +18,6 @@ class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
 
     @Test
     void callService() {
-//        IseeConsultationSoapClient iseeConsultationSoapClient = new IseeConsultationSoapClientImpl("001","OperationBatchIDPay","https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1", certInps);
-
         ConsultazioneIndicatoreResponse result = iseeConsultationSoapClient.callService("RSSMRA70A01H501S").block();
         Assertions.assertNotNull(result);
         System.out.println(result);
