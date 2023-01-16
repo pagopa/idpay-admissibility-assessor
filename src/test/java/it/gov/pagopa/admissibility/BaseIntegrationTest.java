@@ -77,6 +77,7 @@ import static org.awaitility.Awaitility.await;
         "${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}",
+        "${spring.cloud.stream.bindings.rankingRequest-out-0.destination}",
         "${spring.cloud.stream.bindings.errors-out-0.destination}",
 }, controlledShutdown = true)
 @TestPropertySource(
@@ -99,6 +100,7 @@ import static org.awaitility.Awaitility.await;
                 "spring.cloud.stream.kafka.binder.zkNodes=${spring.embedded.zookeeper.connect}",
                 "spring.cloud.stream.binders.kafka-beneficiary-rule-builder.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
+                "spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-errors.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 //endregion
 
@@ -156,6 +158,8 @@ public abstract class BaseIntegrationTest {
     protected String topicAdmissibilityProcessorRequest;
     @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}")
     protected String topicAdmissibilityProcessorOutcome;
+    @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}")
+    protected String topicAdmissibilityProcessorOutRankingRequest;
     @Value("${spring.cloud.stream.bindings.errors-out-0.destination}")
     protected String topicErrors;
 

@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.event.processor;
 
 
-import it.gov.pagopa.admissibility.service.AdmissibilityEvaluatorMediatorService;
+import it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.binder.Binding;

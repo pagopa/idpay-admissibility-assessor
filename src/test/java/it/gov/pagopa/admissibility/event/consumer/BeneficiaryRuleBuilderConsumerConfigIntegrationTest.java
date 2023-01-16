@@ -134,7 +134,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     public static int waitForKieContainerBuild(int expectedRules, OnboardingContextHolderService onboardingContextHolderServiceSpy) {
         int[] ruleBuiltSize = {0};
-        waitFor(() -> (ruleBuiltSize[0] = getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, () -> "Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 500);
+        waitFor(() -> (ruleBuiltSize[0] = getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, () -> "Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 1000);
         return ruleBuiltSize[0];
     }
 

@@ -7,7 +7,8 @@ reactor:
 
 spring:
   application:
-    name: idpay-admissibility-assessor
+    name: "@project.artifactId@"
+    version: "@project.version@"
   jmx.enabled: true
   config:
     activate:
@@ -30,6 +31,10 @@ spring:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
+        rankingRequest-out-0:
+          destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-onboarding-ranking-request}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-ranking-request
         admissibilityDelayProducer-out-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
           binder: kafka-onboarding-request
@@ -61,6 +66,13 @@ spring:
               configuration:
                 sasl.jaas.config: ${KAFKA_ONBOARDING_OUTCOME_SASL_JAAS_CONFIG:}
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
+        kafka-ranking-request:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_RANKING_REQUEST_BROKER:${KAFKA_BROKER:}}
+              configuration:
+                sasl.jaas.config: ${KAFKA_RANKING_REQUEST_SASL_JAAS_CONFIG:}
         kafka-beneficiary-rule-builder:
           type: kafka
           environment:
@@ -84,6 +96,10 @@ spring:
             request.timeout.ms: ${KAFKA_CONFIG_REQUEST_TIMEOUT_MS:60000}
             sasl.mechanism: ${KAFKA_CONFIG_SASL_MECHANISM:PLAIN}
             security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
+            connections.max.idle.ms: ${KAFKA_CONFIG_CONNECTION_MAX_IDLE_TIME:180000}
+            metadata.max.idle.ms: ${KAFKA_CONFIG_METADATA_MAX_IDLE_MS:180000}
+            metadata.max.age.ms: ${KAFKA_CONFIG_METADATA_MAX_AGE_INTERVAL:180000}
+            max.request.size: ${KAFKA_CONFIG_METADATA_MAX_REQUEST_SIZE:1000000}
         bindings:
           beneficiaryRuleBuilderConsumer-in-0:
             consumer:
@@ -96,7 +112,7 @@ spring:
                 max.poll:
                   records: ${KAFKA_BENEFICIARY_RULE_REQUEST_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
                   interval.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
-                connections.max.idle.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
                 socket.connection.setup.timeout:
                   max.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
                   ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
@@ -108,6 +124,14 @@ spring:
                 retry.backoff.ms: ${KAFKA_ONBOARDING_OUTCOME_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
                 linger.ms: ${KAFKA_ONBOARDING_OUTCOME_LINGER_MS:${KAFKA_LINGER_MS:2}}
                 batch.size: ${KAFKA_ONBOARDING_OUTCOME_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
+          rankingRequest-out-0:
+            producer:
+              configuration:
+                client.id: admissibilityProcessor-ranking
+                connections.max.idle.ms: ${KAFKA_RANKING_REQUEST_CONNECTION_MAX_IDLE_TIME:180000}
+                retry.backoff.ms: ${KAFKA_RANKING_REQUEST_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
+                linger.ms: ${KAFKA_RANKING_REQUEST_LINGER_MS:${KAFKA_LINGER_MS:2}}
+                batch.size: ${KAFKA_RANKING_REQUEST_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
           errors-out-0:
             producer:
               configuration:
@@ -134,8 +158,8 @@ spring:
     url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
 
 management.endpoints:
-  jmx:
-    exposure.include: bindings
+  web:
+    exposure.include: info, health
 
 logging:
   level:
@@ -222,14 +246,13 @@ app:
           sendType: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_SEND_TYPE:PROD}
         dataRequest:
           personalDetailsRequest: ${ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_PERSONAL_DETAILS_REQUEST:1}
-    digest:
+    digest: #TODO define fields for agid-token
       header:
         alg: ${ANPR_DIGEST_HEADER_ALG:ES256}
-        kid: ${ANPR_DIGEST_HEADER_KID:}
         typ: ${ANPR_DIGEST_HEADER_TYP:JWT}
       payload:
         #TODO The fields iss, sub and aud are defined in the interoperability portal
-        iss: ${ANPR_DIGEST_ISSUER:}
+        iss: ${ANPR_DIGEST_ISS:}
         sub: ${ANPR_DIGEST_SUB:}
         aud: ${ANPR_DIGEST_PAYLOAD_AUD:${ANPR_C020_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL:}}
     web-client:
@@ -237,9 +260,9 @@ app:
         connect-timeout-millis: ${ANPR_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
         response-timeout-millis: ${ANPR_RESPONSE_TIMEOUT_MILLIS:${RESPONSE_TIMEOUT:60000}}
         read-timeout-handler: ${ANPR_READ_TIMEOUT_HANDLER_MILLIS:${READ_TIMEOUT_HANDLER:60000}}
-      secure:
-        cert: |- 
-          ${ANPR_CLIENT_CERT_STRING:-----BEGIN CERTIFICATE-----
+      ssl:
+        cert: |-
+          ${ANPR_CLIENT_SSL_CERT:-----BEGIN CERTIFICATE-----
           MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
           BQAwXzELMAkGA1UEBhMCSVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUx
           DjAMBgNVBAoMBUlEUEFZMQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxo
@@ -263,7 +286,7 @@ app:
           -----END CERTIFICATE-----
           }
         key: |-
-          ${ANPR_CLIENT_KEY_PEM:-----BEGIN PRIVATE KEY-----
+          ${ANPR_CLIENT_SSL_KEY:-----BEGIN PRIVATE KEY-----
           MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
           ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
           xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
@@ -292,73 +315,72 @@ app:
           NLHn1k0IpmXFOiFa1Y1D6Bc=
           -----END PRIVATE KEY-----
           }
-      agid:
-        secure:
-          cert: |-
-            ${ANPR_AGID_CERT:-----BEGIN CERTIFICATE-----
-            MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
-            BQAwXzELMAkGA1UEBhMCSVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUx
-            DjAMBgNVBAoMBUlEUEFZMQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxo
-            b3N0MB4XDTIyMTEwOTE1MTI0NFoXDTMyMDkxNzE1MTI0NFowXzELMAkGA1UEBhMC
-            SVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUxDjAMBgNVBAoMBUlEUEFZ
-            MQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG
-            9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3bgEIl7z1ArZpNI54
-            ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaulres2EvuP7KjL0tfo
-            x/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2AYW8QPdRm406HJG7b
-            NKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6YgkRctCtKd8h/BRpIR
-            tMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJdvn5rP6TM4OVtZ7V
-            ehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd5wIDAQABo1MwUTAd
-            BgNVHQ4EFgQUPYfJeHRHwSLmcueB8jUQSHUReVIwHwYDVR0jBBgwFoAUPYfJeHRH
-            wSLmcueB8jUQSHUReVIwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
-            AQEAK34LEHSVM44Wwbs9nKDKeQTRGosdd+gQSrqGf3nI0vkhckuaoYPnuFKi+eo2
-            r+J6xXgqhQfrvhXnYxNEJr9U+9ELBc3IjG6bTUS6HyWhu2PJCeckxQJqonVntl99
-            jmEr4G7QJeDc9oJmC0NJqBmQS/D0tMxChNWpYe1AoGXwqc4S6NTd3x2Z8THzv8du
-            MMn7+1f/VOWe7/Iuuvx5DHN2JFi0lvhMqwglIweGn/qLGB0+r9GM+QlfGuZvUey2
-            x3C0DLQnNIkNKktGjaNjCmpZcd9SIVi6TOPpR+AxlIddYvUXu4GYVXyfDPgzPeha
-            JDiI4WMkIMmYSzhMc/lfuDMGow==
-            -----END CERTIFICATE-----
-            }
-          key: |-
-            ${ANPR_AGID_KEY_PEM:-----BEGIN PRIVATE KEY-----
-            MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
-            ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
-            xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
-            VX7gPYBhbxA91GbjTockbts0ouZ0z0AVRCnrOhO816DJZDIB8fjSLvZSimW0O5tw
-            DKQPpiCRFy0K0p3yH8FGkhG0yfQAYsz+jmrBi754IDLz/s+mPcfMLAeQM4lp3+Da
-            lGPiygl2+fms/pMzg5W1ntV6HGKieRpxwE9zIMZKsijnzftdhoa/evtGfSsKmV/G
-            dTga2Z3nAgMBAAECggEAEC6FmMJ4Tyd7T3zNgVPjQnCRbKTihz858qjislibqZKO
-            mE6d0oJ5P+o5R/bWHUQSCevMPvNGQ55QBkxO/1ocZxP/0FfYZf5UrPsCEmwfFejf
-            r8DrLhNr7GS/IcOGM4zNK/hwlP2i+88sVfexRQQygLVtmsnPY1PZSjiqm68lJdu+
-            aP8TYM10y1aeiYnfuUYvnvXJFXeTEockhaUJTmeIQNbbUy+pyJ0mAPASPtXRLr8h
-            UflutICnWcx4v/qkCn1jmHw+NMA4q7hOH7UuOAqj53FqGMN+IWfjMmmYoQ7MVURx
-            8CrnEtlCOua+C8EEIFL2ylvV7X0cv/DqCJLVQoegsQKBgQDLzMaAjNgD8xSXp+Gj
-            beeUsSGptEaGMuA89AzyTnCyvU9a1HGwDAghoQPae+pVk7R5uokojWkBVzP/kKxv
-            ZldGwPOegUUdBLS4yJML+OkqtoCgf3Mbcozm5dVYtx7bYdhh3PswzRmn/h/YjEAz
-            +/mxi6dJir0k0Nd4YNtQbzBctwKBgQDYTtSmJvVQdOHnzqA/LRmMF1l+HaqLuDfu
-            B4rDlxCdDfOAvHqz+3YapP3B4MQuz29TSDqwAnzoN2XZX5B6g/jKauWpAwZkFXuO
-            fqcfNG/+MewTcHIYNm+EtgXtIsnCXDfAeXdQapzNsOX+XSF/aWcgGHg18xOBPt0R
-            7Aoa/h34UQKBgQCsCzGjwcJ2CxXeNPYxfg1ao/HUDoDet0I/kpL/VqKi8Vd1SRS0
-            VmPi58eWALfBCJD5ljRFjKMRY6lc3KgE3vNconTG4UAUEC30NDaWi8liqnCJjS4C
-            BMDYBzwEyYn+D2qYqvFOsEYxYEFIEJX+jH+sl0VguwOTec38LF/YVhUQnwKBgG5u
-            2Kw3SZkZA1ioqjF24gsexKbZmH+avps8qICw+F9mhwIbt/15jVOPFqrMCPzpFKoN
-            P0ErFAAugEYZPxb9l6AoMTY3gCTKvvkB+mq5B9BcRm2qQ+XOrOKxV5c44o7jK+eN
-            W/fnZkSxYsqZW4fEFU1SkNTiU/vxT0ZeHs6nHD/xAoGAOIqaqQnJfGj/wLo3Z9o5
-            /Oxu1zTPGZC6SqpdygCjlQ0kQ8Bp0LV7nL06/VCHAHI2lF12xApRnFk7GY3xyqK8
-            nYxeRASCj3GGmLupGshtfCtDBeysE2h7kj3Bo0d6g1Ye+j8BUZuZaZm6WNlo7cgE
-            NLHn1k0IpmXFOiFa1Y1D6Bc=
-            -----END PRIVATE KEY-----
-            }
-          pub: |-
-            ${ANPR_AGID_PUB:-----BEGIN PUBLIC KEY-----
-            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
-            bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
-            res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
-            YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
-            kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
-            dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
-            5wIDAQAB
-            -----END PUBLIC KEY-----
-            }
+      jwt-agid:
+        cert: |-
+          ${ANPR_AGID_JWT_CERT:-----BEGIN CERTIFICATE-----
+          MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
+          BQAwXzELMAkGA1UEBhMCSVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUx
+          DjAMBgNVBAoMBUlEUEFZMQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxo
+          b3N0MB4XDTIyMTEwOTE1MTI0NFoXDTMyMDkxNzE1MTI0NFowXzELMAkGA1UEBhMC
+          SVQxDTALBgNVBAgMBFJPTUUxDTALBgNVBAcMBFJPTUUxDjAMBgNVBAoMBUlEUEFZ
+          MQ4wDAYDVQQLDAVJRFBBWTESMBAGA1UEAwwJbG9jYWxob3N0MIIBIjANBgkqhkiG
+          9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3bgEIl7z1ArZpNI54
+          ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaulres2EvuP7KjL0tfo
+          x/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2AYW8QPdRm406HJG7b
+          NKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6YgkRctCtKd8h/BRpIR
+          tMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJdvn5rP6TM4OVtZ7V
+          ehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd5wIDAQABo1MwUTAd
+          BgNVHQ4EFgQUPYfJeHRHwSLmcueB8jUQSHUReVIwHwYDVR0jBBgwFoAUPYfJeHRH
+          wSLmcueB8jUQSHUReVIwDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC
+          AQEAK34LEHSVM44Wwbs9nKDKeQTRGosdd+gQSrqGf3nI0vkhckuaoYPnuFKi+eo2
+          r+J6xXgqhQfrvhXnYxNEJr9U+9ELBc3IjG6bTUS6HyWhu2PJCeckxQJqonVntl99
+          jmEr4G7QJeDc9oJmC0NJqBmQS/D0tMxChNWpYe1AoGXwqc4S6NTd3x2Z8THzv8du
+          MMn7+1f/VOWe7/Iuuvx5DHN2JFi0lvhMqwglIweGn/qLGB0+r9GM+QlfGuZvUey2
+          x3C0DLQnNIkNKktGjaNjCmpZcd9SIVi6TOPpR+AxlIddYvUXu4GYVXyfDPgzPeha
+          JDiI4WMkIMmYSzhMc/lfuDMGow==
+          -----END CERTIFICATE-----
+          }
+        key: |-
+          ${ANPR_AGID_JWT_KEY:-----BEGIN PRIVATE KEY-----
+          MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
+          ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
+          xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
+          VX7gPYBhbxA91GbjTockbts0ouZ0z0AVRCnrOhO816DJZDIB8fjSLvZSimW0O5tw
+          DKQPpiCRFy0K0p3yH8FGkhG0yfQAYsz+jmrBi754IDLz/s+mPcfMLAeQM4lp3+Da
+          lGPiygl2+fms/pMzg5W1ntV6HGKieRpxwE9zIMZKsijnzftdhoa/evtGfSsKmV/G
+          dTga2Z3nAgMBAAECggEAEC6FmMJ4Tyd7T3zNgVPjQnCRbKTihz858qjislibqZKO
+          mE6d0oJ5P+o5R/bWHUQSCevMPvNGQ55QBkxO/1ocZxP/0FfYZf5UrPsCEmwfFejf
+          r8DrLhNr7GS/IcOGM4zNK/hwlP2i+88sVfexRQQygLVtmsnPY1PZSjiqm68lJdu+
+          aP8TYM10y1aeiYnfuUYvnvXJFXeTEockhaUJTmeIQNbbUy+pyJ0mAPASPtXRLr8h
+          UflutICnWcx4v/qkCn1jmHw+NMA4q7hOH7UuOAqj53FqGMN+IWfjMmmYoQ7MVURx
+          8CrnEtlCOua+C8EEIFL2ylvV7X0cv/DqCJLVQoegsQKBgQDLzMaAjNgD8xSXp+Gj
+          beeUsSGptEaGMuA89AzyTnCyvU9a1HGwDAghoQPae+pVk7R5uokojWkBVzP/kKxv
+          ZldGwPOegUUdBLS4yJML+OkqtoCgf3Mbcozm5dVYtx7bYdhh3PswzRmn/h/YjEAz
+          +/mxi6dJir0k0Nd4YNtQbzBctwKBgQDYTtSmJvVQdOHnzqA/LRmMF1l+HaqLuDfu
+          B4rDlxCdDfOAvHqz+3YapP3B4MQuz29TSDqwAnzoN2XZX5B6g/jKauWpAwZkFXuO
+          fqcfNG/+MewTcHIYNm+EtgXtIsnCXDfAeXdQapzNsOX+XSF/aWcgGHg18xOBPt0R
+          7Aoa/h34UQKBgQCsCzGjwcJ2CxXeNPYxfg1ao/HUDoDet0I/kpL/VqKi8Vd1SRS0
+          VmPi58eWALfBCJD5ljRFjKMRY6lc3KgE3vNconTG4UAUEC30NDaWi8liqnCJjS4C
+          BMDYBzwEyYn+D2qYqvFOsEYxYEFIEJX+jH+sl0VguwOTec38LF/YVhUQnwKBgG5u
+          2Kw3SZkZA1ioqjF24gsexKbZmH+avps8qICw+F9mhwIbt/15jVOPFqrMCPzpFKoN
+          P0ErFAAugEYZPxb9l6AoMTY3gCTKvvkB+mq5B9BcRm2qQ+XOrOKxV5c44o7jK+eN
+          W/fnZkSxYsqZW4fEFU1SkNTiU/vxT0ZeHs6nHD/xAoGAOIqaqQnJfGj/wLo3Z9o5
+          /Oxu1zTPGZC6SqpdygCjlQ0kQ8Bp0LV7nL06/VCHAHI2lF12xApRnFk7GY3xyqK8
+          nYxeRASCj3GGmLupGshtfCtDBeysE2h7kj3Bo0d6g1Ye+j8BUZuZaZm6WNlo7cgE
+          NLHn1k0IpmXFOiFa1Y1D6Bc=
+          -----END PRIVATE KEY-----
+          }
+        pub: |-
+          ${ANPR_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
+          bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
+          res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
+          YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
+          kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
+          dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
+          5wIDAQAB
+          -----END PUBLIC KEY-----
+          }
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}

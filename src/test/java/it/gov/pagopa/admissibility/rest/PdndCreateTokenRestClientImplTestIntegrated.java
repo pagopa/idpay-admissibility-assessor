@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
+@SuppressWarnings("squid:S3577") // suppressing class name not match alert
 @TestPropertySource(locations = {
         "classpath:/secrets/pdndConfig.properties"
 })
@@ -29,7 +30,6 @@ class PdndCreateTokenRestClientImplTestIntegrated extends BaseIntegrationTest {
 
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);
-        System.out.println(result);
 
     }
 }

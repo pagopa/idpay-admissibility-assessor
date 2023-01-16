@@ -11,7 +11,7 @@ info:
   x-api-id: an x-api-id
   x-summary: an x-summary
 servers:
-  - url: '/authorization-server'
+  - url: 'http://authorization-server'
     description: Interoperability Authorization Server
 tags:
   - name: auth

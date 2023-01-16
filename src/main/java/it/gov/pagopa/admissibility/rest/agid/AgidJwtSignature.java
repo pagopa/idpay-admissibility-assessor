@@ -1,13 +1,12 @@
-package it.gov.pagopa.admissibility.rest.anpr;
+package it.gov.pagopa.admissibility.rest.agid;
 
 import com.auth0.jwt.HeaderParams;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import it.gov.pagopa.admissibility.config.AnprConfig;
+import it.gov.pagopa.admissibility.dto.agid.AgidJwtToken;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,23 +20,21 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
 
-@Component
 @Slf4j
-public class AgidJwtSignature {
-    private final AnprConfig.TokenHeader tokenHeader;
-    private final AnprConfig.TokenPayload tokenPayload;
+public abstract class AgidJwtSignature {
+    private final AgidJwtToken.AgidJwtTokenHeader tokenHeader;
+    private final AgidJwtToken.AgidJwtTokenPayload tokenPayload;
 
     private final String cert;
     private final String key;
     private final String pub;
 
-    public AgidJwtSignature(AnprConfig.TokenHeader tokenHeader,
-                            AnprConfig.TokenPayload tokenPayload,
-                            @Value("${app.anpr.web-client.agid.secure.cert}") String cert,
-                            @Value("${app.anpr.web-client.agid.secure.key}") String key,
-                            @Value("${app.anpr.web-client.agid.secure.pub}") String pub) {
-        this.tokenHeader = tokenHeader;
-        this.tokenPayload = tokenPayload;
+    protected AgidJwtSignature(AgidJwtToken agidJwtToken,
+                            String cert,
+                            String key,
+                            String pub) {
+        this.tokenHeader = agidJwtToken.getHeader();
+        this.tokenPayload = agidJwtToken.getPayload();
         this.cert = cert;
         this.key = key;
         this.pub = pub;

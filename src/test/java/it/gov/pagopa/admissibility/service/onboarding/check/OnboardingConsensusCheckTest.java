@@ -32,7 +32,6 @@ class OnboardingConsensusCheckTest {
                 false,
                 "OK",
                 true,
-                selfDeclarationListTrueMock,
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
@@ -69,7 +68,6 @@ class OnboardingConsensusCheckTest {
                 true,
                 "OK",
                 false,
-                selfDeclarationListTrueMock,
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),
@@ -91,6 +89,8 @@ class OnboardingConsensusCheckTest {
 
     }
 
+    //Handle multi and boolean criteria
+    /*
     @Test
     void testSelfDeclarationConsensusFalse() {
 
@@ -127,6 +127,36 @@ class OnboardingConsensusCheckTest {
         assertEquals(expected, resultSelfDeclarationFalse);
 
     }
+    */
+
+    @Test
+    void testSelfDeclarationConsensusNull() {
+
+        // Given
+        LocalDateTime localDateTimeMock = LocalDateTime.now();
+
+        OnboardingDTO onboardingSelfDeclarationFalseMock = new OnboardingDTO(
+                "1",
+                "1",
+                true,
+                "OK",
+                true,
+                localDateTimeMock,
+                localDateTimeMock,
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate()
+        );
+
+        OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
+
+        // When
+        OnboardingRejectionReason resultSelfDeclarationNull = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
+
+        // Then
+        assertNull(resultSelfDeclarationNull);
+
+    }
 
     @Test
     void testConsensusTrue() {
@@ -142,7 +172,6 @@ class OnboardingConsensusCheckTest {
                 true,
                 "OK",
                 true,
-                selfDeclarationListMock,
                 localDateTimeMock,
                 localDateTimeMock,
                 new BigDecimal(100),

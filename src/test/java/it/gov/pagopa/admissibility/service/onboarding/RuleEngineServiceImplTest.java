@@ -1,10 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
@@ -61,11 +58,12 @@ class RuleEngineServiceImplTest {
         // Then
         Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieBase();
 
+        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
         Assertions.assertTrue(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now().minusMinutes(2)));
 
-        EvaluationDTO expected = new EvaluationDTO();
+        EvaluationCompletedDTO expected = new EvaluationCompletedDTO();
         expected.setInitiativeId(onboardingDTO.getInitiativeId());
         expected.setInitiativeName(initiativeConfig.getInitiativeName());
         expected.setOrganizationId(initiativeConfig.getOrganizationId());

@@ -11,15 +11,32 @@
   "response": {
     "status": "200",
     "jsonBody": {
-      "datiSoggetto": [
-        {
-          "generalita": {
-            "codiceFiscale": "FISCAL_CODE",
-            "cognome": "COGNOME",
-            "nome": "NOME"
+      "listaSoggetti": {
+        "datiSoggetto": [
+          {
+            "generalita": {
+              "codiceFiscale": {
+               "codFiscale": "fiscalCode"
+              },
+              "cognome": "lastName",
+              "nome": "name",
+              "dataNascita": "1970-01-01",
+              "senzaGiornoMese": "1970"
+            },
+            "residenza": [
+              {
+                "indirizzo": {
+                  "cap": "20143",
+                  "comune": {
+                    "nomeComune": "Milano",
+                    "siglaProvinciaIstat": "MI"
+                  }
+                }
+              }
+            ]
           }
-        }
-      ]
+        ]
+      }
     },
     "headers": {
       "Content-Type": "application/json"

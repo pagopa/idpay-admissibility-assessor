@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
@@ -26,25 +27,26 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
     public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
-        if(OnboardingConstants.ONBOARDING_STATUS_OK.equals(result.getStatus())){
-            log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+        if(result instanceof EvaluationCompletedDTO evaluationCompletedDTO){
+                if(OnboardingConstants.ONBOARDING_STATUS_OK.equals((evaluationCompletedDTO.getStatus()))) {
+                     log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+                     return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
+                         .map(c -> evaluationCompletedDTO)
+                          .switchIfEmpty(Mono.defer(() -> {
+                              log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [BUDGET_RESERVATION] initiative {} exhausted", initiativeConfig.getInitiativeId());
 
-            return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
-                    .map(c->result)
-                    .switchIfEmpty(Mono.defer(()->{
-                        log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [BUDGET_RESERVATION] initiative {} exhausted", initiativeConfig.getInitiativeId());
-
-                        result.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
-                                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
-                                        .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
-                                .build());
-                        result.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
-                        return Mono.just(result);
-                    }));
-        } else {
-            log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [RULE_ENGINE] Onboarding request of user {} into initiative {} failed: {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), result.getOnboardingRejectionReasons());
+                               evaluationCompletedDTO.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
+                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
+                                     .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
+                                     .build());
+                             evaluationCompletedDTO.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
+                             return Mono.just(evaluationCompletedDTO);
+                           }))
+                             .map(EvaluationDTO.class::cast);
+                } else {
+                    log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [RULE_ENGINE] Onboarding request of user {} into initiative {} failed: {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), evaluationCompletedDTO.getOnboardingRejectionReasons());
+                }
         }
-
         return Mono.just(result);
     }
 }

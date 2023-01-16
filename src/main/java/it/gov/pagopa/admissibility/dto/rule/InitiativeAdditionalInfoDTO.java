@@ -12,8 +12,6 @@ import java.util.List;
 @ToString
 @Builder
 public class InitiativeAdditionalInfoDTO {
-    @JsonProperty("serviceId")
-    private String serviceId;
     @JsonProperty("serviceName")
     private String serviceName;
     @JsonProperty("argument")

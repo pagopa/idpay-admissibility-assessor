@@ -1,31 +1,26 @@
 package it.gov.pagopa.admissibility.rest.anpr.residence;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
-import it.gov.pagopa.admissibility.rest.anpr.AgidJwtSignature;
+import it.gov.pagopa.admissibility.rest.agid.AnprJwtSignature;
 import it.gov.pagopa.admissibility.rest.anpr.AnprWebClient;
+import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
+import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
-import java.util.Base64;
 import java.util.Date;
 
 @Service
 @Slf4j
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
     private final WebClient webClient;
-    private final AgidJwtSignature agidJwtSignature;
+    private final AnprJwtSignature anprJwtSignature;
 
     private final String headRequestSenderCode;
     private final String headRequestAddresseeCode;
@@ -38,7 +33,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public ResidenceAssessmentRestClientImpl(AnprWebClient anprWebClient,
-                                             AgidJwtSignature agidJwtSignature,
+                                             AnprJwtSignature anprJwtSignature,
 
                                              @Value("${app.anpr.c020-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
 
@@ -50,17 +45,14 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                                              @Value("${app.anpr.c020-residenceAssessment.properties.dataRequest.personalDetailsRequest}") String dataRequestPersonalDetailsRequest,
 
                                              ObjectMapper objectMapper) {
-        this.agidJwtSignature = agidJwtSignature;
+        this.anprJwtSignature = anprJwtSignature;
 
         this.objectMapper = objectMapper;
 
-        HttpClient httpClient = anprWebClient.getHttpClientSecure();
-
-        this.webClient = WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
+        this.webClient = anprWebClient.getAnprWebClient()
+                .clone()
                 .baseUrl(residenceAssessmentBaseUrl)
                 .build();
-
 
         this.headRequestSenderCode = headRequestSenderCode;
         this.headRequestAddresseeCode = headRequestAddresseeCode;
@@ -71,46 +63,33 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
-        String requestDtoString = convertToJson(generateRequest(fiscalCode));
-        String digest = createDigestFromPayload(requestDtoString);
+        String requestDtoString = Utils.convertToJson(generateRequest(fiscalCode), objectMapper);
+        String digest = Utils.createSHA256Digest(requestDtoString);
         return webClient.post()
                 .uri("/anpr-service-e002")
                 .contentType(MediaType.APPLICATION_JSON)
                 .headers(httpHeaders -> {
                     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
                     httpHeaders.setBearerAuth(accessToken);
-                    httpHeaders.add("Agid-JWT-Signature", agidJwtSignature.createAgidJwt(digest));
+                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest));
                     httpHeaders.add("Content-Encoding", "UTF-8");
                     httpHeaders.add("Digest", digest);
                 })
                 .bodyValue(requestDtoString)
                 .retrieve()
-                .bodyToMono(RispostaE002OKDTO.class);
+                .bodyToMono(RispostaE002OKDTO.class)
+                .doOnError(e -> {
+                    throw new AnprDailyRequestLimitException(e);
+                });
         //TODO define error code for retry
-    }
 
-    private String convertToJson(RichiestaE002DTO requestE002DTO) {
-        try {
-            return objectMapper.writeValueAsString(requestE002DTO);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Error converting request dto in JSON",e);
-        }
-    }
-
-    private String createDigestFromPayload(String request) {
-        try {
-            byte[] hash = MessageDigest.getInstance("SHA-256").digest(request.getBytes(StandardCharsets.UTF_8));
-            return "SHA-256="+ Base64.getEncoder().encodeToString(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Something went wrong creating the token", e);
-        }
     }
 
     private RichiestaE002DTO generateRequest(String fiscalCode) {
         Date dateNow = new Date();
         String dateWithHoursString = new  SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
         TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
-                .idOperazioneClient(fiscalCode.concat(dateWithHoursString))
+                .idOperazioneClient(fiscalCode.concat(dateWithHoursString)) // TODO Identificativo univoco attribuito all'operazione dall'ente. Deve essere numerico e crescente. Se esiste in ANPR, l'ente riceve come esito la risposta in precedenza fornita da ANPR con lo stesso ID; se non esiste ed è inferiore all'ultimo inviato, l'elaborazione termina con errore
                 .codMittente(headRequestSenderCode)
                 .codDestinatario(headRequestAddresseeCode)
                 .operazioneRichiesta(headRequestOperationRequest)

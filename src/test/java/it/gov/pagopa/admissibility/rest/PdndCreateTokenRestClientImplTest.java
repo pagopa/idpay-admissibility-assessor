@@ -17,11 +17,11 @@ class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
 
     @Test
     void createTokenOk() {
-        String pdndToken = "PDND_TOKEN_1"; //TODO add check in the request stub
+        String pdndToken = "PDND_TOKEN_1";
 
         ClientCredentialsResponseDTO response = pdndCreateTokenRestClient.createToken(pdndToken).block();
 
         Assertions.assertNotNull(response);
-        Assertions.assertEquals("ACCESS_TOKEN_OK",response.getAccessToken());
+        Assertions.assertEquals("VALID_ACCESS_TOKEN_1",response.getAccessToken());
     }
 }

@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service;
+package it.gov.pagopa.admissibility.service.onboarding;
 
 import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;

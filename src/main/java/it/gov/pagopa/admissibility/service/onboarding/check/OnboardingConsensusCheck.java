@@ -36,12 +36,16 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
             return OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL;
         }
 
-        if (onboardingRequest.getSelfDeclarationList().size() != 0 || onboardingRequest.getSelfDeclarationList() != null) {
+        /*
+        if (!CollectionUtils.isEmpty(onboardingRequest.getSelfDeclarationList())) {
             return selfDeclarationListCheck(onboardingRequest.getSelfDeclarationList());
         }
+        */
         return null;
     }
 
+    //Handle multi and boolean criteria
+    /*
     private String selfDeclarationListCheck(Map<String, Boolean> selfDeclarationList) {
         for (Map.Entry<String, Boolean> selfDeclaration : selfDeclarationList.entrySet()) {
             if (Boolean.FALSE.equals(selfDeclaration.getValue())) {
@@ -50,5 +54,6 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
         }
         return null;
     }
+    */
 
 }
