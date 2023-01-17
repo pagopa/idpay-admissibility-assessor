@@ -40,6 +40,6 @@ class IseeConsultationSoapClientImplSSLKOTest{
         launcher.registerTestExecutionListeners(listener);
         launcher.execute(request);
 
-        Assertions.assertEquals(1,listener.getSummary().getTestsFailedCount());
+        Assertions.assertEquals(2,listener.getSummary().getTestsFailedCount());
     }
 }

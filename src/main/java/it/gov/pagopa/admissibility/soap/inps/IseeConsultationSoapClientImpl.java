@@ -31,10 +31,22 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
     }
 
     @Override
+    public Mono<ConsultazioneIndicatoreResponseType> getIsee(String fiscalCode) {
+        return callService(fiscalCode)
+                .flatMap(response -> {
+                    ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
+                    if (result.getEsito() != EsitoEnum.OK) {
+                        //TODO Define what to do when result is different from ok
+                        return Mono.empty();
+                    } else {
+                        return Mono.just(result);
+                    }
+                });
+    }
+
     public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode) {
         return Mono.create(
                 sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode), into(sink))); //TODO confirm operation to call
-        //TODO Define what to do when result is different from ok
     }
 
     private ConsultazioneIndicatoreRequestType getRequest(String fiscalCode) {
@@ -51,4 +63,5 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
         return consultazioneIndicatoreRequestType;
     }
+
 }
