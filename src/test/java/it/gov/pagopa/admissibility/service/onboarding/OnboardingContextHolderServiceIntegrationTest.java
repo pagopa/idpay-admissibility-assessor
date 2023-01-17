@@ -149,7 +149,8 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .pdndToken("PDND-TOKEN")
+                .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
+                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION")
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .build();
