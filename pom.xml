@@ -101,6 +101,11 @@
 			<artifactId>java-jwt</artifactId>
 			<version>4.2.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.ws</groupId>
+			<artifactId>jaxws-rt</artifactId>
+			<version>2.3.3</version>
+		</dependency>
 
 		<!--TEST-->
 		<dependency>
@@ -294,6 +299,27 @@
 						</configuration>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxws-maven-plugin</artifactId>
+				<version>2.6</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<wsdlDirectory>${project.basedir}/docs/wsclient/inps/</wsdlDirectory>
+					<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client</packageName>
+					<sourceDestDir>${project.build.directory}/generated-sources/wsimport/</sourceDestDir>
+					<bindingFiles>
+						<bindingFile>${project.basedir}/docs/wsclient/inps/ConsultazioneISEE_async_mapping.xml</bindingFile>
+						<bindingFile>${project.basedir}/docs/wsclient/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+					</bindingFiles>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

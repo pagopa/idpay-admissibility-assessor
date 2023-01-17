@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<jaxws:bindings
+        wsdlLocation="ConsultazioneISEE_v2.8_PDND.wsdl"
+        xmlns:jaxws="http://java.sun.com/xml/ns/jaxws">
+    <jaxws:enableAsyncMapping>true</jaxws:enableAsyncMapping>
+</jaxws:bindings>
