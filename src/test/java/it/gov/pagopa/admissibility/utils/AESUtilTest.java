@@ -16,12 +16,12 @@ class AESUtilTest {
     public static final String SALT = "SALT_SAMPLE";
     public static final int KEY_SIZE = 256;
     public static final int ITERATION_COUNT = 10000;
-    public static final String PLAIN_TEXT = "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy ";
-    public static final String PASSPHRASE = "the quick brown fox jumps over the lazy dog";
+    public static final String PLAIN_TEXT = "plain_text";
+    public static final String PASSPHRASE = "passphrase";
     public static final String GCM_IV = "IV_SAMPLE";
     public static final int GCM_TAG_LENGTH = 16;
 
-    public static final String CIPHER_TEXT_AES_GCM_NO_PADDING_KEY_256_ITERATION_10000 = "wzQD/tLo8vghu5EvhZYDaUnp1B5x1e1pBZJHTLkUlNYLGh/rrzkGgFMtrjZUEgOsZoKfJ5gL4DWQN209PooN0kwq6XTt1Kuj5NF2tvyO5yadXmqvV0DbRIQ";
+    public static final String CIPHER_TEXT_AES_GCM_NO_PADDING_KEY_256_ITERATION_10000 = "eofV/2XzqR1oW9hue3ckXmLfp9UUz1dki6c";
 
     @Test
     void testMultiEncrypt() {

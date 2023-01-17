@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
@@ -39,6 +40,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
     private static final String FISCAL_CODE = "FISCAL_CODE";
+    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
+    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
 
     @Mock
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
@@ -58,10 +61,11 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private InitiativeConfig initiativeConfig;
     private RispostaE002OKDTO anprAnswer;
     private Message<String> message;
+    private ApiKeysPDND apiKeysPDND;
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(null, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(null, 60L, false, createTokenServiceMock, userFiscalCodeServiceMock, residenceAssessmentServiceMock, tipoResidenzaDTO2ResidenceMapper, onboardingContextHolderServiceMock);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
@@ -81,17 +85,24 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .pdndToken("PDND_TOKEN")
+                .apiKeyClientId(API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
+                .build();
+
+        apiKeysPDND = ApiKeysPDND.builder()
+                .apiKeyClientId(API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
                 .build();
 
         anprAnswer = buildAnprAnswer();
 
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
 
-        Mockito.when(createTokenServiceMock.getToken(initiativeConfig.getPdndToken())).thenReturn(Mono.just(ACCESS_TOKEN));
+        Mockito.when(onboardingContextHolderServiceMock.getPDNDapiKeys(initiativeConfig)).thenReturn(apiKeysPDND);
+        Mockito.when(createTokenServiceMock.getToken(apiKeysPDND)).thenReturn(Mono.just(ACCESS_TOKEN));
         Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingDTO.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
     }
 

@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
@@ -26,6 +27,8 @@ import java.time.Period;
 import java.util.List;
 
 class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest {
+    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
+    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
 
     @Autowired
     private CreateTokenService createTokenService;
@@ -63,7 +66,8 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .pdndToken("PDND_TOKEN")
+                .apiKeyClientId(API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)

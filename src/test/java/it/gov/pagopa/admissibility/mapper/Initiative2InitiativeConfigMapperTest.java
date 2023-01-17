@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 class Initiative2InitiativeConfigMapperTest {
@@ -96,7 +97,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertTrue(result.getRankingFields().isEmpty());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes");
+        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
     }
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
@@ -116,7 +117,6 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setInitiativeName("INITIATIVENAME");
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
         initiative2BuildDTO.setStatus("STATUS");
-        initiative2BuildDTO.setPdndToken("PDNDTOKEN");
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                 .startDate(LocalDate.MIN)
@@ -131,6 +131,8 @@ class Initiative2InitiativeConfigMapperTest {
                         AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).build(),
                         AutomatedCriteriaDTO.builder().code("CODE3").build()
                 ))
+                .apiKeyClientId("API_KEY_CLIENT_ID")
+                .apiKeyClientAssertion("API_KEY_CLIENT_ASSERTION")
                 .build());
 
         return initiative2BuildDTO;
@@ -141,7 +143,8 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getInitiativeId(), result.getInitiativeId());
         Assertions.assertSame(initiative2BuildDTO.getInitiativeName(), result.getInitiativeName());
         Assertions.assertSame(initiative2BuildDTO.getOrganizationId(), result.getOrganizationId());
-        Assertions.assertSame(initiative2BuildDTO.getPdndToken(), result.getPdndToken());
+        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientId(), result.getApiKeyClientId());
+        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientAssertion(), result.getApiKeyClientAssertion());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getStartDate(), result.getStartDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());

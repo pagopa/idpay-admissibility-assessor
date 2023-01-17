@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.rest;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -21,12 +22,19 @@ class PdndCreateTokenRestClientImplTestIntegrated extends BaseIntegrationTest {
     private PdndCreateTokenRestClient pdndCreateTokenRestClient;
 
     @Value("${app.pdnd.token-pdnd}")
-    private String pdndToken;
+    private String apiKeyClientAssertion;
+
+    @Value("${app.pdnd.properties.clientId}")
+    private String apiKeyClientId;
 
     @Test
     void getToken(){
+        ApiKeysPDND apiKeysPDND_1 = ApiKeysPDND.builder()
+                .apiKeyClientId(apiKeyClientId)
+                .apiKeyClientAssertion(apiKeyClientAssertion)
+                .build();
 
-        ClientCredentialsResponseDTO result = pdndCreateTokenRestClient.createToken(pdndToken).block();
+        ClientCredentialsResponseDTO result = pdndCreateTokenRestClient.createToken(apiKeysPDND_1).block();
 
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);

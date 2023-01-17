@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.rest;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -12,16 +13,21 @@ import org.springframework.test.context.TestPropertySource;
 })
 class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
 
+    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
+    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
     @Autowired
     private PdndCreateTokenRestClient pdndCreateTokenRestClient;
 
     @Test
     void createTokenOk() {
-        String pdndToken = "PDND_TOKEN_1";
+        ApiKeysPDND apiKeysPDND_1 = ApiKeysPDND.builder()
+                .apiKeyClientId(API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .build();
 
-        ClientCredentialsResponseDTO response = pdndCreateTokenRestClient.createToken(pdndToken).block();
+        ClientCredentialsResponseDTO response = pdndCreateTokenRestClient.createToken(apiKeysPDND_1).block();
 
         Assertions.assertNotNull(response);
-        Assertions.assertEquals("ACCESS_TOKEN_OK",response.getAccessToken());
+        Assertions.assertEquals("VALID_ACCESS_TOKEN_1",response.getAccessToken());
     }
 }
