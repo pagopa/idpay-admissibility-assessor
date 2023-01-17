@@ -2,12 +2,9 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoGeneralitaDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoResidenzaDTO;
-import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -79,7 +76,6 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
                 ? anprInvocationService.invoke(accessToken, fiscalCode)
                 : Mono.just(Optional.empty());
-        ;
 
         return inpsInvocation
                 .zipWith(anprInvocation)

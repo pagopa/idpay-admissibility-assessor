@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
@@ -36,9 +37,7 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     @Autowired
     private UserFiscalCodeService userFiscalCodeService;
     @Autowired
-    private ResidenceAssessmentService residenceAssessmentService;
-    @Autowired
-    private TipoResidenzaDTO2ResidenceMapper residenceMapper;
+    private AnprInvocationService anprInvocationService;
 
     @Autowired
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;

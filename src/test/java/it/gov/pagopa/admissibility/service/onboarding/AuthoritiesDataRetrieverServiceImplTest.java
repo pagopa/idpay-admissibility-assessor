@@ -4,8 +4,11 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
+import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsUtils;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -14,7 +17,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -28,6 +30,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,9 +41,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private static final String FISCAL_CODE = "FISCAL_CODE";
 
     @Mock
-    private OnboardingContextHolderService onboardingContextHolderServiceMock;
-
-    @Mock
     private CreateTokenService createTokenServiceMock;
     @Mock
     private UserFiscalCodeService userFiscalCodeServiceMock;
@@ -48,6 +48,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private AnprInvocationService anprInvocationServiceSpy;
     @Mock
     private StreamBridge streamBridgeMock;
+
+    private final TipoResidenzaDTO2ResidenceMapper residenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -66,8 +68,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .tc(true)
                 .status("STATUS")
                 .pdndAccept(true)
-                .tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
-                .criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
+                .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
+                .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .build();
 
         LocalDate now = LocalDate.now();
@@ -84,7 +86,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .rankingInitiative(Boolean.TRUE)
                 .build();
 
-        anprAnswer = buildAnprAnswer();
+        anprAnswer = PdndInvocationsUtils.buildAnprAnswer();
 
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
 
@@ -99,8 +101,16 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
+        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
+
         Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
-        Mockito.doAnswer(Answers.CALLS_REAL_METHODS).when(anprInvocationServiceSpy).extract(anprAnswer, true, true, onboardingDTO);
+        Mockito.doAnswer(i -> {
+            // TODO ISEE
+            onboardingDTO.setResidence(residenceMapper.apply(getResidenceFromAnswer(anprAnswer)));
+            onboardingDTO.setBirthDate(getBirthDateFromAnswer(anprAnswer));
+            return null;
+        }).when(anprInvocationServiceSpy).extract(anprAnswer, true, true, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -109,10 +119,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("74585"), result.getIsee()); // TODO
 
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
 
-        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
         Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
 
         //TODO verify call INPS
@@ -127,7 +135,11 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
         Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
-        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
+        Mockito.doAnswer(i -> {
+            // TODO ISEE
+            onboardingDTO.setResidence(residenceMapper.apply(getResidenceFromAnswer(anprAnswer)));
+            return null;
+        }).when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -153,7 +165,10 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
         Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
-        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
+        Mockito.doAnswer(i -> {
+            onboardingDTO.setResidence(residenceMapper.apply(getResidenceFromAnswer(anprAnswer)));
+            return null;
+        }).when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -180,7 +195,11 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprAnswer)));
-        Mockito.doCallRealMethod().when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
+        Mockito.doAnswer(i -> {
+            // TODO ISEE
+            onboardingDTO.setResidence(residenceMapper.apply(getResidenceFromAnswer(anprAnswer)));
+            return null;
+        }).when(anprInvocationServiceSpy).extract(anprAnswer, true, false, onboardingDTO);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -240,34 +259,17 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.verify(streamBridgeMock).send(Mockito.anyString(), Mockito.any());
     }
 
-    private RispostaE002OKDTO buildAnprAnswer() {
-
-        return new RispostaE002OKDTO().listaSoggetti(buildListaSoggetti());
+    private TipoResidenzaDTO getResidenceFromAnswer(RispostaE002OKDTO anprAnswer) {
+        return anprAnswer.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0);
     }
 
-    private TipoListaSoggettiDTO buildListaSoggetti() {
-        TipoGeneralitaDTO generalita = new TipoGeneralitaDTO();
-        generalita.setDataNascita("2001-02-04");
-        generalita.setSenzaGiornoMese("2001");
+    private BirthDate getBirthDateFromAnswer(RispostaE002OKDTO anprAnswer) {
+        String year = anprAnswer.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getSenzaGiornoMese();
+        Integer age = Period.between(
+                        LocalDate.parse(anprAnswer.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getDataNascita()),
+                        LocalDate.now())
+                .getYears();
 
-        TipoComuneDTO comune = new TipoComuneDTO();
-        comune.setNomeComune("Milano");
-        comune.setSiglaProvinciaIstat("MI");
-
-        TipoIndirizzoDTO indirizzo = new TipoIndirizzoDTO();
-        indirizzo.setCap("20143");
-        indirizzo.setComune(comune);
-
-        TipoResidenzaDTO residenza = new TipoResidenzaDTO();
-        residenza.setIndirizzo(indirizzo);
-
-        TipoDatiSoggettiEnteDTO datiSoggetto = new TipoDatiSoggettiEnteDTO();
-        datiSoggetto.setGeneralita(generalita);
-        datiSoggetto.setResidenza(List.of(residenza));
-
-        TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
-        listaSoggetti.setDatiSoggetto(List.of(datiSoggetto));
-
-        return listaSoggetti;
+        return new BirthDate(year, age);
     }
 }

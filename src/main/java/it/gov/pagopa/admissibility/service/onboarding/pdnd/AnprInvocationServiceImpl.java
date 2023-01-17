@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.onboarding;
+package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
