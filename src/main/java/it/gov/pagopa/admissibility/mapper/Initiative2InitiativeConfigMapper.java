@@ -13,6 +13,7 @@ import java.util.function.Function;
 
 @Service
 public class Initiative2InitiativeConfigMapper implements Function<Initiative2BuildDTO, InitiativeConfig> {
+
     @Override
     public InitiativeConfig apply(Initiative2BuildDTO initiative) {
         List<AutomatedCriteriaDTO> automatedCriteriaList = initiative.getBeneficiaryRule().getAutomatedCriteria();
@@ -21,7 +22,8 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .initiativeName(initiative.getInitiativeName())
                 .organizationId(initiative.getOrganizationId())
                 .status(initiative.getStatus())
-                .pdndToken(initiative.getPdndToken())
+                .apiKeyClientId(initiative.getBeneficiaryRule().getApiKeyClientId())
+                .apiKeyClientAssertion(initiative.getBeneficiaryRule().getApiKeyClientAssertion())
                 .automatedCriteriaCodes(automatedCriteriaList != null ? automatedCriteriaList.stream().map(AutomatedCriteriaDTO::getCode).toList() : null)
                 .initiativeBudget(initiative.getGeneral().getBudget())
                 .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())

@@ -1,8 +1,10 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
@@ -30,18 +32,27 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     private final DroolsRuleRepository droolsRuleRepository;
     private final ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate;
     private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
+    private final Map<String, ApiKeysPDND> apiKeysPDNDConcurrentMap = new ConcurrentHashMap<>();
 
     private final boolean isRedisCacheEnabled;
+    private final AESTokenService aesTokenService;
     public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
 
     private KieBase kieBase;
 
 
-    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher, @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate, @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled) {
+    public OnboardingContextHolderServiceImpl(
+            KieContainerBuilderService kieContainerBuilderService,
+            DroolsRuleRepository droolsRuleRepository,
+            ApplicationEventPublisher applicationEventPublisher,
+            @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
+            @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
+            AESTokenService aesTokenService) {
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
+        this.aesTokenService = aesTokenService;
         refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
     }
 
@@ -108,6 +119,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         initiativeId2Config.put(initiativeConfig.getInitiativeId(),initiativeConfig);
     }
 
+
     private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
         log.debug("[CACHE_MISS] Cannot find locally initiativeId {}", initiativeId);
         long startTime = System.currentTimeMillis();
@@ -118,6 +130,30 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             return null;
         }
         return droolsRule.getInitiativeConfig();
+    }
+    //endregion
+
+    //region PDND Api Keys holder
+    @Override
+    public void setPDNDapiKeys(InitiativeConfig initiativeConfig) {
+        if(initiativeConfig.getApiKeyClientId() != null && initiativeConfig.getApiKeyClientAssertion() != null) {
+            apiKeysPDNDConcurrentMap.put(
+                    initiativeConfig.getInitiativeId(),
+                    getApiKeysPDND(initiativeConfig)
+            );
+        }
+    }
+
+    @Override
+    public ApiKeysPDND getPDNDapiKeys(InitiativeConfig initiativeConfig) {
+        return apiKeysPDNDConcurrentMap.computeIfAbsent(initiativeConfig.getInitiativeId(), initiativeId -> getApiKeysPDND(initiativeConfig));
+    }
+
+    private ApiKeysPDND getApiKeysPDND(InitiativeConfig initiativeConfig) {
+        return ApiKeysPDND.builder()
+                .apiKeyClientId(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()))
+                .apiKeyClientAssertion(aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion()))
+                .build();
     }
     //endregion
 }

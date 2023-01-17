@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.rest;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.ApiClient;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.api.AuthApi;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
@@ -21,19 +22,16 @@ public class PdndCreateTokenRestClientImpl implements PdndCreateTokenRestClient 
 
     private final String clientAssertionType;
     private final String grantType;
-    private final String clientId;
 
-    public PdndCreateTokenRestClientImpl(@Value("${app.pdnd.access.token-base-url}") String pdndAccesTokenBaseUrl,
+    public PdndCreateTokenRestClientImpl(@Value("${app.pdnd.access.token-base-url}") String pdndAccessTokenBaseUrl,
                                          @Value("${app.pdnd.properties.clientAssertionType}") String clientAssertionType,
                                          @Value("${app.pdnd.properties.grant-type}") String grantType,
-                                         @Value("${app.pdnd.properties.clientId}") String clientId, //TODO to send with initiative
 
                                          @Value("${app.pdnd.web-client.timeouts.connect-timeout-millis}") int pdndConnectTimeOutMillis,
                                          @Value("${app.pdnd.web-client.timeouts.response-timeout-millis}") int pdndResponseTimeOutMillis,
                                          @Value("${app.pdnd.web-client.timeouts.read-timeout-handler}") int pdndReadTimeoutHandlerMillis) {
         this.clientAssertionType = clientAssertionType;
         this.grantType = grantType;
-        this.clientId = clientId;
 
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, pdndConnectTimeOutMillis)
@@ -46,17 +44,17 @@ public class PdndCreateTokenRestClientImpl implements PdndCreateTokenRestClient 
                 .build();
 
         ApiClient  newApiClient = new ApiClient(webClient);
-        newApiClient.setBasePath(pdndAccesTokenBaseUrl);
+        newApiClient.setBasePath(pdndAccessTokenBaseUrl);
         authApi = new AuthApi(newApiClient);
     }
 
     @Override
-    public Mono<ClientCredentialsResponseDTO> createToken(String pdndToken) {
+    public Mono<ClientCredentialsResponseDTO> createToken(ApiKeysPDND pdndTokens) {
         return authApi.createToken(
-                pdndToken,
+                pdndTokens.getApiKeyClientAssertion(),
                 clientAssertionType,
                 grantType,
-                clientId
+                pdndTokens.getApiKeyClientId()
         );
     }
 }

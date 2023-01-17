@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -23,7 +24,8 @@ public class InitiativeConfig {
     private String status;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String pdndToken;
+    private String apiKeyClientId;
+    private String apiKeyClientAssertion;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;

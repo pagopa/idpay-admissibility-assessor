@@ -39,6 +39,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final UserFiscalCodeService userFiscalCodeService;
     private final ResidenceAssessmentService residenceAssessmentService;
     private final TipoResidenzaDTO2ResidenceMapper residenceMapper;
+    private final OnboardingContextHolderService onboardingContextHolderService;
 
     private final StreamBridge streamBridge;
 
@@ -49,7 +50,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                CreateTokenService createTokenService,
                                                UserFiscalCodeService userFiscalCodeService,
                                                ResidenceAssessmentService residenceAssessmentService,
-                                               TipoResidenzaDTO2ResidenceMapper residenceMapper) {
+                                               TipoResidenzaDTO2ResidenceMapper residenceMapper,
+                                               OnboardingContextHolderService onboardingContextHolderService) {
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
         this.nextDay = nextDay;
@@ -57,6 +59,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.userFiscalCodeService = userFiscalCodeService;
         this.residenceAssessmentService = residenceAssessmentService;
         this.residenceMapper = residenceMapper;
+        this.onboardingContextHolderService = onboardingContextHolderService;
     }
 
     @Override
@@ -78,7 +81,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         );
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
-            return  createTokenService.getToken(initiativeConfig.getPdndToken())
+            return  createTokenService.getToken(onboardingContextHolderService.getPDNDapiKeys(initiativeConfig))
                     .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
                     .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message));
         }

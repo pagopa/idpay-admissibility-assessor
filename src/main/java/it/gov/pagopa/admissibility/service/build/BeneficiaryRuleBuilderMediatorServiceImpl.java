@@ -103,7 +103,10 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
                 .filter(this.beneficiaryRuleFilterService::filter)
                 .map(beneficiaryRule2DroolsRule)
                 .flatMap(droolsRuleRepository::save)
-                .doOnNext(i -> onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig()))
+                .doOnNext(i -> {
+                    onboardingContextHolderService.setInitiativeConfig(i.getInitiativeConfig());
+                    onboardingContextHolderService.setPDNDapiKeys(i.getInitiativeConfig());
+                })
                 .flatMap(this::initializeCounters);
     }
 
