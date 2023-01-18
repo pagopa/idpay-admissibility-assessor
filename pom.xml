@@ -318,6 +318,8 @@
 					<bindingFiles>
 						<bindingFile>${project.basedir}/docs/wsclient/inps/ConsultazioneISEE_async_mapping.xml</bindingFile>
 						<bindingFile>${project.basedir}/docs/wsclient/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+						<bindingFile>${project.basedir}/docs/wsclient/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
+						<bindingFile>${project.basedir}/docs/wsclient/inps/ISEE_TipiComuni.xsd</bindingFile>
 					</bindingFiles>
 				</configuration>
 			</plugin>

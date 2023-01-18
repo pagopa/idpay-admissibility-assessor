@@ -3,8 +3,10 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -18,7 +20,6 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.*;
 import java.util.Optional;
 import java.util.Random;
@@ -31,6 +32,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private final CreateTokenService createTokenService;
     private final UserFiscalCodeService userFiscalCodeService;
+    private final InpsInvocationService inpsInvocationService;
     private final AnprInvocationService anprInvocationService;
     private final StreamBridge streamBridge;
     private final OnboardingContextHolderService onboardingContextHolderService;
@@ -41,6 +43,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CreateTokenService createTokenService,
                                                UserFiscalCodeService userFiscalCodeService,
+                                               InpsInvocationService inpsInvocationService,
                                                AnprInvocationService anprInvocationService,
                                                OnboardingContextHolderService onboardingContextHolderService) {
         this.streamBridge = streamBridge;
@@ -48,6 +51,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.nextDay = nextDay;
         this.createTokenService = createTokenService;
         this.userFiscalCodeService = userFiscalCodeService;
+        this.inpsInvocationService = inpsInvocationService;
         this.anprInvocationService = anprInvocationService;
         this.onboardingContextHolderService = onboardingContextHolderService;
     }
@@ -63,7 +67,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         );
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
-            return  createTokenService.getToken(onboardingContextHolderService.getPDNDapiKeys(initiativeConfig))
+            return createTokenService.getToken(onboardingContextHolderService.getPDNDapiKeys(initiativeConfig))
                     .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
                     .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message));
         }
@@ -72,8 +76,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<OnboardingDTO> invokePdndServices(String accessToken, OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message) {
-        Mono<Optional<Object>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
-                ? Mono.just(Optional.of("TODO Call INPS Service"))
+        Mono<Optional<ConsultazioneIndicatoreResponseType>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
+                ? inpsInvocationService.invoke(fiscalCode)
                 : Mono.just(Optional.empty());
 
         Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
@@ -101,11 +105,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 });
     }
 
-    private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, Object inpsResponse, RispostaE002OKDTO anprResponse) {
-        if (inpsResponse != null && pdndServicesInvocation.getIsee) {
-            onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));  // TODO
-        }
+    private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, ConsultazioneIndicatoreResponseType inpsResponse, RispostaE002OKDTO anprResponse) {
+        // INPS
+        inpsInvocationService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest);
 
+        // ANPR
         anprInvocationService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest);
     }
 
@@ -131,12 +135,6 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         } else {
             return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
         }
-    }
-
-    private static Random userIdBasedIntegerGenerator(OnboardingDTO onboardingRequest) {
-        @SuppressWarnings("squid:S2245")
-        Random random = new Random(onboardingRequest.getUserId().hashCode());
-        return random;
     }
 
     @AllArgsConstructor

@@ -38,7 +38,7 @@ class AnprInvocationServiceImplTest {
     void setup() {
         anprInvocationService = new AnprInvocationServiceImpl(residenceAssessmentServiceMock, residenceMapper);
 
-        anprAnswer = PdndInvocationsUtils.buildAnprAnswer();
+        anprAnswer = PdndInvocationsTestUtils.buildAnprResponse();
 
         onboardingRequest = OnboardingDTO.builder()
                 .userId("USERID")

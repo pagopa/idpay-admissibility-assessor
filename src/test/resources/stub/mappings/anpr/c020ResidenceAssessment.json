@@ -16,7 +16,7 @@
           {
             "generalita": {
               "codiceFiscale": {
-               "codFiscale": "fiscalCode"
+               "codFiscale": "CF_OK"
               },
               "cognome": "lastName",
               "nome": "name",
