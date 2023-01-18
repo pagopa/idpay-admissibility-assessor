@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -26,6 +28,9 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.service.AuthoritiesDataRetrieverServiceImpl=WARN",
+})
 class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest {
     public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
     public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
@@ -35,9 +40,7 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     @Autowired
     private UserFiscalCodeService userFiscalCodeService;
     @Autowired
-    private ResidenceAssessmentService residenceAssessmentService;
-    @Autowired
-    private TipoResidenzaDTO2ResidenceMapper residenceMapper;
+    private AnprInvocationService anprInvocationService;
 
     @Autowired
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;

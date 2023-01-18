@@ -40,10 +40,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 @Slf4j
-@ContextConfiguration(inheritInitializers = false)
+@ContextConfiguration(classes = {AdmissibilityProcessorConfigTest.MediatorSpyConfiguration.class})
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
+    public static final String RESIDENCE_INITIATIVE_ID = "RESIDENCE_INITIATIVE_ID";
+    public static final String BIRTHDATE_INITIATIVE_ID = "BIRTHDATE_INITIATIVE_ID";
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
@@ -124,6 +126,38 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                 }),
 
                         Stream.of(
+                                Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
+                                        .initiativeId(RESIDENCE_INITIATIVE_ID)
+                                        .initiativeName("RESIDENCE_INITIATIVE_NAME")
+                                        .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                                .automatedCriteria(List.of(
+                                                        AutomatedCriteriaDTO.builder()
+                                                                .authority("AUTH1")
+                                                                .code(CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE)
+                                                                .field("city")
+                                                                .operator(FilterOperator.EQ)
+                                                                .value("Rome")
+                                                                .build()
+                                                ))
+                                                .build())
+                                        .build(),
+
+                                Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
+                                        .initiativeId(BIRTHDATE_INITIATIVE_ID)
+                                        .initiativeName("BIRTHDATE_INITIATIVE_NAME")
+                                        .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                                .automatedCriteria(List.of(
+                                                        AutomatedCriteriaDTO.builder()
+                                                                .authority("AUTH1")
+                                                                .code(CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE)
+                                                                .field("age")
+                                                                .operator(FilterOperator.LT)
+                                                                .value("10")
+                                                                .build()
+                                                ))
+                                                .build())
+                                        .build(),
+
                                 Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
                                         .initiativeId("NEVERSELECTEDINITIATIVE")
                                         .initiativeName("NEVERSELECTEDINITIATIVE_NAME")
@@ -222,13 +256,13 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
 
             ),
-            // AUTOMATED_CRITERIA fail
+            // AUTOMATED_CRITERIA fail due to ISEE
             Pair.of(
                     bias -> {
                         OnboardingDTO onboardingAutomaticCriteriaFail = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                                .isee(BigDecimal.TEN)
+                                .isee(BigDecimal.TEN)   // TODO remove after INPS integration
                                 .build();
-                        Mockito.doReturn(Mono.just(onboardingAutomaticCriteriaFail))
+                        Mockito.doReturn(Mono.just(onboardingAutomaticCriteriaFail))    // TODO remove after INPS integration, the failing answer should be configured in wireMock stub
                                         .when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.eq(onboardingAutomaticCriteriaFail),Mockito.any(),Mockito.any());
                         return onboardingAutomaticCriteriaFail;
                     },
@@ -238,6 +272,34 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"))
                                     .authority("INPS")
                                     .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                                    .build()
+                            , true)
+            ),
+            // AUTOMATED_CRITERIA fail due to RESIDENCE
+            Pair.of(
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                            .initiativeId(RESIDENCE_INITIATIVE_ID)
+                            .build(),
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("RESIDENCE"))
+                                    .authority("AGID")
+                                    .authorityLabel("Agenzia per l'Italia Digitale")
+                                    .build()
+                            , true)
+            ),
+            // AUTOMATED_CRITERIA fail due to BIRTHDATE
+            Pair.of(
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                            .initiativeId(BIRTHDATE_INITIATIVE_ID)
+                            .build(),
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("BIRTHDATE"))
+                                    .authority("AGID")
+                                    .authorityLabel("Agenzia per l'Italia Digitale")
                                     .build()
                             , true)
             ),
