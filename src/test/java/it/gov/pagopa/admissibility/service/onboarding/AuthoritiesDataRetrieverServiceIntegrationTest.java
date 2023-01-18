@@ -1,16 +1,13 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
-import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -32,8 +29,8 @@ import java.util.List;
         "logging.level.it.gov.pagopa.admissibility.service.AuthoritiesDataRetrieverServiceImpl=WARN",
 })
 class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest {
-    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
-    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ID = "a5vd3W7VnhR5Sv44qxgXonZIlMAX9cWnCRiQq5h8";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ASSERTION = "a5vd3W7VnhR5Sv44ow+VbR5Rq7pMHG/U2PhWdEnzWPx5gHYqhA";
 
     @Autowired
     private CreateTokenService createTokenService;
@@ -69,8 +66,8 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .apiKeyClientId(API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .apiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION)
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)

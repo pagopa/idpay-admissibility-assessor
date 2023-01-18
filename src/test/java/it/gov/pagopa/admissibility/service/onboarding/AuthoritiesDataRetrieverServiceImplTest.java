@@ -40,8 +40,10 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
     private static final String FISCAL_CODE = "FISCAL_CODE";
-    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
-    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ID = "a5vd3W7VnhR5Sv44qxgXonZIlMAX9cWnCRiQq5h8";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ASSERTION = "a5vd3W7VnhR5Sv44ow+VbR5Rq7pMHG/U2PhWdEnzWPx5gHYqhA";
+    public static final String DECRYPTED_API_KEY_CLIENT_ID = "DECRYPTED_API_KEY_CLIENT_ID";
+    public static final String DECRYPTED_API_KEY_CLIENT_ASSERTION = "DECRYPTED_API_KEY_CLIENT_ASSERTION";
 
     @Mock
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
@@ -87,16 +89,16 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .apiKeyClientId(API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .apiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION)
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
                 .build();
 
         apiKeysPDND = ApiKeysPDND.builder()
-                .apiKeyClientId(API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .apiKeyClientId(DECRYPTED_API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(DECRYPTED_API_KEY_CLIENT_ASSERTION)
                 .build();
 
         anprAnswer = PdndInvocationsUtils.buildAnprAnswer();

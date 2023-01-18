@@ -13,16 +13,16 @@ import org.springframework.test.context.TestPropertySource;
 })
 class PdndCreateTokenRestClientImplTest extends BaseIntegrationTest {
 
-    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
-    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
+    public static final String DECRYPTED_API_KEY_CLIENT_ID = "DECRYPTED_API_KEY_CLIENT_ID";
+    public static final String DECRYPTED_API_KEY_CLIENT_ASSERTION = "DECRYPTED_API_KEY_CLIENT_ASSERTION";
     @Autowired
     private PdndCreateTokenRestClient pdndCreateTokenRestClient;
 
     @Test
     void createTokenOk() {
         ApiKeysPDND apiKeysPDND_1 = ApiKeysPDND.builder()
-                .apiKeyClientId(API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .apiKeyClientId(DECRYPTED_API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(DECRYPTED_API_KEY_CLIENT_ASSERTION)
                 .build();
 
         ClientCredentialsResponseDTO response = pdndCreateTokenRestClient.createToken(apiKeysPDND_1).block();

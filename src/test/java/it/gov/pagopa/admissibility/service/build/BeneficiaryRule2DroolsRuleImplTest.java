@@ -35,8 +35,8 @@ import java.util.Collections;
 import java.util.List;
 
 class BeneficiaryRule2DroolsRuleImplTest {
-    public static final String API_KEY_CLIENT_ID = "API_KEY_CLIENT_ID";
-    public static final String API_KEY_CLIENT_ASSERTION = "API_KEY_CLIENT_ASSERTION";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ID = "ENCRYPTED_API_KEY_CLIENT_ID";
+    public static final String ENCRYPTED_API_KEY_CLIENT_ASSERTION = "ENCRYPTED_API_KEY_CLIENT_ASSERTION";
 
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final CriteriaCodeService criteriaCodeServiceMock;
@@ -120,8 +120,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .organizationId("ORGANIZATIONID")
                 .startDate(LocalDate.of(2021, 1, 1))
                 .endDate(LocalDate.of(2025, 12, 1))
-                .apiKeyClientId(API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(API_KEY_CLIENT_ASSERTION)
+                .apiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID)
+                .apiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION)
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
@@ -214,8 +214,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
         criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, null));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
-        dto.getBeneficiaryRule().setApiKeyClientId(API_KEY_CLIENT_ID);
-        dto.getBeneficiaryRule().setApiKeyClientAssertion(API_KEY_CLIENT_ASSERTION);
+        dto.getBeneficiaryRule().setApiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID);
+        dto.getBeneficiaryRule().setApiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION);
         dto.setGeneral(
                 InitiativeGeneralDTO.builder()
                         .name("NAME")
