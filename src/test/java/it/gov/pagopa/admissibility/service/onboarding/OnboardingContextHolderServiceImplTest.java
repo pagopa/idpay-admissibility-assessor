@@ -28,7 +28,9 @@ import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -63,7 +65,7 @@ class OnboardingContextHolderServiceImplTest {
         Assertions.assertNotNull(apiKeysCacheField);
         ReflectionUtils.makeAccessible(apiKeysCacheField);
 
-        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled,aesTokenServiceMock);
+        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled,aesTokenServiceMock, TestUtils.objectMapper);
     }
 
     @ParameterizedTest
@@ -247,6 +249,8 @@ class OnboardingContextHolderServiceImplTest {
     }
 
     private InitiativeConfig getInitiativeConfig() {
+        String s = getStringB64("{\"iss\":\"ISS\",\"sub\":\"SUB\",\"purposeId\":null,\"aud\":\"AUD\",\"jti\":\"jti\",\"iat\":1111111111,\"exp\":1647454566}");
+
         return InitiativeConfig.builder()
                 .initiativeId("INITIATIVE-ID")
                 .beneficiaryInitiativeBudget(BigDecimal.valueOf(100))
@@ -256,7 +260,7 @@ class OnboardingContextHolderServiceImplTest {
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
-                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION")
+                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION." + s + ".MORE-INFO")
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .rankingInitiative(Boolean.TRUE)
@@ -264,6 +268,9 @@ class OnboardingContextHolderServiceImplTest {
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
                 .build();
     }
+     private String getStringB64(String s){
+         return new String(Base64.getEncoder().encode(s.getBytes(StandardCharsets.UTF_8)));
+     }
 
     private Map<String, ApiKeysPDND> getApiKeysCache(Field apiKeysCacheField){
         Object cache = ReflectionUtils.getField(apiKeysCacheField, onboardingContextHolderService);

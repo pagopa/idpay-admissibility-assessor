@@ -1,6 +1,8 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -63,21 +65,22 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         );
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
-            return  createTokenService.getToken(onboardingContextHolderService.getPDNDapiKeys(initiativeConfig))
+            ApiKeysPDND pdndApiKeys = onboardingContextHolderService.getPDNDapiKeys(initiativeConfig);
+            return  createTokenService.getToken(pdndApiKeys)
                     .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
-                    .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message));
+                    .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message, pdndApiKeys.getAgidJwtTokenPayload()));
         }
 
         return Mono.just(onboardingRequest);
     }
 
-    private Mono<OnboardingDTO> invokePdndServices(String accessToken, OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message) {
+    private Mono<OnboardingDTO> invokePdndServices(String accessToken, OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, AgidJwtTokenPayload agidJwtTokenPayload) {
         Mono<Optional<Object>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
                 ? Mono.just(Optional.of("TODO Call INPS Service"))
                 : Mono.just(Optional.empty());
 
         Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
-                ? anprInvocationService.invoke(accessToken, fiscalCode)
+                ? anprInvocationService.invoke(accessToken, fiscalCode, agidJwtTokenPayload)
                 : Mono.just(Optional.empty());
 
         return inpsInvocation

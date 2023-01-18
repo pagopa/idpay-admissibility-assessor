@@ -5,18 +5,11 @@ import lombok.Data;
 @Data
 public class AgidJwtToken {
     protected AgidJwtTokenHeader header;
-    protected AgidJwtTokenPayload payload;
+//    protected AgidJwtTokenPayload payload; TODO
 
     @Data
     public static class AgidJwtTokenHeader {
         private String alg;
         private String typ;
-    }
-
-    @Data
-    public static class AgidJwtTokenPayload {
-        private String iss;
-        private String sub;
-        private String aud;
     }
 }

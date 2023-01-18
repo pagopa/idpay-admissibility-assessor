@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ApiKeysPDND {
-    private String apiKeyClientId;
-    private String apiKeyClientAssertion;
-    private AgidJwtTokenPayload agidJwtTokenPayload;
+public class AgidJwtTokenPayload {
+    private String iss;
+    private String sub;
+    private String aud;
 }

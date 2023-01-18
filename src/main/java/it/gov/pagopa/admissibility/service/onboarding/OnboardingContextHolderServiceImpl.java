@@ -1,5 +1,9 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -20,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -36,6 +41,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     private final boolean isRedisCacheEnabled;
     private final AESTokenService aesTokenService;
+    private final ObjectReader orAgidJwtTokenPayload;
     public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
 
     private KieBase kieBase;
@@ -47,12 +53,14 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             ApplicationEventPublisher applicationEventPublisher,
             @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
             @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
-            AESTokenService aesTokenService) {
+            AESTokenService aesTokenService,
+            ObjectMapper objectMapper) {
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
         this.aesTokenService = aesTokenService;
+        this.orAgidJwtTokenPayload = objectMapper.readerFor(AgidJwtTokenPayload.class);
         refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
     }
 
@@ -150,10 +158,23 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     private ApiKeysPDND getApiKeysPDND(InitiativeConfig initiativeConfig) {
-        return ApiKeysPDND.builder()
-                .apiKeyClientId(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()))
-                .apiKeyClientAssertion(aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion()))
-                .build();
+        try {
+            ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
+                    .apiKeyClientId(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()))
+                    .apiKeyClientAssertion(aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion()))
+                    .build();
+            apiKeysPDND.setAgidJwtTokenPayload(retrieveAgidTokenPayload(apiKeysPDND.getApiKeyClientAssertion()));
+
+            return apiKeysPDND;
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e); //TODO
+        }
+    }
+
+    private AgidJwtTokenPayload retrieveAgidTokenPayload(String clientAssertion) throws JsonProcessingException {
+        String[] splitClientAssertion = clientAssertion.split("\\.");
+        String tokenInfoFromClientAssertion = new String(Base64.getDecoder().decode(splitClientAssertion[1]));
+        return orAgidJwtTokenPayload.readValue(tokenInfoFromClientAssertion);
     }
     //endregion
 }

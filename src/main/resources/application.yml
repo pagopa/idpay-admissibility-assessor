@@ -249,11 +249,6 @@ app:
       header:
         alg: ${ANPR_DIGEST_HEADER_ALG:ES256}
         typ: ${ANPR_DIGEST_HEADER_TYP:JWT}
-      payload:
-        #TODO The fields iss, sub and aud are defined in the interoperability portal
-        iss: ${ANPR_DIGEST_ISS:}
-        sub: ${ANPR_DIGEST_SUB:}
-        aud: ${ANPR_DIGEST_PAYLOAD_AUD:${ANPR_C020_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL:}}
     web-client:
       timeouts:
         connect-timeout-millis: ${ANPR_CONNECT_TIMEOUT_MILLIS:${CONNECT_TIMEOUT_MILLIS:10000}}
