@@ -10,7 +10,6 @@ import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 class Initiative2InitiativeConfigMapperTest {

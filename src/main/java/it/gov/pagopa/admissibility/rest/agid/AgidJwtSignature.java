@@ -4,7 +4,6 @@ import com.auth0.jwt.HeaderParams;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
-import it.gov.pagopa.admissibility.config.AnprConfig;
 import it.gov.pagopa.admissibility.dto.agid.AgidJwtToken;
 import lombok.extern.slf4j.Slf4j;
 

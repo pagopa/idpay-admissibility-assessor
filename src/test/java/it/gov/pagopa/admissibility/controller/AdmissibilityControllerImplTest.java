@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.controller;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.exception.ClientExceptionNoBody;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
