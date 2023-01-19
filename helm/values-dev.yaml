@@ -49,3 +49,6 @@ microservice-chart:
     ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_SEND_TYPE: "TEST"
     #Now we are using MOCK on APIM for ANPR and ISEE
     ANPR_C020_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
+    INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps
+    #TODO Temporary External MOCK for PDND
+    PDND_ACCESS_TOKEN_BASE_URL: https://uat.gateway.test.pdnd-interop.pagopa.it/authorization-server
