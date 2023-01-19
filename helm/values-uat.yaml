@@ -47,3 +47,5 @@ microservice-chart:
     CACHE_REFRESH_MS_RATE: "900000"
     REDIS_CACHE_ENABLED: "true"
     ANPR_C020_RESIDENCE_ASSESSMENT_PROPERTIES_SEND_TYPE: "TEST"
+    #TODO Now we are using MOCK on APIM for ANPR and ISEE
+    ANPR_C020_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
