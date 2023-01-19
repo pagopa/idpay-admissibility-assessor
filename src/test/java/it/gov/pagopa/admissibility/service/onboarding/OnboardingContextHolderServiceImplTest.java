@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -8,6 +9,7 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
+import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,9 +30,7 @@ import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -160,10 +160,17 @@ class OnboardingContextHolderServiceImplTest {
         InitiativeConfig initiativeConfig = getInitiativeConfig();
 
         Map<String, ApiKeysPDND> apiKeysPDNDMapMock = new ConcurrentHashMap<>();
+
+        AgidJwtTokenPayload agidJwtTokenPayloadMock = AgidJwtTokenPayload.builder()
+                .iss("ISS1")
+                .sub("SUB1")
+                .aud("AUD1")
+                .build();
         apiKeysPDNDMapMock.put(initiativeConfig.getInitiativeId(),
                 ApiKeysPDND.builder()
                         .apiKeyClientId(initiativeConfig.getApiKeyClientId())
                         .apiKeyClientAssertion(initiativeConfig.getApiKeyClientAssertion())
+                        .agidJwtTokenPayload(agidJwtTokenPayloadMock)
                         .build());
 
         ReflectionUtils.setField(apiKeysCacheField, onboardingContextHolderService, apiKeysPDNDMapMock);
@@ -175,6 +182,7 @@ class OnboardingContextHolderServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(initiativeConfig.getApiKeyClientId(), result.getApiKeyClientId());
         Assertions.assertEquals(initiativeConfig.getApiKeyClientAssertion(), result.getApiKeyClientAssertion());
+        assertionAgidPayloadTokenFields(result);
         Mockito.verify(aesTokenServiceMock, Mockito.never()).decrypt(Mockito.anyString());
     }
 
@@ -194,16 +202,18 @@ class OnboardingContextHolderServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(initiativeConfig.getApiKeyClientId(), result.getApiKeyClientId());
         Assertions.assertEquals(initiativeConfig.getApiKeyClientAssertion(), result.getApiKeyClientAssertion());
+        assertionAgidPayloadTokenFields(result);
         Mockito.verify(aesTokenServiceMock, Mockito.times(2)).decrypt(Mockito.anyString());
 
         Map<String, ApiKeysPDND> apiKeysCacheValue = getApiKeysCache(apiKeysCacheField);
-        Assertions.assertTrue(apiKeysCacheValue.containsKey(initiativeConfig.getInitiativeId()));
+        ApiKeysPDND apiKeysPdndInCache = apiKeysCacheValue.get(initiativeConfig.getInitiativeId());
+        assertionAgidPayloadTokenFields(apiKeysPdndInCache);
 
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testSetPDNDapiKeysInitiativeWithAutomedCriteria(boolean isRedisCacheEnabled){
+    void testSetPDNDapiKeysInitiativeWithAutomatedCriteria(boolean isRedisCacheEnabled){
         // Given
         init(isRedisCacheEnabled);
 
@@ -217,11 +227,21 @@ class OnboardingContextHolderServiceImplTest {
         // Then
         Map<String, ApiKeysPDND> apiKeysCacheValue = getApiKeysCache(apiKeysCacheField);
         Assertions.assertTrue(apiKeysCacheValue.containsKey(initiativeConfig.getInitiativeId()));
+        ApiKeysPDND apiKeysPdndInCache = apiKeysCacheValue.get(initiativeConfig.getInitiativeId());
+        assertionAgidPayloadTokenFields(apiKeysPdndInCache);
+    }
+
+    private void assertionAgidPayloadTokenFields(ApiKeysPDND apiKeysPdndInCache) {
+        TestUtils.checkNotNullFields(apiKeysPdndInCache);
+
+        Assertions.assertEquals("SUB1", apiKeysPdndInCache.getAgidJwtTokenPayload().getSub());
+        Assertions.assertEquals("ISS1", apiKeysPdndInCache.getAgidJwtTokenPayload().getIss());
+        Assertions.assertEquals("AUD1", apiKeysPdndInCache.getAgidJwtTokenPayload().getAud());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testSetPDNDapiKeysInitiativeWithoutAutomedCriteria(boolean isRedisCacheEnabled){
+    void testSetPDNDapiKeysInitiativeWithoutAutomatedCriteria(boolean isRedisCacheEnabled){
         // Given
         init(isRedisCacheEnabled);
 
@@ -249,8 +269,6 @@ class OnboardingContextHolderServiceImplTest {
     }
 
     private InitiativeConfig getInitiativeConfig() {
-        String s = getStringB64("{\"iss\":\"ISS\",\"sub\":\"SUB\",\"purposeId\":null,\"aud\":\"AUD\",\"jti\":\"jti\",\"iat\":1111111111,\"exp\":1647454566}");
-
         return InitiativeConfig.builder()
                 .initiativeId("INITIATIVE-ID")
                 .beneficiaryInitiativeBudget(BigDecimal.valueOf(100))
@@ -259,8 +277,11 @@ class OnboardingContextHolderServiceImplTest {
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
-                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION." + s + ".MORE-INFO")
+                .apiKeyClientId(Initiative2BuildDTOFaker.getStringB64("apiKeyClientId"))
+                .apiKeyClientAssertion(Initiative2BuildDTOFaker.getClientAssertion(
+                        "apiKeyClientAssertionFirstElement",
+                        Initiative2BuildDTOFaker.getAgidTokenPayload(String.valueOf(1)),
+                        "apiKeyClientAssertionLastElement"))
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .rankingInitiative(Boolean.TRUE)
@@ -268,9 +289,6 @@ class OnboardingContextHolderServiceImplTest {
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
                 .build();
     }
-     private String getStringB64(String s){
-         return new String(Base64.getEncoder().encode(s.getBytes(StandardCharsets.UTF_8)));
-     }
 
     private Map<String, ApiKeysPDND> getApiKeysCache(Field apiKeysCacheField){
         Object cache = ReflectionUtils.getField(apiKeysCacheField, onboardingContextHolderService);

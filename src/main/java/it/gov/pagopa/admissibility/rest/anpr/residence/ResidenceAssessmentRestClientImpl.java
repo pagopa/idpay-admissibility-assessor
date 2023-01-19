@@ -72,7 +72,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .headers(httpHeaders -> {
                     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
                     httpHeaders.setBearerAuth(accessToken);
-                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest, agidJwtTokenPayload)); // TODO chiamata al create
+                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest, agidJwtTokenPayload));
                     httpHeaders.add("Content-Encoding", "UTF-8");
                     httpHeaders.add("Digest", digest);
                 })

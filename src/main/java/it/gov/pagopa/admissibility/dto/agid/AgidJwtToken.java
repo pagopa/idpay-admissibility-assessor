@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class AgidJwtToken {
     protected AgidJwtTokenHeader header;
-//    protected AgidJwtTokenPayload payload; TODO
 
     @Data
     public static class AgidJwtTokenHeader {

@@ -139,6 +139,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .value("Rome")
                                                                 .build()
                                                 ))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("RESIDENCEINITIATIVECLIENTID"))
+                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
+                                                        Initiative2BuildDTOFaker.getClientAssertion(
+                                                                "RESIDENCEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
+                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("RESIDENCEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
+                                                                "RESIDENCEINITIATIVECLIENTASSERTIONLASTELEMENT"
+                                                        )
+                                                ))
                                                 .build())
                                         .build(),
 
@@ -155,6 +163,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .value("10")
                                                                 .build()
                                                 ))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("BIRTHDATEINITIATIVECLIENTID"))
+                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
+                                                        Initiative2BuildDTOFaker.getClientAssertion(
+                                                                "BIRTHDATEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
+                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("BIRTHDATEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
+                                                                "BIRTHDATEINITIATIVECLIENTASSERTIONLASTELEMENT"
+                                                        )
+                                                ))
                                                 .build())
                                         .build(),
 
@@ -170,6 +186,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .operator(FilterOperator.EQ)
                                                                 .value("Rome")
                                                                 .build()
+                                                ))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("NEVERSELECTEDINITIATIVECLIENTID"))
+                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
+                                                        Initiative2BuildDTOFaker.getClientAssertion(
+                                                                "NEVERSELECTEDINITIATIVECLIENTASSERTIONFIRSTELEMENT",
+                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("NEVERSELECTEDINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
+                                                                "NEVERSELECTEDINITIATIVECLIENTASSERTIONLASTELEMENT"
+                                                        )
                                                 ))
                                                 .build())
                                         .build()

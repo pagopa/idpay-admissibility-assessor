@@ -167,7 +167,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
             return apiKeysPDND;
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e); //TODO
+            throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e);
         }
     }
 

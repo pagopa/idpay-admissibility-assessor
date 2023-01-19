@@ -49,7 +49,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     private DroolsRuleRepository droolsRuleRepositorySpy;
 
     @Test
-    void testBeneficiaryRuleBuilding() { //TODO fix initiaiveBuilderFaker
+    void testBeneficiaryRuleBuilding() {
         int validRules = 100; // use even number
         int notValidRules = errorUseCases.size();
         long maxWaitingMs = 30000;
