@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.rest.residence;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClient;
 import org.junit.jupiter.api.Assertions;
@@ -24,8 +25,13 @@ class ResidenceAssessmentRestClientImplTestIntegrated extends BaseIntegrationTes
         String accessToken = "VALID_ACCESS_TOKEN_1";
         String fiscalCode = "FISCAL_CODE";
 
+        AgidJwtTokenPayload agidTokenPayload = AgidJwtTokenPayload.builder()
+                .iss("ISS")
+                .sub("SUB")
+                .aud("AUD").build();
+
         // When
-        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode).block();
+        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode,agidTokenPayload).block();
 
         // Then
         Assertions.assertNotNull(result);
