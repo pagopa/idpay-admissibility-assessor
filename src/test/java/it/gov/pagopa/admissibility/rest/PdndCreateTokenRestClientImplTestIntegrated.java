@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
+/**
+ * Confluence page: <a href="https://pagopa.atlassian.net/wiki/spaces/IDPAY/pages/615974424/Secrets+UnitTests">Secrets for UnitTests</a>
+ */
 @SuppressWarnings("squid:S3577") // suppressing class name not match alert
 @TestPropertySource(locations = {
         "classpath:/secrets/pdndConfig.properties"
