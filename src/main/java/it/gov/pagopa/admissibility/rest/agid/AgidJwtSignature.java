@@ -23,7 +23,6 @@ import java.util.*;
 @Slf4j
 public abstract class AgidJwtSignature {
     private final AgidJwtToken.AgidJwtTokenHeader tokenHeader;
-//    private final AgidJwtToken.AgidJwtTokenPayload tokenPayload; //TODO cancel
 
     private final String cert;
     private final String key;
