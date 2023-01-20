@@ -41,7 +41,6 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     private final boolean isRedisCacheEnabled;
     private final AESTokenService aesTokenService;
-    private final ObjectReader orAgidJwtTokenPayload;
     public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
 
     private KieBase kieBase;
@@ -53,14 +52,12 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             ApplicationEventPublisher applicationEventPublisher,
             @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
             @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
-            AESTokenService aesTokenService,
-            ObjectMapper objectMapper) {
+            AESTokenService aesTokenService) {
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
         this.aesTokenService = aesTokenService;
-        this.orAgidJwtTokenPayload = objectMapper.readerFor(AgidJwtTokenPayload.class);
         refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
     }
 
@@ -159,22 +156,12 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     private ApiKeysPDND getApiKeysPDND(InitiativeConfig initiativeConfig) {
         try {
-            ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
-                    .apiKeyClientId(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()))
-                    .apiKeyClientAssertion(aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion()))
-                    .build();
-            apiKeysPDND.setAgidJwtTokenPayload(retrieveAgidTokenPayload(apiKeysPDND.getApiKeyClientAssertion()));
-
-            return apiKeysPDND;
+            return new ApiKeysPDND(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()),
+                    aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion())
+            );
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e);
         }
-    }
-
-    private AgidJwtTokenPayload retrieveAgidTokenPayload(String clientAssertion) throws JsonProcessingException {
-        String[] splitClientAssertion = clientAssertion.split("\\.");
-        String tokenInfoFromClientAssertion = new String(Base64.getDecoder().decode(splitClientAssertion[1]));
-        return orAgidJwtTokenPayload.readValue(tokenInfoFromClientAssertion);
     }
     //endregion
 }

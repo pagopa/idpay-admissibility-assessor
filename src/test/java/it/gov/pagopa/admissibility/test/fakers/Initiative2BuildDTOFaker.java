@@ -50,7 +50,7 @@ public final class Initiative2BuildDTOFaker {
         beneficiaryRule.setAutomatedCriteria(new ArrayList<>());
         beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH1", CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE, null, FilterOperator.GT, "10", null, null));
         beneficiaryRule.getAutomatedCriteria().add(new AutomatedCriteriaDTO("AUTH2", CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE, "year", FilterOperator.GT, "10", null, null));
-        beneficiaryRule.setApiKeyClientId(encrypt(fakeValuesService.bothify(bias!=null? "apiKeyClientId%d".formatted(bias) : "?????")));
+        beneficiaryRule.setApiKeyClientId(encrypt(getUuid(String.valueOf(bias)).toString()));
         beneficiaryRule.setApiKeyClientAssertion(
                 encrypt(
                         getClientAssertion(
@@ -109,5 +109,9 @@ public final class Initiative2BuildDTOFaker {
 
     public static String encrypt(String s){
         return aesUtil.encrypt(PASSPHRASE,s);
+    }
+
+    public static UUID getUuid(String seed){
+        return UUID.nameUUIDFromBytes(seed.getBytes(StandardCharsets.UTF_8));
     }
 }

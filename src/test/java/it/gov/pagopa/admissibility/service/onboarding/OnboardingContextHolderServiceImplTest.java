@@ -65,7 +65,7 @@ class OnboardingContextHolderServiceImplTest {
         Assertions.assertNotNull(apiKeysCacheField);
         ReflectionUtils.makeAccessible(apiKeysCacheField);
 
-        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled,aesTokenServiceMock, TestUtils.objectMapper);
+        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled,aesTokenServiceMock);
     }
 
     @ParameterizedTest

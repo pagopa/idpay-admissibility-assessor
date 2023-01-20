@@ -122,18 +122,6 @@ import static org.awaitility.Awaitility.await;
                 "app.pdv.retry.delay-millis=5000",
                 "app.pdv.retry.max-attempts=3",
                 //endregion
-
-                //region AESUtils
-                "app.util.crypto.aes.cipherInstance=AES/GCM/NoPadding",
-                "app.util.crypto.aes.encoding=UTF-8",
-                "app.util.crypto.aes.secret-type.pbe.algorithm=PBKDF2WithHmacSHA1",
-                "app.util.crypto.aes.secret-type.pbe.salt=SALT_SAMPLE",
-                "app.util.crypto.aes.secret-type.pbe.keySize=256",
-                "app.util.crypto.aes.secret-type.pbe.iterationCount=10000",
-                "app.util.crypto.aes.secret-type.pbe.passphrase=passphrase",
-                "app.util.crypto.aes.mode.gcm.iv=IV_SAMPLE",
-                "app.util.crypto.aes.mode.gcm.tLen=16"
-                //endregion
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
