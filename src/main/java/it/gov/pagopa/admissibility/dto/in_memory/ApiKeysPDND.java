@@ -2,20 +2,17 @@ package it.gov.pagopa.admissibility.dto.in_memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.config.JsonConfig;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Base64;
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 @Builder
 public class ApiKeysPDND {
-    private String apiKeyClientId;
-    private String apiKeyClientAssertion;
-    private AgidJwtTokenPayload agidJwtTokenPayload;
+    private final String apiKeyClientId;
+    private final String apiKeyClientAssertion;
+    private final AgidJwtTokenPayload agidJwtTokenPayload;
+
 
     public ApiKeysPDND(String apiKeyClientId, String apiKeyClientAssertion) throws JsonProcessingException {
         this.apiKeyClientId = apiKeyClientId;
