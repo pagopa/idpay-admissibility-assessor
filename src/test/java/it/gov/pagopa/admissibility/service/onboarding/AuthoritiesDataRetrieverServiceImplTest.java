@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
@@ -72,6 +73,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private RispostaE002OKDTO anprResponse;
     private Message<String> message;
     private ApiKeysPDND apiKeysPDND;
+    private AgidJwtTokenPayload agidTokenPayload;
 
     @BeforeEach
     void setUp() throws JAXBException {
@@ -102,9 +104,11 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .rankingInitiative(Boolean.TRUE)
                 .build();
 
+        agidTokenPayload = AgidJwtTokenPayload.builder().iss("ISS").sub("SUB").aud("AUD").build();
         apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId(DECRYPTED_API_KEY_CLIENT_ID)
                 .apiKeyClientAssertion(DECRYPTED_API_KEY_CLIENT_ASSERTION)
+                .agidJwtTokenPayload(agidTokenPayload)
                 .build();
 
         inpsResponse = PdndInvocationsTestUtils.buildInpsResponse(EsitoEnum.OK);
@@ -134,7 +138,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
             return null;
         }).when(inpsInvocationServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprResponse)));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             onboardingDTO.setBirthDate(PdndInvocationsTestUtils.getBirthDateFromAnswer(anprResponse));
@@ -151,7 +155,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 
     @Test
@@ -185,7 +189,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 
     @Test
@@ -197,7 +201,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprResponse)));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprAnswer)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             return null;
@@ -213,7 +217,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy, Mockito.never()).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 
     @Test
@@ -232,7 +236,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
             return null;
         }).when(inpsInvocationServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprResponse)));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             return null;
@@ -248,7 +252,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 
     @Test
@@ -274,7 +278,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy, Mockito.never()).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy, Mockito.never()).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 
     @Test
@@ -285,7 +289,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         Mockito.when(inpsInvocationServiceSpy.invoke(FISCAL_CODE)).thenReturn(Mono.just(Optional.empty()));
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.empty()));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.empty()));
         Mockito.when(streamBridgeMock.send(Mockito.anyString(), Mockito.any())).thenReturn(true);
 
         // When
@@ -295,7 +299,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNull(result);
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
-        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE);
+        Mockito.verify(anprInvocationServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
         Mockito.verify(streamBridgeMock).send(Mockito.anyString(), Mockito.any());
     }
 }

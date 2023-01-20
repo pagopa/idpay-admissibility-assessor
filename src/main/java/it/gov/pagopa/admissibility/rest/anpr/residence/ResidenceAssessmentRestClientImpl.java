@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.rest.anpr.residence;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.rest.agid.AnprJwtSignature;
 import it.gov.pagopa.admissibility.rest.anpr.AnprWebClient;
@@ -62,7 +63,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     }
 
     @Override
-    public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
+    public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
         String requestDtoString = Utils.convertToJson(generateRequest(fiscalCode), objectMapper);
         String digest = Utils.createSHA256Digest(requestDtoString);
         return webClient.post()
@@ -71,7 +72,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .headers(httpHeaders -> {
                     httpHeaders.setContentType(MediaType.APPLICATION_JSON);
                     httpHeaders.setBearerAuth(accessToken);
-                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest));
+                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest, agidJwtTokenPayload));
                     httpHeaders.add("Content-Encoding", "UTF-8");
                     httpHeaders.add("Digest", digest);
                 })

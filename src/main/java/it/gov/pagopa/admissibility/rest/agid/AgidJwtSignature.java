@@ -5,6 +5,7 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import it.gov.pagopa.admissibility.dto.agid.AgidJwtToken;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.ByteArrayInputStream;
@@ -22,7 +23,6 @@ import java.util.*;
 @Slf4j
 public abstract class AgidJwtSignature {
     private final AgidJwtToken.AgidJwtTokenHeader tokenHeader;
-    private final AgidJwtToken.AgidJwtTokenPayload tokenPayload;
 
     private final String cert;
     private final String key;
@@ -33,18 +33,17 @@ public abstract class AgidJwtSignature {
                             String key,
                             String pub) {
         this.tokenHeader = agidJwtToken.getHeader();
-        this.tokenPayload = agidJwtToken.getPayload();
         this.cert = cert;
         this.key = key;
         this.pub = pub;
     }
 
-    public String createAgidJwt(String digest) {
+    public String createAgidJwt(String digest, AgidJwtTokenPayload agidJwtTokenPayload) {
         log.info("start to create AgidJwt with digest: {}",digest);
         try {
             return JWT.create()
                     .withHeader(createHeaderMap())
-                    .withPayload(createClaimMap(digest))
+                    .withPayload(createClaimMap(digest, agidJwtTokenPayload))
                     .sign(Algorithm.RSA256(getPublicKey(), getPrivateKey()));
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException e) {
             throw new IllegalStateException("Something went wrong creating AgidJwt",e);
@@ -60,7 +59,7 @@ public abstract class AgidJwtSignature {
         return map;
     }
 
-    private Map<String, Object> createClaimMap(String digest) {
+    private Map<String, Object> createClaimMap(String digest, AgidJwtTokenPayload tokenPayload) { //create utilizzo di Iss, Sub, Aud
         long nowSeconds = System.currentTimeMillis() / 1000L;
         long expireSeconds = nowSeconds + 5000L;
 

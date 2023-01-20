@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
@@ -31,6 +32,7 @@ class AnprInvocationServiceImplTest {
 
     private RispostaE002OKDTO anprAnswer;
     private OnboardingDTO onboardingRequest;
+    private AgidJwtTokenPayload agidJwtTokenPayload;
 
     private AnprInvocationService anprInvocationService;
 
@@ -49,15 +51,20 @@ class AnprInvocationServiceImplTest {
                 .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .build();
+
+        agidJwtTokenPayload = AgidJwtTokenPayload.builder()
+                .iss("ISS")
+                .sub("SUB")
+                .aud("AUD").build();
     }
 
     @Test
     void testInvokeOK() {
         // Given
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.just(anprAnswer));
 
         // When
-        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE).block();
+        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -68,10 +75,10 @@ class AnprInvocationServiceImplTest {
     @Test
     void testInvokeDailyLimitException() {
         // Given
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
+        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
 
         // When
-        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE).block();
+        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
 
         // Then
         Assertions.assertEquals(Optional.empty(), result);
