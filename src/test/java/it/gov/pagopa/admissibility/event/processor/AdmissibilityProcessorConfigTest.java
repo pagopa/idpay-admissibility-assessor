@@ -135,7 +135,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                         AutomatedCriteriaDTO.builder()
                                                                 .authority("AUTH1")
                                                                 .code(CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE)
-                                                                .operator(FilterOperator.LE)
+                                                                .operator(FilterOperator.GT)
                                                                 .value("10000")
                                                                 .build()
                                                 ))

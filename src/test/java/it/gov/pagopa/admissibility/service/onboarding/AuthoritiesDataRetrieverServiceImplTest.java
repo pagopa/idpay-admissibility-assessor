@@ -173,7 +173,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
             return null;
         }).when(inpsInvocationServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE)).thenReturn(Mono.just(Optional.of(anprResponse)));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             return null;
@@ -201,7 +201,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
-        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprAnswer)));
+        Mockito.when(anprInvocationServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             return null;
