@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.rest.residence;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClient;
 import lombok.SneakyThrows;
@@ -31,8 +32,13 @@ class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
         String accessToken = "VALID_ACCESS_TOKEN_1";
         String fiscalCode = "FISCAL_CODE";
 
+        AgidJwtTokenPayload agidTokenPayload = AgidJwtTokenPayload.builder()
+                .iss("ISS")
+                .sub("SUB")
+                .aud("AUD").build();
+
         // When
-        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode).block();
+        RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode,agidTokenPayload).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -42,11 +48,15 @@ class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
     @SneakyThrows
     void objectMapperException(){
         // Given
+        AgidJwtTokenPayload agidTokenPayload = AgidJwtTokenPayload.builder()
+                .iss("ISS")
+                .sub("SUB")
+                .aud("AUD").build();
         Mockito.when(objectMapper.writeValueAsString(Mockito.any())).thenThrow(JsonProcessingException.class);
 
         // When
         try {
-            residenceAssessmentRestClient.getResidenceAssessment("VALID_TOKEN", "FISCAL_CODE").block();
+            residenceAssessmentRestClient.getResidenceAssessment("VALID_TOKEN", "FISCAL_CODE",agidTokenPayload).block();
         }catch (Exception e){
             // Then
             Assertions.assertTrue(e instanceof IllegalStateException);

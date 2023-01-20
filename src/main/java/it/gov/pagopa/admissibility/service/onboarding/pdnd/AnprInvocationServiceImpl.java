@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
@@ -29,8 +30,8 @@ public class AnprInvocationServiceImpl implements AnprInvocationService {
     }
 
     @Override
-    public Mono<Optional<RispostaE002OKDTO>> invoke(String accessToken, String fiscalCode) {
-        return residenceAssessmentService.getResidenceAssessment(accessToken, fiscalCode).map(Optional::of)
+    public Mono<Optional<RispostaE002OKDTO>> invoke(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
+        return residenceAssessmentService.getResidenceAssessment(accessToken, fiscalCode, agidJwtTokenPayload).map(Optional::of)
                 .onErrorResume(AnprDailyRequestLimitException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] Daily limit occurred when calling ANPR service", e);
                     // TODO Short circuit all calls on that date

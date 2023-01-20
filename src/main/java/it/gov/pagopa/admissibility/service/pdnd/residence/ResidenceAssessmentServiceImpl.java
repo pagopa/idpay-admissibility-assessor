@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.pdnd.residence;
 
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.rest.anpr.residence.ResidenceAssessmentRestClient;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,7 @@ public class ResidenceAssessmentServiceImpl implements ResidenceAssessmentServic
     }
 
     @Override
-    public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode) {
-        return residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode);
+    public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
+        return residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode, agidJwtTokenPayload);
     }
 }

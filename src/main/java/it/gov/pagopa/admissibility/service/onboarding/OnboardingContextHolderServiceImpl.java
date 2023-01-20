@@ -1,5 +1,9 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -20,6 +24,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -150,10 +155,13 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     private ApiKeysPDND getApiKeysPDND(InitiativeConfig initiativeConfig) {
-        return ApiKeysPDND.builder()
-                .apiKeyClientId(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()))
-                .apiKeyClientAssertion(aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion()))
-                .build();
+        try {
+            return new ApiKeysPDND(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()),
+                    aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion())
+            );
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e);
+        }
     }
     //endregion
 }
