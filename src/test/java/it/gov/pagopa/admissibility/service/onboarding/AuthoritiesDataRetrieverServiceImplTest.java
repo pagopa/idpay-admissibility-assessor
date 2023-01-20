@@ -147,9 +147,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
-
         Assertions.assertEquals(expectedResidence, result.getResidence());
-
         Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
@@ -159,6 +157,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Test
     void retrieveIseeAutomatedCriteriaAndNotRanking() {
         // Given
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
+
         initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
@@ -181,10 +181,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
-
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
-
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
@@ -194,6 +191,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Test
     void retrieveResidenceNotAutomatedCriteriaNotRanking() {
         // Given
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
+
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
@@ -210,10 +209,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getIsee());
-
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
-
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy, Mockito.never()).invoke(FISCAL_CODE);
@@ -223,6 +219,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Test
     void retrieveIseeRankingAndNotAutomatedCriteria() {
         // Given
+        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
+
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
@@ -246,10 +244,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
-
-        Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
         Assertions.assertEquals(expectedResidence, result.getResidence());
-
         Assertions.assertNull(result.getBirthDate());
 
         Mockito.verify(inpsInvocationServiceSpy).invoke(FISCAL_CODE);
@@ -275,7 +270,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("10000"), result.getIsee());
-
         Assertions.assertNull(result.getResidence());
         Assertions.assertNull(result.getBirthDate());
 

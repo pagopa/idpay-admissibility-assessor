@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.soap.inps.IseeConsultationSoapClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
-class InpsInvocationServiceServiceImplTest {
+class InpsInvocationServiceImplTest {
     private static final String FISCAL_CODE = "fiscalCode";
 
     @Mock
@@ -33,7 +32,7 @@ class InpsInvocationServiceServiceImplTest {
 
     @BeforeEach
     void setup() throws JAXBException {
-        inpsInvocationService = new InpsInvocationServiceServiceImpl(iseeConsultationSoapClient);
+        inpsInvocationService = new InpsInvocationServiceImpl(iseeConsultationSoapClient);
 
         inpsResponse = PdndInvocationsTestUtils.buildInpsResponse(EsitoEnum.OK);
 

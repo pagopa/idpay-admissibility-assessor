@@ -46,6 +46,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
     public static final String RESIDENCE_INITIATIVE_ID = "RESIDENCE_INITIATIVE_ID";
     public static final String BIRTHDATE_INITIATIVE_ID = "BIRTHDATE_INITIATIVE_ID";
+    public static final String ISEE_INITIATIVE_ID = "ISEE_INITIATIVE_ID";
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
@@ -126,6 +127,21 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                 }),
 
                         Stream.of(
+                                Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
+                                        .initiativeId(ISEE_INITIATIVE_ID)
+                                        .initiativeName("ISEE_INITIATIVE_NAME")
+                                        .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                                .automatedCriteria(List.of(
+                                                        AutomatedCriteriaDTO.builder()
+                                                                .authority("AUTH1")
+                                                                .code(CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE)
+                                                                .operator(FilterOperator.LE)
+                                                                .value("10000")
+                                                                .build()
+                                                ))
+                                                .build())
+                                        .build(),
+
                                 Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
                                         .initiativeId(RESIDENCE_INITIATIVE_ID)
                                         .initiativeName("RESIDENCE_INITIATIVE_NAME")
@@ -258,14 +274,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             ),
             // AUTOMATED_CRITERIA fail due to ISEE
             Pair.of(
-                    bias -> {
-                        OnboardingDTO onboardingAutomaticCriteriaFail = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                                .isee(BigDecimal.TEN)   // TODO remove after INPS integration
-                                .build();
-                        Mockito.doReturn(Mono.just(onboardingAutomaticCriteriaFail))    // TODO remove after INPS integration, the failing answer should be configured in wireMock stub
-                                        .when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.eq(onboardingAutomaticCriteriaFail),Mockito.any(),Mockito.any());
-                        return onboardingAutomaticCriteriaFail;
-                    },
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .initiativeId(ISEE_INITIATIVE_ID)
+                                .build(),
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)

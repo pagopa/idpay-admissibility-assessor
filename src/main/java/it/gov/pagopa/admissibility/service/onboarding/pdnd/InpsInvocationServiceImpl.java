@@ -19,12 +19,16 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
-public class InpsInvocationServiceServiceImpl implements InpsInvocationService {
+public class InpsInvocationServiceImpl implements InpsInvocationService {
 
     private final IseeConsultationSoapClient iseeConsultationSoapClient;
+    private final XMLInputFactory xmlFactory;
+    private final JAXBContext jaxbContext;
 
-    public InpsInvocationServiceServiceImpl(IseeConsultationSoapClient iseeConsultationSoapClient) {
+    public InpsInvocationServiceImpl(IseeConsultationSoapClient iseeConsultationSoapClient) throws JAXBException {
         this.iseeConsultationSoapClient = iseeConsultationSoapClient;
+        this.xmlFactory = XMLInputFactory.newFactory();
+        this.jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
     }
 
     @Override
@@ -50,10 +54,8 @@ public class InpsInvocationServiceServiceImpl implements InpsInvocationService {
 
     private TypeEsitoConsultazioneIndicatore readResultFromXmlString(String inpsResultString) {
         try (StringReader sr = new StringReader(inpsResultString)) {
-
-            XMLInputFactory xmlFactory = XMLInputFactory.newFactory();
             XMLStreamReader xsr = xmlFactory.createXMLStreamReader(sr);
-            JAXBContext jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
+
             Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
             JAXBElement<TypeEsitoConsultazioneIndicatore> je = unmarshaller.unmarshal(xsr, TypeEsitoConsultazioneIndicatore.class);

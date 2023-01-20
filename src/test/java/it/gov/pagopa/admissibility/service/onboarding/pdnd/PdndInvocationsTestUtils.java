@@ -36,9 +36,7 @@ public class PdndInvocationsTestUtils {
         TypeEsitoConsultazioneIndicatore xmlResult = new TypeEsitoConsultazioneIndicatore();
         xmlResult.setISEE(BigDecimal.valueOf(10000));
 
-        byte[] xmlResultBytes = toByteArray(xmlResult);
-
-        return encodeByteArrayInB64(xmlResultBytes);
+        return toByteArray(xmlResult);
     }
 
     public static byte[] toByteArray(TypeEsitoConsultazioneIndicatore inpsResult) throws JAXBException {
@@ -93,9 +91,8 @@ public class PdndInvocationsTestUtils {
     //endregion
     
     //region get data from response's models
-        // methods to set fields in onboardingRequest simulating real ones
     public static BigDecimal getIseeFromResponse(ConsultazioneIndicatoreResponseType inpsResponse) {
-        String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore()).replaceAll("\\n+", "");
+        String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore());
 
         TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
         return inpsResult.getISEE();
