@@ -30,6 +30,6 @@ public final class OnboardingConstants {
     //endregion
 
     //region global sequence id
-    public static final String GLOBAL_SEQUENCE_ID = "GLOBAL_SEQUENCE_ID";
+    public static final String ANPR_E002_INVOKE = "ANPR_E002_INVOKE";
     //endregion
 }

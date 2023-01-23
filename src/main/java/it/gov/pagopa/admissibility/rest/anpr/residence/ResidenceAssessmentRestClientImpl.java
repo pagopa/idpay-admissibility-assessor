@@ -22,6 +22,8 @@ import java.util.Date;
 @Service
 @Slf4j
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
+    private final  SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private final  SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
     private final WebClient webClient;
     private final AnprJwtSignature anprJwtSignature;
 
@@ -96,29 +98,27 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     }
 
     private Mono<RichiestaE002DTO> generateRequest(String fiscalCode) {
-        return customSequenceGeneratorRepository.generateSequence(OnboardingConstants.GLOBAL_SEQUENCE_ID)
+        return customSequenceGeneratorRepository.nextValue(OnboardingConstants.ANPR_E002_INVOKE)
                 .map(sequenceValue -> createRequest(fiscalCode, sequenceValue));
     }
 
     private RichiestaE002DTO createRequest(String fiscalCode, Long sequenceValue) {
         Date dateNow = new Date();
-        String dateWithHoursString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
         TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
                 .idOperazioneClient(String.valueOf(sequenceValue))
                 .codMittente(headRequestSenderCode)
                 .codDestinatario(headRequestAddresseeCode)
                 .operazioneRichiesta(headRequestOperationRequest)
-                .dataOraRichiesta(dateWithHoursString)
+                .dataOraRichiesta(datetimeFormat.format(dateNow))
                 .tipoOperazione("C")
                 .tipoInvio(headRequestSendType);
 
         TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
                 .codiceFiscale(fiscalCode);
 
-        String dateWithoutHoursString = new SimpleDateFormat("yyyy-MM-dd").format(dateNow);
         TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
                 .schedaAnagraficaRichiesta(dataRequestPersonalDetailsRequest)
-                .dataRiferimentoRichiesta(dateWithoutHoursString)
+                .dataRiferimentoRichiesta(dateFormat.format(dateNow))
                 .casoUso("C020");
 
         return new RichiestaE002DTO()

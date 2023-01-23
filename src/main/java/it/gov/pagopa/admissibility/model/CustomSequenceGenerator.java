@@ -17,5 +17,5 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class CustomSequenceGenerator {
     @Id
     private String sequenceId;
-    private long sequence;
+    private long value;
 }
