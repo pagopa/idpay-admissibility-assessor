@@ -3,9 +3,11 @@ package it.gov.pagopa.admissibility.rest.anpr.residence;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
+import it.gov.pagopa.admissibility.repository.CustomSequenceGeneratorGeneratorRepository;
 import it.gov.pagopa.admissibility.rest.agid.AnprJwtSignature;
 import it.gov.pagopa.admissibility.rest.anpr.AnprWebClient;
 import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +22,8 @@ import java.util.Date;
 @Service
 @Slf4j
 public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRestClient{
+    private final  SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+    private final  SimpleDateFormat datetimeFormat = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss");
     private final WebClient webClient;
     private final AnprJwtSignature anprJwtSignature;
 
@@ -29,6 +33,8 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     private final String headRequestSendType;
 
     private final String dataRequestPersonalDetailsRequest;
+
+    private final CustomSequenceGeneratorGeneratorRepository customSequenceGeneratorRepository;
 
     private final ObjectMapper objectMapper;
 
@@ -45,8 +51,9 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
                                              @Value("${app.anpr.c020-residenceAssessment.properties.dataRequest.personalDetailsRequest}") String dataRequestPersonalDetailsRequest,
 
-                                             ObjectMapper objectMapper) {
+                                             CustomSequenceGeneratorGeneratorRepository customSequenceGeneratorRepository, ObjectMapper objectMapper) {
         this.anprJwtSignature = anprJwtSignature;
+        this.customSequenceGeneratorRepository = customSequenceGeneratorRepository;
 
         this.objectMapper = objectMapper;
 
@@ -64,7 +71,12 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
-        String requestDtoString = Utils.convertToJson(generateRequest(fiscalCode), objectMapper);
+        return generateRequest(fiscalCode)
+                .flatMap(richiestaE002DTO -> callAnprService(accessToken, agidJwtTokenPayload, richiestaE002DTO));
+    }
+
+    private Mono<RispostaE002OKDTO> callAnprService(String accessToken, AgidJwtTokenPayload agidJwtTokenPayload, RichiestaE002DTO richiestaE002DTO) {
+        String requestDtoString = Utils.convertToJson(richiestaE002DTO, objectMapper);
         String digest = Utils.createSHA256Digest(requestDtoString);
         return webClient.post()
                 .uri("/anpr-service-e002")
@@ -83,28 +95,30 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                     throw new AnprDailyRequestLimitException(e);
                 });
         //TODO define error code for retry
-
     }
 
-    private RichiestaE002DTO generateRequest(String fiscalCode) {
+    private Mono<RichiestaE002DTO> generateRequest(String fiscalCode) {
+        return customSequenceGeneratorRepository.nextValue(OnboardingConstants.ANPR_E002_INVOKE)
+                .map(sequenceValue -> createRequest(fiscalCode, sequenceValue));
+    }
+
+    private RichiestaE002DTO createRequest(String fiscalCode, Long sequenceValue) {
         Date dateNow = new Date();
-        String dateWithHoursString = new  SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
         TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
-                .idOperazioneClient(fiscalCode.concat(dateWithHoursString)) // TODO Identificativo univoco attribuito all'operazione dall'ente. Deve essere numerico e crescente. Se esiste in ANPR, l'ente riceve come esito la risposta in precedenza fornita da ANPR con lo stesso ID; se non esiste ed è inferiore all'ultimo inviato, l'elaborazione termina con errore
+                .idOperazioneClient(String.valueOf(sequenceValue))
                 .codMittente(headRequestSenderCode)
                 .codDestinatario(headRequestAddresseeCode)
                 .operazioneRichiesta(headRequestOperationRequest)
-                .dataOraRichiesta(dateWithHoursString)
+                .dataOraRichiesta(datetimeFormat.format(dateNow))
                 .tipoOperazione("C")
                 .tipoInvio(headRequestSendType);
 
         TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
                 .codiceFiscale(fiscalCode);
 
-        String dateWithoutHoursString = new  SimpleDateFormat("yyyy-MM-dd").format(dateNow);
         TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
                 .schedaAnagraficaRichiesta(dataRequestPersonalDetailsRequest)
-                .dataRiferimentoRichiesta(dateWithoutHoursString)
+                .dataRiferimentoRichiesta(dateFormat.format(dateNow))
                 .casoUso("C020");
 
         return new RichiestaE002DTO()
@@ -112,4 +126,5 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
                 .criteriRicerca(criteriRicercaE002DTO)
                 .datiRichiesta(datiRichiestaE002DTO);
     }
+
 }

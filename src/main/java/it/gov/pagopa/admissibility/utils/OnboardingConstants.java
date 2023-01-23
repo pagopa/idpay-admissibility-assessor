@@ -28,4 +28,8 @@ public final class OnboardingConstants {
     public static final String CRITERIA_CODE_BIRTHDATE = "BIRTHDATE";
     public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
     //endregion
+
+    //region global sequence id
+    public static final String ANPR_E002_INVOKE = "ANPR_E002_INVOKE";
+    //endregion
 }
