@@ -70,58 +70,61 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     @Override
     public Mono<RispostaE002OKDTO> getResidenceAssessment(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
         return generateRequest(fiscalCode)
-                .flatMap(richiestaE002DTO -> {
-                    String requestDtoString = Utils.convertToJson(richiestaE002DTO, objectMapper);
-                    String digest = Utils.createSHA256Digest(requestDtoString);
-                    return webClient.post()
-                            .uri("/anpr-service-e002")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .headers(httpHeaders -> {
-                                httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-                                httpHeaders.setBearerAuth(accessToken);
-                                httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest, agidJwtTokenPayload));
-                                httpHeaders.add("Content-Encoding", "UTF-8");
-                                httpHeaders.add("Digest", digest);
-                            })
-                            .bodyValue(requestDtoString)
-                            .retrieve()
-                            .bodyToMono(RispostaE002OKDTO.class)
-                            .doOnError(e -> {
-                                throw new AnprDailyRequestLimitException(e);
-                            });
-                    //TODO define error code for retry
-                });
+                .flatMap(richiestaE002DTO -> callAnprService(accessToken, agidJwtTokenPayload, richiestaE002DTO));
+    }
 
+    private Mono<RispostaE002OKDTO> callAnprService(String accessToken, AgidJwtTokenPayload agidJwtTokenPayload, RichiestaE002DTO richiestaE002DTO) {
+        String requestDtoString = Utils.convertToJson(richiestaE002DTO, objectMapper);
+        String digest = Utils.createSHA256Digest(requestDtoString);
+        return webClient.post()
+                .uri("/anpr-service-e002")
+                .contentType(MediaType.APPLICATION_JSON)
+                .headers(httpHeaders -> {
+                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                    httpHeaders.setBearerAuth(accessToken);
+                    httpHeaders.add("Agid-JWT-Signature", anprJwtSignature.createAgidJwt(digest, agidJwtTokenPayload));
+                    httpHeaders.add("Content-Encoding", "UTF-8");
+                    httpHeaders.add("Digest", digest);
+                })
+                .bodyValue(requestDtoString)
+                .retrieve()
+                .bodyToMono(RispostaE002OKDTO.class)
+                .doOnError(e -> {
+                    throw new AnprDailyRequestLimitException(e);
+                });
+        //TODO define error code for retry
     }
 
     private Mono<RichiestaE002DTO> generateRequest(String fiscalCode) {
-        return customSequenceGeneratorRepository.getSequence(OnboardingConstants.GLOBAL_SEQUENCE_ID)
-                .map(sequenceValue -> {
-                    Date dateNow = new Date();
-                    String dateWithHoursString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
-                    TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
-                            .idOperazioneClient(String.valueOf(sequenceValue))
-                            .codMittente(headRequestSenderCode)
-                            .codDestinatario(headRequestAddresseeCode)
-                            .operazioneRichiesta(headRequestOperationRequest)
-                            .dataOraRichiesta(dateWithHoursString)
-                            .tipoOperazione("C")
-                            .tipoInvio(headRequestSendType);
+        return customSequenceGeneratorRepository.generateSequence(OnboardingConstants.GLOBAL_SEQUENCE_ID)
+                .map(sequenceValue -> createRequest(fiscalCode, sequenceValue));
+    }
 
-                    TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
-                            .codiceFiscale(fiscalCode);
+    private RichiestaE002DTO createRequest(String fiscalCode, Long sequenceValue) {
+        Date dateNow = new Date();
+        String dateWithHoursString = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss").format(dateNow);
+        TipoTestataRichiestaE000DTO testataRichiestaE000DTO = new TipoTestataRichiestaE000DTO()
+                .idOperazioneClient(String.valueOf(sequenceValue))
+                .codMittente(headRequestSenderCode)
+                .codDestinatario(headRequestAddresseeCode)
+                .operazioneRichiesta(headRequestOperationRequest)
+                .dataOraRichiesta(dateWithHoursString)
+                .tipoOperazione("C")
+                .tipoInvio(headRequestSendType);
 
-                    String dateWithoutHoursString = new SimpleDateFormat("yyyy-MM-dd").format(dateNow);
-                    TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
-                            .schedaAnagraficaRichiesta(dataRequestPersonalDetailsRequest)
-                            .dataRiferimentoRichiesta(dateWithoutHoursString)
-                            .casoUso("C020");
+        TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
+                .codiceFiscale(fiscalCode);
 
-                    return new RichiestaE002DTO()
-                            .testataRichiesta(testataRichiestaE000DTO)
-                            .criteriRicerca(criteriRicercaE002DTO)
-                            .datiRichiesta(datiRichiestaE002DTO);
-                });
+        String dateWithoutHoursString = new SimpleDateFormat("yyyy-MM-dd").format(dateNow);
+        TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
+                .schedaAnagraficaRichiesta(dataRequestPersonalDetailsRequest)
+                .dataRiferimentoRichiesta(dateWithoutHoursString)
+                .casoUso("C020");
+
+        return new RichiestaE002DTO()
+                .testataRichiesta(testataRichiestaE000DTO)
+                .criteriRicerca(criteriRicercaE002DTO)
+                .datiRichiesta(datiRichiestaE002DTO);
     }
 
 }

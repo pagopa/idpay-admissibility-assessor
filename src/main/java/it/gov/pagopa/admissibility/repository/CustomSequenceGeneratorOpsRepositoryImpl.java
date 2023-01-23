@@ -12,8 +12,8 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class CustomSequenceGeneratorOpsRepositoryImpl implements CustomSequenceGeneratorOpsRepository {
 
-    public static final String FIELD_ID = CustomSequenceGenerator.Fields.id;
-    public static final String FIELD_SEQUENCE_VALUE = CustomSequenceGenerator.Fields.opClientIdSequence;
+    public static final String FIELD_ID = CustomSequenceGenerator.Fields.sequenceId;
+    public static final String FIELD_SEQUENCE_VALUE = CustomSequenceGenerator.Fields.sequence;
 
     private final ReactiveMongoTemplate mongoTemplate;
 
@@ -22,7 +22,7 @@ public class CustomSequenceGeneratorOpsRepositoryImpl implements CustomSequenceG
     }
 
     @Override
-    public Mono<Long> getSequence(String sequenceId) {
+    public Mono<Long> generateSequence(String sequenceId) {
         log.trace("[ONBOARDING_REQUEST][GENERATE_SEQUENCE] Generate next sequence value");
 
         return  mongoTemplate.findAndModify(
@@ -33,6 +33,6 @@ public class CustomSequenceGeneratorOpsRepositoryImpl implements CustomSequenceG
                         .inc(FIELD_SEQUENCE_VALUE, 1L),
                 FindAndModifyOptions.options().returnNew(true).upsert(true),
                 CustomSequenceGenerator.class)
-                .map(CustomSequenceGenerator::getOpClientIdSequence);
+                .map(CustomSequenceGenerator::getSequence);
     }
 }

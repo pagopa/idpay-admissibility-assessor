@@ -24,13 +24,13 @@ class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseIntegrationTest {
         // Given
         Long initialSequence = 5L;
         CustomSequenceGenerator customSequenceGenerator =  CustomSequenceGenerator.builder()
-                .id(TEST_ID)
-                .opClientIdSequence(initialSequence)
+                .sequenceId(TEST_ID)
+                .sequence(initialSequence)
                 .build();
         customSequenceGeneratorRepository.save(customSequenceGenerator).block();
 
         // When
-        Long sequenceResult = customSequenceGeneratorRepository.getSequence(TEST_ID).block();
+        Long sequenceResult = customSequenceGeneratorRepository.generateSequence(TEST_ID).block();
 
         // Then
         System.out.println(sequenceResult);
@@ -42,8 +42,8 @@ class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseIntegrationTest {
     @Test
     void getSequenceNotExits(){
         // When
-        Long sequenceResult1 = customSequenceGeneratorRepository.getSequence(TEST_ID).block();
-        Long sequenceResult2 = customSequenceGeneratorRepository.getSequence(TEST_ID).block();
+        Long sequenceResult1 = customSequenceGeneratorRepository.generateSequence(TEST_ID).block();
+        Long sequenceResult2 = customSequenceGeneratorRepository.generateSequence(TEST_ID).block();
 
         // Then
         Assertions.assertNotNull(sequenceResult1);
