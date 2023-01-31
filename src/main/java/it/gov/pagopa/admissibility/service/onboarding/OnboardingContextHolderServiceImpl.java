@@ -90,9 +90,11 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     private Mono<KieBase> refreshKieContainerCacheMiss() {
-        log.trace("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
-        initiativeId2Config.clear();
-        final Flux<DroolsRule> droolsRuleFlux = droolsRuleRepository.findAll().doOnNext(dr -> setInitiativeConfig(dr.getInitiativeConfig()));
+        final Flux<DroolsRule> droolsRuleFlux = Mono.defer(() -> {
+            log.info("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
+            initiativeId2Config.clear();
+            return Mono.empty();
+        }).thenMany(droolsRuleRepository.findAll().doOnNext(dr -> setInitiativeConfig(dr.getInitiativeConfig())));
         return kieContainerBuilderService.build(droolsRuleFlux).doOnNext(this::setBeneficiaryRulesKieBase);
     }
     //endregion
