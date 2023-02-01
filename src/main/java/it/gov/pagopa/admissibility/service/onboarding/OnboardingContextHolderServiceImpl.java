@@ -1,11 +1,22 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
+import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
+import org.drools.core.definitions.rule.impl.RuleImpl;
+import org.drools.core.impl.KnowledgeBaseImpl;
 import org.kie.api.KieBase;
+import org.kie.api.command.Command;
+import org.kie.api.runtime.StatelessKieSession;
+import org.kie.internal.command.CommandFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEvent;
@@ -17,8 +28,11 @@ import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -27,23 +41,34 @@ import java.util.function.Consumer;
 @Slf4j
 public class OnboardingContextHolderServiceImpl implements OnboardingContextHolderService {
 
+    public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
+
     private final KieContainerBuilderService kieContainerBuilderService;
     private final DroolsRuleRepository droolsRuleRepository;
     private final ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate;
     private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
 
     private final boolean isRedisCacheEnabled;
-    public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
+    private final boolean preCompileContainer;
 
     private KieBase kieBase;
     private byte[] kieBaseSerialized;
 
 
-    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher, @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate, @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled) {
+    public OnboardingContextHolderServiceImpl(
+            KieContainerBuilderService kieContainerBuilderService,
+            DroolsRuleRepository droolsRuleRepository,
+            ApplicationEventPublisher applicationEventPublisher,
+            @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
+            @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
+            @Value("${app.beneficiary-rule.pre-compile}") boolean preCompileContainer
+    ) {
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
+        this.preCompileContainer = preCompileContainer;
+
         refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
     }
 
@@ -76,11 +101,28 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     private void compileKieBase(){
-        long startTime = System.currentTimeMillis();
-        this.kieBase.newKieSession().fireAllRules();
-        long endTime = System.currentTimeMillis();
+        if(preCompileContainer) {
+            try {
+                log.info("[DROOLS_CONTAINER_COMPILE] Starting KieContainer DROOLS_CONTAINER_COMPILE");
+                long startTime = System.currentTimeMillis();
+                OnboardingDroolsDTO req = new OnboardingDroolsDTO();
+                req.setIsee(BigDecimal.ZERO);
+                req.setBirthDate(new BirthDate("1900",0));
+                req.setResidence(new Residence("", "", "", "", "", ""));
+                List<Command<?>> cmds = new ArrayList<>();
+                cmds.add(CommandFactory.newInsert((CriteriaCodeService) criteriaCode -> new CriteriaCodeConfig()));
+                cmds.add(CommandFactory.newInsert(req));
+                Arrays.stream(((KnowledgeBaseImpl) this.kieBase).getPackages()).flatMap(p -> p.getRules().stream()).map(r -> ((RuleImpl) r).getAgendaGroup())
+                        .distinct().forEach(a -> cmds.add(new AgendaGroupSetFocusCommand(a)));
+                StatelessKieSession session = this.kieBase.newStatelessKieSession();
+                session.execute(CommandFactory.newBatchExecution(cmds));
+                long endTime = System.currentTimeMillis();
 
-        log.info("KieContainer instance compiled in {} ms", endTime - startTime);
+                log.info("[DROOLS_CONTAINER_COMPILE] KieContainer instance compiled in {} ms", endTime - startTime);
+            } catch (Exception e){
+                log.warn("[DROOLS_CONTAINER_COMPILE] An error occurred while pre-compiling Drools rules", e);
+            }
+        }
     }
 
     @Override
