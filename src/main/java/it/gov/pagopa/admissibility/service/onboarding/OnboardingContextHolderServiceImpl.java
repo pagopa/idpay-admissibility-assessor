@@ -18,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -35,6 +36,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
 
     private KieBase kieBase;
+    private byte[] kieBaseSerialized;
 
 
     public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher, @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate, @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled) {
@@ -57,14 +59,28 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         this.kieBase = kieBase;
 
         if (isRedisCacheEnabled) {
-            byte[] kieBaseSerialized = SerializationUtils.serialize(kieBase);
+            kieBaseSerialized = SerializationUtils.serialize(kieBase);
             if (kieBaseSerialized != null) {
-                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> log.debug("Saving KieContainer in cache"));
+                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> {
+                    log.debug("Saving KieContainer in cache and compiling it");
+                    compileKieBase();
+                });
             } else {
                 reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.debug("Clearing KieContainer in cache"));
             }
+        } else {
+            if(kieBase!=null){
+                compileKieBase();
+            }
         }
+    }
 
+    private void compileKieBase(){
+        long startTime = System.currentTimeMillis();
+        this.kieBase.newKieSession().fireAllRules();
+        long endTime = System.currentTimeMillis();
+
+        log.info("KieContainer instance compiled in {} ms", endTime - startTime);
     }
 
     @Override
@@ -80,8 +96,14 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     public void refreshKieContainer(Consumer<? super KieBase> subscriber){
         if (isRedisCacheEnabled) {
             reactiveRedisTemplate.opsForValue().get(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME)
-                    .map(c -> (KieBase) SerializationUtils.deserialize(c))
-                    .doOnNext(c -> this.kieBase = c)
+                    .map(c -> {
+                        if(!Arrays.equals(c, kieBaseSerialized)){
+                            this.kieBase = (KieBase) SerializationUtils.deserialize(c);
+                            this.kieBaseSerialized = c;
+                            compileKieBase();
+                        }
+                        return this.kieBase;
+                    })
                     .switchIfEmpty(refreshKieContainerCacheMiss())
                     .subscribe(subscriber);
         } else {
