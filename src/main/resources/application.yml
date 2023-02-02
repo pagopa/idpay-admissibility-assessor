@@ -198,6 +198,8 @@ app:
     build-delay-duration: ${BENEFICIARY_RULE_BUILD_DELAY_DURATION:PT1S} # each second
     # The milliseconds rate after which to fetch from cache a new instance of the benefiricaryRilekieContainer
     cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:10000}
+    # Pre load container
+    pre-load: ${BENEFICIARY_RULE_CONTAINER_PRE_LOAD_ENABLED:true}
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"

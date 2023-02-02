@@ -18,6 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -26,22 +27,34 @@ import java.util.function.Consumer;
 @Slf4j
 public class OnboardingContextHolderServiceImpl implements OnboardingContextHolderService {
 
+    public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
+
     private final KieContainerBuilderService kieContainerBuilderService;
     private final DroolsRuleRepository droolsRuleRepository;
     private final ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate;
     private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
 
     private final boolean isRedisCacheEnabled;
-    public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
+    private final boolean preLoadContainer;
 
     private KieBase kieBase;
+    private byte[] kieBaseSerialized;
 
 
-    public OnboardingContextHolderServiceImpl(KieContainerBuilderService kieContainerBuilderService, DroolsRuleRepository droolsRuleRepository, ApplicationEventPublisher applicationEventPublisher, @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate, @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled) {
+    public OnboardingContextHolderServiceImpl(
+            KieContainerBuilderService kieContainerBuilderService,
+            DroolsRuleRepository droolsRuleRepository,
+            ApplicationEventPublisher applicationEventPublisher,
+            @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
+            @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
+            @Value("${app.beneficiary-rule.pre-load}") boolean preLoadContainer
+    ) {
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
+        this.preLoadContainer = preLoadContainer;
+
         refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
     }
 
@@ -53,18 +66,24 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     //region kieContainer holder
     @Override
-    public void setBeneficiaryRulesKieBase(KieBase kieBase) {
-        this.kieBase = kieBase;
+    public void setBeneficiaryRulesKieBase(KieBase newKieBase) {
+        preLoadKieBase(newKieBase);
+        this.kieBase = newKieBase;
 
         if (isRedisCacheEnabled) {
-            byte[] kieBaseSerialized = SerializationUtils.serialize(kieBase);
+            kieBaseSerialized = SerializationUtils.serialize(newKieBase);
             if (kieBaseSerialized != null) {
-                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> log.debug("Saving KieContainer in cache"));
+                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> log.info("KieContainer build and stored in cache"));
             } else {
-                reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.debug("Clearing KieContainer in cache"));
+                reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.info("KieContainer removed from the cache"));
             }
         }
+    }
 
+    private void preLoadKieBase(KieBase kieBase){
+        if(preLoadContainer) {
+            kieContainerBuilderService.preLoadKieBase(kieBase);
+        }
     }
 
     @Override
@@ -80,8 +99,15 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     public void refreshKieContainer(Consumer<? super KieBase> subscriber){
         if (isRedisCacheEnabled) {
             reactiveRedisTemplate.opsForValue().get(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME)
-                    .map(c -> (KieBase) SerializationUtils.deserialize(c))
-                    .doOnNext(c -> this.kieBase = c)
+                    .map(c -> {
+                        if(!Arrays.equals(c, kieBaseSerialized)){
+                            this.kieBaseSerialized = c;
+                            KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
+                            preLoadKieBase(newKieBase);
+                            this.kieBase = newKieBase;
+                        }
+                        return this.kieBase;
+                    })
                     .switchIfEmpty(refreshKieContainerCacheMiss())
                     .subscribe(subscriber);
         } else {
