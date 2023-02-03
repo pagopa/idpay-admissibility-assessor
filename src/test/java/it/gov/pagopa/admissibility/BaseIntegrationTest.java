@@ -69,7 +69,7 @@ import static org.awaitility.Awaitility.await;
 @EmbeddedKafka(topics = {
         "${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}",
-        "${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}",
+        "${spring.cloud.stream.bindings.admissibilityProcessorOut-out-0.destination}",
         "${spring.cloud.stream.bindings.rankingRequest-out-0.destination}",
         "${spring.cloud.stream.bindings.errors-out-0.destination}",
 }, controlledShutdown = true)
@@ -143,7 +143,7 @@ public abstract class BaseIntegrationTest {
     protected String topicBeneficiaryRuleConsumer;
     @Value("${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}")
     protected String topicAdmissibilityProcessorRequest;
-    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}")
+    @Value("${spring.cloud.stream.bindings.admissibilityProcessorOut-out-0.destination}")
     protected String topicAdmissibilityProcessorOutcome;
     @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}")
     protected String topicAdmissibilityProcessorOutRankingRequest;
