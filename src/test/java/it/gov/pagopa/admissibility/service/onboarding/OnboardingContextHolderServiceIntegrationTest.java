@@ -86,10 +86,9 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 500
         );
 
-        Field kieBaseField = ReflectionUtils.findField(OnboardingContextHolderServiceImpl.class, "kieBase");
-        Assertions.assertNotNull(kieBaseField);
-        ReflectionUtils.makeAccessible(kieBaseField);
-        ReflectionUtils.setField(kieBaseField, onboardingContextHolderService, null);
+
+        setContextHolderFieldToNull("kieBase");
+        setContextHolderFieldToNull("kieBaseSerialized");
 
         Assertions.assertNull(onboardingContextHolderService.getBeneficiaryRulesKieBase());
 
@@ -137,6 +136,13 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         int resultRuleBuiltSize = getRuleBuiltSize(onboardingContextHolderService);
         Assertions.assertEquals(0, resultRuleBuiltSize);
+    }
+
+    private void setContextHolderFieldToNull(String fieldName) {
+        Field field = ReflectionUtils.findField(OnboardingContextHolderServiceImpl.class, fieldName);
+        Assertions.assertNotNull(field);
+        ReflectionUtils.makeAccessible(field);
+        ReflectionUtils.setField(field, onboardingContextHolderService, null);
     }
 
     private EvaluationDTO executeRules(OnboardingDTO onb) {
