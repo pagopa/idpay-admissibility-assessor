@@ -19,7 +19,7 @@ spring:
         connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     stream:
       function:
-        definition: admissibilityProcessor;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer
+        definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
@@ -27,7 +27,7 @@ spring:
 #          content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-request
           consumer.autoStartup: false
-        admissibilityProcessor-out-0:
+        admissibilityProcessorOut-out-0:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
@@ -116,7 +116,7 @@ spring:
                 socket.connection.setup.timeout:
                   max.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
                   ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
-          admissibilityProcessor-out-0:
+          admissibilityProcessorOut-out-0:
             producer:
               configuration:
                 client.id: admissibilityProcessor
