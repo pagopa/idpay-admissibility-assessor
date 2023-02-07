@@ -114,6 +114,10 @@ import static org.awaitility.Awaitility.await;
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
 public abstract class BaseIntegrationTest {
+
+    @Value("${spring.application.name}")
+    public String applicationName;
+
     @Autowired
     protected EmbeddedKafkaBroker kafkaBroker;
     @Autowired
@@ -271,7 +275,7 @@ public abstract class BaseIntegrationTest {
     private int totaleMessageSentCounter =0;
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, String payload) {
         final RecordHeader retryHeader = new RecordHeader("RETRY", "1".getBytes(StandardCharsets.UTF_8));
-        final RecordHeader applicationNameHeader = new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "idpay-admissibility-assessor".getBytes(StandardCharsets.UTF_8));
+        final RecordHeader applicationNameHeader = new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, applicationName.getBytes(StandardCharsets.UTF_8));
 
         AtomicBoolean containAppNameHeader = new AtomicBoolean(false);
         if(headers!= null){
@@ -377,7 +381,7 @@ public abstract class BaseIntegrationTest {
 
     protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, boolean expectRetryHeader, boolean expectedAppNameHeader, boolean runtimeFieldSetter) {
         if(expectedAppNameHeader) {
-            Assertions.assertEquals("idpay-admissibility-assessor", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME));
+            Assertions.assertEquals(applicationName, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME));
             Assertions.assertEquals(group, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_GROUP));
         }
         Assertions.assertEquals("kafka", TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TYPE));
