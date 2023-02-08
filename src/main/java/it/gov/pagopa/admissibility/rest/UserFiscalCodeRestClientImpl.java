@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.rest;
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -40,12 +41,15 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
     public Mono<UserInfoPDV> retrieveUserInfo(String userId) {
         Map<String, String> params = new HashMap<>();
         params.put("token", userId);
+        long startTime = System.currentTimeMillis();
 
         return webClient
                 .method(HttpMethod.GET)
                 .uri(URI, params)
                 .retrieve()
-                .bodyToMono(UserInfoPDV.class)
+                .toEntity(UserInfoPDV.class)
+                .doOnNext(x -> log.info("[PERFORMANCE_LOG] [PDV_INTEGRATION] Time occurred to call pdv {} ms and resolved into httpStatus {}", System.currentTimeMillis() - startTime, x.getStatusCodeValue()))
+                .map(HttpEntity::getBody)
                 .retryWhen(Retry.fixedDelay(pdvMaxAttempts, Duration.ofMillis(pdvRetryDelay))
                         .filter(ex -> {
                             boolean retry = (ex instanceof WebClientResponseException.TooManyRequests) || ex.getMessage().startsWith("Connection refused");
