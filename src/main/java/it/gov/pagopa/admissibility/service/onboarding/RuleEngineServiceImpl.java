@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.kie.api.command.Command;
@@ -49,8 +50,8 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         long before = System.currentTimeMillis();
         statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
-        long after = System.currentTimeMillis();
-        log.debug("[ONBOARDING_REQUEST] Time between before and after fireAllRules: {} ms", after - before);
+
+        PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
 
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] Send message prepared: {}", req);
 
