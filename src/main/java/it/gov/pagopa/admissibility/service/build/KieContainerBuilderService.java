@@ -13,8 +13,12 @@ public interface KieContainerBuilderService {
      * It will fetch all the {@link DroolsRule} entity , build and new KieContainer
      * */
     Mono<KieBase> buildAll();
+
     /**
      * It will compile a Flux of {@link DroolsRule} entities returning a new KieContainer when the input Flux completes
      * */
     Mono<KieBase> build(Flux<DroolsRule> rules);
+
+    /** It will preload all the initiatives rules putting them in execution */
+    void preLoadKieBase(KieBase kieBase);
 }

@@ -50,7 +50,7 @@ class OnboardingContextHolderServiceImplTest {
             Mockito.when(reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString())).thenReturn(Mono.just(expectedKieBaseSerialized));
         }
 
-        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled);
+        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled, true);
     }
 
     @ParameterizedTest

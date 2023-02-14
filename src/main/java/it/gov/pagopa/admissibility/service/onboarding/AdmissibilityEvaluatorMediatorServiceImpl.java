@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -86,7 +87,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .doOnError(e -> log.error("Fail to checkpoint the message", e))
                                 .subscribe();
                     }
-                    log.info("[PERFORMANCE_LOG] [ONBOARDING_REQUEST] Time occurred to perform business logic: {} ms {}", System.currentTimeMillis() - startTime, message.getPayload());
+                    PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
                 });
     }
 
