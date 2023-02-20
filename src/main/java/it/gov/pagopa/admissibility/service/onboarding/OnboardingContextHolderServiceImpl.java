@@ -5,7 +5,6 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,14 +16,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Service
@@ -130,24 +125,6 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     //endregion
 
     //region initiativeConfig holder
-    private final ExecutorService initiativeRetrieveExecutor = Executors.newFixedThreadPool(100, new BasicThreadFactory.Builder().namingPattern("blockingInitiativeRetrieve-%d").build());
-    /** @deprecated use the {@link #getInitiativeConfig(String)} instead of this, which will call blocking logic */
-    @Deprecated(forRemoval = true)
-    @Override
-    public InitiativeConfig getInitiativeConfigBlocking(String initiativeId) {
-        return Mono.just(initiativeId)
-                .publishOn(Schedulers.fromExecutorService(initiativeRetrieveExecutor, "blockingInitiativeRetrieve"))
-                .flatMap(id -> {
-                    InitiativeConfig initiativeConfig = getInitiativeConfig(id).block(Duration.ofSeconds(10));
-                    if(initiativeConfig!=null){
-                        return Mono.just(initiativeConfig);
-                    } else {
-                        return Mono.empty();
-                    }
-                })
-                .block(Duration.ofSeconds(10));
-    }
-
     @Override
     public Mono<InitiativeConfig> getInitiativeConfig(String initiativeId) {
         InitiativeConfig cachedInitiativeConfig = initiativeId2Config.get(initiativeId);

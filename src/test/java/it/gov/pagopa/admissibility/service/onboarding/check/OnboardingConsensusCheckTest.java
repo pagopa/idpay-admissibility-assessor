@@ -8,8 +8,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -19,11 +17,7 @@ class OnboardingConsensusCheckTest {
 
     @Test
     void testTcConsensusFalse() {
-
         // Given
-        Map<String, Boolean> selfDeclarationListTrueMock = new HashMap<>();
-        selfDeclarationListTrueMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
         OnboardingDTO onboardingTcFalseMock = new OnboardingDTO(
@@ -42,7 +36,7 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        OnboardingRejectionReason resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null);
+        OnboardingRejectionReason resultTcFalse = onboardingConsensusCheck.apply(onboardingTcFalseMock, null, null);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -57,9 +51,6 @@ class OnboardingConsensusCheckTest {
     void testPdndConsensusFalse() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListTrueMock = new HashMap<>();
-        selfDeclarationListTrueMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
         OnboardingDTO onboardingPdndFalseMock = new OnboardingDTO(
@@ -78,7 +69,7 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        OnboardingRejectionReason resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null);
+        OnboardingRejectionReason resultPdndFalse = onboardingConsensusCheck.apply(onboardingPdndFalseMock, null, null);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -151,7 +142,7 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        OnboardingRejectionReason resultSelfDeclarationNull = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null);
+        OnboardingRejectionReason resultSelfDeclarationNull = onboardingConsensusCheck.apply(onboardingSelfDeclarationFalseMock, null, null);
 
         // Then
         assertNull(resultSelfDeclarationNull);
@@ -161,9 +152,6 @@ class OnboardingConsensusCheckTest {
     @Test
     void testConsensusTrue() {
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
         OnboardingDTO onboardingMock = new OnboardingDTO(
@@ -182,7 +170,7 @@ class OnboardingConsensusCheckTest {
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingConsensusCheck.apply(onboardingMock, null);
+        OnboardingRejectionReason result = onboardingConsensusCheck.apply(onboardingMock, null, null);
 
         // Then
         assertNull(result);
