@@ -226,7 +226,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
                                     .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL)
                                     .build(),
-                            false)
+                            true)
             ),
             // PDND consensuns fail
             Pair.of(
@@ -238,7 +238,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
                                     .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL)
                                     .build()
-                            , false)
+                            , true)
             ),
             // self declaration fail
             // Handle multi and boolean criteria
@@ -255,6 +255,19 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , false)
             ),
             */
+            // No initiative
+            Pair.of(
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                            .initiativeId("NOT_EXISTENT")
+                            .tcAcceptTimestamp(LocalDateTime.now().withYear(1970))
+                            .build(),
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                                    .code( OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                                    .build()
+                            , false)
+            ),
             // TC acceptance timestamp fail
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -393,7 +406,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         );
         errorUseCases.add(Pair.of(
                 () -> {
-                    Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i->failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any());
+                    Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i->failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any(), Mockito.any());
                     return failingOnboardingChecks;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingOnboardingChecks)

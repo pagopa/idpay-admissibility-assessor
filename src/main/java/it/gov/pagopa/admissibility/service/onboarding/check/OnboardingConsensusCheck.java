@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.check;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
@@ -16,7 +17,7 @@ import java.util.Map;
 public class OnboardingConsensusCheck implements OnboardingCheck {
 
     @Override
-    public OnboardingRejectionReason apply(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+    public OnboardingRejectionReason apply(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
         log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] evaluating consensus check on onboarding request of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
         final String consensusBasedRejectionReason = checkConsensusErrors(onboardingRequest);
         return StringUtils.hasText(consensusBasedRejectionReason) ?

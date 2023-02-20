@@ -38,6 +38,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
+        "logging.level.it.gov.pagopa.admissibility.utils.PerformanceLogger=WARN",
 })
 public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 

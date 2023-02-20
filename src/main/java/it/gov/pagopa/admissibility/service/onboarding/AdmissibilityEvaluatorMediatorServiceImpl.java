@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -18,6 +19,7 @@ import reactor.core.publisher.Mono;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 
@@ -25,6 +27,7 @@ import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_C
 @Slf4j
 public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityEvaluatorMediatorService {
 
+    private final OnboardingContextHolderService onboardingContextHolderService;
     private final OnboardingCheckService onboardingCheckService;
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
@@ -37,7 +40,17 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final RankingNotifierService rankingNotifierService;
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters alert
-    public AdmissibilityEvaluatorMediatorServiceImpl(OnboardingCheckService onboardingCheckService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService, OnboardingRequestEvaluatorService onboardingRequestEvaluatorService, Onboarding2EvaluationMapper onboarding2EvaluationMapper, ErrorNotifierService errorNotifierService, ObjectMapper objectMapper, OnboardingNotifierService onboardingNotifierService, RankingNotifierService rankingNotifierService) {
+    public AdmissibilityEvaluatorMediatorServiceImpl(
+            OnboardingContextHolderService onboardingContextHolderService,
+            OnboardingCheckService onboardingCheckService,
+            AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
+            OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
+            Onboarding2EvaluationMapper onboarding2EvaluationMapper,
+            ErrorNotifierService errorNotifierService,
+            ObjectMapper objectMapper,
+            OnboardingNotifierService onboardingNotifierService,
+            RankingNotifierService rankingNotifierService) {
+        this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboardingCheckService = onboardingCheckService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
@@ -86,24 +99,35 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .doOnError(e -> log.error("Fail to checkpoint the message", e))
                                 .subscribe();
                     }
-                    log.info("[PERFORMANCE_LOG] [ONBOARDING_REQUEST] Time occurred to perform business logic: {} ms {}", System.currentTimeMillis() - startTime, message.getPayload());
+                    PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
                 });
     }
 
     private Mono<EvaluationDTO> execute(Message<String> message) {
-        Map<String, Object> onboardingContext = new HashMap<>();
 
         log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
 
-        OnboardingDTO onboardingRequest = deserializeMessage(message);
+        return Mono.just(message)
+                .mapNotNull(this::deserializeMessage)
+                .flatMap(onboardingRequest ->
+                        onboardingContextHolderService.getInitiativeConfig(onboardingRequest.getInitiativeId())
+                                .map(Optional::of)
+                                .switchIfEmpty(Mono.just(Optional.empty()))
 
+                                .flatMap(initiativeConfig -> execute(message, onboardingRequest, initiativeConfig.orElse(null)))
+                );
+    }
+
+    private Mono<EvaluationDTO> execute(Message<String> message, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+        Map<String, Object> onboardingContext = new HashMap<>();
+        onboardingContext.put(ONBOARDING_CONTEXT_INITIATIVE_KEY,initiativeConfig);
         if(onboardingRequest!=null) {
-            EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, onboardingContext);
+            EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, initiativeConfig, onboardingContext);
             if (rejectedRequest != null) {
                 return Mono.just(rejectedRequest);
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, onboardingContext, message);
+                return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message);
             }
         } else {
             return Mono.empty();
@@ -114,23 +138,17 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
     }
 
-    private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
-        OnboardingRejectionReason rejectionReason = onboardingCheckService.check(onboardingRequest, onboardingContext);
+    private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
+        OnboardingRejectionReason rejectionReason = onboardingCheckService.check(onboardingRequest, initiativeConfig, onboardingContext);
         if (rejectionReason != null) {
             log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [ONBOARDING_CHECK] Onboarding request failed: {}",rejectionReason);
-            return onboarding2EvaluationMapper.apply(onboardingRequest, readInitiativeConfigFromContext(onboardingContext), Collections.singletonList(rejectionReason));
+            return onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.singletonList(rejectionReason));
         } else return null;
     }
 
-    private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext, Message<String> message) {
-        final InitiativeConfig initiativeConfig = readInitiativeConfigFromContext(onboardingContext);
-
+    private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig));
-    }
-
-    private InitiativeConfig readInitiativeConfigFromContext(Map<String, Object> onboardingContext) {
-        return (InitiativeConfig) onboardingContext.get(ONBOARDING_CONTEXT_INITIATIVE_KEY);
     }
 
     private void callOnboardingNotifier(EvaluationCompletedDTO evaluationCompletedDTO) {

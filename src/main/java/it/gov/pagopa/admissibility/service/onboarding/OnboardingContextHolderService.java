@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import org.kie.api.KieBase;
+import reactor.core.publisher.Mono;
 
 
 /**
@@ -13,8 +14,7 @@ public interface OnboardingContextHolderService {
     KieBase getBeneficiaryRulesKieBase();
     void setBeneficiaryRulesKieBase(KieBase kieBase);
 
-    InitiativeConfig getInitiativeConfig(String initiativeId);
-
+    Mono<InitiativeConfig> getInitiativeConfig(String initiativeId);
     void setInitiativeConfig(InitiativeConfig initiativeConfig);
 
     void setPDNDapiKeys(InitiativeConfig initiativeConfig);

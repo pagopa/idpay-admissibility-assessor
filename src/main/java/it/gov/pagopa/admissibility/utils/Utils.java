@@ -48,6 +48,12 @@ public final class Utils {
         return payload;
     }
 
+    /** To read Message header value */
+    @SuppressWarnings("unchecked")
+    public static <T> T getHeaderValue(Message<?> message, String headerName) {
+        return  (T)message.getHeaders().get(headerName);
+    }
+
     public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
     public static Long euro2Cents(BigDecimal euro){
         return euro == null? null : euro.multiply(ONE_HUNDRED).longValue();
