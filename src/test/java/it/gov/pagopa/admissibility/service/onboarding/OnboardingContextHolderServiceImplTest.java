@@ -78,7 +78,7 @@ class OnboardingContextHolderServiceImplTest {
         Mockito.when(droolsRuleRepositoryMock.findById(Mockito.same(initiativeId))).thenReturn(Mono.empty());
 
         // When
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId);
+        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
         //Then
         Assertions.assertNull(result);
@@ -96,7 +96,7 @@ class OnboardingContextHolderServiceImplTest {
         Mockito.when(droolsRuleRepositoryMock.findById(Mockito.same(initiativeId))).thenReturn(Mono.just(droolsRule));
 
         // When
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId);
+        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
         //Then
         Assertions.assertNotNull(result);
@@ -128,7 +128,7 @@ class OnboardingContextHolderServiceImplTest {
 
         // When
         onboardingContextHolderService.setInitiativeConfig(initiativeConfig);
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId);
+        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
         //Then
         Assertions.assertNotNull(result);

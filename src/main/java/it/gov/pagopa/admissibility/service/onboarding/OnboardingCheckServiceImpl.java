@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.check.OnboardingCheck;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,8 +23,8 @@ public class OnboardingCheckServiceImpl implements OnboardingCheckService {
 
 
     @Override
-    public OnboardingRejectionReason check(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
+    public OnboardingRejectionReason check(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
         log.trace("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] evaluating onboarding checks of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-        return checks.stream().map(f -> f.apply(onboardingRequest, onboardingContext)).filter(Objects::nonNull).findFirst().orElse(null);
+        return checks.stream().map(f -> f.apply(onboardingRequest, initiativeConfig, onboardingContext)).filter(Objects::nonNull).findFirst().orElse(null);
     }
 }
