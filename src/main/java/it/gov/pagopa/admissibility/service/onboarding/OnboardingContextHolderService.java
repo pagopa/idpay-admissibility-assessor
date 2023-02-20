@@ -13,10 +13,6 @@ public interface OnboardingContextHolderService {
     KieBase getBeneficiaryRulesKieBase();
     void setBeneficiaryRulesKieBase(KieBase kieBase);
 
-    /** @deprecated use the {@link #getInitiativeConfig(String)} instead of this, which will call blocking logic */
-    @Deprecated(forRemoval = true)
-    InitiativeConfig getInitiativeConfigBlocking(String initiativeId);
     Mono<InitiativeConfig> getInitiativeConfig(String initiativeId);
-
     void setInitiativeConfig(InitiativeConfig initiativeConfig);
 }

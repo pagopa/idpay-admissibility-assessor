@@ -5,10 +5,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -45,12 +41,10 @@ class OnboardingInitiativeCheckTest {
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, null, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -82,18 +76,15 @@ class OnboardingInitiativeCheckTest {
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfigBlocking(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, initiativeConfig, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -126,18 +117,15 @@ class OnboardingInitiativeCheckTest {
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfigBlocking(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, initiativeConfig, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -172,15 +160,12 @@ class OnboardingInitiativeCheckTest {
         final InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setStartDate(LocalDate.now());
 
-        OnboardingContextHolderService onboardingContextMock = Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextMock.getInitiativeConfigBlocking("1")).thenReturn(initiativeConfig);
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboarding, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboarding, initiativeConfig, onboardingContext);
 
         // Then
         assertNull(result);
-        Assertions.assertSame(initiativeConfig, onboardingContext.get(OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY));
     }
 }
