@@ -46,7 +46,7 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
     }
 
     private String checkInitiativeError(OnboardingDTO onboardingRequest, Map<String, Object> onboardingContext) {
-        InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfig(onboardingRequest.getInitiativeId());
+        InitiativeConfig initiativeConfig = onboardingContextHolderService.getInitiativeConfigBlocking(onboardingRequest.getInitiativeId());
         if(initiativeConfig == null){
             log.error("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] [INITIATIVE_CHECK] cannot find the initiative id {} to which the user {} is asking to onboard", onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
             return OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL;

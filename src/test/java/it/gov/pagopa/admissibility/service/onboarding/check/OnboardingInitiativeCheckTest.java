@@ -27,9 +27,6 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeNotFound() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
         OnboardingDTO onboardingMock = new OnboardingDTO(
@@ -67,9 +64,6 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeTcDateFail() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.of(2022,1,1,0,0);
 
         OnboardingDTO onboardingMock = new OnboardingDTO(
@@ -92,7 +86,7 @@ class OnboardingInitiativeCheckTest {
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
+        Mockito.when(onboardingContextHolder.getInitiativeConfigBlocking(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
@@ -113,9 +107,6 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCriteriaConsensusDateFail() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock1 = LocalDateTime.of(2021,7,14,0,0);
         LocalDateTime localDateTimeMock2 = LocalDateTime.of(2022,1,1,0,0);
 
@@ -139,7 +130,7 @@ class OnboardingInitiativeCheckTest {
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
+        Mockito.when(onboardingContextHolder.getInitiativeConfigBlocking(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
@@ -160,9 +151,6 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCheckOk() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
         OnboardingDTO onboarding = new OnboardingDTO(
@@ -185,7 +173,7 @@ class OnboardingInitiativeCheckTest {
         initiativeConfig.setStartDate(LocalDate.now());
 
         OnboardingContextHolderService onboardingContextMock = Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextMock.getInitiativeConfig("1")).thenReturn(initiativeConfig);
+        Mockito.when(onboardingContextMock.getInitiativeConfigBlocking("1")).thenReturn(initiativeConfig);
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
 
         // When

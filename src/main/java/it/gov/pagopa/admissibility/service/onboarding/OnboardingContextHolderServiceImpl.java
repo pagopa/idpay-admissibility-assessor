@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,11 +17,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 @Service
@@ -126,9 +130,34 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     //endregion
 
     //region initiativeConfig holder
+    private final ExecutorService initiativeRetrieveExecutor = Executors.newFixedThreadPool(100, new BasicThreadFactory.Builder().namingPattern("blockingInitiativeRetrieve-%d").build());
+    /** @deprecated use the {@link #getInitiativeConfig(String)} instead of this, which will call blocking logic */
+    @Deprecated(forRemoval = true)
     @Override
-    public InitiativeConfig getInitiativeConfig(String initiativeId) {
-        return initiativeId2Config.computeIfAbsent(initiativeId, this::retrieveInitiativeConfig);
+    public InitiativeConfig getInitiativeConfigBlocking(String initiativeId) {
+        return Mono.just(initiativeId)
+                .publishOn(Schedulers.fromExecutorService(initiativeRetrieveExecutor, "blockingInitiativeRetrieve"))
+                .flatMap(id -> {
+                    InitiativeConfig initiativeConfig = getInitiativeConfig(id).block(Duration.ofSeconds(10));
+                    if(initiativeConfig!=null){
+                        return Mono.just(initiativeConfig);
+                    } else {
+                        return Mono.empty();
+                    }
+                })
+                .block(Duration.ofSeconds(10));
+    }
+
+    @Override
+    public Mono<InitiativeConfig> getInitiativeConfig(String initiativeId) {
+        InitiativeConfig cachedInitiativeConfig = initiativeId2Config.get(initiativeId);
+        if(cachedInitiativeConfig==null){
+        return retrieveInitiativeConfig(initiativeId)
+                    .doOnNext(initiativeConfig -> initiativeId2Config.put(initiativeId, initiativeConfig))
+                ;
+        } else {
+            return Mono.just(cachedInitiativeConfig);
+        }
     }
 
     @Override
@@ -136,16 +165,19 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         initiativeId2Config.put(initiativeConfig.getInitiativeId(),initiativeConfig);
     }
 
-    private InitiativeConfig retrieveInitiativeConfig(String initiativeId) {
+    private Mono<InitiativeConfig> retrieveInitiativeConfig(String initiativeId) {
         log.debug("[CACHE_MISS] Cannot find locally initiativeId {}", initiativeId);
         long startTime = System.currentTimeMillis();
-        DroolsRule droolsRule = droolsRuleRepository.findById(initiativeId).block(Duration.ofSeconds(10));
-        log.info("[CACHE_MISS] [PERFORMANCE_LOG] Time spent fetching initiativeId: {} ms", System.currentTimeMillis() - startTime);
-        if (droolsRule==null){
-            log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
-            return null;
-        }
-        return droolsRule.getInitiativeConfig();
+        return droolsRuleRepository.findById(initiativeId)
+                .switchIfEmpty(Mono.defer(() -> {
+                    log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
+                    return Mono.empty();
+                }))
+                .map(droolsRule -> {
+                    log.info("PROVA");
+                    return droolsRule.getInitiativeConfig();
+                })
+                .doFinally(x -> log.info("[CACHE_MISS] [PERFORMANCE_LOG] Time spent fetching initiativeId {} ({}): {} ms", initiativeId, x.toString(), System.currentTimeMillis() - startTime));
     }
     //endregion
 }

@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import org.kie.api.KieBase;
+import reactor.core.publisher.Mono;
 
 
 /**
@@ -12,7 +13,10 @@ public interface OnboardingContextHolderService {
     KieBase getBeneficiaryRulesKieBase();
     void setBeneficiaryRulesKieBase(KieBase kieBase);
 
-    InitiativeConfig getInitiativeConfig(String initiativeId);
+    /** @deprecated use the {@link #getInitiativeConfig(String)} instead of this, which will call blocking logic */
+    @Deprecated(forRemoval = true)
+    InitiativeConfig getInitiativeConfigBlocking(String initiativeId);
+    Mono<InitiativeConfig> getInitiativeConfig(String initiativeId);
 
     void setInitiativeConfig(InitiativeConfig initiativeConfig);
 }
