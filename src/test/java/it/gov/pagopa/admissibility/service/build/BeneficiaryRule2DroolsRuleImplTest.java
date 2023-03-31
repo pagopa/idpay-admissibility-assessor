@@ -82,12 +82,14 @@ class BeneficiaryRule2DroolsRuleImplTest {
 
     private void checkResult(DroolsRule result) {
         DroolsRule expected = new DroolsRule();
-        expected.setName("ID-NAME");
+        expected.setName("NAME");
         expected.setId("ID");
         expected.setRule("""
                 package it.gov.pagopa.admissibility.drools.buildrules;
-                                        
-                rule "ID-NAME-ISEE"
+                
+                // NAME
+                
+                rule "ID-ISEE"
                 no-loop true
                 agenda-group "ID"
                 when
@@ -99,7 +101,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 end
                                         
                                         
-                rule "ID-NAME-BIRTHDATE"
+                rule "ID-BIRTHDATE"
                 no-loop true
                 agenda-group "ID"
                 when
