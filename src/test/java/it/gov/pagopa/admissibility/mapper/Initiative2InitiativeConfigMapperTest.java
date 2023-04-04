@@ -96,7 +96,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertTrue(result.getRankingFields().isEmpty());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes");
+        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes");
     }
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
@@ -147,5 +147,6 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
+        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());
     }
 }

@@ -34,6 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/*
+ ******************
+ For any change necessary on this test consider if update "ruleVersion" value setted in it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl.apply
+ ******************
+*/
 class BeneficiaryRule2DroolsRuleImplTest {
 
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
@@ -65,7 +70,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule result = buildBeneficiaryRule2DroolsRule(true).apply(dto);
 
         // then
-        checkResult(result);
+        checkResult(result, dto);
     }
 
     @Test
@@ -77,10 +82,10 @@ class BeneficiaryRule2DroolsRuleImplTest {
         DroolsRule result = beneficiaryRule2DroolsRule.apply(dto);
 
         // then
-        checkResult(result);
+        checkResult(result, dto);
     }
 
-    private void checkResult(DroolsRule result) {
+    private void checkResult(DroolsRule result, Initiative2BuildDTO dto) {
         DroolsRule expected = new DroolsRule();
         expected.setName("NAME");
         expected.setId("ID");
@@ -88,6 +93,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 package it.gov.pagopa.admissibility.drools.buildrules;
                 
                 // NAME
+                // ruleVersion: 20230404
                 
                 rule "ID-ISEE"
                 no-loop true
@@ -121,10 +127,13 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .startDate(LocalDate.of(2021, 1, 1))
                 .endDate(LocalDate.of(2025, 12, 1))
                 .pdndToken("PDND_TOKEN")
+                .automatedCriteria(dto.getBeneficiaryRule().getAutomatedCriteria())
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
                 .build());
+
+        expected.setRuleVersion("20230404");
 
         Assertions.assertEquals(expected, result);
     }

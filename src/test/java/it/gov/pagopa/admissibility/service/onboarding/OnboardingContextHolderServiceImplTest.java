@@ -25,6 +25,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
@@ -116,6 +117,7 @@ class OnboardingContextHolderServiceImplTest {
                 .initiativeName("NAME")
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
+                .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .pdndToken("PDND-TOKEN")
                 .organizationId("ORGANIZATION-ID")
