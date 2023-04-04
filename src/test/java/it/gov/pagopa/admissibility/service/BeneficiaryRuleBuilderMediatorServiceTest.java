@@ -52,7 +52,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     void configureMocks() {
         Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation -> {
             Initiative2BuildDTO i = invocation.getArgument(0);
-            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
+            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE", "RULEVERSION",
                     InitiativeConfig.builder()
                             .initiativeId(i.getInitiativeId())
                             .startDate(i.getGeneral().getStartDate())
