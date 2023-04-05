@@ -101,14 +101,15 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
                     .mapNotNull(c -> {
                         if(!Arrays.equals(c, kieBaseSerialized)){
                             this.kieBaseSerialized = c;
-                            KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
                             try{
+                                KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
                                 preLoadKieBase(newKieBase);
+
+                                this.kieBase = newKieBase;
                             } catch (Exception e){
                                 log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
                                 return null;
                             }
-                            this.kieBase = newKieBase;
                         }
                         return this.kieBase;
                     })
