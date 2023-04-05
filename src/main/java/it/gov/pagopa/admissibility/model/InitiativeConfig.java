@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.model;
 
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,6 +25,7 @@ public class InitiativeConfig {
     private LocalDate startDate;
     private LocalDate endDate;
     private String pdndToken;
+    private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;
