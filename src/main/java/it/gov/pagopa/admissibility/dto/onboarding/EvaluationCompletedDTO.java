@@ -25,4 +25,5 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     private BigDecimal beneficiaryBudget;
     @JsonIgnore
     private Long rankingValue;
+    private String initiativeRewardType;
 }
