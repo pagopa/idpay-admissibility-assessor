@@ -24,7 +24,6 @@ public class OnboardingDTO {
     private LocalDateTime criteriaConsensusTimestamp;
 
     // Authorities data fetched if the initiative requires them
-    private String iseeTypology;
     private BigDecimal isee;
     private Residence residence;
     private BirthDate birthDate;

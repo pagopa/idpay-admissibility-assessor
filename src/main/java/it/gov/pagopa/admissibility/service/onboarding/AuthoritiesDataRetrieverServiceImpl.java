@@ -3,15 +3,9 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -21,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Random;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -56,33 +50,23 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
             Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-            List<IseeTypologyEnum> iseeList = new ArrayList<IseeTypologyEnum>(Arrays.asList(IseeTypologyEnum.values()));
-            int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0,5);
-            for(int i=0; i< randomTipology; i++){
-                Random valueIsee = new Random(onboardingRequest.getUserId().hashCode()+i);
-                iseeMockMap.put(iseeList.get(valueIsee.nextInt(0,5)).name(),new BigDecimal(valueIsee.nextInt(1_000, 100_000)));
+
+            List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
+
+            IseeTypologyEnum prioritaryIsee = initiativeConfig.getAutomatedCriteria().get(0).getTypology().get(0);
+
+            int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1,5);
+            for(int i = 0; i < randomTipology; i++) {
+                Random value = new Random((onboardingRequest.getUserId()+iseeList.get(i)).hashCode());
+                iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
             }
-            List<IseeTypologyEnum> typologyIseeInitiative = null;
-            for(AutomatedCriteriaDTO automatedCriteriaDTO: initiativeConfig.getAutomatedCriteria()){
-                if(automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)){
-                    typologyIseeInitiative = automatedCriteriaDTO.getTypology();
-                }
-            }
-            /*
-            for(IseeTypologyEnum iseePriority: typologyIseeInitiative){
-                if(iseeMockMap.get(iseePriority))
-            }
-             */
-            onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));
+
+            log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
+
+            BigDecimal iseeValue = BigDecimal.valueOf(new Random((onboardingRequest.getUserId()+prioritaryIsee).hashCode()).nextInt(1_000, 100_000));
+            onboardingRequest.setIsee(iseeValue);
         }
 
-        Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-        List<IseeTypologyEnum> iseeList = new ArrayList<IseeTypologyEnum>(Arrays.asList(IseeTypologyEnum.values()));
-        int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0,5);
-        for(int i=0; i< randomTipology; i++){
-            Random valueIsee = new Random(onboardingRequest.getUserId().hashCode()+i);
-            iseeMockMap.put(iseeList.get(valueIsee.nextInt(0,5)).name(),new BigDecimal(valueIsee.nextInt(1_000, 100_000)));
-        }
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
             onboardingRequest.setResidence(
                     userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
@@ -105,6 +89,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
             );
         }
+
         if(onboardingRequest.getBirthDate()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
             int age = userIdBasedIntegerGenerator(onboardingRequest).nextInt(18, 99);
             onboardingRequest.setBirthDate(BirthDate.builder()

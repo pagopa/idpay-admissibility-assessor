@@ -1,7 +1,10 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
@@ -44,6 +47,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .build();
 
         LocalDate now = LocalDate.now();
+        List<IseeTypologyEnum> typology = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
         initiativeConfig = InitiativeConfig.builder()
                 .initiativeId("INITIATIVEID")
                 .initiativeName("INITITIATIVE_NAME")
@@ -55,6 +59,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
+                .automatedCriteria(List.of(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology)))
                 .build();
 
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
@@ -72,7 +77,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
     }
 
     @Test
@@ -87,7 +92,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
     }
 
     @Test
@@ -123,7 +128,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("25729"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
