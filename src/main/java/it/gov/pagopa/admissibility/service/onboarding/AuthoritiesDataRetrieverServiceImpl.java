@@ -3,8 +3,15 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -48,7 +55,33 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         * if all the calls were successful return a Mono with the request
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
+            Map<String, BigDecimal> iseeMockMap = new HashMap<>();
+            List<IseeTypologyEnum> iseeList = new ArrayList<IseeTypologyEnum>(Arrays.asList(IseeTypologyEnum.values()));
+            int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0,5);
+            for(int i=0; i< randomTipology; i++){
+                Random valueIsee = new Random(onboardingRequest.getUserId().hashCode()+i);
+                iseeMockMap.put(iseeList.get(valueIsee.nextInt(0,5)).name(),new BigDecimal(valueIsee.nextInt(1_000, 100_000)));
+            }
+            List<IseeTypologyEnum> typologyIseeInitiative = null;
+            for(AutomatedCriteriaDTO automatedCriteriaDTO: initiativeConfig.getAutomatedCriteria()){
+                if(automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)){
+                    typologyIseeInitiative = automatedCriteriaDTO.getTypology();
+                }
+            }
+            /*
+            for(IseeTypologyEnum iseePriority: typologyIseeInitiative){
+                if(iseeMockMap.get(iseePriority))
+            }
+             */
             onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));
+        }
+
+        Map<String, BigDecimal> iseeMockMap = new HashMap<>();
+        List<IseeTypologyEnum> iseeList = new ArrayList<IseeTypologyEnum>(Arrays.asList(IseeTypologyEnum.values()));
+        int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0,5);
+        for(int i=0; i< randomTipology; i++){
+            Random valueIsee = new Random(onboardingRequest.getUserId().hashCode()+i);
+            iseeMockMap.put(iseeList.get(valueIsee.nextInt(0,5)).name(),new BigDecimal(valueIsee.nextInt(1_000, 100_000)));
         }
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
             onboardingRequest.setResidence(
