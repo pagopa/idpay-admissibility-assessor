@@ -21,7 +21,7 @@ class ErrorManagerTest extends BaseIntegrationTest {
     @Test
     void handleExceptionClientExceptionNoBody() {
         Mockito.when(admissibilityController.getInitiativeStatus("ClientExceptionNoBody"))
-                .thenThrow(new ClientExceptionNoBody(HttpStatus.NOT_FOUND));
+                .thenThrow(new ClientExceptionNoBody(HttpStatus.NOT_FOUND,"NOTFOUND"));
 
         webTestClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
