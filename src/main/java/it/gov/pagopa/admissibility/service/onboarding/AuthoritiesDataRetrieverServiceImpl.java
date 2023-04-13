@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -59,10 +60,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
             }
 
-            for(AutomatedCriteriaDTO automatedCriteriaDTO: initiativeConfig.getAutomatedCriteria()){
+            for(AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()){
                 if(automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)){
-                    List<IseeTypologyEnum> iseeTypologyEnums = automatedCriteriaDTO.getIseeTypes();
-                    for(IseeTypologyEnum iseeTypologyEnum: iseeTypologyEnums){
+                    for(IseeTypologyEnum iseeTypologyEnum : automatedCriteriaDTO.getIseeTypes()){
                         if(iseeMockMap.containsKey(iseeTypologyEnum.name())){
                             onboardingRequest.setIsee(iseeMockMap.get(iseeTypologyEnum.name()));
                             break;
@@ -70,15 +70,15 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     }
                 }
             }
-            if(onboardingRequest.getIsee()==null){
-                onboardingRequest.setIsee(new BigDecimal(-1));
-            }
-
 
             log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
 
-           // BigDecimal iseeValue = BigDecimal.valueOf(new Random((onboardingRequest.getUserId()+prioritaryIsee).hashCode()).nextInt(1_000, 100_000));
-           // onboardingRequest.setIsee(iseeValue);
+            if(onboardingRequest.getIsee()==null){
+                throw new OnboardingException(OnboardingConstants.REJECTION_REASON_ISEE_TYPE_FAIL,
+                        "User with id %s has not a compatible type of ISEE for inititiative %s"
+                                .formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId())
+                );
+            }
         }
 
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
