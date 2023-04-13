@@ -101,7 +101,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .doOnError(e -> log.error("Fail to checkpoint the message", e))
                                 .subscribe();
                     }
-                    PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
+                   PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
                 });
     }
 
@@ -151,12 +151,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig))
-                .onErrorResume(OnboardingException.class, e -> Mono.just(
-                        onboarding2EvaluationMapper.apply(
-                                onboardingRequest,
-                                initiativeConfig,
-                                e.getRejectionReasons())
-                ));
+                .onErrorResume(OnboardingException.class, e -> {
+                    log.info(e.getMessage());
+                    return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
+                });
     }
 
     private void callOnboardingNotifier(EvaluationCompletedDTO evaluationCompletedDTO) {

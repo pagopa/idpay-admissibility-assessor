@@ -80,17 +80,15 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
             CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
             if (onboardingRequest.getIsee() == null) {
-                throw new OnboardingException(List.of(
-                        new OnboardingRejectionReason(
-                                OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
-                                OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted(OnboardingConstants.CRITERIA_CODE_ISEE),
+                return Mono.error(new OnboardingException(
+                        List.of(new OnboardingRejectionReason(
+                                OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
                                 criteriaCodeConfig.getAuthority(),
                                 criteriaCodeConfig.getAuthorityLabel(),
                                 "ISEE non disponibile"
-                        )
-                ),
-                        "User with id %s has not a compatible type of ISEE for inititiative %s"
-                                .formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId())
+                        )),
+                        "User having id %s has not compatible type for initiative %s".formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId()))
                 );
             }
         }

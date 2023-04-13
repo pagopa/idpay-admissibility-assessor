@@ -27,6 +27,7 @@ public class OnboardingRejectionReason implements Serializable {
         INVALID_REQUEST,
         BUDGET_EXHAUSTED,
         AUTOMATED_CRITERIA_FAIL,
+        ISEE_TYPE_KO,
         OUT_OF_RANKING
     }
 }
