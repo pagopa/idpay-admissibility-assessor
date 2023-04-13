@@ -21,7 +21,6 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT = "CONSENSUS_CHECK_SELF_DECLARATION_%s_FAIL";
     public static final String REJECTION_REASON_CONSENSUS_PDND_FAIL = "CONSENSUS_CHECK_PDND_FAIL";
     public static final String REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT = "AUTOMATED_CRITERIA_%s_FAIL";
-    public static final String REJECTION_REASON_ISEE_TYPE_FAIL = "ISEE_TYPE_NOT_COMPATIBLE";
     //endregion
 
     //region criteria code

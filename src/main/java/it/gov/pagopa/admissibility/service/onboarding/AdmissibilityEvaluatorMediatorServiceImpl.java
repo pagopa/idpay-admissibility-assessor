@@ -9,7 +9,6 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +17,10 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 
@@ -153,10 +155,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         onboarding2EvaluationMapper.apply(
                                 onboardingRequest,
                                 initiativeConfig,
-                                List.of(OnboardingRejectionReason.builder()
-                                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_FAIL)
-                                        .code(OnboardingConstants.REJECTION_REASON_ISEE_TYPE_FAIL)
-                                        .build()))
+                                e.getRejectionReasons())
                 ));
     }
 

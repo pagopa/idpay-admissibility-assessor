@@ -1,24 +1,27 @@
 package it.gov.pagopa.admissibility.exception;
 
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import lombok.Getter;
+
+import java.util.List;
 
 @Getter
 public class OnboardingException extends RuntimeException{
 
-    private final String rejectionReason;
+    private final List<OnboardingRejectionReason> rejectionReasons;
     private final boolean printStackTrace;
 
-    public OnboardingException(String rejectionReason, String message){
-        this(rejectionReason, message, null);
+    public OnboardingException(List<OnboardingRejectionReason> rejectionReasons, String message){
+        this(rejectionReasons, message, null);
     }
 
-    public OnboardingException(String rejectionReason, String message, Throwable ex){
-        this(rejectionReason, message, false, ex);
+    public OnboardingException(List<OnboardingRejectionReason> rejectionReasons, String message, Throwable ex){
+        this(rejectionReasons, message, false, ex);
     }
 
-    public OnboardingException(String rejectionReason, String message, boolean printStackTrace, Throwable ex){
+    public OnboardingException(List<OnboardingRejectionReason> rejectionReasons, String message, boolean printStackTrace, Throwable ex){
         super(message, ex);
-        this.rejectionReason=rejectionReason;
+        this.rejectionReasons = rejectionReasons;
         this.printStackTrace=printStackTrace;
     }
 }

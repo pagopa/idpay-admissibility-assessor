@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -25,6 +26,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @Mock
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
+    @Mock
+    private CriteriaCodeService criteriaCodeServiceMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -34,7 +37,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
