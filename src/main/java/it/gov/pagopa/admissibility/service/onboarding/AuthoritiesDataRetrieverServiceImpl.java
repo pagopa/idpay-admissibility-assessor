@@ -53,7 +53,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
             List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
 
-            IseeTypologyEnum prioritaryIsee = initiativeConfig.getAutomatedCriteria().get(0).getTypology().get(0);
+            IseeTypologyEnum prioritaryIsee = initiativeConfig.getAutomatedCriteria().get(0).getIseeTypes().get(0);
 
             int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1,5);
             for(int i = 0; i < randomTipology; i++) {

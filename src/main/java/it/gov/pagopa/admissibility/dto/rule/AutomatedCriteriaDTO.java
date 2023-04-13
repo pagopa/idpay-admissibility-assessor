@@ -21,5 +21,5 @@ public class AutomatedCriteriaDTO   {
     private String value;
     private String value2;
     private Sort.Direction orderDirection;
-    private List<IseeTypologyEnum> typology;
+    private List<IseeTypologyEnum> iseeTypes;
 }
