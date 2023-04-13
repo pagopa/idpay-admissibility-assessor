@@ -26,6 +26,7 @@ public class OnboardingRejectionReason {
         INVALID_REQUEST,
         BUDGET_EXHAUSTED,
         AUTOMATED_CRITERIA_FAIL,
+        ISEE_KO,
         OUT_OF_RANKING;
     }
 }

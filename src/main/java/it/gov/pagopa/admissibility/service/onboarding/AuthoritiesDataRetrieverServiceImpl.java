@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -50,10 +51,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
             Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-
             List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
-
-            IseeTypologyEnum prioritaryIsee = initiativeConfig.getAutomatedCriteria().get(0).getIseeTypes().get(0);
 
             int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1,5);
             for(int i = 0; i < randomTipology; i++) {
@@ -61,10 +59,26 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
             }
 
+            for(AutomatedCriteriaDTO automatedCriteriaDTO: initiativeConfig.getAutomatedCriteria()){
+                if(automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)){
+                    List<IseeTypologyEnum> iseeTypologyEnums = automatedCriteriaDTO.getIseeTypes();
+                    for(IseeTypologyEnum iseeTypologyEnum: iseeTypologyEnums){
+                        if(iseeMockMap.containsKey(iseeTypologyEnum.name())){
+                            onboardingRequest.setIsee(iseeMockMap.get(iseeTypologyEnum.name()));
+                            break;
+                        }
+                    }
+                }
+            }
+            if(onboardingRequest.getIsee()==null){
+                onboardingRequest.setIsee(new BigDecimal(-1));
+            }
+
+
             log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
 
-            BigDecimal iseeValue = BigDecimal.valueOf(new Random((onboardingRequest.getUserId()+prioritaryIsee).hashCode()).nextInt(1_000, 100_000));
-            onboardingRequest.setIsee(iseeValue);
+           // BigDecimal iseeValue = BigDecimal.valueOf(new Random((onboardingRequest.getUserId()+prioritaryIsee).hashCode()).nextInt(1_000, 100_000));
+           // onboardingRequest.setIsee(iseeValue);
         }
 
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
