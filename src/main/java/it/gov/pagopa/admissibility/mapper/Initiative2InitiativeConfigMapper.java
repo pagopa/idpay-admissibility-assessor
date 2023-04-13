@@ -30,6 +30,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
                 .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
+                .initiativeRewardType(initiative.getInitiativeRewardType())
                 .build();
     }
 

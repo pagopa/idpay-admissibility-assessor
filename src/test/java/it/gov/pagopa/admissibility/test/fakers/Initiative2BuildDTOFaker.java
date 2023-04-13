@@ -32,6 +32,7 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
+        out.initiativeRewardType("REFUND");
 
         final InitiativeBeneficiaryRuleDTO beneficiaryRule = new InitiativeBeneficiaryRuleDTO();
         List<IseeTypologyEnum> typology = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);

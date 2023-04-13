@@ -38,7 +38,7 @@ public class Onboarding2EvaluationMapper {
             out.setInitiativeEndDate(initiative.getEndDate());
             out.setOrganizationId(initiative.getOrganizationId());
             out.setBeneficiaryBudget(initiative.getBeneficiaryInitiativeBudget());
-
+            out.setInitiativeRewardType(initiative.getInitiativeRewardType());
             setRankingValue(onboardingDTO, initiative, out);
         }
 
