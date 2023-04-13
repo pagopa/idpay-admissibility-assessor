@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Random;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -48,8 +49,24 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         * if all the calls were successful return a Mono with the request
         */
         if(onboardingRequest.getIsee()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
-            onboardingRequest.setIsee(new BigDecimal(userIdBasedIntegerGenerator(onboardingRequest).nextInt(1_000, 100_000)));
+            Map<String, BigDecimal> iseeMockMap = new HashMap<>();
+
+            List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
+
+            IseeTypologyEnum prioritaryIsee = initiativeConfig.getAutomatedCriteria().get(0).getTypology().get(0);
+
+            int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1,5);
+            for(int i = 0; i < randomTipology; i++) {
+                Random value = new Random((onboardingRequest.getUserId()+iseeList.get(i)).hashCode());
+                iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
+            }
+
+            log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
+
+            BigDecimal iseeValue = BigDecimal.valueOf(new Random((onboardingRequest.getUserId()+prioritaryIsee).hashCode()).nextInt(1_000, 100_000));
+            onboardingRequest.setIsee(iseeValue);
         }
+
         if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
             onboardingRequest.setResidence(
                     userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
@@ -72,6 +89,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
             );
         }
+
         if(onboardingRequest.getBirthDate()==null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
             int age = userIdBasedIntegerGenerator(onboardingRequest).nextInt(18, 99);
             onboardingRequest.setBirthDate(BirthDate.builder()
