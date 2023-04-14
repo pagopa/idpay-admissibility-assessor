@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.controller;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.exception.ClientExceptionNoBody;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -46,7 +45,7 @@ class AdmissibilityControllerImplTest {
     void getInitiativeStatusNotFound(){
 
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1"))
-                .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
+                .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND, "NOTFOUND")));
 
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")

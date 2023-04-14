@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OnboardingRejectionReason {
+public class OnboardingRejectionReason implements Serializable {
     @NotNull
     private OnboardingRejectionReasonType type;
     @NotNull
@@ -26,6 +27,7 @@ public class OnboardingRejectionReason {
         INVALID_REQUEST,
         BUDGET_EXHAUSTED,
         AUTOMATED_CRITERIA_FAIL,
-        OUT_OF_RANKING;
+        ISEE_TYPE_KO,
+        OUT_OF_RANKING
     }
 }

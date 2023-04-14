@@ -117,6 +117,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
         initiative2BuildDTO.setStatus("STATUS");
         initiative2BuildDTO.setPdndToken("PDNDTOKEN");
+        initiative2BuildDTO.setInitiativeRewardType("REFUND");
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                 .startDate(LocalDate.MIN)

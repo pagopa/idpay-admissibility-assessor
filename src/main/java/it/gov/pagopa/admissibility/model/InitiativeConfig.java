@@ -31,4 +31,5 @@ public class InitiativeConfig {
     private BigDecimal beneficiaryInitiativeBudget;
     private boolean rankingInitiative;
     private List<Order> rankingFields;
+    private String initiativeRewardType;
 }
