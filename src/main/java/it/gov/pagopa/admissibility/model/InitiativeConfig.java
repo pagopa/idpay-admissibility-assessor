@@ -32,4 +32,5 @@ public class InitiativeConfig {
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;
+    private String organizationName;
 }

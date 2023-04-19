@@ -126,6 +126,7 @@ class OnboardingContextHolderServiceImplTest {
                 .rankingFields(List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
                 .initiativeRewardType("REFUND")
+                .organizationName("ORGANIZATIONNAME")
                 .build();
 
 

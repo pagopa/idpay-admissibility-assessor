@@ -115,6 +115,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setInitiativeId("INITIATIVEID");
         initiative2BuildDTO.setInitiativeName("INITIATIVENAME");
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
+        initiative2BuildDTO.setOrganizationName("ORGANIZATIONNAME");
         initiative2BuildDTO.setStatus("STATUS");
         initiative2BuildDTO.setPdndToken("PDNDTOKEN");
         initiative2BuildDTO.setInitiativeRewardType("REFUND");

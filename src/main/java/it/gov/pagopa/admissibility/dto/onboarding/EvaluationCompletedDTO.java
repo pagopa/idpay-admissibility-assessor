@@ -26,4 +26,5 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     @JsonIgnore
     private Long rankingValue;
     private String initiativeRewardType;
+    private String organizationName;
 }
