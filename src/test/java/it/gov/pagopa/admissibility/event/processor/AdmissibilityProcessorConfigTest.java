@@ -314,7 +314,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
 
             ),
-            // AUTOMATED_CRITERIA fail due to ISEE
+            // AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                                 .initiativeId(ISEE_INITIATIVE_ID)
@@ -328,7 +328,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
-            // AUTOMATED_CRITERIA fail due to RESIDENCE
+            // AUTOMATED_CRITERIA fail due to RESIDENCE TODO to fix configuring wiremock stubs
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(RESIDENCE_INITIATIVE_ID)
@@ -342,7 +342,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
-            // AUTOMATED_CRITERIA fail due to BIRTHDATE
+            // AUTOMATED_CRITERIA fail due to BIRTHDATE TODO to fix configuring wiremock stubs
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(BIRTHDATE_INITIATIVE_ID)
