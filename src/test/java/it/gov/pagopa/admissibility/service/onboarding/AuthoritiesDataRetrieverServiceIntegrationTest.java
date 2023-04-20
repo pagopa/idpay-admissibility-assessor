@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
 import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
@@ -38,6 +39,8 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     private UserFiscalCodeService userFiscalCodeService;
     @Autowired
     private AnprInvocationService anprInvocationService;
+    @Autowired
+    private InpsInvocationService inpsInvocationService;
 
     @Autowired
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
@@ -49,13 +52,13 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     @BeforeEach
     void setUp() {
         onboardingDTO = OnboardingDTO.builder()
-                .userId("USERID_OK_1")
+                .userId("userId_1")
                 .initiativeId("INITIATIVEID")
                 .tc(true)
                 .status("STATUS")
                 .pdndAccept(true)
-                .tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
-                .criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
+                .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
+                .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .build();
 
         LocalDate now = LocalDate.now();
@@ -98,11 +101,11 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
                 .build();
         BirthDate expectedBirthDate = BirthDate.builder()
                 .year("1970")
-                .age(Period.between(LocalDate.of(1970,1,1), LocalDate.now()).getYears())  // 2023-1970=53
+                .age(Period.between(LocalDate.of(1970, 1, 1), LocalDate.now()).getYears())  // 2023-1970=53
                 .build();
 
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(BigDecimal.valueOf(24428), result.getIsee());   // TODO INPS
+        Assertions.assertEquals(BigDecimal.valueOf(10000), result.getIsee());
         Assertions.assertEquals(expectedResidence, result.getResidence());
         Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
     }

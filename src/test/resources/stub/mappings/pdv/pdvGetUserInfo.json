@@ -11,7 +11,7 @@
   "response": {
     "status": "200",
     "jsonBody": {
-      "pii": "fiscalCode"
+      "pii": "CF_OK"
     },
     "headers": {
       "Content-Type": "application/json"
