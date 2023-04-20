@@ -25,6 +25,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -41,6 +42,10 @@ import java.util.stream.Stream;
 
 @Slf4j
 @ContextConfiguration(classes = {AdmissibilityProcessorConfigTest.MediatorSpyConfiguration.class})
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.service.onboarding.check.OnboardingInitiativeCheck=OFF",
+        "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
+})
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";

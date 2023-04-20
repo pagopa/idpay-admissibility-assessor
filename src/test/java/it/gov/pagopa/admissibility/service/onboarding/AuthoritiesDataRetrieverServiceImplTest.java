@@ -72,7 +72,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private ConsultazioneIndicatoreResponseType inpsResponse;
     private RispostaE002OKDTO anprResponse;
     private Message<String> message;
-    private ApiKeysPDND apiKeysPDND;
     private AgidJwtTokenPayload agidTokenPayload;
 
     @BeforeEach
@@ -105,7 +104,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .build();
 
         agidTokenPayload = AgidJwtTokenPayload.builder().iss("ISS").sub("SUB").aud("AUD").build();
-        apiKeysPDND = ApiKeysPDND.builder()
+        ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId(DECRYPTED_API_KEY_CLIENT_ID)
                 .apiKeyClientAssertion(DECRYPTED_API_KEY_CLIENT_ASSERTION)
                 .agidJwtTokenPayload(agidTokenPayload)
@@ -130,7 +129,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
         Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
-        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
+        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(LocalDate.now().getYear() - 2001).build();
 
         Mockito.when(inpsInvocationServiceSpy.invoke(FISCAL_CODE)).thenReturn(Mono.just(Optional.of(inpsResponse)));
         Mockito.doAnswer(i -> {

@@ -28,7 +28,7 @@ public class UserFiscalCodeServiceImpl implements UserFiscalCodeService{
                     .map(UserInfoPDV::getPii)
                     .doOnNext(u -> {
                         userCache.put(userId,u);
-                        log.info("Added into map user fiscal code with userId: {}", userId);
+                        log.debug("[CACHE_MISS] Added into map user fiscal code with userId: {}", userId);
                     });
         }
     }

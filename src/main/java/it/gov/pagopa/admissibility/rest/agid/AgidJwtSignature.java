@@ -39,7 +39,7 @@ public abstract class AgidJwtSignature {
     }
 
     public String createAgidJwt(String digest, AgidJwtTokenPayload agidJwtTokenPayload) {
-        log.info("start to create AgidJwt with digest: {}",digest);
+        log.debug("start to create AgidJwt with digest: {}",digest);
         try {
             return JWT.create()
                     .withHeader(createHeaderMap())

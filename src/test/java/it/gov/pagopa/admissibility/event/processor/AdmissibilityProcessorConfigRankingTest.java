@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.event.processor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.RankingRequestDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.RankingNotifierService;
@@ -22,6 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -115,7 +117,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     private final List<Pair<Function<Integer, OnboardingDTO>, Consumer<RankingRequestDTO>>> useCases = List.of(
             //successful case - coda ranking
             Pair.of(
-                    bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
+                    bias -> buildOnboardingRequestBuilder(bias)
+                            .build(),
                     rankingRequest -> {
                         Assertions.assertNotNull(rankingRequest.getUserId());
                         Assertions.assertNotNull(rankingRequest.getInitiativeId());
@@ -127,7 +130,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
 
             //onboardingKo case
             Pair.of(
-                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                    bias -> buildOnboardingRequestBuilder(bias)
                             .isee(BigDecimal.ZERO)
                             .build(),
                     rankingRequest -> {
@@ -141,13 +144,19 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     );
     //endregion
 
+    private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestBuilder(Integer bias) {
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                .isee(BigDecimal.valueOf(20))
+                .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
+    }
+
 
     //region not valid useCases
     // all use cases configured must have a unique id recognized by the regexp errorUseCaseIdPatternMatch
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
     {
         final String failingRankingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING";
-        OnboardingDTO rankingFailinPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+        @SuppressWarnings("ConstantConditions") OnboardingDTO rankingFailinPublishing = buildOnboardingRequestBuilder(errorUseCases.size())
                 .userId(failingRankingPublishingUserId)
                 .build();
         int rankingFailingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
@@ -163,7 +172,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         ));
 
         final String exceptionWhenRankingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING_DUE_EXCEPTION";
-        OnboardingDTO exceptionWhenRankingPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+        OnboardingDTO exceptionWhenRankingPublishing = buildOnboardingRequestBuilder(errorUseCases.size())
                 .userId(exceptionWhenRankingPublishingUserId)
                 .build();
         int exceptionWhenRankingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;

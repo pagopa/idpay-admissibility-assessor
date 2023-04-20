@@ -28,15 +28,14 @@ class CreateTokenServiceImplTest {
     private CreateTokenService createTokenService;
 
     private Field accessTokenCacheField;
-    private ApiKeysPDND apiKeysPDND;
 
-    private final int expireInSeconds = 30;
+    private final int expireInSeconds = 5;
 
     @BeforeEach
     void setUp() {
         createTokenService = new CreateTokenServiceImpl(pdndCreateTokenRestClientMock, expireInSeconds);
 
-        apiKeysPDND = ApiKeysPDND.builder()
+        ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId("API_KEY_CLIENT_ID")
                 .apiKeyClientAssertion("API_KEY_CLIENT_ASSERTION")
                 .build();

@@ -17,6 +17,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -88,7 +89,7 @@ class AnprInvocationServiceImplTest {
     void testExtract() {
         // Given
         Residence expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
-        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(21).build();
+        BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(LocalDate.now().getYear() - 2001).build();
 
         // When
         anprInvocationService.extract(anprAnswer, true, true, onboardingRequest);
