@@ -3,11 +3,13 @@ package it.gov.pagopa.admissibility.model;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -15,10 +17,12 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class OnboardingFamilies {
     @Id
     private String id;
     private Set<String> memberIds;
     private OnboardingFamilyEvaluationStatus status;
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
+    private LocalDateTime createDate;
 }
