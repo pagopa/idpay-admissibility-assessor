@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

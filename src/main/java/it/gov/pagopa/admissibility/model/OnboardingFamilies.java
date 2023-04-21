@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.model;
 
-import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +16,6 @@ import java.util.Set;
 public class OnboardingFamilies {
     @Id
     private String id;
-    private OnboardingEvaluationStatus status;
+    private OnboardingFamilyEvaluationStatus status;
     private Set<String> memberIds;
 }
