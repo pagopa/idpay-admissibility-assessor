@@ -105,6 +105,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertNull(resultCompleted.getInitiativeName());
         Assertions.assertNull(resultCompleted.getOrganizationId());
+        Assertions.assertNull(resultCompleted.getOrganizationName());
         Assertions.assertNull(resultCompleted.getBeneficiaryBudget());
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
         Assertions.assertNull(resultCompleted.getInitiativeRewardType());

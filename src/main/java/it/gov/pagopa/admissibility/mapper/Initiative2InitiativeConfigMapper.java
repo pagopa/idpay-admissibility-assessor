@@ -20,6 +20,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .initiativeId(initiative.getInitiativeId())
                 .initiativeName(initiative.getInitiativeName())
                 .organizationId(initiative.getOrganizationId())
+                .organizationName(initiative.getOrganizationName())
                 .status(initiative.getStatus())
                 .pdndToken(initiative.getPdndToken())
                 .automatedCriteria(automatedCriteriaList)
@@ -31,7 +32,6 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
                 .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .initiativeRewardType(initiative.getInitiativeRewardType())
-                .organizationName(initiative.getOrganizationName())
                 .build();
     }
 
