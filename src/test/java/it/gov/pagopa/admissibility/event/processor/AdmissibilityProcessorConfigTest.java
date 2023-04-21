@@ -89,6 +89,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             checkResponse(evaluation, useCases);
         }
 
+        // TODO verify PDND number of invocations
+
         checkErrorsPublished(notValidOnboarding, maxWaitingMs, errorUseCases);
 
         System.out.printf("""
@@ -314,6 +316,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
 
             ),
+
+            // TODO test error when invoking PDND
+
             // AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -328,6 +333,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
+
+            // TODO test daily limit reached when invoking INPS
+
             // AUTOMATED_CRITERIA fail due to RESIDENCE TODO to fix configuring wiremock stubs
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -356,6 +364,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
+
+            // TODO test daily limit reached when invoking ANPR
+
             // exhausted initiative budget
             Pair.of(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
