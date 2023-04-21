@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -28,7 +29,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
         if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
-            if (OnboardingConstants.ONBOARDING_STATUS_OK.equals((evaluationCompletedDTO.getStatus()))) {
+            if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
                         .map(c -> evaluationCompletedDTO)
@@ -39,7 +40,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
                                     .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
                                     .build());
-                            evaluationCompletedDTO.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
+                            evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
                             return Mono.just(evaluationCompletedDTO);
                         }))
                         .map(EvaluationDTO.class::cast);

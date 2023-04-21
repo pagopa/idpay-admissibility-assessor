@@ -7,11 +7,6 @@ public final class OnboardingConstants {
     public static final String ONBOARDING_CONTEXT_INITIATIVE_KEY = "INITIATIVE_KEY";
     //endregion
 
-    //region onboarding statuses
-    public static final String ONBOARDING_STATUS_KO = "ONBOARDING_KO";
-    public static final String ONBOARDING_STATUS_OK = "ONBOARDING_OK";
-    //endregion
-
     //region rejection reasons
     public static final String REJECTION_REASON_CONSENSUS_TC_FAIL = "CONSENSUS_CHECK_TC_FAIL";
     public static final String REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL = "INVALID_INITIATIVE_ID";

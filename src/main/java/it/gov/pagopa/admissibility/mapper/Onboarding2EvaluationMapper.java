@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.mapper;
 
+import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -28,7 +29,7 @@ public class Onboarding2EvaluationMapper {
         EvaluationCompletedDTO out = new EvaluationCompletedDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setInitiativeId(onboardingDTO.getInitiativeId());
-        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingConstants.ONBOARDING_STATUS_OK : OnboardingConstants.ONBOARDING_STATUS_KO);
+        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setOnboardingRejectionReasons(rejectionReasons);
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
@@ -75,7 +76,7 @@ public class Onboarding2EvaluationMapper {
         out.setCriteriaConsensusTimestamp(evaluationCompletedDTO.getCriteriaConsensusTimestamp());
         out.setRankingValue(Optional.ofNullable(evaluationCompletedDTO.getRankingValue()).orElse(-1L));
 
-        out.setOnboardingKo(OnboardingConstants.ONBOARDING_STATUS_KO.equals(evaluationCompletedDTO.getStatus()));
+        out.setOnboardingKo(OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluationCompletedDTO.getStatus()));
 
         return out;
     }

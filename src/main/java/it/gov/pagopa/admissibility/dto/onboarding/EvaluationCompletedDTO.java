@@ -1,6 +1,10 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import lombok.*;
+import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import net.minidev.json.annotate.JsonIgnore;
 
@@ -19,7 +23,7 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     private String initiativeName;
     private LocalDate initiativeEndDate;
     @NotEmpty
-    private String status;
+    private OnboardingEvaluationStatus status;
     @NotNull
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
     private BigDecimal beneficiaryBudget;

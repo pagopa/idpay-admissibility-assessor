@@ -2,13 +2,13 @@ package it.gov.pagopa.admissibility.service;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
+import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.*;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,7 +79,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .code("Rejected")
                 .build());
 
-        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingEvaluationStatus.ONBOARDING_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
@@ -127,7 +127,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .code("Rejected")
                 .build());
 
-        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingEvaluationStatus.ONBOARDING_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
@@ -174,8 +174,8 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
         Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding2), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
 
-        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
-        EvaluationCompletedDTO evaluationDTO2 = EvaluationCompletedDTO.builder().userId("USER2").status(OnboardingConstants.ONBOARDING_STATUS_KO).build();
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingEvaluationStatus.ONBOARDING_KO).build();
+        EvaluationCompletedDTO evaluationDTO2 = EvaluationCompletedDTO.builder().userId("USER2").status(OnboardingEvaluationStatus.ONBOARDING_KO).build();
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));

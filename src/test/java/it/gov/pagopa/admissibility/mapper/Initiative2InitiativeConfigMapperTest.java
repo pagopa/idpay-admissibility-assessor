@@ -147,6 +147,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
+        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryType(), result.getBeneficiaryType());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());
     }
