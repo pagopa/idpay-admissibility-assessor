@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.mapper;
 
-import it.gov.pagopa.admissibility.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;

@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.*;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.AutomatedCriteria2ExtraFilterMapper;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
@@ -206,7 +207,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                     .authorityLabel("Agenzia per l'Italia Digitale")
                     .build());
         }
-        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? "ONBOARDING_OK" : "ONBOARDING_KO");
+        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
 
         Assertions.assertEquals(expectedEvaluationResult, evaluationResult);
     }

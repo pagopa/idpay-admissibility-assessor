@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
@@ -68,7 +69,7 @@ class RuleEngineServiceImplTest {
         expected.setInitiativeName(initiativeConfig.getInitiativeName());
         expected.setOrganizationId(initiativeConfig.getOrganizationId());
         expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
-        expected.setStatus("ONBOARDING_KO");
+        expected.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
         expected.setOnboardingRejectionReasons(Collections.singletonList(OnboardingRejectionReason.builder()
                 .code("REASON1")
                 .build()));

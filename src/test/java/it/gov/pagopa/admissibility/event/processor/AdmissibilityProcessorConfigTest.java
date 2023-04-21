@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
@@ -152,7 +153,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
                     evaluation -> {
                         Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
-                        Assertions.assertEquals("ONBOARDING_OK", evaluation.getStatus());
+                        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
                         assertEvaluationFields(evaluation, true);
                     }
             ),
@@ -283,7 +284,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     }
 
     private void checkKO(EvaluationCompletedDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
-        Assertions.assertEquals("ONBOARDING_KO", evaluation.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
         Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().contains(expectedRejectionReason),
                 "Expected rejection reason %s and obtained %s".formatted(expectedRejectionReason, evaluation.getOnboardingRejectionReasons()));
@@ -406,7 +407,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
                 .initiativeEndDate(initiativeExceptionWhenOnboardingPublishing.getGeneral().getEndDate())
                 .organizationId(initiativeExceptionWhenOnboardingPublishing.getOrganizationId())
-                .status("ONBOARDING_OK")
+                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
                 .onboardingRejectionReasons(Collections.emptyList())
                 .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
                 .build();

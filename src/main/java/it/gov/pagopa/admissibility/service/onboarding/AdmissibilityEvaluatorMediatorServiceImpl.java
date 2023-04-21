@@ -5,7 +5,9 @@ import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
+import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
@@ -30,6 +32,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final OnboardingCheckService onboardingCheckService;
+    private final OnboardingFamilyEvaluationService onboardingFamilyEvaluationService;
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
@@ -44,7 +47,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     public AdmissibilityEvaluatorMediatorServiceImpl(
             OnboardingContextHolderService onboardingContextHolderService,
             OnboardingCheckService onboardingCheckService,
-            AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
+            OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
             OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
             ErrorNotifierService errorNotifierService,
@@ -53,6 +56,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             RankingNotifierService rankingNotifierService) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboardingCheckService = onboardingCheckService;
+        this.onboardingFamilyEvaluationService = onboardingFamilyEvaluationService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
@@ -129,7 +133,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 return Mono.just(rejectedRequest);
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message);
+                return checkOnboardingFamily(onboardingRequest, initiativeConfig, message)
+                        .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
+
+                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty());
             }
         } else {
             return Mono.empty();
@@ -146,6 +153,14 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [ONBOARDING_CHECK] Onboarding request failed: {}", rejectionReason);
             return onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.singletonList(rejectionReason));
         } else return null;
+    }
+
+    private Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
+        if(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiativeConfig.getBeneficiaryType())){
+            return onboardingFamilyEvaluationService.checkOnboardingFamily(onboardingRequest, message);
+        } else {
+            return Mono.empty();
+        }
     }
 
     private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
