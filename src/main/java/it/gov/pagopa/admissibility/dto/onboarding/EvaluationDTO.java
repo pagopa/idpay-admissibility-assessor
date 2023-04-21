@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public abstract class EvaluationDTO {
     @NotEmpty
     private String userId;
+    private String familyId;
     @NotEmpty
     private String initiativeId;
     @NotEmpty

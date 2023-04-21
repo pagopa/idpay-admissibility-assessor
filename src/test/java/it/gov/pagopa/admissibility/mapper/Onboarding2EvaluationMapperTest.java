@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -46,7 +47,8 @@ class Onboarding2EvaluationMapperTest {
                 acceptanceDateTime,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                Family.builder().familyId("FAMILYID").build()
         );
 
         //init initiativeConfig
@@ -94,6 +96,8 @@ class Onboarding2EvaluationMapperTest {
                 .code("InitiativeId NULL")
                 .build());
 
+        onboardingRequest.setFamily(null);
+
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, null, rejectReasons);
 
@@ -114,7 +118,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType");
+        TestUtils.checkNotNullFields(resultCompleted, "familyId", "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType");
     }
 
     @Test
@@ -238,6 +242,7 @@ class Onboarding2EvaluationMapperTest {
 
     private void commonAssertionsOnboarding2EvaluationCompleted(EvaluationCompletedDTO resultCompleted) {
         Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
+        Assertions.assertEquals(onboardingRequest.getFamily()!=null?onboardingRequest.getFamily().getFamilyId() : null, resultCompleted.getFamilyId());
         Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
         Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
     }

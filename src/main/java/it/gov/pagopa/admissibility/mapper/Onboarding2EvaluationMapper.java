@@ -28,6 +28,7 @@ public class Onboarding2EvaluationMapper {
     private EvaluationCompletedDTO getEvaluationCompletedDTO(OnboardingDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
         EvaluationCompletedDTO out = new EvaluationCompletedDTO();
         out.setUserId(onboardingDTO.getUserId());
+        out.setFamilyId(getFamilyId(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
@@ -49,6 +50,7 @@ public class Onboarding2EvaluationMapper {
     private RankingRequestDTO getRankingRequestDTO(OnboardingDTO onboardingDTO,InitiativeConfig initiative) {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(onboardingDTO.getUserId());
+        out.setFamilyId(getFamilyId(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setOrganizationId(initiative.getOrganizationId());
         out.setAdmissibilityCheckDate(LocalDateTime.now());
@@ -61,6 +63,10 @@ public class Onboarding2EvaluationMapper {
         return out;
     }
 
+    private static String getFamilyId(OnboardingDTO onboardingDTO) {
+        return onboardingDTO.getFamily() != null ? onboardingDTO.getFamily().getFamilyId() : null;
+    }
+
     private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
         if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
             out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
@@ -70,6 +76,7 @@ public class Onboarding2EvaluationMapper {
     public RankingRequestDTO apply(EvaluationCompletedDTO evaluationCompletedDTO) {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(evaluationCompletedDTO.getUserId());
+        out.setFamilyId(evaluationCompletedDTO.getFamilyId());
         out.setInitiativeId(evaluationCompletedDTO.getInitiativeId());
         out.setOrganizationId(evaluationCompletedDTO.getOrganizationId());
         out.setAdmissibilityCheckDate(evaluationCompletedDTO.getAdmissibilityCheckDate());

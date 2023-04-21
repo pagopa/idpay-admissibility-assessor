@@ -29,6 +29,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -56,6 +57,9 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
     @AfterEach
     void verifyNoMoreIvocations(){
+        Mockito.mockingDetails(errorNotifierServiceMock).getInvocations()
+                .forEach(i-> System.out.println("Called errorNotifier: " + Arrays.toString(i.getArguments())));
+
         Mockito.verifyNoMoreInteractions(
                 onboardingContextHolderServiceMock,
                 onboardingCheckServiceMock,
@@ -252,11 +256,14 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
 
         Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_first, msgs.get(0))).thenReturn(Mono.empty());
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_waitingFirst, msgs.get(0))).thenReturn(Mono.error(new WaitingFamilyOnBoardingException()));
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyOk, msgs.get(0))).thenReturn(Mono.just(expectedEvaluationOnboardingFamilyOk));
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyKo, msgs.get(0))).thenReturn(Mono.just(expectedEvaluationOnboardingFamilyKo));
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_waitingFirst, msgs.get(1))).thenReturn(Mono.error(new WaitingFamilyOnBoardingException()));
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyOk, msgs.get(2))).thenReturn(Mono.just(expectedEvaluationOnboardingFamilyOk));
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyKo, msgs.get(3))).thenReturn(Mono.just(expectedEvaluationOnboardingFamilyKo));
+
+        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(i -> Mono.error(new IllegalStateException("UNEXPECTED")));
 
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding_first), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding_first), Mockito.any())).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -265,6 +272,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verifyNoInteractions(errorNotifierServiceMock);
+
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_first), Mockito.same(initiativeConfig), Mockito.any());
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_waitingFirst), Mockito.same(initiativeConfig), Mockito.any());
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_familyOk), Mockito.same(initiativeConfig), Mockito.any());
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_familyKo), Mockito.same(initiativeConfig), Mockito.any());
 
         Mockito.verify(onboardingNotifierServiceMock).notify(expectedEvaluationOnboardingFirst);
         Mockito.verify(onboardingNotifierServiceMock).notify(expectedEvaluationOnboardingFamilyOk);

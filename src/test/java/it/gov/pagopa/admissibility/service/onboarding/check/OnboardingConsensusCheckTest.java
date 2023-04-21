@@ -30,7 +30,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -63,7 +64,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -136,7 +138,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
@@ -164,7 +167,8 @@ class OnboardingConsensusCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
