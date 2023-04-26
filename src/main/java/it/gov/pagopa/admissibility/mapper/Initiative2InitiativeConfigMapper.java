@@ -34,7 +34,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
                 .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .initiativeRewardType(initiative.getInitiativeRewardType())
-                .isLogoPresent((additionalInfo != null && additionalInfo.getLogoFileName()!= null) ? Boolean.TRUE : Boolean.FALSE)
+                .isLogoPresent(additionalInfo != null && additionalInfo.getLogoFileName()!= null)
                 .build();
     }
 
