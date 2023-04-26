@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.repository;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -31,24 +32,30 @@ class OnboardingFamiliesRepositoryTest extends BaseIntegrationTest {
     }
 
     @Test
-    void testFindByMemberIdsIn() {
-        OnboardingFamilies f1 = storeTestFamily(OnboardingFamilies.builder()
-                .id("TESTFAMILYID")
-                .memberIds(Set.of("ID1", "ID2"))
-                .build());
+    void testFindByMemberIdsInAndInitiativeId() {
+        String initiativeId = "INITIATIVEID";
 
-        OnboardingFamilies f2 = storeTestFamily(OnboardingFamilies.builder()
-                .id("TESTFAMILYID2")
-                .memberIds(Set.of("ID2", "ID3"))
-                .build());
+        OnboardingFamilies f1 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID", Set.of("ID1", "ID2")), initiativeId));
+        storeTestFamily(f1.toBuilder().initiativeId("INITIATIVEID2").build());
 
-        List<OnboardingFamilies> result = repository.findByMemberIdsIn("ID1").collectList().block();
+        OnboardingFamilies f2 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID2", Set.of("ID2", "ID3")), initiativeId));
+        storeTestFamily(f2.toBuilder().initiativeId("INITIATIVEID2").build());
+
+        //checking if builder custom implementation is successfully handling ids
+        assertStoredData();
+        Assertions.assertEquals(4, testData.stream().map(OnboardingFamilies::getId).count());
+
+        List<OnboardingFamilies> result = repository.findByMemberIdsInAndInitiativeId("ID1", initiativeId).collectList().block();
         Assertions.assertEquals(List.of(f1), result);
 
-        result = repository.findByMemberIdsIn("ID2").collectList().block();
+        result = repository.findByMemberIdsInAndInitiativeId("ID2", initiativeId).collectList().block();
         Assertions.assertEquals(List.of(f1, f2), result);
 
-        result = repository.findByMemberIdsIn("ID4").collectList().block();
+        result = repository.findByMemberIdsInAndInitiativeId("ID4", initiativeId).collectList().block();
         Assertions.assertEquals(Collections.emptyList(), result);
+    }
+
+    private void assertStoredData() {
+        testData.forEach(t -> Assertions.assertEquals(t, repository.findById(t.getId()).block()));
     }
 }
