@@ -54,6 +54,7 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setOrganizationName("ORGANIZATIONNAME");
         initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.TEN);
         initiativeConfig.setInitiativeRewardType("REFUND");
+        initiativeConfig.setIsLogoPresent(Boolean.FALSE);
         initiativeConfig.setEndDate(LocalDate.now());
     }
 
@@ -110,10 +111,11 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
         Assertions.assertNull(resultCompleted.getInitiativeRewardType());
         Assertions.assertNull(resultCompleted.getRankingValue());
+        Assertions.assertNull(resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType");
+        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
     }
 
     @Test

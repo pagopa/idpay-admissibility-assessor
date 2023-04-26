@@ -27,4 +27,5 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     private Long rankingValue;
     private String initiativeRewardType;
     private String organizationName;
+    private Boolean isLogoPresent;
 }

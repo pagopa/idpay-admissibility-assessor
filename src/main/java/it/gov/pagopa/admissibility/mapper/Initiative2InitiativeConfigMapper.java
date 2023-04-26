@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import org.apache.commons.lang3.ObjectUtils;
@@ -16,6 +17,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
     @Override
     public InitiativeConfig apply(Initiative2BuildDTO initiative) {
         List<AutomatedCriteriaDTO> automatedCriteriaList = initiative.getBeneficiaryRule().getAutomatedCriteria();
+        InitiativeAdditionalInfoDTO additionalInfo = initiative.getAdditionalInfo();
         return InitiativeConfig.builder()
                 .initiativeId(initiative.getInitiativeId())
                 .initiativeName(initiative.getInitiativeName())
@@ -32,6 +34,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
                 .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .initiativeRewardType(initiative.getInitiativeRewardType())
+                .isLogoPresent((additionalInfo != null && additionalInfo.getLogoFileName()!= null) ? Boolean.TRUE : Boolean.FALSE)
                 .build();
     }
 

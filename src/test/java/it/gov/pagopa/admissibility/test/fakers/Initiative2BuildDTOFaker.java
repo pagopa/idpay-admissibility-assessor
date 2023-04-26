@@ -61,7 +61,8 @@ public final class Initiative2BuildDTOFaker {
                 "SERVICENAME%s".formatted(bias),
                 "ARGUMENT%s".formatted(bias),
                 "DESCRIPTION%s".formatted(bias),
-                List.of(ChannelsDTO.builder().type("web").contact("CONTACT%s".formatted(bias)).build())
+                List.of(ChannelsDTO.builder().type("web").contact("CONTACT%s".formatted(bias)).build()),
+                "logo.png"
         ));
 
         TestUtils.checkNotNullFields(out.build());
