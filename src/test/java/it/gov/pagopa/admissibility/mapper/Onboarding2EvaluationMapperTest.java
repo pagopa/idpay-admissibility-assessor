@@ -51,8 +51,10 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setInitiativeId("INITIATIVEID");
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
+        initiativeConfig.setOrganizationName("ORGANIZATIONNAME");
         initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.TEN);
         initiativeConfig.setInitiativeRewardType("REFUND");
+        initiativeConfig.setIsLogoPresent(Boolean.FALSE);
         initiativeConfig.setEndDate(LocalDate.now());
     }
 
@@ -104,14 +106,16 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertNull(resultCompleted.getInitiativeName());
         Assertions.assertNull(resultCompleted.getOrganizationId());
+        Assertions.assertNull(resultCompleted.getOrganizationName());
         Assertions.assertNull(resultCompleted.getBeneficiaryBudget());
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
         Assertions.assertNull(resultCompleted.getInitiativeRewardType());
         Assertions.assertNull(resultCompleted.getRankingValue());
+        Assertions.assertNull(resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType");
+        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
     }
 
     @Test
@@ -228,7 +232,10 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(initiativeConfig.getInitiativeName(), resultCompleted.getInitiativeName());
         Assertions.assertEquals(initiativeConfig.getInitiativeId(), resultCompleted.getInitiativeId());
         Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultCompleted.getOrganizationId());
+        Assertions.assertEquals(initiativeConfig.getOrganizationName(), resultCompleted.getOrganizationName());
         Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
+        Assertions.assertEquals(initiativeConfig.getInitiativeRewardType(), resultCompleted.getInitiativeRewardType());
+        Assertions.assertEquals(initiativeConfig.getIsLogoPresent(), resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(expectedRankingValue, resultCompleted.getRankingValue());
     }

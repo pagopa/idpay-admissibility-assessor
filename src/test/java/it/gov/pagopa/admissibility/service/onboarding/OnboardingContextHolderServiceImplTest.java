@@ -121,11 +121,13 @@ class OnboardingContextHolderServiceImplTest {
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .pdndToken("PDND-TOKEN")
                 .organizationId("ORGANIZATION-ID")
+                .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)
                 .rankingInitiative(Boolean.TRUE)
                 .rankingFields(List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
                 .initiativeRewardType("REFUND")
+                .isLogoPresent(Boolean.FALSE)
                 .build();
 
 

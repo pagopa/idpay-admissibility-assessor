@@ -13,6 +13,7 @@ public class Initiative2BuildDTO {
     private String initiativeId;
     private String initiativeName;
     private String organizationId;
+    private String organizationName;
     private String pdndToken;
     private String status;
     private InitiativeBeneficiaryRuleDTO beneficiaryRule;
