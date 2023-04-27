@@ -232,7 +232,10 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(initiativeConfig.getInitiativeName(), resultCompleted.getInitiativeName());
         Assertions.assertEquals(initiativeConfig.getInitiativeId(), resultCompleted.getInitiativeId());
         Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultCompleted.getOrganizationId());
+        Assertions.assertEquals(initiativeConfig.getOrganizationName(), resultCompleted.getOrganizationName());
         Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
+        Assertions.assertEquals(initiativeConfig.getInitiativeRewardType(), resultCompleted.getInitiativeRewardType());
+        Assertions.assertEquals(initiativeConfig.getIsLogoPresent(), resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(expectedRankingValue, resultCompleted.getRankingValue());
     }

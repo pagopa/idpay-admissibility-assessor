@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeAdditionalInfoDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -34,7 +35,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
                 .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
                 .initiativeRewardType(initiative.getInitiativeRewardType())
-                .isLogoPresent(additionalInfo != null && additionalInfo.getLogoFileName()!= null)
+                .isLogoPresent(additionalInfo != null && !StringUtils.isEmpty(additionalInfo.getLogoFileName()))
                 .build();
     }
 
