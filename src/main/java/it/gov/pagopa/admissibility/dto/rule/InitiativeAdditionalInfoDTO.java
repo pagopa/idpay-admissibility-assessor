@@ -20,4 +20,6 @@ public class InitiativeAdditionalInfoDTO {
     private String description;
     @JsonProperty("channels")
     private List<ChannelsDTO> channels;
+    @JsonProperty("logoFileName")
+    private String logoFileName;
 }
