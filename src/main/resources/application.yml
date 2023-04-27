@@ -215,3 +215,7 @@ app:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
+    FAMILY:
+      authority: "INPS"
+      authorityLabel: "Istituto Nazionale Previdenza Sociale"
+      onboardingField: "family"

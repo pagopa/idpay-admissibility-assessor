@@ -190,7 +190,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
             RankingRequestDTO actual = objectMapper.readValue(errorMessage, RankingRequestDTO.class);
             RankingRequestDTO expected = objectMapper.readValue(expectedPayload, RankingRequestDTO.class);
 
-            TestUtils.checkNotNullFields(actual);
+            TestUtils.checkNotNullFields(actual, "familyId");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
         } catch (JsonProcessingException e) {

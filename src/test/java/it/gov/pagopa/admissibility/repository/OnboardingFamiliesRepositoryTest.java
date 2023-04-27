@@ -1,13 +1,18 @@
 package it.gov.pagopa.admissibility.repository;
 
+import com.mongodb.client.result.UpdateResult;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,5 +62,62 @@ class OnboardingFamiliesRepositoryTest extends BaseIntegrationTest {
 
     private void assertStoredData() {
         testData.forEach(t -> Assertions.assertEquals(t, repository.findById(t.getId()).block()));
+    }
+
+    @Test
+    void testCreateIfNotExists(){
+        // Given
+        Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
+        OnboardingFamilies expectedResult = new OnboardingFamilies(f1, "INITIATIVEID");
+        expectedResult.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        testData.add(expectedResult);
+
+        LocalDateTime beforeCreate = LocalDateTime.now();
+
+        // When not exists
+        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId()).block();
+
+        // Then after create
+        Assertions.assertNotNull(result);
+        Assertions.assertNotNull(result.getCreateDate());
+        Assertions.assertTrue(result.getCreateDate().isAfter(beforeCreate));
+        result.setCreateDate(result.getCreateDate().truncatedTo(ChronoUnit.MILLIS));
+        expectedResult.setCreateDate(result.getCreateDate());
+        Assertions.assertEquals(expectedResult, result);
+
+        // When exists
+        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId()).block();
+
+        // Then afterDeleteResult
+        Assertions.assertNull(resultWhenAlreadyExists);
+
+        Assertions.assertEquals(result, repository.findById("FAMILYID_INITIATIVEID").block());
+    }
+
+    @Test
+    void testUpdateOnboardingFamilyOutcome(){
+        // Given
+        String initiativeId = "INITIATIVEID";
+
+        Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
+        OnboardingFamilies of1 = storeTestFamily(new OnboardingFamilies(f1, initiativeId));
+        OnboardingFamilies of2 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID2", Set.of("ID2", "ID3")), initiativeId));
+
+        OnboardingFamilyEvaluationStatus updatedStatus = OnboardingFamilyEvaluationStatus.ONBOARDING_OK;
+        List<OnboardingRejectionReason> updatedOnboardingRejectionReasons = List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR, "DUMMY", "AUTH", "AUTHLABEL", "DETAILS"));
+
+        // When
+        UpdateResult result = repository.updateOnboardingFamilyOutcome(f1, initiativeId, updatedStatus, updatedOnboardingRejectionReasons).block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertSame(1L, result.getModifiedCount());
+        Assertions.assertSame(1L, result.getMatchedCount());
+
+        of1.setStatus(updatedStatus);
+        of1.setOnboardingRejectionReasons(updatedOnboardingRejectionReasons);
+        Assertions.assertEquals(of1, repository.findById(of1.getId()).block());
+
+        Assertions.assertEquals(of2, repository.findById(of2.getId()).block());
     }
 }

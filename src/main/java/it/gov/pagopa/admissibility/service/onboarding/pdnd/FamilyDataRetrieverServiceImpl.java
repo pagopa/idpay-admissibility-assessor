@@ -8,12 +8,13 @@ import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverService {
 
     @Override
-    public Mono<Family> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
+    public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
         String mockedFamilyId = onboardingRequest.getUserId();
@@ -21,7 +22,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
             mockedFamilyId = mockedFamilyId.substring(0, mockedFamilyId.indexOf("_FAMILYMEMBER"));
         }
 
-        return Mono.just(Family.builder()
+        return Mono.just(Optional.of(Family.builder()
                 .familyId(mockedFamilyId)
                 .memberIds(new HashSet<>(List.of(
                         onboardingRequest.getUserId(),
@@ -30,6 +31,6 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                         mockedFamilyId+"_FAMILYMEMBER2",
                         mockedFamilyId+"_FAMILYMEMBER3"
                 )))
-                .build());
+                .build()));
     }
 }

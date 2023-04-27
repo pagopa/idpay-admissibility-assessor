@@ -1,8 +1,13 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
+import com.mongodb.client.result.UpdateResult;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.RankingRequestDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
@@ -13,6 +18,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +29,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
@@ -89,5 +97,50 @@ class OnboardingFamilyEvaluationServiceTest {
 
         // Then
         Assertions.assertEquals(expectedResult, result);
+    }
+
+    private final Map<OnboardingEvaluationStatus, OnboardingFamilyEvaluationStatus> expectedEvaluationStatusMapping = Map.of(
+            OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingFamilyEvaluationStatus.ONBOARDING_OK,
+            OnboardingEvaluationStatus.DEMANDED, OnboardingFamilyEvaluationStatus.ONBOARDING_OK,
+            OnboardingEvaluationStatus.JOINED, OnboardingFamilyEvaluationStatus.ONBOARDING_OK,
+            OnboardingEvaluationStatus.REJECTED, OnboardingFamilyEvaluationStatus.ONBOARDING_KO,
+            OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingFamilyEvaluationStatus.ONBOARDING_KO
+    );
+
+    @ParameterizedTest
+    @EnumSource(OnboardingEvaluationStatus.class)
+    void testUpdateOnboardingFamilyOutcome_Completed(OnboardingEvaluationStatus evaluationStatus){
+        // Given
+        EvaluationCompletedDTO evaluation = new EvaluationCompletedDTO();
+        evaluation.setStatus(evaluationStatus);
+        evaluation.setOnboardingRejectionReasons(Collections.emptyList());
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        Family family = new Family("FAMILYID", Set.of("USERID"));
+
+        Mockito.when(onboardingFamiliesRepositoryMock.updateOnboardingFamilyOutcome(Mockito.same(family), Mockito.same(initiativeConfig.getInitiativeId()), Mockito.eq(expectedEvaluationStatusMapping.get(evaluationStatus)), Mockito.same(evaluation.getOnboardingRejectionReasons())))
+                .thenReturn(Mono.just(Mockito.mock(UpdateResult.class)));
+
+        // When
+        EvaluationDTO result = service.updateOnboardingFamilyOutcome(family, initiativeConfig, evaluation).block();
+
+        // Then
+        Assertions.assertSame(result, evaluation);
+    }
+
+    @Test
+    void testUpdateOnboardingFamilyOutcome_Ranking(){
+        // Given
+        RankingRequestDTO evaluation = new RankingRequestDTO();
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        Family family = new Family("FAMILYID", Set.of("USERID"));
+
+        Mockito.when(onboardingFamiliesRepositoryMock.updateOnboardingFamilyOutcome(Mockito.same(family), Mockito.same(initiativeConfig.getInitiativeId()), Mockito.eq(OnboardingFamilyEvaluationStatus.ONBOARDING_OK), Mockito.eq(Collections.emptyList())))
+                .thenReturn(Mono.just(Mockito.mock(UpdateResult.class)));
+
+        // When
+        EvaluationDTO result = service.updateOnboardingFamilyOutcome(family, initiativeConfig, evaluation).block();
+
+        // Then
+        Assertions.assertSame(result, evaluation);
     }
 }

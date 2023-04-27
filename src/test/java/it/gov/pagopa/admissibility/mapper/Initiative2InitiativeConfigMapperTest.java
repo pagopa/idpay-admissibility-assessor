@@ -124,6 +124,7 @@ class Initiative2InitiativeConfigMapperTest {
                 .endDate(LocalDate.MAX)
                 .budget(BigDecimal.TEN)
                 .beneficiaryBudget(BigDecimal.ONE)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()

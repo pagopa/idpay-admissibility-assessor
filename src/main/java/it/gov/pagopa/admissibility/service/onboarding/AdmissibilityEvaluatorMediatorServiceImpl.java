@@ -75,7 +75,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     public void execute(Flux<Message<String>> messageFlux) {
         messageFlux
                 .flatMap(this::executeAndCommit)
-                .subscribe(evaluationDTO -> log.info("[[ADMISSIBILITY_ONBOARDING_REQUEST]] Processed offsets committed successfully"));
+                .subscribe(evaluationDTO -> log.info("[ADMISSIBILITY_ONBOARDING_REQUEST] Processed offsets committed successfully"));
     }
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
@@ -157,11 +157,15 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
-        if(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiativeConfig.getBeneficiaryType())){
+        if(isFamilyInitiative(initiativeConfig)){
             return onboardingFamilyEvaluationService.checkOnboardingFamily(onboardingRequest, initiativeConfig, message);
         } else {
             return Mono.empty();
         }
+    }
+
+    private static boolean isFamilyInitiative(InitiativeConfig initiativeConfig) {
+        return InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiativeConfig.getBeneficiaryType());
     }
 
     private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
@@ -170,6 +174,14 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 .onErrorResume(OnboardingException.class, e -> {
                     log.info(e.getMessage());
                     return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
+                })
+
+                .flatMap(ev -> {
+                    if(isFamilyInitiative(initiativeConfig)){
+                        return onboardingFamilyEvaluationService.updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
+                    } else {
+                        return Mono.just(ev);
+                    }
                 });
     }
 

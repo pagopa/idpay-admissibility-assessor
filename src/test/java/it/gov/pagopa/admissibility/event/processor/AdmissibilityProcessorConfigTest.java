@@ -423,7 +423,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             EvaluationCompletedDTO actual = objectMapper.readValue(errorMessage, EvaluationCompletedDTO.class);
             EvaluationCompletedDTO expected = objectMapper.readValue(expectedPayload, EvaluationCompletedDTO.class);
 
-            TestUtils.checkNotNullFields(actual, "rankingValue");
+            TestUtils.checkNotNullFields(actual, "rankingValue", "familyId");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
             Assertions.assertEquals(expected.getInitiativeName(), actual.getInitiativeName());

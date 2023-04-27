@@ -17,10 +17,12 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_CONSENSUS_PDND_FAIL = "CONSENSUS_CHECK_PDND_FAIL";
     public static final String REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT = "AUTOMATED_CRITERIA_%s_FAIL";
     public static final String REJECTION_REASON_ISEE_TYPE_KO = "ISEE_TYPE_FAIL";
+    public static final String REJECTION_REASON_FAMILY_KO = "FAMILY_FAIL";
     //endregion
 
     //region criteria code
     public static final String CRITERIA_CODE_ISEE = "ISEE";
+    public static final String CRITERIA_CODE_FAMILY = "FAMILY";
     public static final String CRITERIA_CODE_BIRTHDATE = "BIRTHDATE";
     public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
     //endregion
