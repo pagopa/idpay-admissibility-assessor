@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding.family;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
@@ -41,6 +42,7 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
     @Override
     public Mono<EvaluationDTO> handleExistentFamily(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig, Message<String> message) {
         log.info("[ONBOARDING_REQUEST] User family has been already onboarded: userId {}; familyId {}; initiativeId {}; onboardingFamilyStatus {}", onboardingRequest.getUserId(), family.getFamilyId(), onboardingRequest.getInitiativeId(), family.getStatus());
+        onboardingRequest.setFamily(new Family(family.getFamilyId(), family.getMemberIds()));
 
         if(OnboardingFamilyEvaluationStatus.IN_PROGRESS.equals(family.getStatus())){
             onboardingRescheduleService.reschedule(

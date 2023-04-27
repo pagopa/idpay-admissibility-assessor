@@ -27,7 +27,7 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
 
         return insert(onboardingInProgress)
                 .onErrorResume(DuplicateKeyException.class, e-> {
-                    log.info("[ONBOARDING_REQUEST] Onboarding Family having id {} already exists with the following memberIds {}", family.getFamilyId(), family.getMemberIds());
+                    log.debug("[ONBOARDING_REQUEST] Onboarding Family having id {} already exists with the following memberIds {}", family.getFamilyId(), family.getMemberIds());
                     return Mono.empty();
                 });
     }

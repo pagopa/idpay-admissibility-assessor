@@ -16,7 +16,6 @@ import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +38,6 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@Slf4j
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
@@ -273,6 +271,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         Assertions.assertNotNull(evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getAdmissibilityCheckDate());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
+
+        Assertions.assertNull(evaluation.getFamilyId());
 
         if(expectedInitiativeFieldFilled) {
             Assertions.assertNotNull(evaluation.getInitiativeName());

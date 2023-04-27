@@ -68,6 +68,8 @@ class ExistentFamilyHandlerServiceTest {
         Mono<EvaluationDTO> mono = service.handleExistentFamily(request, family, initiativeConfig, message);
         Assertions.assertThrows(WaitingFamilyOnBoardingException.class, mono::block);
 
+        Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
+
         Mockito.verify(onboardingRescheduleServiceMock).reschedule(
                 Mockito.same(request),
                 Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
@@ -101,12 +103,16 @@ class ExistentFamilyHandlerServiceTest {
         EvaluationDTO result = service.handleExistentFamily(request, family, initiativeConfig, message).block();
 
         // Then
+        expectedResult.setFamilyId(family.getFamilyId());
         expectedResult.setStatus(expectedStatus);
+
         Assertions.assertNotNull(result);
         // the mapper use now()
         Assertions.assertFalse(expectedResult.getAdmissibilityCheckDate().isAfter(result.getAdmissibilityCheckDate()));
         expectedResult.setAdmissibilityCheckDate(null);
         result.setAdmissibilityCheckDate(null);
         Assertions.assertEquals(expectedResult, result);
+
+        Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
     }
 }

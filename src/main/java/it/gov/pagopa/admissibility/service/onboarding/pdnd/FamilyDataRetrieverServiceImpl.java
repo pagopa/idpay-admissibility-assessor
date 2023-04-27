@@ -18,7 +18,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
         String mockedFamilyId = onboardingRequest.getUserId();
-        if(mockedFamilyId.matches("_FAMILYMEMBER\\d+$")){
+        if(mockedFamilyId.matches(".*_FAMILYMEMBER\\d+$")){
             mockedFamilyId = mockedFamilyId.substring(0, mockedFamilyId.indexOf("_FAMILYMEMBER"));
         }
 

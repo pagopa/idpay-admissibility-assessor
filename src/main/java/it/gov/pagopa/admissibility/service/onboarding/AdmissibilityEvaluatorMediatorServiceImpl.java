@@ -85,6 +85,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 .flatMap(this::execute)
                 .doOnNext(evaluationDTO -> {
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
+
+                        // TODO publish DEMANDED for other members when family and ONBOARDING_OK
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));

@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.mapper;
 
-import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
@@ -83,7 +83,9 @@ public class Onboarding2EvaluationMapper {
         out.setCriteriaConsensusTimestamp(evaluationCompletedDTO.getCriteriaConsensusTimestamp());
         out.setRankingValue(Optional.ofNullable(evaluationCompletedDTO.getRankingValue()).orElse(-1L));
 
-        out.setOnboardingKo(OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluationCompletedDTO.getStatus()));
+        out.setOnboardingKo(
+                OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluationCompletedDTO.getStatus()) ||
+                        OnboardingEvaluationStatus.REJECTED.equals(evaluationCompletedDTO.getStatus()));
 
         return out;
     }
