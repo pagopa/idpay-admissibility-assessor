@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.soap.inps;
 
 import it.gov.pagopa.admissibility.generated.soap.ws.client.*;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -15,24 +16,21 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
     private final String requestProtocolEnte;
     private final String serviceToBeProvided;
     private final String requestStateEnte;
-    private final String requestIndicatorType;
 
     public IseeConsultationSoapClientImpl(InpsClientConfig inpsClientConfig,
                                           @Value("${app.inps.request.request-protocol-ente}") String requestProtocolEnte,
                                           @Value("${app.inps.request.service-to-be-provided}")String serviceToBeProvided,
-                                          @Value("${app.inps.request.request-state}")String requestStateEnte,
-                                          @Value("${app.inps.request.request-indicator-type}")String requestIndicatorType){
+                                          @Value("${app.inps.request.request-state}")String requestStateEnte){
 
         this.requestProtocolEnte = requestProtocolEnte;
         this.serviceToBeProvided = serviceToBeProvided;
         this.requestStateEnte = requestStateEnte;
         this.portSvcConsultazione = inpsClientConfig.getPortSvcConsultazione();
-        this.requestIndicatorType = requestIndicatorType;
     }
 
     @Override
-    public Mono<ConsultazioneIndicatoreResponseType> getIsee(String fiscalCode) {
-        return callService(fiscalCode)
+    public Mono<ConsultazioneIndicatoreResponseType> getIsee(String fiscalCode, IseeTypologyEnum iseeType) {
+        return callService(fiscalCode, iseeType)
                 .flatMap(response -> {
                     ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
                     if (result.getEsito() != EsitoEnum.OK) {
@@ -44,12 +42,12 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                 });
     }
 
-    public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode) {
+    public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode, IseeTypologyEnum iseeType) {
         return Mono.create(
-                sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode), into(sink))); //TODO confirm operation to call
+                sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode, iseeType), into(sink))); //TODO confirm operation to call
     }
 
-    private ConsultazioneIndicatoreRequestType getRequest(String fiscalCode) {
+    private ConsultazioneIndicatoreRequestType getRequest(String fiscalCode, IseeTypologyEnum iseeType) {
         ConsultazioneIndicatoreRequestType consultazioneIndicatoreRequestType = new ConsultazioneIndicatoreRequestType();
 
         RicercaCFType ricercaCFType = new RicercaCFType();
@@ -59,9 +57,21 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
         ricercaCFType.setStatodomandaPrestazione(StatoDomandaPrestazioneType.fromValue(requestStateEnte));
 
         consultazioneIndicatoreRequestType.setRicercaCF(ricercaCFType);
-        consultazioneIndicatoreRequestType.setTipoIndicatore(TipoIndicatoreSinteticoEnum.fromValue(requestIndicatorType));
+        consultazioneIndicatoreRequestType.setTipoIndicatore(transcodeIseeType(iseeType));
 
         return consultazioneIndicatoreRequestType;
+    }
+
+    private static TipoIndicatoreSinteticoEnum transcodeIseeType(IseeTypologyEnum iseeType) {
+        return switch (iseeType) {
+            case ORDINARIO -> TipoIndicatoreSinteticoEnum.ORDINARIO;
+            case MINORENNE -> TipoIndicatoreSinteticoEnum.MINORENNE;
+            case UNIVERSITARIO -> TipoIndicatoreSinteticoEnum.UNIVERSITARIO;
+            case SOCIOSANITARIO -> TipoIndicatoreSinteticoEnum.SOCIO_SANITARIO;
+            case DOTTORATO -> TipoIndicatoreSinteticoEnum.DOTTORATO;
+            case RESIDENZIALE -> TipoIndicatoreSinteticoEnum.RESIDENZIALE;
+            case CORRENTE -> null; // TODO what's supposed to be CORRENTE?
+        };
     }
 
 }

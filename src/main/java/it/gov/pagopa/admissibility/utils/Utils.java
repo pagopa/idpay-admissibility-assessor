@@ -20,12 +20,15 @@ import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.ZoneId;
 import java.util.Base64;
 import java.util.function.Consumer;
 
 @Slf4j
 public final class Utils {
     private Utils(){}
+
+    public static final ZoneId ZONE_ID = ZoneId.of("Europe/Rome");
 
     /** It will try to deserialize a message, eventually notifying the error  */
     public static <T> T deserializeMessage(Message<?> message, ObjectReader objectReader, Consumer<Throwable> onError) {

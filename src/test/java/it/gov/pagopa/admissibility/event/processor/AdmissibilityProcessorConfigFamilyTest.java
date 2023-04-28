@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -29,14 +30,17 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorConfigTest {
 
     @TestConfiguration
@@ -303,13 +307,20 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     //region useCases
+
+    private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestBuilder(Integer bias) {
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                .isee(BigDecimal.valueOf(20))
+                .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
+    }
+
     // each useCase's userId should contain "userId_[0-9]+", this string is matched in order to set particular member id
     Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED, OnboardingEvaluationStatus.DEMANDED);
     Set<OnboardingEvaluationStatus> expectedOnboardingKoStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingEvaluationStatus.REJECTED);
     private final List<OnboardingUseCase<EvaluationDTO>> useCases = List.of(
             // useCase 0: onboardingOk
             OnboardingUseCase.withJustPayload(
-                    bias -> OnboardingDTOFaker.mockInstance(bias, 1),
+                    bias -> buildOnboardingRequestBuilder(bias).build(),
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
                             Assertions.assertFalse(rankingRequest.isOnboardingKo());
@@ -324,7 +335,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
-                        return OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        return buildOnboardingRequestBuilder(bias)
                                 .isee(BigDecimal.ZERO)
                                 .build();
                     },
@@ -351,7 +362,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                     bias -> {
                         expectedOnboardingKoFamilies++;
                         expectedFamilyRetrieveKo++;
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        OnboardingDTO out = buildOnboardingRequestBuilder(bias)
                                 .userId("NOFAMILYuserId_" + bias)
                                 .build();
                         Mockito.doReturn(Mono.just(Optional.empty()))

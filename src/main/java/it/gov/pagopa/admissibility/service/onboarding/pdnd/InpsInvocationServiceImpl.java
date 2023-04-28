@@ -1,9 +1,15 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.soap.inps.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -16,24 +22,27 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Service
 public class InpsInvocationServiceImpl implements InpsInvocationService {
 
+    private final CriteriaCodeService criteriaCodeService;
     private final IseeConsultationSoapClient iseeConsultationSoapClient;
     private final XMLInputFactory xmlFactory;
     private final JAXBContext jaxbContext;
 
-    public InpsInvocationServiceImpl(IseeConsultationSoapClient iseeConsultationSoapClient) throws JAXBException {
+    public InpsInvocationServiceImpl(CriteriaCodeService criteriaCodeService, IseeConsultationSoapClient iseeConsultationSoapClient) throws JAXBException {
+        this.criteriaCodeService = criteriaCodeService;
         this.iseeConsultationSoapClient = iseeConsultationSoapClient;
         this.xmlFactory = XMLInputFactory.newFactory();
         this.jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
     }
 
     @Override
-    public Mono<Optional<ConsultazioneIndicatoreResponseType>> invoke(String fiscalCode) {
-        return iseeConsultationSoapClient.getIsee(fiscalCode).map(Optional::of)
+    public Mono<Optional<ConsultazioneIndicatoreResponseType>> invoke(String fiscalCode, IseeTypologyEnum iseeType) {
+        return iseeConsultationSoapClient.getIsee(fiscalCode, iseeType).map(Optional::of)
                 .defaultIfEmpty(Optional.empty());
     }
 
@@ -42,6 +51,20 @@ public class InpsInvocationServiceImpl implements InpsInvocationService {
         if (inpsResponse != null && getIsee) {
             // TODO log userId and ISEE obtained from INPS
             onboardingRequest.setIsee(getIseeFromResponse(inpsResponse));
+
+            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
+            if (onboardingRequest.getIsee() == null) {
+                throw new OnboardingException(
+                        List.of(new OnboardingRejectionReason(
+                                OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                                OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
+                                criteriaCodeConfig.getAuthority(),
+                                criteriaCodeConfig.getAuthorityLabel(),
+                                "ISEE non disponibile"
+                        )),
+                        "User having id %s has not compatible ISEE type for initiative %s".formatted(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
+                );
+            }
         }
     }
 

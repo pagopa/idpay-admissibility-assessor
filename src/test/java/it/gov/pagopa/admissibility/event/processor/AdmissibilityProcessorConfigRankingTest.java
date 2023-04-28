@@ -118,7 +118,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     private final List<OnboardingUseCase<RankingRequestDTO>> useCases = List.of(
             // useCase 0: successful case - coda ranking
             OnboardingUseCase.withJustPayload(
-                    bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
+                    bias -> buildOnboardingRequestBuilder(bias)
+                            .build(),
                     rankingRequest -> {
                         Assertions.assertNotNull(rankingRequest.getUserId());
                         Assertions.assertNotNull(rankingRequest.getInitiativeId());
@@ -131,7 +132,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
 
             // useCase 1: onboardingKo case
             OnboardingUseCase.withJustPayload(
-                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                    bias -> buildOnboardingRequestBuilder(bias)
                             .isee(BigDecimal.ZERO)
                             .build(),
                     rankingRequest -> {

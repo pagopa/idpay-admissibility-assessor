@@ -5,13 +5,17 @@ import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
+import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -28,13 +32,13 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +48,6 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@Slf4j
 @ContextConfiguration(classes = {AdmissibilityProcessorConfigTest.MediatorSpyConfiguration.class})
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.check.OnboardingInitiativeCheck=OFF",
@@ -60,6 +63,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
+    @SpyBean
+    private UserFiscalCodeService userFiscalCodeServiceSpy;
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
@@ -152,6 +157,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .code(CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE)
                                                                 .operator(FilterOperator.GT)
                                                                 .value("10000")
+                                                                .iseeTypes(List.of(IseeTypologyEnum.ORDINARIO))
                                                                 .build()
                                                 ))
                                                 .build())
@@ -236,17 +242,27 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
     }
 
+    private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestCachedBuilder(Integer bias) {
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                .isee(BigDecimal.valueOf(20))
+                .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
+    }
+
     //region useCases
     private final List<OnboardingUseCase<EvaluationCompletedDTO>> useCases = List.of(
-            // useCase 0: successful case
+            // useCase 0: successful use case where AutomatedCriteria were cached
             OnboardingUseCase.withJustPayload(
-                    bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
+                    bias -> buildOnboardingRequestCachedBuilder(bias)
+                            .build(),
                     evaluation -> {
                         Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
                         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
                         assertEvaluationFields(evaluation, true);
+
+                        Mockito.verify(userFiscalCodeServiceSpy, Mockito.never()).getUserFiscalCode(evaluation.getUserId());
                     }
             ),
+
             // useCase 1: TC consensus fail
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -259,6 +275,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build(),
                             true)
             ),
+
             // useCase 2: PDND consensuns fail
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -271,6 +288,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
+
             // self declaration fail
             // Handle multi and boolean criteria
             /*
@@ -286,6 +304,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , false)
             ),
             */
+
             // useCase 3: No initiative
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -299,6 +318,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , false)
             ),
+
             // useCase 4: TC acceptance timestamp fail
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -311,6 +331,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                            , true)
             ),
+
             // useCase 5: TC criteria acceptance timestamp fail
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -330,8 +351,12 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             // useCase 6: AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                                .initiativeId(ISEE_INITIATIVE_ID)
-                                .build(),
+                            .initiativeId(ISEE_INITIATIVE_ID)
+
+                            // TODO remove cached value in order to call the service
+                            .isee(BigDecimal.TEN)
+
+                            .build(),
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
@@ -348,6 +373,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(RESIDENCE_INITIATIVE_ID)
+
+                            // TODO remove cached value in order to call the service
+                            .residence(new Residence())
+
                             .build(),
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
@@ -363,6 +392,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(BIRTHDATE_INITIATIVE_ID)
+
+                            // TODO remove cached value in order to call the service
+                            .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990))
+
                             .build(),
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
@@ -377,8 +410,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             // TODO test daily limit reached when invoking ANPR
 
             // exhausted initiative budget
-            Pair.of(
-                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+            OnboardingUseCase.withJustPayload(
+                    bias -> buildOnboardingRequestCachedBuilder(bias)
                             .initiativeId(EXHAUSTED_INITIATIVE_ID)
                             .build(),
                     evaluation -> checkKO(evaluation,
@@ -485,7 +518,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
         final String failingRuleEngineUserId = "FAILING_RULE_ENGINE";
         String failingRuleEngineUseCase = TestUtils.jsonSerializer(
-                OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+                buildOnboardingRequestCachedBuilder(errorUseCases.size())
                         .userId(failingRuleEngineUserId)
                         .build()
         );
@@ -498,7 +531,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         ));
 
         final String failingOnboardingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING";
-        OnboardingDTO onboardingFailinPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+        OnboardingDTO onboardingFailinPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
                 .userId(failingOnboardingPublishingUserId)
                 .build();
         int onboardingFailinPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
@@ -514,7 +547,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         ));
 
         final String exceptionWhenOnboardingPublishingUserId = "FAILING_REWARD_PUBLISHING_DUE_EXCEPTION";
-        OnboardingDTO exceptionWhenOnboardingPublishing = OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+        OnboardingDTO exceptionWhenOnboardingPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
                 .userId(exceptionWhenOnboardingPublishingUserId)
                 .build();
         int exceptionWhenOnboardingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
@@ -530,7 +563,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         ));
 
         String failingBudgetReservation = TestUtils.jsonSerializer(
-                OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), initiativesNumber)
+                buildOnboardingRequestCachedBuilder(errorUseCases.size())
                         .initiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID)
                         .build()
         );
