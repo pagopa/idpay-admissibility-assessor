@@ -133,6 +133,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
+                .isLogoPresent(Boolean.TRUE)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
@@ -191,6 +192,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
         expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
+        expectedEvaluationResult.setIsLogoPresent(Boolean.TRUE);
         expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
@@ -243,7 +245,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 "SERVICENAME",
                 "ARGUMENT",
                 "DESCRIPTION",
-                List.of(ChannelsDTO.builder().type("web").contact("CONTACT").build())
+                List.of(ChannelsDTO.builder().type("web").contact("CONTACT").build()),
+                "logo.png"
         ));
 
         return dto;

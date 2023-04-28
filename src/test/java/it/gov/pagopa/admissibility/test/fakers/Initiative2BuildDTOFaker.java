@@ -31,6 +31,7 @@ public final class Initiative2BuildDTOFaker {
         out.initiativeId(fakeValuesService.bothify(bias!=null? "id_%d".formatted(bias) : "?????"));
         out.initiativeName(fakeValuesService.bothify("?????"));
         out.organizationId(fakeValuesService.bothify("?????"));
+        out.organizationName(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
         out.initiativeRewardType("REFUND");
 
@@ -60,7 +61,8 @@ public final class Initiative2BuildDTOFaker {
                 "SERVICENAME%s".formatted(bias),
                 "ARGUMENT%s".formatted(bias),
                 "DESCRIPTION%s".formatted(bias),
-                List.of(ChannelsDTO.builder().type("web").contact("CONTACT%s".formatted(bias)).build())
+                List.of(ChannelsDTO.builder().type("web").contact("CONTACT%s".formatted(bias)).build()),
+                "logo.png"
         ));
 
         TestUtils.checkNotNullFields(out.build());

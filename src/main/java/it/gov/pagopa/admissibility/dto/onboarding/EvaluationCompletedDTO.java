@@ -19,6 +19,7 @@ import java.util.List;
 @SuperBuilder
 public class EvaluationCompletedDTO extends EvaluationDTO{
     private String initiativeName;
+    private String organizationName;
     private LocalDate initiativeEndDate;
     @NotEmpty
     private OnboardingEvaluationStatus status;
@@ -28,4 +29,5 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     @JsonIgnore
     private Long rankingValue;
     private String initiativeRewardType;
+    private Boolean isLogoPresent;
 }

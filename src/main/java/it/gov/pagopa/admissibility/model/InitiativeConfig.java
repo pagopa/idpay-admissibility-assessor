@@ -22,6 +22,7 @@ public class InitiativeConfig {
     private String initiativeId;
     private String initiativeName;
     private String organizationId;
+    private String organizationName;
     private String status;
     private LocalDate startDate;
     private LocalDate endDate;
@@ -33,5 +34,6 @@ public class InitiativeConfig {
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;
+    private Boolean isLogoPresent;
     private InitiativeGeneralDTO.BeneficiaryTypeEnum beneficiaryType;
 }
