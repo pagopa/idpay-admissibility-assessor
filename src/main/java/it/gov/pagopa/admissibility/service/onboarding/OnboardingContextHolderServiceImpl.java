@@ -109,12 +109,18 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     public void refreshKieContainer(Consumer<? super KieBase> subscriber){
         if (isRedisCacheEnabled) {
             reactiveRedisTemplate.opsForValue().get(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME)
-                    .map(c -> {
+                    .mapNotNull(c -> {
                         if(!Arrays.equals(c, kieBaseSerialized)){
                             this.kieBaseSerialized = c;
-                            KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
-                            preLoadKieBase(newKieBase);
-                            this.kieBase = newKieBase;
+                            try{
+                                KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
+                                preLoadKieBase(newKieBase);
+
+                                this.kieBase = newKieBase;
+                            } catch (Exception e){
+                                log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
+                                return null;
+                            }
                         }
                         return this.kieBase;
                     })
@@ -141,8 +147,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         InitiativeConfig cachedInitiativeConfig = initiativeId2Config.get(initiativeId);
         if(cachedInitiativeConfig==null){
         return retrieveInitiativeConfig(initiativeId)
-                    .doOnNext(initiativeConfig -> initiativeId2Config.put(initiativeId, initiativeConfig))
-                ;
+                    .doOnNext(initiativeConfig -> initiativeId2Config.put(initiativeId, initiativeConfig));
         } else {
             return Mono.just(cachedInitiativeConfig);
         }
@@ -158,13 +163,10 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         long startTime = System.currentTimeMillis();
         return droolsRuleRepository.findById(initiativeId)
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
+                    log.info("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
                     return Mono.empty();
                 }))
-                .map(droolsRule -> {
-                    log.info("PROVA");
-                    return droolsRule.getInitiativeConfig();
-                })
+                .map(DroolsRule::getInitiativeConfig)
                 .doFinally(x -> log.info("[CACHE_MISS] [PERFORMANCE_LOG] Time spent fetching initiativeId {} ({}): {} ms", initiativeId, x.toString(), System.currentTimeMillis() - startTime));
     }
     //endregion

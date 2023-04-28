@@ -20,18 +20,7 @@ class OnboardingConsensusCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingTcFalseMock = new OnboardingDTO(
-                "1",
-                "1",
-                false,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingTcFalseMock = buildOnboardingRequest(false, true, localDateTimeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -53,18 +42,7 @@ class OnboardingConsensusCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingPdndFalseMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                false,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingPdndFalseMock = buildOnboardingRequest(true, false, localDateTimeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -126,18 +104,7 @@ class OnboardingConsensusCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingSelfDeclarationFalseMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingSelfDeclarationFalseMock = buildOnboardingRequest(true, true, localDateTimeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -154,18 +121,7 @@ class OnboardingConsensusCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest(true, true, localDateTimeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -174,6 +130,23 @@ class OnboardingConsensusCheckTest {
 
         // Then
         assertNull(result);
+    }
+
+    private OnboardingDTO buildOnboardingRequest(boolean tc, boolean pdndCheck, LocalDateTime localDateTimeMock) {
+        return new OnboardingDTO(
+                "1",
+                "1",
+                tc,
+                "OK",
+                pdndCheck,
+                localDateTimeMock,
+                localDateTimeMock,
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate(),
+                null,
+                false
+        );
     }
 
 }

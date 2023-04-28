@@ -8,22 +8,27 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
@@ -35,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -45,6 +49,7 @@ import java.util.stream.Stream;
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.check.OnboardingInitiativeCheck=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
+        "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=OFF",
 })
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
@@ -55,6 +60,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
+
+    @Value("${app.onboarding-request.max-retry}")
+    private int maxRetry;
 
     private final int initiativesNumber = 7;
 
@@ -69,12 +77,12 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
         publishOnboardingRules(validOnboardings);
 
-        List<String> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
-        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).toList());
+        List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
+        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
+        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
@@ -229,18 +237,18 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     }
 
     //region useCases
-    private final List<Pair<Function<Integer, OnboardingDTO>, java.util.function.Consumer<EvaluationCompletedDTO>>> useCases = List.of(
-            //successful case
-            Pair.of(
+    private final List<OnboardingUseCase<EvaluationCompletedDTO>> useCases = List.of(
+            // useCase 0: successful case
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
                     evaluation -> {
                         Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
-                        Assertions.assertEquals("ONBOARDING_OK", evaluation.getStatus());
+                        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
                         assertEvaluationFields(evaluation, true);
                     }
             ),
-            // TC consensus fail
-            Pair.of(
+            // useCase 1: TC consensus fail
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tc(false)
                             .build(),
@@ -251,8 +259,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build(),
                             true)
             ),
-            // PDND consensuns fail
-            Pair.of(
+            // useCase 2: PDND consensuns fail
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .pdndAccept(false)
                             .build(),
@@ -266,7 +274,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             // self declaration fail
             // Handle multi and boolean criteria
             /*
-            Pair.of(
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .selfDeclarationList(Map.of("DUMMY", false))
                             .build(),
@@ -278,8 +286,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , false)
             ),
             */
-            // No initiative
-            Pair.of(
+            // useCase 3: No initiative
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId("NOT_EXISTENT")
                             .tcAcceptTimestamp(LocalDateTime.now().withYear(1970))
@@ -291,8 +299,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , false)
             ),
-            // TC acceptance timestamp fail
-            Pair.of(
+            // useCase 4: TC acceptance timestamp fail
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tcAcceptTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
@@ -303,8 +311,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                            , true)
             ),
-            // TC criteria acceptance timestamp fail
-            Pair.of(
+            // useCase 5: TC criteria acceptance timestamp fail
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .criteriaConsensusTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
@@ -319,8 +327,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
             // TODO test error when invoking PDND
 
-            // AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
-            Pair.of(
+            // useCase 6: AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                                 .initiativeId(ISEE_INITIATIVE_ID)
                                 .build(),
@@ -336,8 +344,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
             // TODO test daily limit reached when invoking INPS
 
-            // AUTOMATED_CRITERIA fail due to RESIDENCE TODO to fix configuring wiremock stubs
-            Pair.of(
+            // useCase 7: AUTOMATED_CRITERIA fail due to RESIDENCE TODO to fix configuring wiremock stubs
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(RESIDENCE_INITIATIVE_ID)
                             .build(),
@@ -350,8 +358,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
-            // AUTOMATED_CRITERIA fail due to BIRTHDATE TODO to fix configuring wiremock stubs
-            Pair.of(
+
+            // useCase 8: AUTOMATED_CRITERIA fail due to BIRTHDATE TODO to fix configuring wiremock stubs
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(BIRTHDATE_INITIATIVE_ID)
                             .build(),
@@ -378,7 +387,26 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
                                     .build()
                             , true)
+            ),
+
+            // useCase 8: evaluation throws exception, but retry header expired
+            new OnboardingUseCase<>(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber).build();
+
+                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(
+                                Mockito.argThat(i->out.getUserId().equals(i.getUserId())), Mockito.any(), Mockito.any());
+
+                        return MessageBuilder.withPayload(out).setHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY, maxRetry+"").build();
+                    },
+                    evaluation -> checkKO(evaluation,
+                            OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR)
+                                    .code(OnboardingConstants.REJECTION_REASON_GENERIC_ERROR)
+                                    .build()
+                            , true)
             )
+
     );
 
     private void assertEvaluationFields(EvaluationCompletedDTO evaluation, boolean expectedInitiativeFieldFilled){
@@ -387,6 +415,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         Assertions.assertNotNull(evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getAdmissibilityCheckDate());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
+
+        Assertions.assertNull(evaluation.getFamilyId());
 
         if(expectedInitiativeFieldFilled) {
             Assertions.assertNotNull(evaluation.getInitiativeName());
@@ -398,7 +428,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     }
 
     private void checkKO(EvaluationCompletedDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
-        Assertions.assertEquals("ONBOARDING_KO", evaluation.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
         Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().contains(expectedRejectionReason),
                 "Expected rejection reason %s and obtained %s".formatted(expectedRejectionReason, evaluation.getOnboardingRejectionReasons()));
@@ -521,7 +551,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
                 .initiativeEndDate(initiativeExceptionWhenOnboardingPublishing.getGeneral().getEndDate())
                 .organizationId(initiativeExceptionWhenOnboardingPublishing.getOrganizationId())
-                .status("ONBOARDING_OK")
+                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
                 .onboardingRejectionReasons(Collections.emptyList())
                 .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
                 .build();
@@ -537,7 +567,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             EvaluationCompletedDTO actual = objectMapper.readValue(errorMessage, EvaluationCompletedDTO.class);
             EvaluationCompletedDTO expected = objectMapper.readValue(expectedPayload, EvaluationCompletedDTO.class);
 
-            TestUtils.checkNotNullFields(actual, "rankingValue");
+            TestUtils.checkNotNullFields(actual, "rankingValue", "familyId");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
             Assertions.assertEquals(expected.getInitiativeName(), actual.getInitiativeName());

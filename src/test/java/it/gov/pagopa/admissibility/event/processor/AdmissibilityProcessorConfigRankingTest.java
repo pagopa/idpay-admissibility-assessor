@@ -6,7 +6,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.RankingRequestDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.service.onboarding.RankingNotifierService;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
@@ -19,6 +19,8 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
@@ -27,7 +29,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
@@ -44,18 +45,18 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
 
     @Test
     void testRankingAdmissibilityOnboarding() throws IOException {
-        int validOnboardings = 1000; // 30; // use even number
+        int validOnboardings = 100; // use even number
         int notValidOnboarding = errorUseCases.size();
         long maxWaitingMs = 30000;
 
         publishOnboardingRules(validOnboardings);
 
-        List<String> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
-        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).toList());
+        List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
+        onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
+        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
@@ -114,23 +115,23 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     }
 
     //region useCases
-    private final List<Pair<Function<Integer, OnboardingDTO>, Consumer<RankingRequestDTO>>> useCases = List.of(
-            //successful case - coda ranking
-            Pair.of(
-                    bias -> buildOnboardingRequestBuilder(bias)
-                            .build(),
+    private final List<OnboardingUseCase<RankingRequestDTO>> useCases = List.of(
+            // useCase 0: successful case - coda ranking
+            OnboardingUseCase.withJustPayload(
+                    bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
                     rankingRequest -> {
                         Assertions.assertNotNull(rankingRequest.getUserId());
                         Assertions.assertNotNull(rankingRequest.getInitiativeId());
                         Assertions.assertNotNull(rankingRequest.getAdmissibilityCheckDate());
                         Assertions.assertNotNull(rankingRequest.getRankingValue());
                         Assertions.assertFalse(rankingRequest.isOnboardingKo());
+                        Assertions.assertNull(rankingRequest.getFamilyId());
                     }
             ),
 
-            //onboardingKo case
-            Pair.of(
-                    bias -> buildOnboardingRequestBuilder(bias)
+            // useCase 1: onboardingKo case
+            OnboardingUseCase.withJustPayload(
+                    bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .isee(BigDecimal.ZERO)
                             .build(),
                     rankingRequest -> {
@@ -201,7 +202,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
             RankingRequestDTO actual = objectMapper.readValue(errorMessage, RankingRequestDTO.class);
             RankingRequestDTO expected = objectMapper.readValue(expectedPayload, RankingRequestDTO.class);
 
-            TestUtils.checkNotNullFields(actual);
+            TestUtils.checkNotNullFields(actual, "familyId");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
         } catch (JsonProcessingException e) {

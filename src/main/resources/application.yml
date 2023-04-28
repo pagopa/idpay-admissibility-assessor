@@ -188,9 +188,12 @@ app:
     # the size of the thread pool to handle @Scheduled tasks
     schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
   onboarding-request:
+    max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
       next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
       delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
+    delay-family-in-progress:
+      delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}
   beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
     online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}
@@ -213,6 +216,10 @@ app:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
+    FAMILY:
+      authority: "INPS"
+      authorityLabel: "Istituto Nazionale Previdenza Sociale"
+      onboardingField: "family"
   pdv:
     base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
     headers:

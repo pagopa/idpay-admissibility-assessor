@@ -45,7 +45,7 @@ class AdmissibilityControllerImplTest {
     void getInitiativeStatusNotFound(){
 
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1"))
-                .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
+                .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND, "NOTFOUND")));
 
         webClient.get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")

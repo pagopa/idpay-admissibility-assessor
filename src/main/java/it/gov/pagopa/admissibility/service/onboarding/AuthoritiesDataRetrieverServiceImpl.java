@@ -6,7 +6,15 @@ import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsInvocationService;
 import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
@@ -26,6 +34,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.*;
 import java.time.*;
 import java.util.Optional;
 import java.util.Random;
@@ -36,6 +46,8 @@ import java.util.function.Supplier;
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService {
     private final Long delaySeconds;
     private final boolean nextDay;
+    private final OnboardingContextHolderService onboardingContextHolderService;
+    private final CriteriaCodeService criteriaCodeService;
 
     private final CreateTokenService createTokenService;
     private final UserFiscalCodeService userFiscalCodeService;
@@ -52,7 +64,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                UserFiscalCodeService userFiscalCodeService,
                                                InpsInvocationService inpsInvocationService,
                                                AnprInvocationService anprInvocationService,
-                                               OnboardingContextHolderService onboardingContextHolderService) {
+                                               OnboardingContextHolderService onboardingContextHolderService,
+                                               CriteriaCodeService criteriaCodeService) {
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
         this.nextDay = nextDay;
@@ -61,6 +74,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.inpsInvocationService = inpsInvocationService;
         this.anprInvocationService = anprInvocationService;
         this.onboardingContextHolderService = onboardingContextHolderService;
+        this.criteriaCodeService = criteriaCodeService;
     }
 
     /** Declared just to let know Spring to connect the producer at startup */
@@ -174,5 +188,3 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
 }
-
-

@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
@@ -31,6 +32,7 @@ import reactor.core.publisher.Mono;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -126,19 +128,24 @@ class OnboardingContextHolderServiceImplTest {
         String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .beneficiaryInitiativeBudget(BigDecimal.valueOf(100))
                 .endDate(LocalDate.MAX)
                 .initiativeName("NAME")
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
+                .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
                 .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION")
                 .organizationId("ORGANIZATION-ID")
+                .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)
                 .rankingInitiative(Boolean.TRUE)
                 .rankingFields(List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
+                .initiativeRewardType("REFUND")
+                .isLogoPresent(Boolean.FALSE)
                 .build();
 
 
@@ -147,8 +154,7 @@ class OnboardingContextHolderServiceImplTest {
         InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
         //Then
-        Assertions.assertNotNull(result);
-        TestUtils.checkNotNullFields(result);
+        Assertions.assertSame(initiativeConfig, result);
     }
 
     @ParameterizedTest

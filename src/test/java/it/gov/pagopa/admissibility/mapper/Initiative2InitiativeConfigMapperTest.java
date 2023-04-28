@@ -33,6 +33,7 @@ class Initiative2InitiativeConfigMapperTest {
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
                         Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
                 result.getRankingFields());
+        Assertions.assertTrue(result.getIsLogoPresent());
 
         TestUtils.checkNotNullFields(result);
     }
@@ -53,6 +54,7 @@ class Initiative2InitiativeConfigMapperTest {
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
                         Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
                 result.getRankingFields());
+        Assertions.assertFalse(result.getIsLogoPresent());
 
         TestUtils.checkNotNullFields(result,"serviceId");
     }
@@ -63,6 +65,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.FALSE);
 
         setAdditionalInfo(initiative2BuildDTO);
+        initiative2BuildDTO.getAdditionalInfo().setLogoFileName("");
 
         final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
 
@@ -71,6 +74,7 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
         Assertions.assertEquals(Boolean.FALSE, result.isRankingInitiative());
+        Assertions.assertFalse(result.getIsLogoPresent());
 
         TestUtils.checkNotNullFields(result, "rankingFields" );
     }
@@ -95,8 +99,9 @@ class Initiative2InitiativeConfigMapperTest {
         commonAssertions(initiative2BuildDTO,result);
         Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
         Assertions.assertTrue(result.getRankingFields().isEmpty());
+        Assertions.assertTrue(result.getIsLogoPresent());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
+        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
     }
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
@@ -107,6 +112,7 @@ class Initiative2InitiativeConfigMapperTest {
                 .channels(List.of(
                         ChannelsDTO.builder().type("web").contact("contact").build()
                 ))
+                .logoFileName("test.png")
                 .build());
     }
 
@@ -115,13 +121,16 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setInitiativeId("INITIATIVEID");
         initiative2BuildDTO.setInitiativeName("INITIATIVENAME");
         initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
+        initiative2BuildDTO.setOrganizationName("ORGANIZATIONNAME");
         initiative2BuildDTO.setStatus("STATUS");
+        initiative2BuildDTO.setInitiativeRewardType("REFUND");
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                 .startDate(LocalDate.MIN)
                 .endDate(LocalDate.MAX)
                 .budget(BigDecimal.TEN)
                 .beneficiaryBudget(BigDecimal.ONE)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
@@ -142,12 +151,16 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getInitiativeId(), result.getInitiativeId());
         Assertions.assertSame(initiative2BuildDTO.getInitiativeName(), result.getInitiativeName());
         Assertions.assertSame(initiative2BuildDTO.getOrganizationId(), result.getOrganizationId());
+        Assertions.assertSame(initiative2BuildDTO.getOrganizationName(), result.getOrganizationName());
         Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientId(), result.getApiKeyClientId());
         Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientAssertion(), result.getApiKeyClientAssertion());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getStartDate(), result.getStartDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
+        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryType(), result.getBeneficiaryType());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
+        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());
+        Assertions.assertSame(initiative2BuildDTO.getInitiativeRewardType(), result.getInitiativeRewardType());
     }
 }

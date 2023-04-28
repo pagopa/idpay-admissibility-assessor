@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.model;
 
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,14 +22,19 @@ public class InitiativeConfig {
     private String initiativeId;
     private String initiativeName;
     private String organizationId;
+    private String organizationName;
     private String status;
     private LocalDate startDate;
     private LocalDate endDate;
     private String apiKeyClientId;
     private String apiKeyClientAssertion;
+    private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;
     private BigDecimal beneficiaryInitiativeBudget;
     private boolean rankingInitiative;
     private List<Order> rankingFields;
+    private String initiativeRewardType;
+    private Boolean isLogoPresent;
+    private InitiativeGeneralDTO.BeneficiaryTypeEnum beneficiaryType;
 }

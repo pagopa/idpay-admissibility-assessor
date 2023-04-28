@@ -25,18 +25,7 @@ class OnboardingInitiativeCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                null,
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest(null, localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -60,18 +49,7 @@ class OnboardingInitiativeCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.of(2022,1,1,0,0);
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -101,18 +79,8 @@ class OnboardingInitiativeCheckTest {
         LocalDateTime localDateTimeMock1 = LocalDateTime.of(2021,7,14,0,0);
         LocalDateTime localDateTimeMock2 = LocalDateTime.of(2022,1,1,0,0);
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock1,
-                localDateTimeMock2,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock1);
+        onboardingMock.setCriteriaConsensusTimestamp(localDateTimeMock2);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -141,18 +109,7 @@ class OnboardingInitiativeCheckTest {
         // Given
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboarding = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboarding = buildOnboardingRequest("1", localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -167,5 +124,22 @@ class OnboardingInitiativeCheckTest {
 
         // Then
         assertNull(result);
+    }
+
+    private OnboardingDTO buildOnboardingRequest(String initiativeId, LocalDateTime localDateTimeMock) {
+        return new OnboardingDTO(
+                "1",
+                initiativeId,
+                true,
+                "OK",
+                true,
+                localDateTimeMock,
+                localDateTimeMock,
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate(),
+                null,
+                false
+        );
     }
 }

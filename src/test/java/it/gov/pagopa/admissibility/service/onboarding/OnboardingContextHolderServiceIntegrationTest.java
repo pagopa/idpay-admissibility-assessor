@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,10 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         Assertions.assertEquals(0, startingRuleBuiltSize);
 
+        // Caching invalid rules
+        reactiveRedisTemplate.opsForValue().set(OnboardingContextHolderServiceImpl.ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, "INVALIDOBJECT".getBytes()).block();
+        refreshAndAssertKieContainerRuleSize(0);
+
         // Build a valid KieBase that produces a rule of size 1, assert KieBase is null after Reflection
         List<OnboardingRejectionReason> expectedRejectionReason =
                 Collections.singletonList(
@@ -86,23 +91,13 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 500
         );
 
-
         setContextHolderFieldToNull("kieBase");
         setContextHolderFieldToNull("kieBaseSerialized");
 
         Assertions.assertNull(onboardingContextHolderService.getBeneficiaryRulesKieBase());
 
         // Refresh KieBase and assert the built rules have expected size
-        onboardingContextHolderService.refreshKieContainer();
-        waitFor(
-                ()-> onboardingContextHolderService.getBeneficiaryRulesKieBase() != null,
-                ()->"KieBase is null",
-                10,
-                500
-        );
-
-        int ruleBuiltSize = getRuleBuiltSize(onboardingContextHolderService);
-        Assertions.assertEquals(1, ruleBuiltSize);
+        refreshAndAssertKieContainerRuleSize(1);
 
         // Execute rule and assert onboarding has the expected rejection reason
         OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, 1);
@@ -136,6 +131,19 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         int resultRuleBuiltSize = getRuleBuiltSize(onboardingContextHolderService);
         Assertions.assertEquals(0, resultRuleBuiltSize);
+    }
+
+    private void refreshAndAssertKieContainerRuleSize(int expectedRuleSize) {
+        onboardingContextHolderService.refreshKieContainer();
+        waitFor(
+                ()-> onboardingContextHolderService.getBeneficiaryRulesKieBase() != null,
+                ()->"KieBase is null",
+                10,
+                500
+        );
+
+        int ruleBuiltSize = getRuleBuiltSize(onboardingContextHolderService);
+        Assertions.assertEquals(expectedRuleSize, ruleBuiltSize);
     }
 
     private void setContextHolderFieldToNull(String fieldName) {

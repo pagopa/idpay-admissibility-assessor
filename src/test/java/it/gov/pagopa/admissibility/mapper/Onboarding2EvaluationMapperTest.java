@@ -2,7 +2,9 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -45,7 +47,9 @@ class Onboarding2EvaluationMapperTest {
                 acceptanceDateTime,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                Family.builder().familyId("FAMILYID").build(),
+                false
         );
 
         //init initiativeConfig
@@ -53,8 +57,10 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setInitiativeId("INITIATIVEID");
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
+        initiativeConfig.setOrganizationName("ORGANIZATIONNAME");
         initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.TEN);
-
+        initiativeConfig.setInitiativeRewardType("REFUND");
+        initiativeConfig.setIsLogoPresent(Boolean.FALSE);
         initiativeConfig.setEndDate(LocalDate.now());
     }
 
@@ -77,7 +83,7 @@ class Onboarding2EvaluationMapperTest {
         commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, null);
 
 
-        Assertions.assertEquals("ONBOARDING_OK", resultCompleted.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
         Assertions.assertEquals(0, BigDecimal.TEN.compareTo(resultCompleted.getBeneficiaryBudget()));
         Assertions.assertTrue(CollectionUtils.isEmpty(resultCompleted.getOnboardingRejectionReasons()));
 
@@ -93,6 +99,8 @@ class Onboarding2EvaluationMapperTest {
                 .code("InitiativeId NULL")
                 .build());
 
+        onboardingRequest.setFamily(null);
+
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, null, rejectReasons);
 
@@ -102,17 +110,20 @@ class Onboarding2EvaluationMapperTest {
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
-        Assertions.assertEquals("ONBOARDING_KO", resultCompleted.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
 
         Assertions.assertNull(resultCompleted.getInitiativeName());
         Assertions.assertNull(resultCompleted.getOrganizationId());
+        Assertions.assertNull(resultCompleted.getOrganizationName());
         Assertions.assertNull(resultCompleted.getBeneficiaryBudget());
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
+        Assertions.assertNull(resultCompleted.getInitiativeRewardType());
         Assertions.assertNull(resultCompleted.getRankingValue());
+        Assertions.assertNull(resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "initiativeName", "organizationId", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue");
+        TestUtils.checkNotNullFields(resultCompleted, "familyId", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
     }
 
     @Test
@@ -134,7 +145,7 @@ class Onboarding2EvaluationMapperTest {
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
-        Assertions.assertEquals("ONBOARDING_KO", resultCompleted.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
@@ -181,7 +192,7 @@ class Onboarding2EvaluationMapperTest {
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         System.out.println(resultCompleted);
         commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
-        Assertions.assertEquals("ONBOARDING_KO", resultCompleted.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
 
         commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, Utils.euro2Cents(onboardingRequest.getIsee()));
         Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudget(), resultCompleted.getBeneficiaryBudget());
@@ -229,13 +240,17 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(initiativeConfig.getInitiativeName(), resultCompleted.getInitiativeName());
         Assertions.assertEquals(initiativeConfig.getInitiativeId(), resultCompleted.getInitiativeId());
         Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultCompleted.getOrganizationId());
+        Assertions.assertEquals(initiativeConfig.getOrganizationName(), resultCompleted.getOrganizationName());
         Assertions.assertEquals(initiativeConfig.getEndDate(), resultCompleted.getInitiativeEndDate());
+        Assertions.assertEquals(initiativeConfig.getInitiativeRewardType(), resultCompleted.getInitiativeRewardType());
+        Assertions.assertEquals(initiativeConfig.getIsLogoPresent(), resultCompleted.getIsLogoPresent());
 
         Assertions.assertEquals(expectedRankingValue, resultCompleted.getRankingValue());
     }
 
     private void commonAssertionsOnboarding2EvaluationCompleted(EvaluationCompletedDTO resultCompleted) {
         Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
+        Assertions.assertEquals(onboardingRequest.getFamily()!=null?onboardingRequest.getFamily().getFamilyId() : null, resultCompleted.getFamilyId());
         Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
         Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
     }
@@ -256,10 +271,10 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertInstanceOf(EvaluationCompletedDTO.class, evaluationDTO);
 
         EvaluationCompletedDTO evaluationCompletedDTO = (EvaluationCompletedDTO) evaluationDTO;
-        Assertions.assertEquals(OnboardingConstants.ONBOARDING_STATUS_KO, evaluationCompletedDTO.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluationCompletedDTO.getStatus());
 
         if(!onboardingKo){
-            evaluationCompletedDTO.setStatus(OnboardingConstants.ONBOARDING_STATUS_OK);
+            evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
         }
 
         RankingRequestDTO result = onboarding2EvaluationMapper.apply(evaluationCompletedDTO);

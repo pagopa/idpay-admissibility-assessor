@@ -1,10 +1,11 @@
-package it.gov.pagopa.admissibility.service;
+package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.build.*;
+import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
@@ -52,7 +53,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     void configureMocks() {
         Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation -> {
             Initiative2BuildDTO i = invocation.getArgument(0);
-            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
+            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE", "RULEVERSION",
                     InitiativeConfig.builder()
                             .initiativeId(i.getInitiativeId())
                             .startDate(i.getGeneral().getStartDate())
