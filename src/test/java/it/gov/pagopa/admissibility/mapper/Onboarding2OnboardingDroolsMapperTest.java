@@ -31,7 +31,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),
-                new Family()
+                new Family(),
+                false
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();

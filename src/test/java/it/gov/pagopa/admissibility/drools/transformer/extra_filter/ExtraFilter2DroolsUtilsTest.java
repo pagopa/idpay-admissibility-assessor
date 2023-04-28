@@ -22,7 +22,8 @@ class ExtraFilter2DroolsUtilsTest {
             "selfDeclarationList",
             "tcAcceptTimestamp",
             "criteriaConsensusTimestamp",
-            "family"
+            "family",
+            "budgetReserved"
     ));
 
     static final Map<String, Class<?>> expectedFields2Class = Map.ofEntries(

@@ -27,14 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.util.Pair;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -69,7 +68,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         publishOnboardingRules();
 
-        List<String> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
+        List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
 
         storeInitiativeCountersInitialState();
 
@@ -83,7 +82,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
+        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
@@ -157,14 +156,18 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     @Override
-    protected <T extends EvaluationDTO> List<String> buildValidPayloads(int bias, int validOnboardings, List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
+    protected <T extends EvaluationDTO> List<Message<String>> buildValidPayloads(int bias, int validOnboardings, List<OnboardingUseCase<T>> useCases) {
         return super.buildValidPayloads(bias, validOnboardings, useCases).stream()
-                .flatMap(payload -> publishedInitiatives.stream()
+                .flatMap(message -> publishedInitiatives.stream()
                         .flatMap(initiative ->
                                 IntStream.range(0, membersPerFamily)
-                                        .mapToObj(i -> payload
-                                                .replace("id_0", initiative.getInitiativeId())
-                                                .replaceAll("(userId_[^\"]+)", "$1_FAMILYMEMBER" + i)
+                                        .mapToObj(i ->
+                                                MessageBuilder.withPayload(message.getPayload()
+                                                                .replace("id_0", initiative.getInitiativeId())
+                                                                .replaceAll("(userId_[^\"]+)", "$1_FAMILYMEMBER" + i)
+                                                        )
+                                                        .copyHeaders(message.getHeaders())
+                                                        .build()
                                         ))
                 ).toList();
     }
@@ -303,9 +306,9 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     // each useCase's userId should contain "userId_[0-9]+", this string is matched in order to set particular member id
     Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED, OnboardingEvaluationStatus.DEMANDED);
     Set<OnboardingEvaluationStatus> expectedOnboardingKoStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingEvaluationStatus.REJECTED);
-    private final List<Pair<Function<Integer, OnboardingDTO>, Consumer<EvaluationDTO>>> useCases = List.of(
+    private final List<OnboardingUseCase<EvaluationDTO>> useCases = List.of(
             // useCase 0: onboardingOk
-            Pair.of(
+            OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstance(bias, 1),
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
@@ -318,7 +321,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             ),
 
             // useCase 1: onboardingKo case
-            Pair.of(
+            OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
                         return OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
@@ -344,7 +347,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             ),
 
             // useCase 2: onboardingKo case due to family not found
-            Pair.of(
+            OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
                         expectedFamilyRetrieveKo++;

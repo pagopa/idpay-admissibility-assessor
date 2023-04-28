@@ -6,7 +6,10 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.service.onboarding.*;
+import it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorService;
+import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +17,6 @@ import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.TestPropertySource;
@@ -90,24 +92,34 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
         }
     }
 
+    public record OnboardingUseCase <T extends EvaluationDTO>(
+            Function<Integer, Message<OnboardingDTO>> useCaseMessageBuilder,
+            Consumer<T> useCaseVerifier) {
 
-    protected <T extends EvaluationDTO> List<String> buildValidPayloads(int bias, int validOnboardings,List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
+        public static <T extends EvaluationDTO> OnboardingUseCase<T> withJustPayload(Function<Integer, OnboardingDTO> useCaseBuilder, Consumer<T> useCaseVerifier){
+            return new OnboardingUseCase<>(
+                    bias -> MessageBuilder.withPayload(useCaseBuilder.apply(bias)).build(),
+                    useCaseVerifier);
+        }
+    }
+
+    protected <T extends EvaluationDTO> List<Message<String>> buildValidPayloads(int bias, int validOnboardings,List<OnboardingUseCase<T>> useCases) {
         return IntStream.range(bias, bias + validOnboardings)
                 .mapToObj(i -> this.mockInstance(i,useCases))
-                .map(TestUtils::jsonSerializer)
+                .map(m->MessageBuilder.withPayload(TestUtils.jsonSerializer(m.getPayload())).copyHeaders(m.getHeaders()).build())
                 .toList();
     }
 
-    protected <T extends EvaluationDTO> OnboardingDTO mockInstance(int bias, List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
-        return useCases.get(bias % useCases.size()).getFirst().apply(bias);
+    protected <T extends EvaluationDTO> Message<OnboardingDTO> mockInstance(int bias, List<OnboardingUseCase<T>> useCases) {
+        return useCases.get(bias % useCases.size()).useCaseMessageBuilder().apply(bias);
     }
 
-    protected <T extends EvaluationDTO> void checkResponse(T evaluation, List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
+    protected <T extends EvaluationDTO> void checkResponse(T evaluation, List<OnboardingUseCase<T>> useCases) {
         String userId = evaluation.getUserId();
         int biasRetrieve = Integer.parseInt(userId.substring(userId.indexOf("userId_") + 7));
         int useCaseIndex = biasRetrieve % useCases.size();
         try {
-            useCases.get(useCaseIndex).getSecond().accept(evaluation);
+            useCases.get(useCaseIndex).useCaseVerifier().accept(evaluation);
         } catch (Throwable e) {
             System.err.printf("Failed use case %d on user %s initiativeId %s%n",
                     useCaseIndex,

@@ -12,31 +12,34 @@ import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 
 @Service
 @Slf4j
 public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityEvaluatorMediatorService {
+
+    private final int maxOnboardingRequestRetry;
 
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final OnboardingCheckService onboardingCheckService;
@@ -53,6 +56,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     @SuppressWarnings("squid:S00107") // suppressing too many parameters alert
     public AdmissibilityEvaluatorMediatorServiceImpl(
+            @Value("${app.onboarding-request.max-retry}") int maxOnboardingRequestRetry,
+
             OnboardingContextHolderService onboardingContextHolderService,
             OnboardingCheckService onboardingCheckService,
             OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
@@ -62,6 +67,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             ObjectMapper objectMapper,
             OnboardingNotifierService onboardingNotifierService,
             RankingNotifierService rankingNotifierService) {
+        this.maxOnboardingRequestRetry = maxOnboardingRequestRetry;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboardingCheckService = onboardingCheckService;
         this.onboardingFamilyEvaluationService = onboardingFamilyEvaluationService;
@@ -106,7 +112,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
-                    // TODO we should send it as ONBOARDING_KO (instead or rescheduling)?
                     errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
@@ -150,7 +155,26 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 return checkOnboardingFamily(onboardingRequest, initiativeConfig, message)
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
 
-                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty());
+                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
+
+                        .onErrorResume(e -> {
+                            log.error("[ONBOARDING_REQUEST] something gone wrong while handling onboarding request {} of userId {} into initiativeId {}",
+                                    onboardingRequest.isBudgetReserved() ? "(BUDGET_RESERVED)" : "",
+                                    onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
+
+                            byte[] retryHeaderValue = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY, byte[].class);
+                            if (retryHeaderValue == null || Integer.parseInt(new String(retryHeaderValue, StandardCharsets.UTF_8)) < maxOnboardingRequestRetry) {
+                                log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
+                                return Mono.error(e);
+                            } else {
+                                return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig
+                                        , List.of(new OnboardingRejectionReason(
+                                                OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                                                OnboardingConstants.REJECTION_REASON_GENERIC_ERROR,
+                                                null, null, null
+                                        ))));
+                            }
+                        });
             }
         } else {
             return Mono.empty();
