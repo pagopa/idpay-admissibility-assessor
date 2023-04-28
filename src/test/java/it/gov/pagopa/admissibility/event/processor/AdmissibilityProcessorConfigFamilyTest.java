@@ -12,6 +12,7 @@ import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingRescheduleService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -27,6 +28,7 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -43,13 +45,18 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
     private List<Initiative2BuildDTO> publishedInitiatives;
 
-    private final int validOnboardingFamilies=50;
+    private final int onboardingFamilies =50;
     private final int membersPerFamily=3;
 
     private int expectedOnboardingKoFamilies=0;
+    private int expectedFamilyRetrieveKo=0;
+
+    private int expectedOnboardedFamilies;
 
     @SpyBean
     private OnboardingRescheduleService rescheduleServiceSpy;
+    @SpyBean
+    private FamilyDataRetrieverService familyDataRetrieverServiceSpy;
 
     @Autowired
     private OnboardingFamiliesRepository onboardingFamiliesRepository;
@@ -57,18 +64,20 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private InitiativeCountersRepository initiativeCountersRepository;
 
     @Test
-    void testRankingAdmissibilityOnboarding() throws IOException {
+    void testFamilyAdmissibilityOnboarding() throws IOException {
         long maxWaitingMs = 30000;
 
         publishOnboardingRules();
 
-        List<String> onboardings = new ArrayList<>(buildValidPayloads(0, validOnboardingFamilies, useCases));
+        List<String> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
 
         storeInitiativeCountersInitialState();
 
-        int expectedRequestsPerInitiative = validOnboardingFamilies * membersPerFamily;
+        int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
         int expectedEvaluationCompletedMessages = expectedRequestsPerInitiative + expectedOnboardingKoFamilies * membersPerFamily; // rankingKO are published also here
+
+        expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, null, i));
@@ -105,7 +114,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                 expectedPublishedMessages,
                 membersPerFamily,
                 publishedInitiatives.size(),
-                validOnboardingFamilies,
+                onboardingFamilies,
                 timePublishingOnboardingRequest,
                 rescheduled,
                 timeConsumerResponseEnd,
@@ -131,7 +140,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                     initiative.getBeneficiaryRule().getAutomatedCriteria().get(0).setOrderDirection(Sort.Direction.ASC);
                     initiative.getBeneficiaryRule().setAutomatedCriteria(List.of(initiative.getBeneficiaryRule().getAutomatedCriteria().get(0)));
 
-                    BigDecimal budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(validOnboardingFamilies));
+                    BigDecimal budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingFamilies));
 
                     initiative.getGeneral().setBudget(budget);
 
@@ -183,15 +192,20 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             payload.setUserId(userId.replaceAll("_FAMILYMEMBER\\d+",""));
             checkResponse(payload, useCases);
             payload.setUserId(userId);
-            Assertions.assertNotNull(payload.getFamilyId(), "Evaluation has null familyId: " + payload);
+            if(payload.getUserId().startsWith("NOFAMILY")){
+                Assertions.assertNull(payload.getFamilyId(), "Evaluation has familyId evenif not expected: " + payload);
+            } else {
+                Assertions.assertNotNull(payload.getFamilyId(), "Evaluation has null familyId: " + payload);
+            }
         }
 
-        Set<String> familyIds = evaluations.stream().map(EvaluationDTO::getFamilyId).collect(Collectors.toSet());
-        Assertions.assertEquals(validOnboardingFamilies, familyIds.size(), () -> "Unexpected families count: " + familyIds.stream().sorted().toList());
+        Set<String> familyIds = evaluations.stream().map(EvaluationDTO::getFamilyId).filter(Objects::nonNull).collect(Collectors.toSet());
+        Assertions.assertEquals(expectedOnboardedFamilies, familyIds.size(), () -> "Unexpected families count: " + familyIds.stream().sorted().toList());
 
 
         Map<String, List<T>> families = evaluations.stream()
-                .collect(Collectors.groupingBy(ev->ev.getFamilyId() + "_" + ev.getInitiativeId())); // not simply grouping by familyId because ranking KO publish also here
+                .filter(ev->ev.getFamilyId()!=null)
+                .collect(Collectors.groupingBy(ev->ev.getFamilyId() + "_" + ev.getInitiativeId())); // not simply grouping by familyId because ranking KO publish also in outcome
 
         if (clazz.equals(EvaluationCompletedDTO.class)) {
             families.values()
@@ -249,12 +263,12 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             Assertions.assertNotNull(onboardingFamilies);
 
             Assertions.assertEquals(
-                    validOnboardingFamilies,
+                    expectedOnboardedFamilies,
                     onboardingFamilies.size(),
                     "Initiative %s has an unexpected onboarding families count".formatted(i.getInitiativeId())
             );
 
-            Assertions.assertEquals(expectedOnboardingKoFamilies,
+            Assertions.assertEquals(expectedOnboardingKoFamilies - expectedFamilyRetrieveKo,
                     onboardingFamilies.stream().filter(f->OnboardingFamilyEvaluationStatus.ONBOARDING_KO.equals(f.getStatus())).count());
 
             Assertions.assertTrue(onboardingFamilies.stream().allMatch(f->
@@ -269,7 +283,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             InitiativeCounters counter = initiativeCountersRepository.findById("INITIATIVEID").block();
             Assertions.assertNotNull(counter);
 
-            Assertions.assertEquals(validOnboardingFamilies, counter.getOnboarded());
+            // this counter is initialized in order to compensate KO, thus at the end the budget should be exhausted
+            Assertions.assertEquals(onboardingFamilies, counter.getOnboarded());
             Assertions.assertEquals(0L, counter.getResidualInitiativeBudgetCents());
         }
 
@@ -285,6 +300,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     //region useCases
+    // each useCase's userId should contain "userId_[0-9]+", this string is matched in order to set particular member id
     Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED);
     Set<OnboardingEvaluationStatus> expectedOnboardingKoStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingEvaluationStatus.REJECTED);
     private final List<Pair<Function<Integer, OnboardingDTO>, Consumer<EvaluationDTO>>> useCases = List.of(
@@ -321,6 +337,37 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                                             CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE_AUTH,
                                             CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE_AUTH_LABEL,
                                             null
+                                    )),
+                                    evaluationCompleted.getOnboardingRejectionReasons());
+                        }
+                    }
+            ),
+
+            // useCase 2: onboardingKo case due to family not found
+            Pair.of(
+                    bias -> {
+                        expectedOnboardingKoFamilies++;
+                        expectedFamilyRetrieveKo++;
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                                .userId("NOFAMILYuserId_" + bias)
+                                .build();
+                        Mockito.doReturn(Mono.just(Optional.empty()))
+                                .when(familyDataRetrieverServiceSpy)
+                                .retrieveFamily(Mockito.argThat(r->r.getUserId().startsWith(out.getUserId())), Mockito.any());
+                        return out;
+                    },
+                    evaluation -> {
+                        if(evaluation instanceof RankingRequestDTO rankingRequest){
+                            Assertions.assertTrue(rankingRequest.isOnboardingKo());
+                        } else if(evaluation instanceof EvaluationCompletedDTO evaluationCompleted) {
+                            Assertions.assertTrue(expectedOnboardingKoStatuses.contains(evaluationCompleted.getStatus()));
+                            Assertions.assertEquals(
+                                    List.of(new OnboardingRejectionReason(
+                                            OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO,
+                                            OnboardingConstants.REJECTION_REASON_FAMILY_KO,
+                                            CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH,
+                                            CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH_LABEL,
+                                            "Nucleo familiare non disponibile"
                                     )),
                                     evaluationCompleted.getOnboardingRejectionReasons());
                         }

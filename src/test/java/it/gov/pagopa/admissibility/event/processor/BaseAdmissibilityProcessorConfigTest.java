@@ -103,7 +103,7 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
 
     protected <T extends EvaluationDTO> void checkResponse(T evaluation, List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
         String userId = evaluation.getUserId();
-        int biasRetrieve = Integer.parseInt(userId.substring(7));
+        int biasRetrieve = Integer.parseInt(userId.substring(userId.indexOf("userId_") + 7));
         int useCaseIndex = biasRetrieve % useCases.size();
         try {
             useCases.get(useCaseIndex).getSecond().accept(evaluation);
