@@ -35,7 +35,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -70,7 +71,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -111,7 +113,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock2,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();
@@ -151,7 +154,8 @@ class OnboardingInitiativeCheckTest {
                 localDateTimeMock,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                null
         );
 
         Map<String, Object> onboardingContext = new HashMap<>();

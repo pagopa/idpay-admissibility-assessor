@@ -8,14 +8,14 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingNotifierService;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
@@ -38,7 +38,6 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@Slf4j
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
@@ -152,7 +151,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstance(bias, initiativesNumber),
                     evaluation -> {
                         Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
-                        Assertions.assertEquals("ONBOARDING_OK", evaluation.getStatus());
+                        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
                         assertEvaluationFields(evaluation, true);
                     }
             ),
@@ -273,6 +272,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         Assertions.assertNotNull(evaluation.getAdmissibilityCheckDate());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
 
+        Assertions.assertNull(evaluation.getFamilyId());
+
         if(expectedInitiativeFieldFilled) {
             Assertions.assertNotNull(evaluation.getInitiativeName());
             Assertions.assertNotNull(evaluation.getOrganizationId());
@@ -283,7 +284,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     }
 
     private void checkKO(EvaluationCompletedDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
-        Assertions.assertEquals("ONBOARDING_KO", evaluation.getStatus());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
         Assertions.assertTrue(evaluation.getOnboardingRejectionReasons().contains(expectedRejectionReason),
                 "Expected rejection reason %s and obtained %s".formatted(expectedRejectionReason, evaluation.getOnboardingRejectionReasons()));
@@ -406,7 +407,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
                 .initiativeEndDate(initiativeExceptionWhenOnboardingPublishing.getGeneral().getEndDate())
                 .organizationId(initiativeExceptionWhenOnboardingPublishing.getOrganizationId())
-                .status("ONBOARDING_OK")
+                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
                 .onboardingRejectionReasons(Collections.emptyList())
                 .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
                 .build();
@@ -422,7 +423,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             EvaluationCompletedDTO actual = objectMapper.readValue(errorMessage, EvaluationCompletedDTO.class);
             EvaluationCompletedDTO expected = objectMapper.readValue(expectedPayload, EvaluationCompletedDTO.class);
 
-            TestUtils.checkNotNullFields(actual, "rankingValue");
+            TestUtils.checkNotNullFields(actual, "rankingValue", "familyId");
             Assertions.assertEquals(expected.getUserId(), actual.getUserId());
             Assertions.assertEquals(expected.getInitiativeId(), actual.getInitiativeId());
             Assertions.assertEquals(expected.getInitiativeName(), actual.getInitiativeName());

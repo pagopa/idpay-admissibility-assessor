@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.*;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.AutomatedCriteria2ExtraFilterMapper;
 import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
@@ -18,8 +19,8 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.service.onboarding.RuleEngineService;
-import it.gov.pagopa.admissibility.service.onboarding.RuleEngineServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineServiceImpl;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -133,6 +134,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
                 .isLogoPresent(Boolean.TRUE)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
         expected.setRuleVersion("20230404");
@@ -208,7 +210,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                     .authorityLabel("Agenzia per l'Italia Digitale")
                     .build());
         }
-        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? "ONBOARDING_OK" : "ONBOARDING_KO");
+        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
 
         Assertions.assertEquals(expectedEvaluationResult, evaluationResult);
     }

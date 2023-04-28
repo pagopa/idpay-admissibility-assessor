@@ -13,10 +13,10 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 class ErrorManagerTest extends BaseIntegrationTest {
 
     @SpyBean
-    AdmissibilityController admissibilityController;
+    private AdmissibilityController admissibilityController;
 
     @Autowired
-    WebTestClient webTestClient;
+    private WebTestClient webTestClient;
 
     @Test
     void handleExceptionClientExceptionNoBody() {

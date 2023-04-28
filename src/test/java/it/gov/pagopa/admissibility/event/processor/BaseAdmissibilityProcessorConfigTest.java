@@ -2,12 +2,12 @@ package it.gov.pagopa.admissibility.event.processor;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
-import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.onboarding.*;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
@@ -71,18 +71,15 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
             Mockito.doAnswer(args-> {
                         Flux<Message<String>> messageFlux = args.getArgument(0);
                         messageFlux = messageFlux.map(m -> {
-                                    if(m.getHeaders().get(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME) == null) { //TODO verify commit on reschedule message when PDND integration will be test
-                                        Checkpointer mock = Mockito.mock(Checkpointer.class);
-                                        Mockito.when(mock.success()).thenReturn(Mono.empty());
-                                        checkpoints.add(mock);
-                                        return MessageBuilder.withPayload(m.getPayload())
-                                                .copyHeaders(m.getHeaders())
-                                                .setHeader(AzureHeaders.CHECKPOINTER, mock)
-                                                .build();
-                                    }else {
-                                        return  m;
+                                    Checkpointer mock = Mockito.mock(Checkpointer.class);
+                                    Mockito.when(mock.success()).thenReturn(Mono.empty());
+                                    checkpoints.add(mock);
+                                    return MessageBuilder.withPayload(m.getPayload())
+                                            .copyHeaders(m.getHeaders())
+                                            .setHeader(AzureHeaders.CHECKPOINTER, mock)
+                                            .build();
                                     }
-                                })
+                                )
                                 .name("spy");
                         admissibilityEvaluatorMediatorServiceSpy.execute(messageFlux);
                         return null;
@@ -107,8 +104,17 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
 
     protected <T extends EvaluationDTO> void checkResponse(T evaluation, List<Pair<Function<Integer, OnboardingDTO>, Consumer<T>>> useCases) {
         String userId = evaluation.getUserId();
-        int biasRetrieve = Integer.parseInt(userId.substring(7));
-        useCases.get(biasRetrieve % useCases.size()).getSecond().accept(evaluation);
+        int biasRetrieve = Integer.parseInt(userId.substring(userId.indexOf("userId_") + 7));
+        int useCaseIndex = biasRetrieve % useCases.size();
+        try {
+            useCases.get(useCaseIndex).getSecond().accept(evaluation);
+        } catch (Throwable e) {
+            System.err.printf("Failed use case %d on user %s initiativeId %s%n",
+                    useCaseIndex,
+                    userId,
+                    evaluation.getInitiativeId());
+            throw e;
+        }
     }
 
     protected void checkOffsets(long expectedReadMessages, long exptectedPublishedResults, String outputTopic) {

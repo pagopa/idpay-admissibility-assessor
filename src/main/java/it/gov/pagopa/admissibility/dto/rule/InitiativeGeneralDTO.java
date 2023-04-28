@@ -57,8 +57,12 @@ public class InitiativeGeneralDTO   {
    * Gets or Sets beneficiaryType
    */
   public enum BeneficiaryTypeEnum {
+    /** Individual (Persona Fisica) */
     PF("PF"),
-    PG("PG");
+    /** Legal Person (Persona Giuridica) */
+    PG("PG"),
+    /** Family (Nucleo Familiare) */
+    NF("NF");
 
     private String value;
 

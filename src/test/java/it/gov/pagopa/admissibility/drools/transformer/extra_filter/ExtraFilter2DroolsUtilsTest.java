@@ -21,7 +21,8 @@ class ExtraFilter2DroolsUtilsTest {
             "pdndAccept",
             "selfDeclarationList",
             "tcAcceptTimestamp",
-            "criteriaConsensusTimestamp"
+            "criteriaConsensusTimestamp",
+            "family"
     ));
 
     static final Map<String, Class<?>> expectedFields2Class = Map.ofEntries(
@@ -48,8 +49,9 @@ class ExtraFilter2DroolsUtilsTest {
         Assertions.assertEquals(expectedFields, result.stream().map(ExtraFilterField::getField).collect(Collectors.toSet()));
 
         System.out.println("Testing invalid subclass");
+        Map<Class<?>, List<Class<?>>> classMapping = Collections.singletonMap(BigDecimal.class, Collections.singletonList(OnboardingDTO.class));
         try {
-            ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, Collections.singletonMap(BigDecimal.class, Collections.singletonList(OnboardingDTO.class)), ignoredPaths);
+            ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, classMapping, ignoredPaths);
             Assertions.fail("Subclass check failed");
         } catch (IllegalArgumentException e) {
             //Nothing to do!

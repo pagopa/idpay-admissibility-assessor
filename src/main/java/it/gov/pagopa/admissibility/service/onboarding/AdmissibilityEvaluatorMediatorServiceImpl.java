@@ -5,13 +5,23 @@ import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
+import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
+import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -30,6 +40,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final OnboardingCheckService onboardingCheckService;
+    private final OnboardingFamilyEvaluationService onboardingFamilyEvaluationService;
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
@@ -44,7 +55,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     public AdmissibilityEvaluatorMediatorServiceImpl(
             OnboardingContextHolderService onboardingContextHolderService,
             OnboardingCheckService onboardingCheckService,
-            AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
+            OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
             OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
             ErrorNotifierService errorNotifierService,
@@ -53,6 +64,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             RankingNotifierService rankingNotifierService) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboardingCheckService = onboardingCheckService;
+        this.onboardingFamilyEvaluationService = onboardingFamilyEvaluationService;
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
@@ -70,7 +82,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     public void execute(Flux<Message<String>> messageFlux) {
         messageFlux
                 .flatMap(this::executeAndCommit)
-                .subscribe(evaluationDTO -> log.info("[[ADMISSIBILITY_ONBOARDING_REQUEST]] Processed offsets committed successfully"));
+                .subscribe(evaluationDTO -> log.info("[ADMISSIBILITY_ONBOARDING_REQUEST] Processed offsets committed successfully"));
     }
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
@@ -78,15 +90,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
         return Mono.just(message)
                 .flatMap(this::execute)
-                .doOnNext(evaluationDTO -> {
+                .map(req2ev -> {
+                    OnboardingDTO request = req2ev.getKey();
+                    EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));
                         }
+                        inviteFamilyMembers(request, evaluation);
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
+
+                    return evaluationDTO;
                 })
                 .onErrorResume(e -> {
                     // TODO we should send it as ONBOARDING_KO (instead or rescheduling)?
@@ -105,7 +122,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 });
     }
 
-    private Mono<EvaluationDTO> execute(Message<String> message) {
+    private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
 
         log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
 
@@ -117,6 +134,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .switchIfEmpty(Mono.just(Optional.empty()))
 
                                 .flatMap(initiativeConfig -> execute(message, onboardingRequest, initiativeConfig.orElse(null)))
+                                .map(ev -> Pair.of(onboardingRequest, ev))
                 );
     }
 
@@ -129,7 +147,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 return Mono.just(rejectedRequest);
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message);
+                return checkOnboardingFamily(onboardingRequest, initiativeConfig, message)
+                        .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
+
+                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty());
             }
         } else {
             return Mono.empty();
@@ -148,12 +169,32 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } else return null;
     }
 
+    private Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
+        if(isFamilyInitiative(initiativeConfig)){
+            return onboardingFamilyEvaluationService.checkOnboardingFamily(onboardingRequest, initiativeConfig, message);
+        } else {
+            return Mono.empty();
+        }
+    }
+
+    private static boolean isFamilyInitiative(InitiativeConfig initiativeConfig) {
+        return InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiativeConfig.getBeneficiaryType());
+    }
+
     private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig))
                 .onErrorResume(OnboardingException.class, e -> {
                     log.info(e.getMessage());
                     return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
+                })
+
+                .flatMap(ev -> {
+                    if(isFamilyInitiative(initiativeConfig)){
+                        return onboardingFamilyEvaluationService.updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
+                    } else {
+                        return Mono.just(ev);
+                    }
                 });
     }
 
@@ -178,6 +219,19 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
             errorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
+        }
+    }
+
+    private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
+        if(request.getFamily()!=null && OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
+            request.getFamily().getMemberIds().forEach(userId -> {
+                if(!userId.equals(request.getUserId())){
+                    callOnboardingNotifier(evaluation.toBuilder()
+                            .userId(userId)
+                            .status(OnboardingEvaluationStatus.DEMANDED)
+                            .build());
+                }
+            });
         }
     }
 
