@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.onboarding;
+package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;

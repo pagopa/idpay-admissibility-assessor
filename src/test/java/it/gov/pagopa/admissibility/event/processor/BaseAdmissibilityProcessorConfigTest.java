@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.onboarding.*;
+import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
