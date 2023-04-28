@@ -26,22 +26,21 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
-        String mockedFamilyId = "FAMILYID_" + onboardingRequest.getUserId();
-        if (mockedFamilyId.matches(".*_FAMILYMEMBER\\d+$")) {
-            mockedFamilyId = mockedFamilyId.substring(0, mockedFamilyId.indexOf("_FAMILYMEMBER"));
+        String membersMockedBaseId = onboardingRequest.getUserId();
+        if (membersMockedBaseId.matches(".*_FAMILYMEMBER\\d+$")) {
+            membersMockedBaseId = membersMockedBaseId.substring(0, membersMockedBaseId.indexOf("_FAMILYMEMBER"));
         }
 
         return searchMockCollection(onboardingRequest.getUserId())
                 .map(Optional::of)
                 .switchIfEmpty(
                         Mono.just(Optional.of(Family.builder()
-                                .familyId(mockedFamilyId)
+                                .familyId("FAMILYID_" + membersMockedBaseId)
                                 .memberIds(new HashSet<>(List.of(
                                         onboardingRequest.getUserId(),
-                                        mockedFamilyId,
-                                        mockedFamilyId + "_FAMILYMEMBER1",
-                                        mockedFamilyId + "_FAMILYMEMBER2",
-                                        mockedFamilyId + "_FAMILYMEMBER3"
+                                        membersMockedBaseId + "_FAMILYMEMBER0",
+                                        membersMockedBaseId + "_FAMILYMEMBER1",
+                                        membersMockedBaseId + "_FAMILYMEMBER2"
                                 )))
                                 .build()))
                 );

@@ -16,7 +16,7 @@ import java.util.List;
 @ToString(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 public class EvaluationCompletedDTO extends EvaluationDTO{
     private String initiativeName;
     private String organizationName;

@@ -75,7 +75,10 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
-        int expectedEvaluationCompletedMessages = expectedRequestsPerInitiative + expectedOnboardingKoFamilies * membersPerFamily; // rankingKO are published also here
+        int expectedEvaluationCompletedMessages =
+                expectedRequestsPerInitiative
+                + expectedOnboardingKoFamilies * membersPerFamily // rankingKO are published also here
+                + (onboardingFamilies - expectedOnboardingKoFamilies) * (membersPerFamily - 1); // DEMANDED for each other member when ONBOARDING_OK
 
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
@@ -213,23 +216,20 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                         Map<OnboardingEvaluationStatus, Long> membersByStatusCount = members.stream().map(o -> (EvaluationCompletedDTO) o)
                                 .collect(Collectors.groupingBy(EvaluationCompletedDTO::getStatus, Collectors.counting()));
 
-                        Assertions.assertEquals(2, membersByStatusCount.size(), "Unexpected statuses: " + membersByStatusCount.keySet());
-
-                        OnboardingEvaluationStatus expectedFirstMemberStatus;
-                        OnboardingEvaluationStatus expectedOtherMembersStatus;
+                        Map<OnboardingEvaluationStatus, Long> expected;
 
                         if (membersByStatusCount.containsKey(OnboardingEvaluationStatus.ONBOARDING_OK)) {
-                            expectedFirstMemberStatus = OnboardingEvaluationStatus.ONBOARDING_OK;
-                            expectedOtherMembersStatus = OnboardingEvaluationStatus.JOINED;
+                            expected = Map.of(
+                                    OnboardingEvaluationStatus.ONBOARDING_OK, 1L,
+                                    OnboardingEvaluationStatus.JOINED, (long) (membersPerFamily - 1),
+                                    OnboardingEvaluationStatus.DEMANDED, (long) (membersPerFamily - 1)
+                            );
                         } else {
-                            expectedFirstMemberStatus = OnboardingEvaluationStatus.ONBOARDING_KO;
-                            expectedOtherMembersStatus = OnboardingEvaluationStatus.REJECTED;
+                            expected = Map.of(
+                                    OnboardingEvaluationStatus.ONBOARDING_KO, 1L,
+                                    OnboardingEvaluationStatus.REJECTED, (long) (membersPerFamily - 1)
+                            );
                         }
-
-                        Map<OnboardingEvaluationStatus, Long> expected = Map.of(
-                                expectedFirstMemberStatus, 1L,
-                                expectedOtherMembersStatus, (long) (membersPerFamily - 1)
-                        );
 
                         Assertions.assertEquals(expected, membersByStatusCount);
                     });
@@ -301,7 +301,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
     //region useCases
     // each useCase's userId should contain "userId_[0-9]+", this string is matched in order to set particular member id
-    Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED);
+    Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED, OnboardingEvaluationStatus.DEMANDED);
     Set<OnboardingEvaluationStatus> expectedOnboardingKoStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingEvaluationStatus.REJECTED);
     private final List<Pair<Function<Integer, OnboardingDTO>, Consumer<EvaluationDTO>>> useCases = List.of(
             // useCase 0: onboardingOk

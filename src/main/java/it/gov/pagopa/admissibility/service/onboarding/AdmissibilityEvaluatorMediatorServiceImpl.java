@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
@@ -20,6 +21,7 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierSe
 import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -88,17 +90,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
         return Mono.just(message)
                 .flatMap(this::execute)
-                .doOnNext(evaluationDTO -> {
+                .map(req2ev -> {
+                    OnboardingDTO request = req2ev.getKey();
+                    EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
-
-                        // TODO publish DEMANDED for other members when family and ONBOARDING_OK
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));
                         }
+                        inviteFamilyMembers(request, evaluation);
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
+
+                    return evaluationDTO;
                 })
                 .onErrorResume(e -> {
                     // TODO we should send it as ONBOARDING_KO (instead or rescheduling)?
@@ -117,7 +122,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 });
     }
 
-    private Mono<EvaluationDTO> execute(Message<String> message) {
+    private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
 
         log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
 
@@ -129,6 +134,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .switchIfEmpty(Mono.just(Optional.empty()))
 
                                 .flatMap(initiativeConfig -> execute(message, onboardingRequest, initiativeConfig.orElse(null)))
+                                .map(ev -> Pair.of(onboardingRequest, ev))
                 );
     }
 
@@ -213,6 +219,19 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
             errorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
+        }
+    }
+
+    private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
+        if(request.getFamily()!=null && OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
+            request.getFamily().getMemberIds().forEach(userId -> {
+                if(!userId.equals(request.getUserId())){
+                    callOnboardingNotifier(evaluation.toBuilder()
+                            .userId(userId)
+                            .status(OnboardingEvaluationStatus.DEMANDED)
+                            .build());
+                }
+            });
         }
     }
 
