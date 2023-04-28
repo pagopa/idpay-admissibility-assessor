@@ -34,6 +34,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                 return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
                         .map(c -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
+                            onboardingRequest.setBudgetReserved(true);
 
                             return evaluationCompletedDTO;
                         })

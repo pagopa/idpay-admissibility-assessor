@@ -54,7 +54,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
     @BeforeEach
     void init(){
-        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
+        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(2, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, errorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
     }
 
     @AfterEach

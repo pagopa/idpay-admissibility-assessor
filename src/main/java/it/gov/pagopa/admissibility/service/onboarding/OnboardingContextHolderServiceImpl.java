@@ -152,7 +152,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         long startTime = System.currentTimeMillis();
         return droolsRuleRepository.findById(initiativeId)
                 .switchIfEmpty(Mono.defer(() -> {
-                    log.error("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
+                    log.info("[ONBOARDING_CONTEXT] cannot find initiative having id %s".formatted(initiativeId));
                     return Mono.empty();
                 }))
                 .map(DroolsRule::getInitiativeConfig)

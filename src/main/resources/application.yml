@@ -188,6 +188,7 @@ app:
     # the size of the thread pool to handle @Scheduled tasks
     schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
   onboarding-request:
+    max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
       next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
       delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}

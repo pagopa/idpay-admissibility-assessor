@@ -48,7 +48,8 @@ class Onboarding2EvaluationMapperTest {
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),
-                Family.builder().familyId("FAMILYID").build()
+                Family.builder().familyId("FAMILYID").build(),
+                false
         );
 
         //init initiativeConfig

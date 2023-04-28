@@ -28,6 +28,8 @@ public class OnboardingDTO {
     private BigDecimal isee;
     private Residence residence;
     private BirthDate birthDate;
-
     private Family family;
+
+    // Info filled during processing
+    private boolean budgetReserved;
 }
