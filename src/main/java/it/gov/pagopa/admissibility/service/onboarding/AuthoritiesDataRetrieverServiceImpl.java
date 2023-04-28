@@ -18,11 +18,8 @@ import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -33,7 +30,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 @Service
 @Slf4j
@@ -67,15 +63,6 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.inpsInvocationService = inpsInvocationService;
         this.anprInvocationService = anprInvocationService;
         this.onboardingContextHolderService = onboardingContextHolderService;
-    }
-
-    /** Declared just to let know Spring to connect the producer at startup */
-    @Configuration
-    static class AdmissibilityDelayProducerConfig {
-        @Bean
-        public Supplier<Flux<Message<OnboardingDTO>>> admissibilityDelayProducer() {
-            return Flux::empty;
-        }
     }
 
     @Override

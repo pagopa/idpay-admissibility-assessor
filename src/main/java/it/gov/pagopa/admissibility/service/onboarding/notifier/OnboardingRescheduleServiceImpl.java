@@ -5,12 +5,16 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.time.OffsetDateTime;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -22,6 +26,15 @@ public class OnboardingRescheduleServiceImpl implements OnboardingRescheduleServ
     public OnboardingRescheduleServiceImpl(StreamBridge streamBridge, ErrorNotifierService errorNotifierService) {
         this.streamBridge = streamBridge;
         this.errorNotifierService = errorNotifierService;
+    }
+
+    /** Declared just to let know Spring to connect the producer at startup */
+    @Configuration
+    static class AdmissibilityDelayProducerConfig {
+        @Bean
+        public Supplier<Flux<Message<OnboardingDTO>>> admissibilityDelayProducer() {
+            return Flux::empty;
+        }
     }
 
     @Override

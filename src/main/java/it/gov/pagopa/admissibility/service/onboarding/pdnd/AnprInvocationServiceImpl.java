@@ -7,7 +7,7 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoGeneralitaDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoResidenzaDTO;
 import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
-import it.gov.pagopa.admissibility.rest.anpr.exception.AnprDailyRequestLimitException;
+import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
 import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

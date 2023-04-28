@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.pdnd;
 
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
-import it.gov.pagopa.admissibility.rest.UserFiscalCodeRestClient;
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;

@@ -5,7 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
-import it.gov.pagopa.admissibility.rest.PdndCreateTokenRestClient;
+import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -68,6 +68,7 @@ class CreateTokenServiceImplTest {
         BaseIntegrationTest.wait((expireInSeconds*1000L)+ deltaMillis, TimeUnit.MILLISECONDS);
 
         Cache<String, String> cacheChange = retrieveCache();
+        //noinspection SuspiciousMethodCalls
         Assertions.assertNull(cacheChange.getIfPresent(apiKeysPDND_given));
         Mockito.verify(pdndCreateTokenRestClientMock, Mockito.never()).createToken(apiKeysPDND_given);
     }
@@ -97,6 +98,7 @@ class CreateTokenServiceImplTest {
         Mockito.verify(pdndCreateTokenRestClientMock).createToken(apiKeysPDND_NEW);
 
         Cache<String, String> cacheChange = retrieveCache();
+        //noinspection SuspiciousMethodCalls
         String retrievedTokenInCache = cacheChange.getIfPresent(apiKeysPDND_NEW);
         Assertions.assertNotNull(retrievedTokenInCache);
         Assertions.assertEquals("NEW_ACCESS_TOKEN", retrievedTokenInCache);

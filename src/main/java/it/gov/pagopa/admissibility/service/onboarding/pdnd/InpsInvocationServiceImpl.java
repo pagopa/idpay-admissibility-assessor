@@ -8,7 +8,7 @@ import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazio
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
-import it.gov.pagopa.admissibility.soap.inps.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.connector.soap.inps.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;

@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.config;
 
 import com.mongodb.lang.NonNull;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import lombok.Setter;
 import org.bson.types.Decimal128;
 import org.springframework.boot.autoconfigure.mongo.MongoClientSettingsBuilderCustomizer;

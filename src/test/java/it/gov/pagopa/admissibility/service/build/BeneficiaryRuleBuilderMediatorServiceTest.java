@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.service.build;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;

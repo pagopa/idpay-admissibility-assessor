@@ -1,11 +1,11 @@
 package it.gov.pagopa.admissibility.service;
 
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,13 +78,6 @@ class InitiativeStatusServiceImplTest {
                 .build();
         Mockito.when(droolsRuleRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.just(droolsRuleMock));
 
-        InitiativeCounters initiativeCountersMock = InitiativeCounters.builder()
-                .id("INITIATIVE1")
-                .initiativeBudgetCents(100L)
-                .onboarded(1L)
-                .residualInitiativeBudgetCents(100000L)
-                .reservedInitiativeBudgetCents(1000L)
-                .build();
         Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.empty());
 
         InitiativeStatusService initiativeStatusService = new InitiativeStatusServiceImpl(droolsRuleRepositoryMock, initiativeCountersRepositoryMock);

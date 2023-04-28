@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.pdnd;
 
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
-import it.gov.pagopa.admissibility.rest.UserFiscalCodeRestClient;
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -93,6 +93,7 @@ class UserFiscalCodeServiceImplTest {
     private Map<String, String> retrieveCache() {
         Object cacheBefore = ReflectionUtils.getField(userCacheField, userFiscalCodeService);
         Assertions.assertNotNull(cacheBefore);
+        //noinspection unchecked
         return (Map<String, String>) cacheBefore;
     }
 }
