@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/",
+    "urlPathPattern": "/inps/isee",
     "headers": {
       "SOAPAction": {
         "equalTo": "\"http://inps.it/ConsultazioneISEE/ISvcConsultazione/ConsultazioneIndicatore\""

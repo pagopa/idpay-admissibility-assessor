@@ -10,10 +10,13 @@ import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.process.runtime.Executable;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.soap.inps.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.StreamsHealthIndicator;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.admissibility.utils.TestUtils;
+import lombok.NonNull;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -45,8 +48,8 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.messaging.Message;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.ReflectionUtils;
@@ -86,7 +89,7 @@ import static org.awaitility.Awaitility.await;
 //                "spring.jmx.enabled=true",
 
                 //region common feature disabled
-                "app.beneficiary-rule.cache.refresh-ms-rate:60000",
+                "app.beneficiary-rule.cache.refresh-ms-rate:600000",
                 "logging.level.it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl=WARN",
                 //endregion
 
@@ -125,7 +128,7 @@ import static org.awaitility.Awaitility.await;
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
-@ContextConfiguration(initializers = {BaseIntegrationTest.wireMockInitializer.class})
+@ContextConfiguration(initializers = {BaseIntegrationTest.WireMockInitializer.class})
 public abstract class BaseIntegrationTest {
 
     @Value("${spring.application.name}")
@@ -192,31 +195,43 @@ public abstract class BaseIntegrationTest {
     @PostConstruct
     public void logEmbeddedServerConfig() throws NoSuchFieldException, UnknownHostException {
         String mongoUrl;
-        if(embeddedMongoServer != null) {
+        if (embeddedMongoServer != null) {
             Field mongoEmbeddedServerConfigField = Executable.class.getDeclaredField("config");
             mongoEmbeddedServerConfigField.setAccessible(true);
             MongodConfig mongodConfig = (MongodConfig) ReflectionUtils.getField(mongoEmbeddedServerConfigField, embeddedMongoServer);
             Net mongodNet = Objects.requireNonNull(mongodConfig).net();
 
-            mongoUrl="mongodb://%s:%s".formatted(mongodNet.getServerAddress().getHostAddress(), mongodNet.getPort());
+            mongoUrl = "mongodb://%s:%s".formatted(mongodNet.getServerAddress().getHostAddress(), mongodNet.getPort());
         } else {
-            mongoUrl=mongodbUri.replaceFirst(":[^:]+(?=:[0-9]+)", "");
+            mongoUrl = mongodbUri.replaceFirst(":[^:]+(?=:[0-9]+)", "");
         }
 
+        String wiremockHttpBaseUrl="UNKNOWN";
+        String wiremockHttpsBaseUrl="UNKNOWN";
+        try{
+            wiremockHttpBaseUrl = serverWireMock.getRuntimeInfo().getHttpBaseUrl();
+            wiremockHttpsBaseUrl = serverWireMock.getRuntimeInfo().getHttpsBaseUrl();
+        } catch (Exception e){
+            System.out.println("Cannot read wiremock urls");
+        }
         System.out.printf("""
                         ************************
                         Embedded mongo: %s
                         Embedded kafka: %s
                         Embedded redis: %s
+                        WireMock http: %s
+                        WireMock https: %s
                         ************************
                         """,
                 mongoUrl,
                 "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes),
-                redisUrl);
+                redisUrl,
+                wiremockHttpBaseUrl,
+                wiremockHttpsBaseUrl);
     }
 
     @Test
-    void testHealthIndicator(){
+    void testHealthIndicator() {
         Health health = streamsHealthIndicator.health();
         Assertions.assertEquals(Status.UP, health.getStatus());
     }
@@ -233,7 +248,7 @@ public abstract class BaseIntegrationTest {
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(groupId, "true", kafkaBroker);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         Consumer<String, String> consumer = cf.createConsumer();
-        if(attachToBroker){
+        if (attachToBroker) {
             kafkaBroker.consumeFromAnEmbeddedTopic(consumer, topic);
         }
         return consumer;
@@ -279,7 +294,7 @@ public abstract class BaseIntegrationTest {
 
     protected void publishIntoEmbeddedKafka(String topic, String key, Message<String> message) {
         publishIntoEmbeddedKafka(topic,
-                message.getHeaders().entrySet().stream().map(e->(Header)new RecordHeader(e.getKey(), e.getValue().toString().getBytes(StandardCharsets.UTF_8))).toList()
+                message.getHeaders().entrySet().stream().map(e -> (Header) new RecordHeader(e.getKey(), e.getValue().toString().getBytes(StandardCharsets.UTF_8))).toList()
                 , key, message.getPayload());
     }
 
@@ -291,25 +306,26 @@ public abstract class BaseIntegrationTest {
         }
     }
 
-    private int totaleMessageSentCounter =0;
+    private int totalMessageSentCounter = 0;
+
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, String payload) {
         final RecordHeader retryHeader = new RecordHeader("retry", "1".getBytes(StandardCharsets.UTF_8));
         final RecordHeader applicationNameHeader = new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, applicationName.getBytes(StandardCharsets.UTF_8));
 
         Boolean[] containAppNameHeader = new Boolean[]{false};
-        if(headers!= null){
+        if (headers != null) {
             headers.forEach(h -> {
-                if(h.key().equals(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME)){
-                    containAppNameHeader[0]=true;
+                if (h.key().equals(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME)) {
+                    containAppNameHeader[0] = true;
                 }
             });
         }
 
         final RecordHeader[] additionalHeaders;
-        if(totaleMessageSentCounter++%2 == 0 || containAppNameHeader[0]){
-            additionalHeaders= new RecordHeader[]{retryHeader};
+        if (totalMessageSentCounter++ % 2 == 0 || containAppNameHeader[0]) {
+            additionalHeaders = new RecordHeader[]{retryHeader};
         } else {
-            additionalHeaders= new RecordHeader[]{retryHeader, applicationNameHeader};
+            additionalHeaders = new RecordHeader[]{retryHeader, applicationNameHeader};
         }
 
         if (headers == null) {
@@ -324,28 +340,29 @@ public abstract class BaseIntegrationTest {
         template.send(record);
     }
 
-    protected Map<TopicPartition, OffsetAndMetadata> getCommittedOffsets(String topic, String groupId){
+    protected Map<TopicPartition, OffsetAndMetadata> getCommittedOffsets(String topic, String groupId) {
         try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, groupId, false)) {
-            return consumer.committed(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).collect(Collectors.toSet()));
+            return consumer.committed(consumer.partitionsFor(topic).stream().map(p -> new TopicPartition(topic, p.partition())).collect(Collectors.toSet()));
         }
     }
-    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages){
+
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages) {
         return checkCommittedOffsets(topic, groupId, expectedCommittedMessages, 10, 500);
     }
 
     // Cannot use directly Awaitlity cause the Callable condition is performed on separate thread, which will go into conflict with the consumer Kafka access
-    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages, int maxAttempts, int millisAttemptDelay){
+    protected Map<TopicPartition, OffsetAndMetadata> checkCommittedOffsets(String topic, String groupId, long expectedCommittedMessages, int maxAttempts, int millisAttemptDelay) {
         RuntimeException lastException = null;
-        if(maxAttempts<=0){
-            maxAttempts=1;
+        if (maxAttempts <= 0) {
+            maxAttempts = 1;
         }
 
-        for(;maxAttempts>0; maxAttempts--){
+        for (; maxAttempts > 0; maxAttempts--) {
             try {
                 final Map<TopicPartition, OffsetAndMetadata> commits = getCommittedOffsets(topic, groupId);
                 Assertions.assertEquals(expectedCommittedMessages, commits.values().stream().mapToLong(OffsetAndMetadata::offset).sum());
                 return commits;
-            } catch (Throwable e){
+            } catch (Throwable e) {
                 lastException = new RuntimeException(e);
                 wait(millisAttemptDelay, TimeUnit.MILLISECONDS);
             }
@@ -353,15 +370,15 @@ public abstract class BaseIntegrationTest {
         throw lastException;
     }
 
-    protected Map<TopicPartition, Long> getEndOffsets(String topic){
+    protected Map<TopicPartition, Long> getEndOffsets(String topic) {
         try (Consumer<String, String> consumer = getEmbeddedKafkaConsumer(topic, "idpay-group-test-check", false)) {
-            return consumer.endOffsets(consumer.partitionsFor(topic).stream().map(p-> new TopicPartition(topic, p.partition())).toList());
+            return consumer.endOffsets(consumer.partitionsFor(topic).stream().map(p -> new TopicPartition(topic, p.partition())).toList());
         }
     }
 
-    protected Map<TopicPartition, Long> checkPublishedOffsets(String topic, long expectedPublishedMessages){
+    protected Map<TopicPartition, Long> checkPublishedOffsets(String topic, long expectedPublishedMessages) {
         Map<TopicPartition, Long> endOffsets = getEndOffsets(topic);
-        Assertions.assertEquals(expectedPublishedMessages, endOffsets.values().stream().mapToLong(x->x).sum());
+        Assertions.assertEquals(expectedPublishedMessages, endOffsets.values().stream().mapToLong(x -> x).sum());
         return endOffsets;
     }
 
@@ -377,10 +394,10 @@ public abstract class BaseIntegrationTest {
     }
 
     public static void wait(long timeout, TimeUnit timeoutUnit) {
-        try{
-            Awaitility.await().timeout(timeout,timeoutUnit).until(()->false);
-        } catch (ConditionTimeoutException ex){
-            // Do Nothing
+        try {
+            Awaitility.await().timeout(timeout, timeoutUnit).until(() -> false);
+        } catch (ConditionTimeoutException ex) {
+// Do Nothing
         }
     }
 
@@ -399,7 +416,7 @@ public abstract class BaseIntegrationTest {
     }
 
     protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, boolean expectRetryHeader, boolean expectedAppNameHeader, boolean runtimeFieldSetter) {
-        if(expectedAppNameHeader) {
+        if (expectedAppNameHeader) {
             Assertions.assertEquals(applicationName, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME));
             Assertions.assertEquals(group, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_GROUP));
         }
@@ -408,61 +425,76 @@ public abstract class BaseIntegrationTest {
         Assertions.assertEquals(srcTopic, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_SRC_TOPIC));
         Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
         Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
-        if(expectRetryHeader) {
+        if (expectRetryHeader) {
             Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "retry")); // to test if headers are correctly propagated
         }
-        if(!runtimeFieldSetter) {
+        if (!runtimeFieldSetter) {
             Assertions.assertEquals(expectedPayload, errorMessage.value());
-        }else {
+        } else {
             checkPayload(errorMessage.value(), expectedPayload);
         }
     }
-    protected void checkPayload(String errorMessage, String expectedPayload){}
 
-    //Setting WireMock
+    protected void checkPayload(String errorMessage, String expectedPayload) {
+    }
+
+    //region desc=Setting WireMock
     @RegisterExtension
     static WireMockExtension serverWireMock = initServerWiremock();
 
-    public static WireMockExtension initServerWiremock(){
+    public static WireMockExtension initServerWiremock() {
         return serverWireMock = WireMockExtension.newInstance()
                 .options(RestTestUtils.getWireMockConfiguration())
                 .build();
     }
-    public static class wireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+    public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
-        public void initialize(ConfigurableApplicationContext applicationContext) {
-            //pdv settings
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.pdv.base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
-            );
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.pdv.headers.x-api-key=%s", "x_api_key")
-            );
-            //pdnd settings
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.pdnd.access.token-base-url=%s", serverWireMock.getRuntimeInfo().getHttpBaseUrl())
-            );
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.pdnd.properties.clientId=%s", "PDND_CLIENT_ID_TEST")
-            );
-            //C020 settings
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.anpr.c020-residenceAssessment.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
-            );
-            //INPS settings
-            TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("app.inps.iseeConsultation.base-url=%s", serverWireMock.getRuntimeInfo().getHttpsBaseUrl())
-            );
+        public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
+// setting wiremock HTTP baseUrl
+            Stream.of(
+                    Pair.of("app.pdv.base-url","pdv"),
+                    Pair.of("app.pdnd.access.token-base-url","pdnd")
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
+
+// setting wiremock HTTPS baseUrl
+            Stream.of(
+                    Pair.of("app.anpr.c020-residenceAssessment.base-url","anpr/residence"),
+                            Pair.of("app.inps.iseeConsultation.base-url","inps/isee")
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
 
             System.out.printf("""
-                        ************************
-                        Server wiremock:
-                        http base url: %s
-                        https base url: %s
-                        ************************
-                        """,
+                            ************************
+                            Server wiremock:
+                            http base url: %s
+                            https base url: %s
+                            ************************
+                            """,
                     serverWireMock.getRuntimeInfo().getHttpBaseUrl(),
                     serverWireMock.getRuntimeInfo().getHttpsBaseUrl());
         }
+
+        private static java.util.function.Consumer<Pair<String, String>> setWireMockBaseMockedServicePath(ConfigurableApplicationContext applicationContext, String serverWireMock) {
+            return key2basePath -> TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("%s=%s/%s", key2basePath.getFirst(), serverWireMock, key2basePath.getSecond())
+            );
+        }
     }
+
+    @Autowired
+    private IseeConsultationSoapClient iseeConsultationSoapClient;
+
+    /**
+     * Due to a bug into concurrency handling of com.github.tomakehurst.wiremock.common.xml.Xml.read,
+     * current com.github.tomakehurst.wiremock.matching.EqualToXmlPattern implementation require to pre-load stubs using such configuration
+    */
+    @PostConstruct
+    void initWiremockEqualToXmlPattern(){
+        try{
+            iseeConsultationSoapClient.getIsee("CF_OK", IseeTypologyEnum.ORDINARIO).block();
+        } catch (Exception e){
+            //Do Nothing
+        }
+    }
+//endregion
 }

@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
+import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
+import it.gov.pagopa.admissibility.connector.rest.anpr.residence.ResidenceAssessmentRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
@@ -7,8 +9,6 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoGeneralitaDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoResidenzaDTO;
 import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
-import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
-import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -19,19 +19,19 @@ import java.util.Optional;
 
 @Service
 @Slf4j
-public class AnprInvocationServiceImpl implements AnprInvocationService {
+public class ResidenceDataRetrieverServiceImpl implements ResidenceDataRetrieverService {
 
-    private final ResidenceAssessmentService residenceAssessmentService;
+    private final ResidenceAssessmentRestClient residenceAssessmentRestClient;
     private final TipoResidenzaDTO2ResidenceMapper residenceMapper;
 
-    public AnprInvocationServiceImpl(ResidenceAssessmentService residenceAssessmentService, TipoResidenzaDTO2ResidenceMapper residenceMapper) {
-        this.residenceAssessmentService = residenceAssessmentService;
+    public ResidenceDataRetrieverServiceImpl(ResidenceAssessmentRestClient residenceAssessmentRestClient, TipoResidenzaDTO2ResidenceMapper residenceMapper) {
+        this.residenceAssessmentRestClient = residenceAssessmentRestClient;
         this.residenceMapper = residenceMapper;
     }
 
     @Override
     public Mono<Optional<RispostaE002OKDTO>> invoke(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload) {
-        return residenceAssessmentService.getResidenceAssessment(accessToken, fiscalCode, agidJwtTokenPayload).map(Optional::of)
+        return residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode, agidJwtTokenPayload).map(Optional::of)
                 .onErrorResume(AnprDailyRequestLimitException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] Daily limit occurred when calling ANPR service", e);
                     // TODO Short circuit all calls on that date

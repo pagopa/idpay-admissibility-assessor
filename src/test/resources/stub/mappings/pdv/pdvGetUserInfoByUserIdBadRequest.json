@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/tokens/(USERID_BADREQUEST_[0-9]+)/pii"
+    "urlPathPattern": "/pdv/tokens/(USERID_BADREQUEST_[0-9]+)/pii"
   },
   "response": {
     "status": "400",

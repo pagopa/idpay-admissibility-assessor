@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
-public interface InpsInvocationService {
+public interface IseeDataRetrieverService {
 
     Mono<Optional<ConsultazioneIndicatoreResponseType>> invoke(String fiscalCode, IseeTypologyEnum iseeType);
 

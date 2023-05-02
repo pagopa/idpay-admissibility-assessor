@@ -16,13 +16,13 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import javax.xml.bind.JAXBException;
+import jakarta.xml.bind.JAXBException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
-class InpsInvocationServiceImplTest {
+class IseeDataRetrieverServiceImplTest {
 
     private static final String FISCAL_CODE = "fiscalCode";
     public static final IseeTypologyEnum ISEE_TYPOLOGY = IseeTypologyEnum.UNIVERSITARIO;
@@ -32,14 +32,14 @@ class InpsInvocationServiceImplTest {
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
 
-    private InpsInvocationService inpsInvocationService;
+    private IseeDataRetrieverService iseeDataRetrieverService;
 
     private ConsultazioneIndicatoreResponseType inpsResponse;
     private OnboardingDTO onboardingRequest;
 
     @BeforeEach
     void setup() throws JAXBException {
-        inpsInvocationService = new InpsInvocationServiceImpl(criteriaCodeServiceMock, iseeConsultationSoapClientMock);
+        iseeDataRetrieverService = new IseeDataRetrieverServiceImpl(criteriaCodeServiceMock, iseeConsultationSoapClientMock);
 
         Mockito.lenient().when(criteriaCodeServiceMock.getCriteriaCodeConfig(Mockito.anyString())).thenReturn(new CriteriaCodeConfig(
                 "ISEE",
@@ -67,7 +67,7 @@ class InpsInvocationServiceImplTest {
         Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(inpsResponse));
 
         // When
-        Optional<ConsultazioneIndicatoreResponseType> result = inpsInvocationService.invoke(FISCAL_CODE, ISEE_TYPOLOGY).block();
+        Optional<ConsultazioneIndicatoreResponseType> result = iseeDataRetrieverService.invoke(FISCAL_CODE, ISEE_TYPOLOGY).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -83,7 +83,7 @@ class InpsInvocationServiceImplTest {
         Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.empty());
 
         // When
-        Optional<ConsultazioneIndicatoreResponseType> result = inpsInvocationService.invoke(FISCAL_CODE, ISEE_TYPOLOGY).block();
+        Optional<ConsultazioneIndicatoreResponseType> result = iseeDataRetrieverService.invoke(FISCAL_CODE, ISEE_TYPOLOGY).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -93,7 +93,7 @@ class InpsInvocationServiceImplTest {
     @Test
     void testExtract() {
         // When
-        inpsInvocationService.extract(inpsResponse, true, onboardingRequest);
+        iseeDataRetrieverService.extract(inpsResponse, true, onboardingRequest);
 
         // Then
         Assertions.assertEquals(BigDecimal.valueOf(10000), onboardingRequest.getIsee());
@@ -102,7 +102,7 @@ class InpsInvocationServiceImplTest {
     @Test
     void testExtractWhenResponseNull() {
         // When
-        inpsInvocationService.extract(null, true, onboardingRequest);
+        iseeDataRetrieverService.extract(null, true, onboardingRequest);
 
         // Then
         Assertions.assertNull(onboardingRequest.getIsee());

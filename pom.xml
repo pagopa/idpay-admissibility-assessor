@@ -66,6 +66,33 @@
 			<version>4.3.0</version>
 		</dependency>
 
+		<!--JAX-WS-->
+		<dependency>
+			<groupId>jakarta.activation</groupId>
+			<artifactId>jakarta.activation-api</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.soap</groupId>
+			<artifactId>jakarta.xml.soap-api</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.ws</groupId>
+			<artifactId>jaxws-rt</artifactId>
+			<version>4.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.ws</groupId>
+			<artifactId>jakarta.xml.ws-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
 		<!--3rd party library-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -84,7 +111,7 @@
 		<dependency>
 			<groupId>org.codehaus.janino</groupId>
 			<artifactId>janino</artifactId>
-			<version>3.1.8</version>
+			<version>3.1.9</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -94,17 +121,12 @@
 		<dependency>
 			<groupId>org.openapitools</groupId>
 			<artifactId>jackson-databind-nullable</artifactId>
-			<version>0.2.1</version>
+			<version>0.2.6</version>
 		</dependency>
 		<dependency>
 			<groupId>com.auth0</groupId>
 			<artifactId>java-jwt</artifactId>
-			<version>4.2.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.xml.ws</groupId>
-			<artifactId>jaxws-rt</artifactId>
-			<version>2.3.3</version>
+			<version>4.3.0</version>
 		</dependency>
 
 		<!--TEST-->
@@ -134,6 +156,7 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-contract-wiremock</artifactId>
 			<scope>test</scope>
+			<version>3.1.7</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
@@ -244,7 +267,7 @@
 			<plugin>
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
-				<version>6.0.0</version>
+				<version>6.4.0</version>
 				<executions>
 					<execution>
 						<id>idpay-admissibility-assessor-pdnd-client</id>
@@ -271,6 +294,7 @@
 								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.config
 								</configPackage>
 								<dateLibrary>java17</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
 							</configOptions>
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
@@ -300,6 +324,7 @@
 								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.config
 								</configPackage>
 								<dateLibrary>java17</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
 							</configOptions>
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
@@ -307,9 +332,9 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>com.sun.xml.ws</groupId>
 				<artifactId>jaxws-maven-plugin</artifactId>
-				<version>2.6</version>
+				<version>3.0.0</version>
 				<executions>
 					<execution>
 						<goals>

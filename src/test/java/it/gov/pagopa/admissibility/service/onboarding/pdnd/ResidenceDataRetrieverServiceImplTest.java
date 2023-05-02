@@ -1,13 +1,13 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
+import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
+import it.gov.pagopa.admissibility.connector.rest.anpr.residence.ResidenceAssessmentRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
-import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
-import it.gov.pagopa.admissibility.service.pdnd.residence.ResidenceAssessmentService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,12 +22,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
-class AnprInvocationServiceImplTest {
+class ResidenceDataRetrieverServiceImplTest {
     private static final String ACCESS_TOKEN = "ACCESS_TOKEN";
     private static final String FISCAL_CODE = "fiscalCode";
 
     @Mock
-    private ResidenceAssessmentService residenceAssessmentServiceMock;
+    private ResidenceAssessmentRestClient residenceAssessmentRestClientMock;
 
     private final TipoResidenzaDTO2ResidenceMapper residenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
@@ -35,11 +35,11 @@ class AnprInvocationServiceImplTest {
     private OnboardingDTO onboardingRequest;
     private AgidJwtTokenPayload agidJwtTokenPayload;
 
-    private AnprInvocationService anprInvocationService;
+    private ResidenceDataRetrieverService residenceDataRetrieverService;
 
     @BeforeEach
     void setup() {
-        anprInvocationService = new AnprInvocationServiceImpl(residenceAssessmentServiceMock, residenceMapper);
+        residenceDataRetrieverService = new ResidenceDataRetrieverServiceImpl(residenceAssessmentRestClientMock, residenceMapper);
 
         anprAnswer = PdndInvocationsTestUtils.buildAnprResponse();
 
@@ -62,10 +62,10 @@ class AnprInvocationServiceImplTest {
     @Test
     void testInvokeOK() {
         // Given
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(residenceAssessmentRestClientMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.just(anprAnswer));
 
         // When
-        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
+        Optional<RispostaE002OKDTO> result = residenceDataRetrieverService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -76,10 +76,10 @@ class AnprInvocationServiceImplTest {
     @Test
     void testInvokeDailyLimitException() {
         // Given
-        Mockito.when(residenceAssessmentServiceMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
+        Mockito.when(residenceAssessmentRestClientMock.getResidenceAssessment(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload)).thenReturn(Mono.error(AnprDailyRequestLimitException::new));
 
         // When
-        Optional<RispostaE002OKDTO> result = anprInvocationService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
+        Optional<RispostaE002OKDTO> result = residenceDataRetrieverService.invoke(ACCESS_TOKEN, FISCAL_CODE,agidJwtTokenPayload).block();
 
         // Then
         Assertions.assertEquals(Optional.empty(), result);
@@ -92,7 +92,7 @@ class AnprInvocationServiceImplTest {
         BirthDate expectedBirthDate = BirthDate.builder().year("2001").age(LocalDate.now().getYear() - 2001).build();
 
         // When
-        anprInvocationService.extract(anprAnswer, true, true, onboardingRequest);
+        residenceDataRetrieverService.extract(anprAnswer, true, true, onboardingRequest);
 
         // Then
         Assertions.assertEquals(expectedResidence, onboardingRequest.getResidence());
@@ -102,7 +102,7 @@ class AnprInvocationServiceImplTest {
     @Test
     void testExtractWhenResponseNull() {
         // When
-        anprInvocationService.extract(null, true, true, onboardingRequest);
+        residenceDataRetrieverService.extract(null, true, true, onboardingRequest);
 
         // Then
         Assertions.assertNull(onboardingRequest.getResidence());

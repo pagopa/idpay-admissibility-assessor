@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/tokens/(userId_[0-9]+)/pii",
+    "urlPathPattern": "/pdv/tokens/(userId_[0-9]+)/pii",
     "headers": {
       "x-api-key": {
         "matches": "x_api_key([0-9]?)+"

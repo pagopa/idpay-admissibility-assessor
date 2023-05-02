@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.pdnd;
+package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;

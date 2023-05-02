@@ -1,11 +1,11 @@
-package it.gov.pagopa.admissibility.service.pdnd;
+package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
-import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,12 +20,12 @@ import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 @ExtendWith(MockitoExtension.class)
-class CreateTokenServiceImplTest {
+class PdndAccessTokenRetrieverServiceImplTest {
 
     @Mock
     private PdndCreateTokenRestClient pdndCreateTokenRestClientMock;
 
-    private CreateTokenService createTokenService;
+    private PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService;
 
     private Field accessTokenCacheField;
 
@@ -33,7 +33,7 @@ class CreateTokenServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        createTokenService = new CreateTokenServiceImpl(pdndCreateTokenRestClientMock, expireInSeconds);
+        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndCreateTokenRestClientMock, expireInSeconds);
 
         ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId("API_KEY_CLIENT_ID")
@@ -43,10 +43,10 @@ class CreateTokenServiceImplTest {
         Cache<ApiKeysPDND,String> cacheTest = CacheBuilder.newBuilder().expireAfterAccess(expireInSeconds, TimeUnit.SECONDS).build();
         cacheTest.put(apiKeysPDND,"accessToken_1");
 
-        accessTokenCacheField = ReflectionUtils.findField(CreateTokenServiceImpl.class, "accessTokenCache");
+        accessTokenCacheField = ReflectionUtils.findField(PdndAccessTokenRetrieverServiceImpl.class, "accessTokenCache");
         Assertions.assertNotNull(accessTokenCacheField);
         ReflectionUtils.makeAccessible(accessTokenCacheField);
-        ReflectionUtils.setField(accessTokenCacheField, createTokenService, cacheTest);
+        ReflectionUtils.setField(accessTokenCacheField, pdndAccessTokenRetrieverService, cacheTest);
     }
 
     @Test
@@ -58,7 +58,7 @@ class CreateTokenServiceImplTest {
                 .build();
 
         // When
-        String result = createTokenService.getToken(apiKeysPDND_given).block();
+        String result = pdndAccessTokenRetrieverService.getToken(apiKeysPDND_given).block();
 
         //Then
         Assertions.assertNotNull(result);
@@ -88,7 +88,7 @@ class CreateTokenServiceImplTest {
                 .thenReturn(Mono.just(clientCredentialsResponseDTOMock));
 
         // When
-        String result = createTokenService.getToken(apiKeysPDND_NEW).block();
+        String result = pdndAccessTokenRetrieverService.getToken(apiKeysPDND_NEW).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -107,7 +107,7 @@ class CreateTokenServiceImplTest {
     @Test
     void getTokenPresentWithoutCache() {
         // Given
-        createTokenService = new CreateTokenServiceImpl(pdndCreateTokenRestClientMock, 0);
+        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndCreateTokenRestClientMock, 0);
         ApiKeysPDND apiKeysPDND1 = ApiKeysPDND.builder()
                 .apiKeyClientId("API_KEY_CLIENT_ID_1")
                 .apiKeyClientAssertion("API_KEY_CLIENT_ASSERTION_1")
@@ -120,13 +120,13 @@ class CreateTokenServiceImplTest {
                 .thenReturn(Mono.just(clientCredentialsResponseDTOMock));
 
         // When
-        String result = createTokenService.getToken(apiKeysPDND1).block();
+        String result = pdndAccessTokenRetrieverService.getToken(apiKeysPDND1).block();
 
         //Then
-        Field accessTokenCacheNullField = ReflectionUtils.findField(CreateTokenServiceImpl.class, "accessTokenCache");
+        Field accessTokenCacheNullField = ReflectionUtils.findField(PdndAccessTokenRetrieverServiceImpl.class, "accessTokenCache");
         Assertions.assertNotNull(accessTokenCacheNullField);
         ReflectionUtils.makeAccessible(accessTokenCacheNullField);
-        Object cacheInspect = ReflectionUtils.getField(accessTokenCacheNullField, createTokenService);
+        Object cacheInspect = ReflectionUtils.getField(accessTokenCacheNullField, pdndAccessTokenRetrieverService);
         Assertions.assertNull(cacheInspect);
 
         Assertions.assertNotNull(result);
@@ -136,7 +136,7 @@ class CreateTokenServiceImplTest {
     }
 
     private Cache<String,String> retrieveCache() {
-        Object cacheBefore = ReflectionUtils.getField(accessTokenCacheField, createTokenService);
+        Object cacheBefore = ReflectionUtils.getField(accessTokenCacheField, pdndAccessTokenRetrieverService);
         Assertions.assertNotNull(cacheBefore);
         return (Cache<String,String>) cacheBefore;
     }

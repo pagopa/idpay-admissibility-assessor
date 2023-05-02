@@ -8,11 +8,11 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.AnprInvocationService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsInvocationService;
-import it.gov.pagopa.admissibility.service.pdnd.CreateTokenService;
-import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.AllArgsConstructor;
@@ -38,10 +38,10 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
 
-    private final CreateTokenService createTokenService;
+    private final PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService;
     private final UserFiscalCodeService userFiscalCodeService;
-    private final InpsInvocationService inpsInvocationService;
-    private final AnprInvocationService anprInvocationService;
+    private final IseeDataRetrieverService iseeDataRetrieverService;
+    private final ResidenceDataRetrieverService residenceDataRetrieverService;
     private final OnboardingRescheduleService onboardingRescheduleService;
 
 
@@ -50,18 +50,18 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
 
                                                OnboardingRescheduleService onboardingRescheduleService,
-                                               CreateTokenService createTokenService,
+                                               PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService,
                                                UserFiscalCodeService userFiscalCodeService,
-                                               InpsInvocationService inpsInvocationService,
-                                               AnprInvocationService anprInvocationService,
+                                               IseeDataRetrieverService iseeDataRetrieverService,
+                                               ResidenceDataRetrieverService residenceDataRetrieverService,
                                                OnboardingContextHolderService onboardingContextHolderService) {
         this.onboardingRescheduleService = onboardingRescheduleService;
         this.delayMinutes = delayMinutes;
         this.nextDay = nextDay;
-        this.createTokenService = createTokenService;
+        this.pdndAccessTokenRetrieverService = pdndAccessTokenRetrieverService;
         this.userFiscalCodeService = userFiscalCodeService;
-        this.inpsInvocationService = inpsInvocationService;
-        this.anprInvocationService = anprInvocationService;
+        this.iseeDataRetrieverService = iseeDataRetrieverService;
+        this.residenceDataRetrieverService = residenceDataRetrieverService;
         this.onboardingContextHolderService = onboardingContextHolderService;
     }
 
@@ -89,7 +89,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
             ApiKeysPDND pdndApiKeys = onboardingContextHolderService.getPDNDapiKeys(initiativeConfig);
-            return  createTokenService.getToken(pdndApiKeys)
+            return  pdndAccessTokenRetrieverService.getToken(pdndApiKeys)
                     .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
                     .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message, pdndApiKeys.getAgidJwtTokenPayload()));
         }
@@ -98,12 +98,12 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<OnboardingDTO> invokePdndServices(String accessToken, OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, AgidJwtTokenPayload agidJwtTokenPayload) {
-        Mono<Optional<ConsultazioneIndicatoreResponseType>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
-                ? inpsInvocationService.invoke(fiscalCode, pdndServicesInvocation.iseeTypes.get(0)) // TODO invoke all until obtained a result
+        Mono<Optional<ConsultazioneIndicatoreResponseType>> inpsInvocation = pdndServicesInvocation.requireInpsIseeInvocation()
+                ? iseeDataRetrieverService.invoke(fiscalCode, pdndServicesInvocation.iseeTypes.get(0)) // TODO invoke all until obtained a result
                 : Mono.just(Optional.empty());
 
-        Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
-                ? anprInvocationService.invoke(accessToken, fiscalCode, agidJwtTokenPayload)
+        Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprResidenceInvocation()
+                ? residenceDataRetrieverService.invoke(accessToken, fiscalCode, agidJwtTokenPayload)
                 : Mono.just(Optional.empty());
 
         return inpsInvocation
@@ -116,9 +116,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                             t.getT1().orElse(null),
                             t.getT2().orElse(null));
 
-                    if ((!pdndServicesInvocation.requireInpsInvocation() || t.getT1().isPresent())
+                    if ((!pdndServicesInvocation.requireInpsIseeInvocation() || t.getT1().isPresent())
                             &&
-                            (!pdndServicesInvocation.requireAnprInvocation() || t.getT2().isPresent())) {
+                            (!pdndServicesInvocation.requireAnprResidenceInvocation() || t.getT2().isPresent())) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
@@ -129,10 +129,10 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, ConsultazioneIndicatoreResponseType inpsResponse, RispostaE002OKDTO anprResponse) {
         // INPS
-        inpsInvocationService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest);
+        iseeDataRetrieverService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest);
 
         // ANPR
-        anprInvocationService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest);
+        residenceDataRetrieverService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest);
     }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {
@@ -163,11 +163,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             return getIsee || getResidence || getBirthDate;
         }
 
-        boolean requireInpsInvocation() {
+        boolean requireInpsIseeInvocation() {
             return getIsee;
         }
 
-        boolean requireAnprInvocation() {
+        boolean requireAnprResidenceInvocation() {
             return getResidence || getBirthDate;
         }
     }

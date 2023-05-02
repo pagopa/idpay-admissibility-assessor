@@ -35,8 +35,8 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                 .flatMap(response -> {
                     ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
                     if (result.getEsito() != EsitoEnum.OK) {
-                        //TODO Define what to do when result is different from ok
-                        return Mono.empty();
+                        log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a not OK result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
+                        return Mono.empty(); // Returning empty in order to retry later
                     } else {
                         return Mono.just(result);
                     }

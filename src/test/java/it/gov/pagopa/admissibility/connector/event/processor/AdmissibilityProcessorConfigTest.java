@@ -2,20 +2,21 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
+import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
-import it.gov.pagopa.admissibility.service.pdnd.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -40,11 +41,10 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -55,16 +55,23 @@ import java.util.stream.Stream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=OFF",
 })
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
+
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
     public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
     public static final String RESIDENCE_INITIATIVE_ID = "RESIDENCE_INITIATIVE_ID";
     public static final String BIRTHDATE_INITIATIVE_ID = "BIRTHDATE_INITIATIVE_ID";
     public static final String ISEE_INITIATIVE_ID = "ISEE_INITIATIVE_ID";
 
+    public static final String PDND_CLIENT_ID_RESIDENCE = "RESIDENCEINITIATIVECLIENTID";
+    public static final String PDND_CLIENT_ID_ISEE = "ISEEINITIATIVECLIENTID";
+    public static final String PDND_CLIENT_ID_BIRTHDATE = "BIRTHDATEINITIATIVECLIENTID";
+
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
     @SpyBean
     private UserFiscalCodeService userFiscalCodeServiceSpy;
+    @SpyBean
+    private PdndCreateTokenRestClient pdndCreateTokenRestClientSpy;
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
@@ -102,8 +109,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             checkResponse(evaluation, useCases);
         }
 
-        // TODO verify PDND number of invocations
-
+        checkPdndAccessTokenInvocations();
         checkErrorsPublished(notValidOnboarding, maxWaitingMs, errorUseCases);
 
         System.out.printf("""
@@ -123,6 +129,24 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         );
 
         checkOffsets(onboardings.size(), validOnboardings, topicAdmissibilityProcessorOutcome);
+    }
+
+    private void checkPdndAccessTokenInvocations() {
+        Map<String, Long> pdndClientIdsInvocations = Mockito.mockingDetails(pdndCreateTokenRestClientSpy).getInvocations().stream()
+                .map(i -> i.getArgument(0, ApiKeysPDND.class))
+                .collect(Collectors.groupingBy(ApiKeysPDND::getApiKeyClientId, Collectors.counting()));
+
+        Assertions.assertEquals(Set.of(
+                        PDND_CLIENT_ID_ISEE,
+                        PDND_CLIENT_ID_RESIDENCE,
+                        PDND_CLIENT_ID_BIRTHDATE
+                ),
+                pdndClientIdsInvocations.keySet());
+
+        pdndClientIdsInvocations.forEach((clientId, invocations) ->
+                Assertions.assertTrue(
+                        invocations >= 1 && invocations < 4,
+                        "Unexpected number of ClientId %s invocations".formatted(clientId)));
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
@@ -160,6 +184,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .iseeTypes(List.of(IseeTypologyEnum.ORDINARIO))
                                                                 .build()
                                                 ))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_ISEE))
+                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
+                                                        Initiative2BuildDTOFaker.getClientAssertion(
+                                                                "ISEEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
+                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("ISEEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
+                                                                "ISEEINITIATIVECLIENTASSERTIONLASTELEMENT"
+                                                        )
+                                                ))
                                                 .build())
                                         .build(),
 
@@ -176,7 +208,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .value("Rome")
                                                                 .build()
                                                 ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("RESIDENCEINITIATIVECLIENTID"))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_RESIDENCE))
                                                 .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
                                                         Initiative2BuildDTOFaker.getClientAssertion(
                                                                 "RESIDENCEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
@@ -200,7 +232,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .value("10")
                                                                 .build()
                                                 ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("BIRTHDATEINITIATIVECLIENTID"))
+                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_BIRTHDATE))
                                                 .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
                                                         Initiative2BuildDTOFaker.getClientAssertion(
                                                                 "BIRTHDATEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
@@ -348,13 +380,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
             // TODO test error when invoking PDND
 
-            // useCase 6: AUTOMATED_CRITERIA fail due to ISEE TODO to fix configuring wiremock stubs
+            // useCase 6: AUTOMATED_CRITERIA fail due to ISEE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(ISEE_INITIATIVE_ID)
-
-                            // TODO remove cached value in order to call the service
-                            .isee(BigDecimal.TEN)
 
                             .build(),
                     evaluation -> checkKO(evaluation,
@@ -367,15 +396,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
             ),
 
+            // TODO ISEE test when multiple Isee typologies
+
             // TODO test daily limit reached when invoking INPS
 
-            // useCase 7: AUTOMATED_CRITERIA fail due to RESIDENCE TODO to fix configuring wiremock stubs
+            // useCase 7: AUTOMATED_CRITERIA fail due to RESIDENCE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(RESIDENCE_INITIATIVE_ID)
-
-                            // TODO remove cached value in order to call the service
-                            .residence(new Residence())
 
                             .build(),
                     evaluation -> checkKO(evaluation,
@@ -388,13 +416,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
             ),
 
-            // useCase 8: AUTOMATED_CRITERIA fail due to BIRTHDATE TODO to fix configuring wiremock stubs
+            // useCase 8: AUTOMATED_CRITERIA fail due to BIRTHDATE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .initiativeId(BIRTHDATE_INITIATIVE_ID)
-
-                            // TODO remove cached value in order to call the service
-                            .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990))
 
                             .build(),
                     evaluation -> checkKO(evaluation,
@@ -542,7 +567,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
                 }
         ));
 
@@ -558,7 +583,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
                 }
         ));
 

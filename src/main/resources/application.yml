@@ -223,7 +223,7 @@ app:
   pdv:
     base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
     headers:
-      x-api-key: ${PDV_DECRYPT_API_KEY:}
+      x-api-key: ${PDV_DECRYPT_API_KEY:x_api_key}
     retry:
       delay-millis: ${PDV_RETRY_DELAY_MILLIS:2000}
       max-attempts: ${PDV_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
@@ -234,7 +234,7 @@ app:
     write.handler.timeout: ${WRITE_TIMEOUT_HANDLER:60000}
   pdnd:
     access.token-base-url: ${PDND_ACCESS_TOKEN_BASE_URL:https://uat.gateway.test.pdnd-interop.pagopa.it/authorization-server}
-    time-expire-token: ${PDND_TIME_EXPIRE_TOKEN_SECONDS:0}
+    time-expire-token: ${PDND_TIME_EXPIRE_TOKEN_SECONDS:420} # 7 minutes
     properties:
       clientAssertionType: ${PDND_CLIENT_ASSERTION_TYPE:urn:ietf:params:oauth:client-assertion-type:jwt-bearer}
       grant-type: ${PDND_GRANT_TYPE:client_credentials}

@@ -7,7 +7,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.Optional;
 
-public interface AnprInvocationService {
+public interface ResidenceDataRetrieverService {
     Mono<Optional<RispostaE002OKDTO>> invoke(String accessToken, String fiscalCode, AgidJwtTokenPayload agidJwtTokenPayload);
 
     void extract(RispostaE002OKDTO anprResponse, boolean getResidence, boolean getBirthDate, OnboardingDTO onboardingRequest);

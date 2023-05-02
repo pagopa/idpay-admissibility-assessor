@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.connector.soap.inps;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.MonoSink;
 
-import javax.xml.ws.AsyncHandler;
+import jakarta.xml.ws.AsyncHandler;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

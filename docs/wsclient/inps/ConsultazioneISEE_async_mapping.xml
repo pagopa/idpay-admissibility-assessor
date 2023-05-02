@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
-<jaxws:bindings
+<bindings
+        xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
         wsdlLocation="ConsultazioneISEE_v2.8_PDND.wsdl"
-        xmlns:jaxws="http://java.sun.com/xml/ns/jaxws">
-    <jaxws:enableAsyncMapping>true</jaxws:enableAsyncMapping>
-</jaxws:bindings>
+        xmlns="https://jakarta.ee/xml/ns/jaxws">
+    <bindings node="wsdl:definitions">
+        <package name="async.client"/>
+        <enableAsyncMapping>true</enableAsyncMapping>
+    </bindings>
+</bindings>

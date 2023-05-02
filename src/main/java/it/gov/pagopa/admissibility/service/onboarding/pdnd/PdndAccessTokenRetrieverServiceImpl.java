@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.pdnd;
+package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -12,13 +12,13 @@ import reactor.core.publisher.Mono;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class CreateTokenServiceImpl implements CreateTokenService{
+public class PdndAccessTokenRetrieverServiceImpl implements PdndAccessTokenRetrieverService {
 
     private final PdndCreateTokenRestClient pdndCreateTokenRestClient;
     private final Cache<ApiKeysPDND,String> accessTokenCache;
 
-    public CreateTokenServiceImpl(PdndCreateTokenRestClient pdndCreateTokenRestClient,
-                                  @Value("${app.pdnd.time-expire-token}") int expireIn) {
+    public PdndAccessTokenRetrieverServiceImpl(PdndCreateTokenRestClient pdndCreateTokenRestClient,
+                                               @Value("${app.pdnd.time-expire-token}") int expireIn) {
         this.pdndCreateTokenRestClient = pdndCreateTokenRestClient;
         if (expireIn!=0){
             accessTokenCache = CacheBuilder.newBuilder().expireAfterWrite(expireIn, TimeUnit.SECONDS).build();

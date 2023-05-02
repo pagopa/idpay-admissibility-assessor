@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/token.oauth2",
+    "urlPathPattern": "/pdnd/token.oauth2",
     "headers": {
       "Content-Type": {
         "contains": "application/x-www-form-urlencoded"

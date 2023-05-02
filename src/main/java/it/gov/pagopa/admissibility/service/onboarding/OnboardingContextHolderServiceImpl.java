@@ -189,7 +189,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
                     aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion())
             );
         } catch (JsonProcessingException e) {
-            throw new IllegalStateException("[Admissibility] Error retrieving fields for AgidJWTTokenPayload",e);
+            throw new IllegalStateException("[ONBOARDING_REQUEST] Error retrieving fields for AgidJWTTokenPayload",e);
         }
     }
     //endregion

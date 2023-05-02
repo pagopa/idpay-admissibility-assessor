@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.service.pdnd;
+package it.gov.pagopa.admissibility.service;
 
 import reactor.core.publisher.Mono;
 
