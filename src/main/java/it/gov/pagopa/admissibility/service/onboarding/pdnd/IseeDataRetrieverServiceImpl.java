@@ -4,7 +4,6 @@ import it.gov.pagopa.admissibility.connector.soap.inps.IseeConsultationSoapClien
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
@@ -25,6 +24,7 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,32 +65,40 @@ public class IseeDataRetrieverServiceImpl implements IseeDataRetrieverService {
     }
 
     @Override
-    public void extract(ConsultazioneIndicatoreResponseType inpsResponse, boolean getIsee, OnboardingDTO onboardingRequest) {
-        if (inpsResponse != null && getIsee) {
-            // TODO log userId and ISEE obtained from INPS
-            onboardingRequest.setIsee(getIseeFromResponse(inpsResponse));
+    public List<OnboardingRejectionReason> extract(ConsultazioneIndicatoreResponseType inpsResponse, boolean getIsee, OnboardingDTO onboardingRequest) {
+        if(getIsee) {
+            if (inpsResponse != null) {
+                onboardingRequest.setIsee(getIseeFromResponse(inpsResponse));
+                // TODO log userId and ISEE obtained from INPS
+            }
 
-            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
             if (onboardingRequest.getIsee() == null) {
-                throw new OnboardingException(
-                        List.of(new OnboardingRejectionReason(
+                CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
+                log.info("[ONBOARDING_REQUEST][INPS_INVOCATION] User having id {} has not compatible ISEE type for initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+                return List.of(new OnboardingRejectionReason(
                                 OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                 OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
                                 criteriaCodeConfig.getAuthority(),
                                 criteriaCodeConfig.getAuthorityLabel(),
                                 "ISEE non disponibile"
-                        )),
-                        "User having id %s has not compatible ISEE type for initiative %s".formatted(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
+                        )
                 );
             }
         }
+
+        return Collections.emptyList();
     }
 
     private BigDecimal getIseeFromResponse(ConsultazioneIndicatoreResponseType inpsResponse) {
-        String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
+        try {
+            String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
 
-        TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
-        return inpsResult.getISEE();
+            TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
+            return inpsResult.getISEE();
+        } catch (Exception e){
+            log.error("Cannot read ISEE from INPS response", e);
+            return null;
+        }
     }
 
     public static TypeEsitoConsultazioneIndicatore readResultFromXmlString(String inpsResultString) {

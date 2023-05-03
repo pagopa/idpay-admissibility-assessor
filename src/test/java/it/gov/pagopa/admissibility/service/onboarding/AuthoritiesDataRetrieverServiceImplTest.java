@@ -4,9 +4,11 @@ import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
@@ -40,6 +42,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,14 +146,14 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.when(iseeDataRetrieverServiceSpy.invoke(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(Optional.of(inpsResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setIsee(PdndInvocationsTestUtils.getIseeFromResponse(inpsResponse));
-            return null;
+            return Collections.emptyList();
         }).when(iseeDataRetrieverServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
         Mockito.when(residenceDataRetrieverServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
             onboardingDTO.setBirthDate(PdndInvocationsTestUtils.getBirthDateFromAnswer(anprResponse));
-            return null;
+            return Collections.emptyList();
         }).when(residenceDataRetrieverServiceSpy).extract(anprResponse, true, true, onboardingDTO);
 
         // When
@@ -178,13 +181,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.when(iseeDataRetrieverServiceSpy.invoke(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(Optional.of(inpsResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setIsee(PdndInvocationsTestUtils.getIseeFromResponse(inpsResponse));
-            return null;
+            return Collections.emptyList();
         }).when(iseeDataRetrieverServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
         Mockito.when(residenceDataRetrieverServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
-            return null;
+            return Collections.emptyList();
         }).when(residenceDataRetrieverServiceSpy).extract(anprResponse, true, false, onboardingDTO);
 
         // When
@@ -212,7 +215,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.when(residenceDataRetrieverServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
-            return null;
+            return Collections.emptyList();
         }).when(residenceDataRetrieverServiceSpy).extract(anprResponse, true, false, onboardingDTO);
 
         // When
@@ -241,13 +244,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.when(iseeDataRetrieverServiceSpy.invoke(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(Optional.of(inpsResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setIsee(PdndInvocationsTestUtils.getIseeFromResponse(inpsResponse));
-            return null;
+            return Collections.emptyList();
         }).when(iseeDataRetrieverServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
         Mockito.when(residenceDataRetrieverServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setResidence(residenceMapper.apply(PdndInvocationsTestUtils.getResidenceFromAnswer(anprResponse)));
-            return null;
+            return Collections.emptyList();
         }).when(residenceDataRetrieverServiceSpy).extract(anprResponse, true, false, onboardingDTO);
 
         // When
@@ -273,7 +276,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.when(iseeDataRetrieverServiceSpy.invoke(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(Optional.of(inpsResponse)));
         Mockito.doAnswer(i -> {
             onboardingDTO.setIsee(PdndInvocationsTestUtils.getIseeFromResponse(inpsResponse));
-            return null;
+            return Collections.emptyList();
         }).when(iseeDataRetrieverServiceSpy).extract(inpsResponse, true, onboardingDTO);
 
         // When
@@ -309,5 +312,37 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Mockito.verify(residenceDataRetrieverServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
         Mockito.verify(onboardingRescheduleServiceMock)
                 .reschedule(Mockito.eq(onboardingDTO), Mockito.argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), Mockito.eq("Daily limit reached"), Mockito.any());
+    }
+
+    @Test
+    void testRejectionReasons() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
+
+        OnboardingRejectionReason expectedRejectionReasonISEE = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO, "ISEE",null, null, null);
+        OnboardingRejectionReason expectedRejectionReasonResidence = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO, "RESIDENCE",null, null, null);
+        OnboardingRejectionReason expectedRejectionReasonBirthdate = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO, "BIRTHDATE",null, null, null);
+
+        Mockito.when(iseeDataRetrieverServiceSpy.invoke(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(Optional.of(inpsResponse)));
+        Mockito.doAnswer(i -> List.of(expectedRejectionReasonISEE)).when(iseeDataRetrieverServiceSpy).extract(inpsResponse, true, onboardingDTO);
+
+        Mockito.when(residenceDataRetrieverServiceSpy.invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload)).thenReturn(Mono.just(Optional.of(anprResponse)));
+        Mockito.doAnswer(i -> List.of(expectedRejectionReasonResidence, expectedRejectionReasonBirthdate)).when(residenceDataRetrieverServiceSpy).extract(anprResponse, true, true, onboardingDTO);
+
+        // When
+        Mono<OnboardingDTO> retrieveMono = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message);
+        try {
+            retrieveMono.block();
+            Assertions.fail("Expected exception");
+        } catch (OnboardingException e) {
+            Assertions.assertEquals(List.of(
+                    expectedRejectionReasonISEE,
+                    expectedRejectionReasonResidence,
+                    expectedRejectionReasonBirthdate
+            ), e.getRejectionReasons());
+        }
+
+        Mockito.verify(iseeDataRetrieverServiceSpy).invoke(FISCAL_CODE, ISEE_TYPOLOGY);
+        Mockito.verify(residenceDataRetrieverServiceSpy).invoke(ACCESS_TOKEN, FISCAL_CODE, agidTokenPayload);
     }
 }

@@ -3,16 +3,18 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.AllArgsConstructor;
@@ -30,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -128,11 +131,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, ConsultazioneIndicatoreResponseType inpsResponse, RispostaE002OKDTO anprResponse) {
-        // INPS
-        iseeDataRetrieverService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest);
+        List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
+                iseeDataRetrieverService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest).stream(),
+                residenceDataRetrieverService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest).stream()
+        ).toList();
 
-        // ANPR
-        residenceDataRetrieverService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest);
+        if(!rejectionReasons.isEmpty()){
+            throw new OnboardingException(rejectionReasons, "Cannot retrieve all required authorities data");
+        }
     }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {

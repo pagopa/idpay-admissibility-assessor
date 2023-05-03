@@ -33,8 +33,12 @@ public class PdndInvocationsTestUtils {
     }
 
     public static byte[] buildXmlResult() throws JAXBException {
+        return buildXmlResult(BigDecimal.valueOf(10000));
+    }
+
+    public static byte[] buildXmlResult(BigDecimal isee) throws JAXBException {
         TypeEsitoConsultazioneIndicatore xmlResult = new TypeEsitoConsultazioneIndicatore();
-        xmlResult.setISEE(BigDecimal.valueOf(10000));
+        xmlResult.setISEE(isee);
 
         return toByteArray(xmlResult);
     }

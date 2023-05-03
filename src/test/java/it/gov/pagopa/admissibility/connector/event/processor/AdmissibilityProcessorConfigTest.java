@@ -145,8 +145,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
         pdndClientIdsInvocations.forEach((clientId, invocations) ->
                 Assertions.assertTrue(
-                        invocations >= 1 && invocations < 4,
-                        "Unexpected number of ClientId %s invocations".formatted(clientId)));
+                        invocations >= 1 && invocations < 10, //ideally it would be 1, but due to concurrency accesses, more than 1 requests could be performed
+                        "Unexpected number of ClientId %s invocations: %d".formatted(clientId, invocations)));
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
@@ -396,6 +396,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
             ),
 
+            // TODO test when no ISEE returned
+
             // TODO ISEE test when multiple Isee typologies
 
             // TODO test daily limit reached when invoking INPS
@@ -416,6 +418,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
             ),
 
+            // TODO test when no RESIDENCE returned
+
             // useCase 8: AUTOMATED_CRITERIA fail due to BIRTHDATE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
@@ -431,6 +435,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                     .build()
                             , true)
             ),
+
+            // TODO test when no BIRTHDATE returned
 
             // TODO test daily limit reached when invoking ANPR
 
