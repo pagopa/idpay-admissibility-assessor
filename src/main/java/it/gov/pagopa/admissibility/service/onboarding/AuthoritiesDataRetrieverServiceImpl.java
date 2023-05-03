@@ -132,7 +132,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         Map<String, BigDecimal> iseeMockMap = new HashMap<>();
         List<IseeTypologyEnum> iseeList = Arrays.asList(IseeTypologyEnum.values());
 
-        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, iseeList.size());
+        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0, iseeList.size());
         for (int i = 0; i < randomTypology; i++) {
             Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
             iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
