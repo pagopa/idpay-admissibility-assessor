@@ -18,6 +18,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
@@ -35,7 +36,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
     @Mock
-    private IseeDataRetrieverService iseeDataRetrieverServiceMock;
+    private ReactiveMongoTemplate reactiveMongoTemplateMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -45,7 +46,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, iseeDataRetrieverServiceMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
@@ -82,7 +83,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 "ISEE"
         ));
 
-        Mockito.lenient().when(iseeDataRetrieverServiceMock.retrieveUserIsee(Mockito.anyString())).thenReturn(Mono.empty());
+        Mockito.lenient().when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.any(), Mockito.eq("mocked_isee")))
+                .thenReturn(Mono.empty());
     }
 
     @Test

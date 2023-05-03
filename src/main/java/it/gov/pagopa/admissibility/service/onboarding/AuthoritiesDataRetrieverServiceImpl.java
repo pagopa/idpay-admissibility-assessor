@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Isee;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
@@ -14,6 +15,7 @@ import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -29,20 +31,22 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final CriteriaCodeService criteriaCodeService;
-    private final IseeDataRetrieverService iseeDataRetrieverService;
+    private final ReactiveMongoTemplate mongoTemplate;
 
     private final StreamBridge streamBridge;
 
     public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
                                                StreamBridge streamBridge,
                                                @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
-                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay, CriteriaCodeService criteriaCodeService, IseeDataRetrieverService iseeDataRetrieverService) {
+                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
+                                               CriteriaCodeService criteriaCodeService,
+                                               ReactiveMongoTemplate mongoTemplate) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
         this.nextDay = nextDay;
         this.criteriaCodeService = criteriaCodeService;
-        this.iseeDataRetrieverService = iseeDataRetrieverService;
+        this.mongoTemplate = mongoTemplate;
     }
 
     @Override
@@ -97,26 +101,12 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        return iseeDataRetrieverService.retrieveUserIsee(onboardingRequest.getUserId())
-                .switchIfEmpty(Mono.defer(() -> {
-                    Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-                    List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
-
-                    int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, 6);
-                    for (int i = 0; i < randomTipology; i++) {
-                        Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
-                        iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
-                    }
-
-                    return Mono.just(iseeMockMap);
-                }))
-                .doOnNext(m -> {
-                    log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), m);
-
-                    setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m);
-                })
+        return this.retrieveUserIsee(onboardingRequest.getUserId())
+                .switchIfEmpty(mockIsee(onboardingRequest))
+                .doOnNext(m -> setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m))
                 .flatMap(m -> {
                     CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
+
                     if (onboardingRequest.getIsee() == null) {
                         return Mono.error(new OnboardingException(
                                 List.of(new OnboardingRejectionReason(
@@ -134,12 +124,35 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 });
     }
 
-    private static void setIseeIfCorrespondingType(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, BigDecimal> m) {
+    private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
+        Map<String, BigDecimal> iseeMockMap = new HashMap<>();
+        List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
+
+        int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, 6);
+        for (int i = 0; i < randomTipology; i++) {
+            Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
+            iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
+        }
+
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
+
+        return Mono.just(iseeMockMap);
+    }
+
+    private Mono<Map<String,BigDecimal>> retrieveUserIsee(String userId) {
+            return mongoTemplate.findById(
+                    userId,
+                    Isee.class,
+                    "mocked_isee"
+            ).map(Isee::getIseeTypeMap);
+    }
+
+    private void setIseeIfCorrespondingType(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, BigDecimal> iseeMap) {
         for (AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()) {
             if (automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)) {
                 for (IseeTypologyEnum iseeTypologyEnum : automatedCriteriaDTO.getIseeTypes()) {
-                    if (m.containsKey(iseeTypologyEnum.name())) {
-                        onboardingRequest.setIsee(m.get(iseeTypologyEnum.name()));
+                    if (iseeMap.containsKey(iseeTypologyEnum.name())) {
+                        onboardingRequest.setIsee(iseeMap.get(iseeTypologyEnum.name()));
                         break;
                     }
                 }
