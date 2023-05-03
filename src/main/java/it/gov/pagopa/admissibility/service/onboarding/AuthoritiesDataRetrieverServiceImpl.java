@@ -109,11 +109,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         return this.retrieveUserIsee(onboardingRequest.getUserId())
                 .switchIfEmpty(mockIsee(onboardingRequest))
                 .doOnNext(m -> setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m))
-                .flatMap(m -> {
+                .map(m -> {
                     CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
 
                     if (onboardingRequest.getIsee() == null) {
-                        return Mono.error(new OnboardingException(
+                        throw new OnboardingException(
                                 List.of(new OnboardingRejectionReason(
                                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                                         OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
@@ -121,20 +121,19 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                         criteriaCodeConfig.getAuthorityLabel(),
                                         "ISEE non disponibile"
                                 )),
-                                "User having id %s has not compatible type for initiative %s".formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId()))
-                        );
-                    } else {
-                        return Mono.just(onboardingRequest);
+                                "User having id %s has not compatible type for initiative %s".formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId()));
                     }
+
+                    return onboardingRequest;
                 });
     }
 
     private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
         Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-        List<IseeTypologyEnum> iseeList = new ArrayList<>(Arrays.asList(IseeTypologyEnum.values()));
+        List<IseeTypologyEnum> iseeList = Arrays.asList(IseeTypologyEnum.values());
 
-        int randomTipology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, 6);
-        for (int i = 0; i < randomTipology; i++) {
+        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, iseeList.size());
+        for (int i = 0; i < randomTypology; i++) {
             Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
             iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
         }
