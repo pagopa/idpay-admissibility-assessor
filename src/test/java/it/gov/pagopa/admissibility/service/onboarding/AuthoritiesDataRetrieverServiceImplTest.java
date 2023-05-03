@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +34,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
+    @Mock
+    private IseeDataRetrieverService iseeDataRetrieverServiceMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -42,7 +45,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, iseeDataRetrieverServiceMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
@@ -78,6 +81,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 "Istituto Nazionale Previdenza Sociale",
                 "ISEE"
         ));
+
+        Mockito.lenient().when(iseeDataRetrieverServiceMock.retrieveUserIsee(Mockito.anyString())).thenReturn(Mono.empty());
     }
 
     @Test
