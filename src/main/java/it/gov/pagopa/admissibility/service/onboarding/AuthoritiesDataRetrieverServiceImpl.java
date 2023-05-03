@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Isee;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
@@ -12,9 +11,15 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.experimental.FieldNameConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -191,4 +196,16 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
     */
+}
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@FieldNameConstants
+class Isee {
+
+    @Id
+    private String userId;
+    private Map<String,BigDecimal> iseeTypeMap;
 }
