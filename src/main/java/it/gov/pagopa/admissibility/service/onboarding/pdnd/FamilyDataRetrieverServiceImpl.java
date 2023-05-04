@@ -2,7 +2,11 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import lombok.AllArgsConstructor;
+import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.messaging.Message;
@@ -26,21 +30,13 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
-        String membersMockedBaseId = onboardingRequest.getUserId();
-        if (membersMockedBaseId.matches(".*_FAMILYMEMBER\\d+$")) {
-            membersMockedBaseId = membersMockedBaseId.substring(0, membersMockedBaseId.indexOf("_FAMILYMEMBER"));
-        }
-
         return searchMockCollection(onboardingRequest.getUserId())
                 .map(Optional::of)
                 .switchIfEmpty(
                         Mono.just(Optional.of(Family.builder()
-                                .familyId("FAMILYID_" + membersMockedBaseId)
+                                .familyId("FAMILYID_" + onboardingRequest.getUserId())
                                 .memberIds(new HashSet<>(List.of(
-                                        onboardingRequest.getUserId(),
-                                        membersMockedBaseId + "_FAMILYMEMBER0",
-                                        membersMockedBaseId + "_FAMILYMEMBER1",
-                                        membersMockedBaseId + "_FAMILYMEMBER2"
+                                        onboardingRequest.getUserId()
                                 )))
                                 .build()))
                 );
@@ -48,9 +44,20 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private Mono<Family> searchMockCollection(String userId) {
         return mongoTemplate.find(
-                new Query(Criteria.where("memberIds").is(userId)),
-                Family.class,
-                "mocked_families"
-        ).next();
+                        new Query(Criteria.where("memberIds").is(userId)),
+                        MockedFamily.class
+                ).cast(Family.class)
+                .next();
+    }
+
+    @Document("mocked_families")
+    @SuperBuilder
+    @AllArgsConstructor
+    public static class MockedFamily extends Family {
+        @Id
+        @Override
+        public String getFamilyId() {
+            return super.getFamilyId();
+        }
     }
 }

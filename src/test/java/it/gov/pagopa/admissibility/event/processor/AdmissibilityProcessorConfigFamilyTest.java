@@ -13,6 +13,7 @@ import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverServiceImpl;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
@@ -61,6 +63,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private OnboardingFamiliesRepository onboardingFamiliesRepository;
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
+    @Autowired
+    private ReactiveMongoTemplate mongoTemplate;
 
     @Test
     void testFamilyAdmissibilityOnboarding() throws IOException {
@@ -184,6 +188,23 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         initiativeCountersRepository.save(counter).block();
     }
 
+    private void storeMockedFamilyMembers(String userId) {
+        String membersMockedBaseId = userId;
+        if (membersMockedBaseId.matches(".*_FAMILYMEMBER\\d+$")) {
+            membersMockedBaseId = membersMockedBaseId.substring(0, membersMockedBaseId.indexOf("_FAMILYMEMBER"));
+        }
+
+        mongoTemplate.save(FamilyDataRetrieverServiceImpl.MockedFamily.builder()
+                                .familyId("FAMILYID_" + membersMockedBaseId)
+                                .memberIds(new HashSet<>(List.of(
+                                        membersMockedBaseId + "_FAMILYMEMBER0",
+                                        membersMockedBaseId + "_FAMILYMEMBER1",
+                                        membersMockedBaseId + "_FAMILYMEMBER2"
+                                )))
+                                .build())
+                .block();
+    }
+
     private <T extends EvaluationDTO> void checkResponses(int expectedRequestsPerInitiative, List<ConsumerRecord<String, String>> payloadConsumed,Class<T> clazz) throws JsonProcessingException {
         assertInitiativePublishedMessagesCount(expectedRequestsPerInitiative, payloadConsumed, clazz);
 
@@ -239,21 +260,29 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         }
     }
 
-    private void assertInitiativePublishedMessagesCount(int expectedRequestsPerInitiative, List<ConsumerRecord<String, String>> publishedRecords, Class<? extends EvaluationDTO> clazz) {
-        Assertions.assertEquals(expectedRequestsPerInitiative, publishedRecords.size(), ()->"Unexpected ranking published message count, there are some duplicates: " +
-                publishedRecords.stream()
-                        .map(r-> {
-                            try {
-                                return objectMapper.readValue(r.value(), clazz);
-                            } catch (JsonProcessingException e) {
-                                throw new IllegalStateException(e);
-                            }
-                        })
-                        .collect(Collectors.groupingBy(ev->ev.getUserId() + "_" + ev.getInitiativeId(), Collectors.counting()))
-                        .entrySet().stream()
-                        .filter(e->e.getValue()>1)
-                        .map(Map.Entry::getKey)
-                        .toList()
+    private void assertInitiativePublishedMessagesCount(int expectedMessages, List<ConsumerRecord<String, String>> publishedRecords, Class<? extends EvaluationDTO> clazz) {
+        Assertions.assertEquals(expectedMessages, publishedRecords.size(), ()-> {
+            Set<Map.Entry<String, Long>> userId2MessagesCount = publishedRecords.stream()
+                            .map(r -> {
+                                try {
+                                    return objectMapper.readValue(r.value(), clazz);
+                                } catch (JsonProcessingException e) {
+                                    throw new IllegalStateException(e);
+                                }
+                            })
+                            .filter(r -> !(r instanceof EvaluationCompletedDTO completedDTO) || !OnboardingEvaluationStatus.DEMANDED.equals(completedDTO.getStatus()))
+                            .collect(Collectors.groupingBy(ev -> ev.getUserId() + "_" + ev.getInitiativeId(), Collectors.counting()))
+                            .entrySet();
+
+                    return "Unexpected published message count, %s: duplicates: %s".formatted(
+                            expectedMessages == userId2MessagesCount.size()
+                                    ? "there are some duplicates"
+                            : "distinct messages: " + userId2MessagesCount.size(),
+                            userId2MessagesCount.stream()
+                            .filter(e -> e.getValue() > 1)
+                            .map(Map.Entry::getKey)
+                            .toList());
+                }
         );
     }
 
@@ -309,7 +338,11 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private final List<OnboardingUseCase<EvaluationDTO>> useCases = List.of(
             // useCase 0: onboardingOk
             OnboardingUseCase.withJustPayload(
-                    bias -> OnboardingDTOFaker.mockInstance(bias, 1),
+                    bias -> {
+                        OnboardingDTO request = OnboardingDTOFaker.mockInstance(bias, 1);
+                        storeMockedFamilyMembers(request.getUserId());
+                        return request;
+                    },
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
                             Assertions.assertFalse(rankingRequest.isOnboardingKo());
@@ -324,9 +357,11 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
-                        return OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        OnboardingDTO request = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
                                 .isee(BigDecimal.ZERO)
                                 .build();
+                        storeMockedFamilyMembers(request.getUserId());
+                        return request;
                     },
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
@@ -351,13 +386,13 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                     bias -> {
                         expectedOnboardingKoFamilies++;
                         expectedFamilyRetrieveKo++;
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        OnboardingDTO request = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
                                 .userId("NOFAMILYuserId_" + bias)
                                 .build();
                         Mockito.doReturn(Mono.just(Optional.empty()))
                                 .when(familyDataRetrieverServiceSpy)
-                                .retrieveFamily(Mockito.argThat(r->r.getUserId().startsWith(out.getUserId())), Mockito.any());
-                        return out;
+                                .retrieveFamily(Mockito.argThat(r->r.getUserId().startsWith(request.getUserId())), Mockito.any());
+                        return request;
                     },
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
