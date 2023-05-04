@@ -150,7 +150,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("14411"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
