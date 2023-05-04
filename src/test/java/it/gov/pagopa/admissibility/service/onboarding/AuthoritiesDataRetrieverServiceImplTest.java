@@ -18,8 +18,10 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +35,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
+    @Mock
+    private ReactiveMongoTemplate reactiveMongoTemplateMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -42,7 +46,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
@@ -78,6 +82,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 "Istituto Nazionale Previdenza Sociale",
                 "ISEE"
         ));
+
+        Mockito.lenient().when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.any(), Mockito.eq("mocked_isee")))
+                .thenReturn(Mono.empty());
     }
 
     @Test
@@ -143,7 +150,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("14411"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
