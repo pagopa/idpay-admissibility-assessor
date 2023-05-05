@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -107,7 +108,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         return this.retrieveUserIsee(onboardingRequest.getUserId())
-                .switchIfEmpty(mockIsee(onboardingRequest))
+                .switchIfEmpty(Mono.defer(() -> mockIsee(onboardingRequest)))
                 .doOnNext(m -> setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m))
                 .map(m -> {
                     CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
@@ -129,7 +130,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
-        log.info("[ONBOARDING_CITIZEN][MOCK_ISEE] Isee of user {} not found in collection mocked_isee",
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] ISEE of user {} not found in collection mocked_isee",
                 onboardingRequest.getUserId());
 
         Map<String, BigDecimal> iseeMockMap = new HashMap<>();
@@ -145,7 +146,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<Map<String,BigDecimal>> retrieveUserIsee(String userId) {
-        log.info("[ONBOARDING_CITIZEN][MOCK_ISEE] Fetching ISEE of user {}", userId);
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] Fetching ISEE of user {}", userId);
 
             return mongoTemplate.findById(
                     userId,
@@ -207,6 +208,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 @NoArgsConstructor
 @Builder
 @FieldNameConstants
+@Document("mocked_isee")
 class Isee {
 
     @Id
