@@ -129,6 +129,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
+        log.info("[ONBOARDING_CITIZEN][MOCK_ISEE] Isee of user {} not found in collection mocked_isee",
+                onboardingRequest.getUserId());
+
         Map<String, BigDecimal> iseeMockMap = new HashMap<>();
         List<IseeTypologyEnum> iseeList = Arrays.asList(IseeTypologyEnum.values());
 
@@ -138,12 +141,12 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
         }
 
-        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
-
         return Mono.just(iseeMockMap);
     }
 
     private Mono<Map<String,BigDecimal>> retrieveUserIsee(String userId) {
+        log.info("[ONBOARDING_CITIZEN][MOCK_ISEE] Fetching ISEE of user {}", userId);
+
             return mongoTemplate.findById(
                     userId,
                     Isee.class,
@@ -152,6 +155,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private void setIseeIfCorrespondingType(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, BigDecimal> iseeMap) {
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMap);
+
         for (AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()) {
             if (automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)) {
                 for (IseeTypologyEnum iseeTypologyEnum : automatedCriteriaDTO.getIseeTypes()) {
