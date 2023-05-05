@@ -1,16 +1,16 @@
 package it.gov.pagopa.admissibility.dto.onboarding.extra;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
+@SuperBuilder
 public class Family {
     private String familyId;
     private Set<String> memberIds;
