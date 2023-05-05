@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -107,7 +108,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         return this.retrieveUserIsee(onboardingRequest.getUserId())
-                .switchIfEmpty(mockIsee(onboardingRequest))
+                .switchIfEmpty(Mono.defer(() -> mockIsee(onboardingRequest)))
                 .doOnNext(m -> setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m))
                 .map(m -> {
                     CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
@@ -129,21 +130,24 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] ISEE of user {} not found in collection mocked_isee",
+                onboardingRequest.getUserId());
+
         Map<String, BigDecimal> iseeMockMap = new HashMap<>();
         List<IseeTypologyEnum> iseeList = Arrays.asList(IseeTypologyEnum.values());
 
-        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(0, iseeList.size());
+        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, iseeList.size()+1);
         for (int i = 0; i < randomTypology; i++) {
             Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
             iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
         }
 
-        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMockMap);
-
         return Mono.just(iseeMockMap);
     }
 
     private Mono<Map<String,BigDecimal>> retrieveUserIsee(String userId) {
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] Fetching ISEE of user {}", userId);
+
             return mongoTemplate.findById(
                     userId,
                     Isee.class,
@@ -152,6 +156,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     private void setIseeIfCorrespondingType(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, BigDecimal> iseeMap) {
+        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMap);
+
         for (AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()) {
             if (automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)) {
                 for (IseeTypologyEnum iseeTypologyEnum : automatedCriteriaDTO.getIseeTypes()) {
@@ -202,6 +208,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 @NoArgsConstructor
 @Builder
 @FieldNameConstants
+@Document("mocked_isee")
 class Isee {
 
     @Id
