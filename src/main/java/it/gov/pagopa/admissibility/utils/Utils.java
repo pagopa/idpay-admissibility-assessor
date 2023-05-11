@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 
 public final class Utils {
 
+    public static final String FISCAL_CODE_STRUCTURE_REGEX = "^[A-Z]{6}\\d{2}[A-Z]\\d{2}[A-Z]\\d{3}[A-Z]$";
     public static final String FISCAL_CODE_MONTH_LETTERS = "ABCDEHLMPRST";
 
     private Utils(){}

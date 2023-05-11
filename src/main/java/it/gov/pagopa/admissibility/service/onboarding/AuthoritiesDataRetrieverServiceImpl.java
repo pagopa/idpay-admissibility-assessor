@@ -1,11 +1,10 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.connector.rest.UserRestClient;
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
@@ -30,6 +29,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -40,7 +40,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final CriteriaCodeService criteriaCodeService;
     private final ReactiveMongoTemplate mongoTemplate;
-    private final UserRestClient userRestClient;
+    private final UserFiscalCodeRestClient userRestClient;
 
     private final StreamBridge streamBridge;
 
@@ -49,7 +49,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CriteriaCodeService criteriaCodeService,
-                                               ReactiveMongoTemplate mongoTemplate, UserRestClient userRestClient) {
+                                               ReactiveMongoTemplate mongoTemplate,
+                                               UserFiscalCodeRestClient userRestClient) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
@@ -67,7 +68,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         return Mono.just(onboardingRequest)
                 // ISEE
                 .flatMap(o -> {
-                    if (o.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_ISEE, onboardingRequest, initiativeConfig)) {
                         return retrieveIsee(o, initiativeConfig);
                     }
 
@@ -75,7 +76,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 })
                 // RESIDENCE
                 .doOnNext(o -> {
-                    if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_RESIDENCE, onboardingRequest, initiativeConfig)) {
                         onboardingRequest.setResidence(
                                 userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
                                         ? Residence.builder()
@@ -100,10 +101,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 })
                 // BIRTHDATE
                 .flatMap(o -> {
-                    if (onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_BIRTHDATE, onboardingRequest, initiativeConfig)) {
                         return userRestClient.retrieveUserInfo(o.getUserId())
-                                .map(UserInfoPDV::getPii)
-                                .map(Utils::calculateBirthDateFromFiscalCode) //TODO correct?
+                                .map(u -> validateCFAndCalculateBirthDate(u.getPii()))
                                 .doOnNext(bd -> o.setBirthDate(
                                         BirthDate.builder()
                                                 .age(Utils.getAge(bd))
@@ -115,6 +115,37 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
                     return Mono.just(o);
                 });
+    }
+
+    private boolean requiresCritierium(String criterium, OnboardingDTO o, InitiativeConfig initiativeConfig) {
+        return switch (criterium) {
+            case OnboardingConstants.CRITERIA_CODE_ISEE ->
+                    o.getIsee() == null && is2retrieve(initiativeConfig, criterium);
+            case OnboardingConstants.CRITERIA_CODE_RESIDENCE ->
+                    o.getResidence() == null && is2retrieve(initiativeConfig, criterium);
+            case OnboardingConstants.CRITERIA_CODE_BIRTHDATE ->
+                    o.getBirthDate() == null && is2retrieve(initiativeConfig, criterium);
+            default -> false;
+        };
+    }
+
+    private LocalDate validateCFAndCalculateBirthDate(String cf) {
+        // Check if input fiscal code matches the legal structure
+        if (cf.matches(Utils.FISCAL_CODE_STRUCTURE_REGEX)) {
+            return Utils.calculateBirthDateFromFiscalCode(cf);
+        } else {
+            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
+            throw new OnboardingException(
+                    List.of(new OnboardingRejectionReason(
+                            OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO,
+                            OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO,
+                            criteriaCodeConfig.getAuthority(),
+                            criteriaCodeConfig.getAuthorityLabel(),
+                            "Data di nascita non disponibile"
+                    )),
+                    "[ADMISSIBILITY] Fiscal code not valid"
+            );
+        }
     }
 
     private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {

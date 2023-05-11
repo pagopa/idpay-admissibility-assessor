@@ -17,18 +17,18 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class UserRestClientImpl implements UserRestClient {
+public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
     private static final String API_KEY_HEADER = "x-api-key";
     private static final String URI = "/tokens/{token}/pii";
     private final int pdvRetryDelay;
     private final long pdvMaxAttempts;
     private final WebClient webClient;
 
-    public UserRestClientImpl(@Value("${app.pdv.base-url}") String pdvBaseUrl,
-                              @Value("${app.pdv.headers.x-api-key}") String apiKeyValue,
-                              @Value("${app.pdv.retry.delay-millis}") int pdvRetryDelay,
-                              @Value("${app.pdv.retry.max-attempts}") long pdvMaxAttempts,
-                              WebClient.Builder webClientBuilder) {
+    public UserFiscalCodeRestClientImpl(@Value("${app.pdv.base-url}") String pdvBaseUrl,
+                                        @Value("${app.pdv.headers.x-api-key}") String apiKeyValue,
+                                        @Value("${app.pdv.retry.delay-millis}") int pdvRetryDelay,
+                                        @Value("${app.pdv.retry.max-attempts}") long pdvMaxAttempts,
+                                        WebClient.Builder webClientBuilder) {
         this.pdvRetryDelay = pdvRetryDelay;
         this.pdvMaxAttempts = pdvMaxAttempts;
         this.webClient = webClientBuilder.clone()

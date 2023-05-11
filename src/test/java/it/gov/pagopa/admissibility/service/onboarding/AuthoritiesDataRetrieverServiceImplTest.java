@@ -1,8 +1,9 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.connector.rest.UserRestClient;
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -39,7 +40,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Mock
     private ReactiveMongoTemplate reactiveMongoTemplateMock;
     @Mock
-    private UserRestClient userRestClientMock;
+    private UserFiscalCodeRestClient userRestClientMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -96,6 +97,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
+        Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("PTRGNL73S51X000Q").build()));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
