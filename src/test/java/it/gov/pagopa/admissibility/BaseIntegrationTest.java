@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility;
 import com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.config.MongodConfig;
 import de.flapdoodle.embed.mongo.config.Net;
@@ -11,7 +12,9 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.StreamsHealthIndicator;
+import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.admissibility.utils.TestUtils;
+import lombok.NonNull;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -26,6 +29,7 @@ import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
@@ -34,6 +38,8 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.data.util.Pair;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -41,7 +47,9 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.Message;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.support.TestPropertySourceUtils;
 import org.springframework.util.ReflectionUtils;
 
 import javax.annotation.PostConstruct;
@@ -110,9 +118,15 @@ import static org.awaitility.Awaitility.await;
                 "logging.level.org.springframework.boot.autoconfigure.mongo.embedded=WARN",
                 "spring.mongodb.embedded.version=4.0.21",
                 //endregion
+
+                //region pdv
+                "app.pdv.retry.delay-millis=5000",
+                "app.pdv.retry.max-attempts=3",
+                //endregion
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient
+@ContextConfiguration(initializers = {BaseIntegrationTest.WireMockInitializer.class})
 public abstract class BaseIntegrationTest {
 
     @Value("${spring.application.name}")
@@ -190,16 +204,28 @@ public abstract class BaseIntegrationTest {
             mongoUrl=mongodbUri.replaceFirst(":[^:]+(?=:[0-9]+)", "");
         }
 
+        String wiremockHttpBaseUrl="UNKNOWN";
+        String wiremockHttpsBaseUrl="UNKNOWN";
+        try{
+            wiremockHttpBaseUrl = serverWireMock.getRuntimeInfo().getHttpBaseUrl();
+            wiremockHttpsBaseUrl = serverWireMock.getRuntimeInfo().getHttpsBaseUrl();
+        } catch (Exception e){
+            System.out.println("Cannot read wiremock urls");
+        }
         System.out.printf("""
                         ************************
                         Embedded mongo: %s
                         Embedded kafka: %s
                         Embedded redis: %s
+                        WireMock http: %s
+                        WireMock https: %s
                         ************************
                         """,
                 mongoUrl,
                 "bootstrapServers: %s, zkNodes: %s".formatted(kafkaBootstrapServers, zkNodes),
-                redisUrl);
+                redisUrl,
+                wiremockHttpBaseUrl,
+                wiremockHttpsBaseUrl);
     }
 
     @Test
@@ -405,4 +431,47 @@ public abstract class BaseIntegrationTest {
         }
     }
     protected void checkPayload(String errorMessage, String expectedPayload){}
+
+    //region desc=Setting WireMock
+    @RegisterExtension
+    static WireMockExtension serverWireMock = initServerWiremock();
+
+    public static WireMockExtension initServerWiremock() {
+        return serverWireMock = WireMockExtension.newInstance()
+                .options(RestTestUtils.getWireMockConfiguration())
+                .build();
+    }
+
+    public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+        @Override
+        public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
+// setting wiremock HTTP baseUrl
+            Stream.of(
+                    Pair.of("app.pdv.base-url","pdv"),
+                    Pair.of("app.pdnd.access.token-base-url","pdnd")
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
+
+// setting wiremock HTTPS baseUrl
+            Stream.of(
+                    Pair.of("app.anpr.c020-residenceAssessment.base-url","anpr/residence"),
+                    Pair.of("app.inps.iseeConsultation.base-url","inps/isee")
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
+
+            System.out.printf("""
+                            ************************
+                            Server wiremock:
+                            http base url: %s
+                            https base url: %s
+                            ************************
+                            """,
+                    serverWireMock.getRuntimeInfo().getHttpBaseUrl(),
+                    serverWireMock.getRuntimeInfo().getHttpsBaseUrl());
+        }
+
+        private static java.util.function.Consumer<Pair<String, String>> setWireMockBaseMockedServicePath(ConfigurableApplicationContext applicationContext, String serverWireMock) {
+            return key2basePath -> TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
+                    String.format("%s=%s/%s", key2basePath.getFirst(), serverWireMock, key2basePath.getSecond())
+            );
+        }
+    }
 }
