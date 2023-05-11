@@ -131,6 +131,7 @@ class Initiative2InitiativeConfigMapperTest {
                 .endDate(LocalDate.MAX)
                 .budget(BigDecimal.TEN)
                 .beneficiaryBudget(BigDecimal.ONE)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
@@ -155,6 +156,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
+        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryType(), result.getBeneficiaryType());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());
         Assertions.assertSame(initiative2BuildDTO.getInitiativeRewardType(), result.getInitiativeRewardType());

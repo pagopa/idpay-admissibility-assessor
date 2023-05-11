@@ -1,9 +1,10 @@
-package it.gov.pagopa.admissibility.service.onboarding;
+package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -28,10 +29,15 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
         if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
-            if (OnboardingConstants.ONBOARDING_STATUS_OK.equals((evaluationCompletedDTO.getStatus()))) {
+            if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
-                        .map(c -> evaluationCompletedDTO)
+                        .map(c -> {
+                            log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
+                            onboardingRequest.setBudgetReserved(true);
+
+                            return evaluationCompletedDTO;
+                        })
                         .switchIfEmpty(Mono.defer(() -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [BUDGET_RESERVATION] initiative {} exhausted", initiativeConfig.getInitiativeId());
 
@@ -39,7 +45,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
                                     .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
                                     .build());
-                            evaluationCompletedDTO.setStatus(OnboardingConstants.ONBOARDING_STATUS_KO);
+                            evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
                             return Mono.just(evaluationCompletedDTO);
                         }))
                         .map(EvaluationDTO.class::cast);

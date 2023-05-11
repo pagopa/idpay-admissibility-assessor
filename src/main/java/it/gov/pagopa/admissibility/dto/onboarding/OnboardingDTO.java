@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,4 +28,8 @@ public class OnboardingDTO {
     private BigDecimal isee;
     private Residence residence;
     private BirthDate birthDate;
+    private Family family;
+
+    // Info filled during processing
+    private boolean budgetReserved;
 }

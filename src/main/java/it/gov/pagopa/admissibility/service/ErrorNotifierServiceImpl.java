@@ -28,6 +28,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     public static final String ERROR_MSG_HEADER_SRC_TOPIC = "srcTopic";
     public static final String ERROR_MSG_HEADER_DESCRIPTION = "description";
     public static final String ERROR_MSG_HEADER_RETRYABLE = "retryable";
+    public static final String ERROR_MSG_HEADER_RETRY = "retry";
     public static final String ERROR_MSG_HEADER_STACKTRACE = "stacktrace";
 
     private final StreamBridge streamBridge;

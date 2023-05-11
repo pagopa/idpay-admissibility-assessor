@@ -1,12 +1,12 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
-import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -112,6 +112,7 @@ class OnboardingContextHolderServiceImplTest {
         String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .beneficiaryInitiativeBudget(BigDecimal.valueOf(100))
                 .endDate(LocalDate.MAX)
                 .initiativeName("NAME")
@@ -136,7 +137,6 @@ class OnboardingContextHolderServiceImplTest {
         InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
         //Then
-        Assertions.assertNotNull(result);
-        TestUtils.checkNotNullFields(result);
+        Assertions.assertSame(initiativeConfig, result);
     }
 }

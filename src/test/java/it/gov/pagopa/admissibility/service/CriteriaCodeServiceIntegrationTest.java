@@ -20,7 +20,8 @@ class CriteriaCodeServiceIntegrationTest extends BaseIntegrationTest {
         Map<String, CriteriaCodeConfig> expected = Map.of(
                 "ISEE", new CriteriaCodeConfig("ISEE", "INPS", "Istituto Nazionale Previdenza Sociale", "isee"),
                 "BIRTHDATE", new CriteriaCodeConfig("BIRTHDATE", "AGID", "Agenzia per l'Italia Digitale", "birthDate"),
-                "RESIDENCE", new CriteriaCodeConfig("RESIDENCE", "AGID","Agenzia per l'Italia Digitale",  "residence")
+                "RESIDENCE", new CriteriaCodeConfig("RESIDENCE", "AGID","Agenzia per l'Italia Digitale",  "residence"),
+                "FAMILY", new CriteriaCodeConfig("FAMILY", "INPS","Istituto Nazionale Previdenza Sociale",  "family")
         );
 
         Assertions.assertEquals(expected, result);

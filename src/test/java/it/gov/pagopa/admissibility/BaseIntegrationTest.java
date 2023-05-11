@@ -40,6 +40,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
+import org.springframework.messaging.Message;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.ReflectionUtils;
 
@@ -54,7 +55,6 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -264,6 +264,12 @@ public abstract class BaseIntegrationTest {
         }
     }
 
+    protected void publishIntoEmbeddedKafka(String topic, String key, Message<String> message) {
+        publishIntoEmbeddedKafka(topic,
+                message.getHeaders().entrySet().stream().map(e->(Header)new RecordHeader(e.getKey(), e.getValue().toString().getBytes(StandardCharsets.UTF_8))).toList()
+                , key, message.getPayload());
+    }
+
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, Object payload) {
         try {
             publishIntoEmbeddedKafka(topic, headers, key, objectMapper.writeValueAsString(payload));
@@ -274,20 +280,20 @@ public abstract class BaseIntegrationTest {
 
     private int totaleMessageSentCounter =0;
     protected void publishIntoEmbeddedKafka(String topic, Iterable<Header> headers, String key, String payload) {
-        final RecordHeader retryHeader = new RecordHeader("RETRY", "1".getBytes(StandardCharsets.UTF_8));
+        final RecordHeader retryHeader = new RecordHeader("retry", "1".getBytes(StandardCharsets.UTF_8));
         final RecordHeader applicationNameHeader = new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, applicationName.getBytes(StandardCharsets.UTF_8));
 
-        AtomicBoolean containAppNameHeader = new AtomicBoolean(false);
+        Boolean[] containAppNameHeader = new Boolean[]{false};
         if(headers!= null){
             headers.forEach(h -> {
                 if(h.key().equals(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME)){
-                    containAppNameHeader.set(true);
+                    containAppNameHeader[0]=true;
                 }
             });
         }
 
         final RecordHeader[] additionalHeaders;
-        if(totaleMessageSentCounter++%2 == 0 || containAppNameHeader.get()){
+        if(totaleMessageSentCounter++%2 == 0 || containAppNameHeader[0]){
             additionalHeaders= new RecordHeader[]{retryHeader};
         } else {
             additionalHeaders= new RecordHeader[]{retryHeader, applicationNameHeader};
@@ -297,8 +303,8 @@ public abstract class BaseIntegrationTest {
             headers = new RecordHeaders(additionalHeaders);
         } else {
             headers = Stream.concat(
-                            StreamSupport.stream(headers.spliterator(), false),
-                            Arrays.stream(additionalHeaders))
+                            Arrays.stream(additionalHeaders),
+                            StreamSupport.stream(headers.spliterator(), false))
                     .collect(Collectors.toList());
         }
         ProducerRecord<byte[], byte[]> record = new ProducerRecord<>(topic, null, key == null ? null : key.getBytes(StandardCharsets.UTF_8), payload.getBytes(StandardCharsets.UTF_8), headers);
@@ -390,7 +396,7 @@ public abstract class BaseIntegrationTest {
         Assertions.assertNotNull(errorMessage.headers().lastHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_STACKTRACE));
         Assertions.assertEquals(errorDescription, TestUtils.getHeaderValue(errorMessage, ErrorNotifierServiceImpl.ERROR_MSG_HEADER_DESCRIPTION));
         if(expectRetryHeader) {
-            Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "RETRY")); // to test if headers are correctly propagated
+            Assertions.assertEquals("1", TestUtils.getHeaderValue(errorMessage, "retry")); // to test if headers are correctly propagated
         }
         if(!runtimeFieldSetter) {
             Assertions.assertEquals(expectedPayload, errorMessage.value());
