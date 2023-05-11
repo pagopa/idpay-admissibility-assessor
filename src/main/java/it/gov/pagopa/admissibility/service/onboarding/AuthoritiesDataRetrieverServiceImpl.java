@@ -1,9 +1,11 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.connector.rest.UserRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
@@ -11,6 +13,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -27,7 +30,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.*;
 
 @Service
@@ -38,6 +40,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final CriteriaCodeService criteriaCodeService;
     private final ReactiveMongoTemplate mongoTemplate;
+    private final UserRestClient userRestClient;
 
     private final StreamBridge streamBridge;
 
@@ -46,13 +49,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CriteriaCodeService criteriaCodeService,
-                                               ReactiveMongoTemplate mongoTemplate) {
+                                               ReactiveMongoTemplate mongoTemplate, UserRestClient userRestClient) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
         this.nextDay = nextDay;
         this.criteriaCodeService = criteriaCodeService;
         this.mongoTemplate = mongoTemplate;
+        this.userRestClient = userRestClient;
     }
 
     @Override
@@ -95,14 +99,21 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     }
                 })
                 // BIRTHDATE
-                .doOnNext(o -> {
+                .flatMap(o -> {
                     if (onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
-                        int age = userIdBasedIntegerGenerator(onboardingRequest).nextInt(18, 99);
-                        onboardingRequest.setBirthDate(BirthDate.builder()
-                                .age(age)
-                                .year((LocalDate.now().getYear() - age) + "")
-                                .build());
+                        return userRestClient.retrieveUserInfo(o.getUserId())
+                                .map(UserInfoPDV::getPii)
+                                .map(Utils::calculateBirthDateFromFiscalCode) //TODO correct?
+                                .doOnNext(bd -> o.setBirthDate(
+                                        BirthDate.builder()
+                                                .age(Utils.getAge(bd))
+                                                .year(bd.getYear()+"")
+                                                .build()
+                                ))
+                                .then(Mono.just(o));
                     }
+
+                    return Mono.just(o);
                 });
     }
 

@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.connector.rest.UserRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
@@ -37,6 +38,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private CriteriaCodeService criteriaCodeServiceMock;
     @Mock
     private ReactiveMongoTemplate reactiveMongoTemplateMock;
+    @Mock
+    private UserRestClient userRestClientMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -46,7 +49,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock, userRestClientMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
