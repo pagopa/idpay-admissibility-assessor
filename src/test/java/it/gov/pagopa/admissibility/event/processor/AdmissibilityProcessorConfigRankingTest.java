@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -29,7 +30,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-
+@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessorConfigTest {
     @SpyBean
     private RankingNotifierService rankingNotifierServiceSpy;

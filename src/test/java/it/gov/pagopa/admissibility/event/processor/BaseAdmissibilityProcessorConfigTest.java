@@ -41,6 +41,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.admissibility.utils.PerformanceLogger=WARN",
+        "logging.level.it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClientImpl=WARN",
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
 
