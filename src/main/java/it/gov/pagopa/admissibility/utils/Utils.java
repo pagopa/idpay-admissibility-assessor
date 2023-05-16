@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 
 public final class Utils {
 
-    public static final String FISCAL_CODE_STRUCTURE_REGEX = "^([A-Za-z]{6}[0-9lmnpqrstuvLMNPQRSTUV]{2}[abcdehlmprstABCDEHLMPRST]{1}[0-9lmnpqrstuvLMNPQRSTUV]{2}[A-Za-z]{1}[0-9lmnpqrstuvLMNPQRSTUV]{3}[A-Za-z]{1})$";
     public static final String FISCAL_CODE_MONTH_LETTERS = "ABCDEHLMPRST";
 
     private Utils(){}
@@ -50,6 +49,11 @@ public final class Utils {
 
     //region birthdate from fiscalcode
     public static LocalDate calculateBirthDateFromFiscalCode(String fiscalCode) {
+        String fiscalCodeStructureRegex = "^([A-Za-z]{6}[0-9lmnpqrstuvLMNPQRSTUV]{2}[abcdehlmprstABCDEHLMPRST]{1}[0-9lmnpqrstuvLMNPQRSTUV]{2}[A-Za-z]{1}[0-9lmnpqrstuvLMNPQRSTUV]{3}[A-Za-z]{1})$";
+        if (!fiscalCode.matches(fiscalCodeStructureRegex)) {
+            throw new IllegalArgumentException("[ADMISSIBILITY] Fiscal code is not valid!");
+        }
+
         // Extract birthdate characters from the fiscal code
         String birthDateCode = fiscalCode.substring(6, 11);
 

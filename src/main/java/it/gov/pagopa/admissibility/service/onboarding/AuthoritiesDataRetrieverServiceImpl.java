@@ -131,9 +131,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private LocalDate validateCFAndCalculateBirthDate(String cf) {
         // Check if input fiscal code matches the legal structure
-        if (cf.matches(Utils.FISCAL_CODE_STRUCTURE_REGEX)) {
+        try {
             return Utils.calculateBirthDateFromFiscalCode(cf);
-        } else {
+        } catch (IllegalArgumentException e) {
             CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
             throw new OnboardingException(
                     List.of(new OnboardingRejectionReason(
@@ -143,7 +143,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                             criteriaCodeConfig.getAuthorityLabel(),
                             "Data di nascita non disponibile"
                     )),
-                    "[ADMISSIBILITY] Fiscal code not valid"
+                    "[ADMISSIBILITY] Fiscal code is not valid!"
             );
         }
     }
