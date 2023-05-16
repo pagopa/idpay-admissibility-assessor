@@ -57,9 +57,9 @@ public final class Utils {
         String birthDateCode = fiscalCode.substring(6, 11);
 
         // Extract birth year, month, and day from the code
-        int birthYearDigits = handleHomocodes(birthDateCode.substring(0, 2));
+        int birthYearDigits = parseCfDigits(birthDateCode.substring(0, 2));
         char birthMonthCode = birthDateCode.charAt(2);
-        int birthDay = handleHomocodes(birthDateCode.substring(3));
+        int birthDay = parseCfDigits(birthDateCode.substring(3));
 
         // Adjust the day for females (increment by 40)
         if (birthDay > 40) {
@@ -79,7 +79,7 @@ public final class Utils {
         return Period.between(birthDate, LocalDate.now()).getYears();
     }
 
-    private static int handleHomocodes(String cfNumericField) {
+    private static int parseCfDigits(String cfNumericField) {
         return Integer.parseInt(
                 cfNumericField
                         .replace('L', '0')
