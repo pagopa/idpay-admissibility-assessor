@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -10,8 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 class Onboarding2OnboardingDroolsMapperTest {
 
@@ -19,9 +18,6 @@ class Onboarding2OnboardingDroolsMapperTest {
     void onboarding2OnboardingDroolsFilledTest() {
 
         // GIVEN
-        Map<String, Boolean> selfDeclarationListMock1 = new HashMap<>();
-        selfDeclarationListMock1.put("MAP", true);
-
         LocalDateTime localDateTimeMock1 = LocalDateTime.now();
 
         OnboardingDTO objectMock1 = new OnboardingDTO(
@@ -34,7 +30,9 @@ class Onboarding2OnboardingDroolsMapperTest {
                 localDateTimeMock1,
                 new BigDecimal(100),
                 new Residence(),
-                new BirthDate()
+                new BirthDate(),
+                new Family(),
+                false
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();

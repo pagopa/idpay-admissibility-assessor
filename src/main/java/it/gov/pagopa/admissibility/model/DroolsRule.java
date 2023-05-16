@@ -21,5 +21,6 @@ public class DroolsRule {
     private String id;
     private String name;
     private String rule;
+    private String ruleVersion;
     private InitiativeConfig initiativeConfig;
 }

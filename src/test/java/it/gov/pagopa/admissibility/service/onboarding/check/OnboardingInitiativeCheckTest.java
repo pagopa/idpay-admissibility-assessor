@@ -5,10 +5,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -27,33 +23,17 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeNotFound() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                null,
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest(null, localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, null, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -67,39 +47,22 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeTcDateFail() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.of(2022,1,1,0,0);
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, initiativeConfig, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -113,40 +76,24 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCriteriaConsensusDateFail() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock1 = LocalDateTime.of(2021,7,14,0,0);
         LocalDateTime localDateTimeMock2 = LocalDateTime.of(2022,1,1,0,0);
 
-        OnboardingDTO onboardingMock = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock1,
-                localDateTimeMock2,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock1);
+        onboardingMock.setCriteriaConsensusTimestamp(localDateTimeMock2);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
-        OnboardingContextHolderService onboardingContextHolder = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(onboardingContextHolder.getInitiativeConfig(onboardingMock.getInitiativeId())).thenReturn(initiativeConfig);
         Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
         Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
 
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextHolder);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboardingMock, initiativeConfig, onboardingContext);
 
         // Then
         OnboardingRejectionReason expected = OnboardingRejectionReason.builder()
@@ -160,23 +107,9 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCheckOk() {
 
         // Given
-        Map<String, Boolean> selfDeclarationListMock = new HashMap<>();
-        selfDeclarationListMock.put("MAP", true);
-
         LocalDateTime localDateTimeMock = LocalDateTime.now();
 
-        OnboardingDTO onboarding = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock,
-                localDateTimeMock,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate()
-        );
+        OnboardingDTO onboarding = buildOnboardingRequest("1", localDateTimeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -184,15 +117,29 @@ class OnboardingInitiativeCheckTest {
         final InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setStartDate(LocalDate.now());
 
-        OnboardingContextHolderService onboardingContextMock = Mockito.mock(OnboardingContextHolderService.class);
-        Mockito.when(onboardingContextMock.getInitiativeConfig("1")).thenReturn(initiativeConfig);
-        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck(onboardingContextMock);
+        OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
         // When
-        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboarding, onboardingContext);
+        OnboardingRejectionReason result = onboardingInitiativeCheck.apply(onboarding, initiativeConfig, onboardingContext);
 
         // Then
         assertNull(result);
-        Assertions.assertSame(initiativeConfig, onboardingContext.get(OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY));
+    }
+
+    private OnboardingDTO buildOnboardingRequest(String initiativeId, LocalDateTime localDateTimeMock) {
+        return new OnboardingDTO(
+                "1",
+                initiativeId,
+                true,
+                "OK",
+                true,
+                localDateTimeMock,
+                localDateTimeMock,
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate(),
+                null,
+                false
+        );
     }
 }

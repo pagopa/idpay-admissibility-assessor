@@ -21,6 +21,6 @@ public class AdmissibilityControllerImpl implements AdmissibilityController{
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatus(String initiativeId) {
             return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId)
-                    .switchIfEmpty(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND)));
+                    .switchIfEmpty(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND, "Cannot find initiative having id " + initiativeId)));
     }
 }

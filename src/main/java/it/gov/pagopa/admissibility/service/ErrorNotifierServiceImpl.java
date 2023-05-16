@@ -4,12 +4,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,6 +28,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     public static final String ERROR_MSG_HEADER_SRC_TOPIC = "srcTopic";
     public static final String ERROR_MSG_HEADER_DESCRIPTION = "description";
     public static final String ERROR_MSG_HEADER_RETRYABLE = "retryable";
+    public static final String ERROR_MSG_HEADER_RETRY = "retry";
     public static final String ERROR_MSG_HEADER_STACKTRACE = "stacktrace";
 
     private final StreamBridge streamBridge;
@@ -63,7 +68,7 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
 
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-outcome.type}") String admissibilityOutServiceType,
                                     @Value("${spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityOutServer,
-                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessor-out-0.destination}") String admissibilityOutTopic,
+                                    @Value("${spring.cloud.stream.bindings.admissibilityProcessorOut-out-0.destination}") String admissibilityOutTopic,
 
                                     @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityRankingRequestServiceType,
                                     @Value("${spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityRankingRequestServer,
@@ -88,6 +93,15 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
         this.admissibilityRankingRequestServiceType = admissibilityRankingRequestServiceType;
         this.admissibilityRankingRequestServer = admissibilityRankingRequestServer;
         this.admissibilityRankingRequestTopic = admissibilityRankingRequestTopic;
+    }
+
+    /** Declared just to let know Spring to connect the producer at startup */
+    @Configuration
+    static class ErrorNotifierProducerConfig {
+        @Bean
+        public Supplier<Flux<Message<Object>>> errors() {
+            return Flux::empty;
+        }
     }
 
     private final Pattern serviceBusEndpointPattern = Pattern.compile("Endpoint=sb://([^;]+)/?;");

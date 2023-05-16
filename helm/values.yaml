@@ -48,6 +48,11 @@ microservice-chart:
   envConfig:
     APP: "idpay-admissibility-assessor"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
+    MONGODB_DBNAME: "idpay"
+    APPLICATIONINSIGHTS_ROLE_NAME: "idpayadmissibilityassessor"
+    APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
+    APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
+    APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
 
   envConfigMapExternals:
     idpay-common:
@@ -67,7 +72,6 @@ microservice-chart:
 
 
   envSecret:
-    #    APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
     MONGODB_URI: mongodb-connection-string
     KAFKA_ONBOARDING_OUTCOME_SASL_JAAS_CONFIG: evh-idpay-onboarding-outcome-idpay-onboarding-outcome-producer-jaas-config-idpay-00
     KAFKA_RANKING_REQUEST_SASL_JAAS_CONFIG: evh-idpay-onboarding-ranking-request-idpay-onboarding-ranking-request-producer-jaas-config-idpay-00

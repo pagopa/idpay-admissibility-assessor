@@ -1,7 +1,8 @@
-package it.gov.pagopa.admissibility.service.onboarding;
+package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
@@ -10,6 +11,8 @@ import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -68,7 +71,7 @@ class RuleEngineServiceImplTest {
         expected.setInitiativeName(initiativeConfig.getInitiativeName());
         expected.setOrganizationId(initiativeConfig.getOrganizationId());
         expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
-        expected.setStatus("ONBOARDING_KO");
+        expected.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
         expected.setOnboardingRejectionReasons(Collections.singletonList(OnboardingRejectionReason.builder()
                 .code("REASON1")
                 .build()));

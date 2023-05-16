@@ -5,13 +5,6 @@ reactor:
   bufferSize:
     small: ${REACTOR_BUFFER_SIZE:256}
 
-info:
-  build:
-    artifact: "@project.artifactId@"
-    name: "@project.artifactId@"
-    description: "@project.description@"
-    version: "@project.version@"
-
 spring:
   application:
     name: "@project.artifactId@"
@@ -26,7 +19,7 @@ spring:
         connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     stream:
       function:
-        definition: admissibilityProcessor;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer
+        definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest
       bindings:
         admissibilityProcessor-in-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
@@ -34,7 +27,7 @@ spring:
 #          content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-request
           consumer.autoStartup: false
-        admissibilityProcessor-out-0:
+        admissibilityProcessorOut-out-0:
           destination: ${KAFKA_ONBOARDING_OUTCOME_TOPIC:idpay-onboarding-outcome}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-onboarding-outcome
@@ -105,7 +98,7 @@ spring:
             security.protocol: ${KAFKA_CONFIG_SECURITY_PROTOCOL:SASL_SSL}
             connections.max.idle.ms: ${KAFKA_CONFIG_CONNECTION_MAX_IDLE_TIME:180000}
             metadata.max.idle.ms: ${KAFKA_CONFIG_METADATA_MAX_IDLE_MS:180000}
-            metadata.max.age.ms: ${KAFKA_CONFIG_METADATA_MAX_AGE_INTERVAL:180000}
+            metadata.max.age.ms: ${KAFKA_CONFIG_METADATA_MAX_AGE_INTERVAL:179000}
             max.request.size: ${KAFKA_CONFIG_METADATA_MAX_REQUEST_SIZE:1000000}
         bindings:
           beneficiaryRuleBuilderConsumer-in-0:
@@ -113,7 +106,7 @@ spring:
               startOffset: ${KAFKA_BENEFICIARY_RULE_REQUEST_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
               autoCommitOffset: false
               ackMode: MANUAL_IMMEDIATE
-              ackTime: ${KAFKA_BENEFICIARY_RULE_REQUEST_ACK_MILLIS:10000}
+              ackTime: ${KAFKA_BENEFICIARY_RULE_REQUEST_ACK_MILLIS:500}
               standardHeaders: ${KAFKA_BENEFICIARY_RULE_REQUEST_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
               configuration:
                 max.poll:
@@ -123,7 +116,7 @@ spring:
                 socket.connection.setup.timeout:
                   max.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
                   ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
-          admissibilityProcessor-out-0:
+          admissibilityProcessorOut-out-0:
             producer:
               configuration:
                 client.id: admissibilityProcessor
@@ -165,8 +158,8 @@ spring:
     url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
 
 management.endpoints:
-  jmx:
-    exposure.include: bindings
+  web:
+    exposure.include: info, health
 
 logging:
   level:
@@ -195,9 +188,12 @@ app:
     # the size of the thread pool to handle @Scheduled tasks
     schedule-max-number: ${THREADS_SCHEDULE_MAX_NUMBER:1}
   onboarding-request:
+    max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
       next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
       delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
+    delay-family-in-progress:
+      delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}
   beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
     online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}
@@ -205,6 +201,8 @@ app:
     build-delay-duration: ${BENEFICIARY_RULE_BUILD_DELAY_DURATION:PT1S} # each second
     # The milliseconds rate after which to fetch from cache a new instance of the benefiricaryRilekieContainer
     cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:10000}
+    # Pre load container
+    pre-load: ${BENEFICIARY_RULE_CONTAINER_PRE_LOAD_ENABLED:true}
   criteria-code-configs: # TODO using Spring cloud kubernetes?
     ISEE:
       authority: "INPS"
@@ -218,3 +216,7 @@ app:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
+    FAMILY:
+      authority: "INPS"
+      authorityLabel: "Istituto Nazionale Previdenza Sociale"
+      onboardingField: "family"

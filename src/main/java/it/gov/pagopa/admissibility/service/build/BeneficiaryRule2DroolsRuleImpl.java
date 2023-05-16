@@ -47,15 +47,21 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
 
         DroolsRule out = new DroolsRule();
         out.setId(initiative.getInitiativeId());
-        out.setName(String.format("%s-%s", initiative.getInitiativeId(), initiative.getInitiativeName()));
+        out.setName(initiative.getInitiativeName());
+        out.setRuleVersion("20230404");
 
         out.setRule("""
                 package %s;
-                                    
+                
+                // %s
+                // ruleVersion: %s
+                
                 %s
                 """.formatted(
                 KieContainerBuilderServiceImpl.RULES_BUILT_PACKAGE,
-                initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getName(), c)).collect(Collectors.joining("\n\n")))
+                out.getName(),
+                out.getRuleVersion(),
+                initiative.getBeneficiaryRule().getAutomatedCriteria().stream().map(c -> automatedCriteriaRuleBuild(out.getId(), out.getId(), c)).collect(Collectors.joining("\n\n")))
         );
 
         out.setInitiativeConfig(initiative2InitiativeConfigMapper.apply(initiative));

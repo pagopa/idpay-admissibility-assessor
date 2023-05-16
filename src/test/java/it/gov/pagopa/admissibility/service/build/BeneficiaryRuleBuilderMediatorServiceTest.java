@@ -1,10 +1,11 @@
-package it.gov.pagopa.admissibility.service;
+package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.build.*;
+import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.utils.TestUtils;
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.kie.api.KieBase;
 import org.mockito.Mockito;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
@@ -51,7 +53,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     void configureMocks() {
         Mockito.when(beneficiaryRule2DroolsRuleMock.apply(Mockito.any())).thenAnswer(invocation -> {
             Initiative2BuildDTO i = invocation.getArgument(0);
-            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE",
+            return new DroolsRule(i.getInitiativeId(), i.getInitiativeName(), "RULE", "RULEVERSION",
                     InitiativeConfig.builder()
                             .initiativeId(i.getInitiativeId())
                             .startDate(i.getGeneral().getStartDate())
@@ -73,7 +75,14 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         // Given
         int N = 10;
         List<Initiative2BuildDTO> initiatives = IntStream.range(0, N).mapToObj(Initiative2BuildDTOFaker::mockInstance).collect(Collectors.toList());
-        Flux<Message<String>> inputFlux = Flux.fromIterable(initiatives).map(TestUtils::jsonSerializer).map(MessageBuilder::withPayload).map(MessageBuilder::build);
+        Flux<Message<String>> inputFlux = Flux.fromIterable(initiatives)
+                .map(TestUtils::jsonSerializer)
+                .map(payload -> MessageBuilder
+                        .withPayload(payload)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.OFFSET, 0L)
+                )
+                .map(MessageBuilder::build);
 
         BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
 
@@ -104,7 +113,12 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
         Flux<Message<String>> msgs = Flux.just(initiative1, initiative2)
                 .map(TestUtils::jsonSerializer)
-                .map(MessageBuilder::withPayload).map(MessageBuilder::build);
+                .map(payload -> MessageBuilder
+                        .withPayload(payload)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.OFFSET, 0L)
+                )
+                .map(MessageBuilder::build);
 
         Mockito.when(beneficiaryRuleFilterServiceMock.filter(initiative1)).thenReturn(true);
         Mockito.when(beneficiaryRuleFilterServiceMock.filter(initiative2)).thenReturn(false);
@@ -133,7 +147,11 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
         Flux<Message<String>> msgs = Flux.just(initiative1, initiative2)
                 .map(TestUtils::jsonSerializer)
-                .map(MessageBuilder::withPayload)
+                .map(payload -> MessageBuilder
+                        .withPayload(payload)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.OFFSET, 0L)
+                )
                 .doOnNext(m->m.setHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "otherAppName".getBytes(StandardCharsets.UTF_8)))
                 .map(MessageBuilder::build);
 

@@ -1,27 +1,42 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
 
     @Mock
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
+    @Mock
+    private CriteriaCodeService criteriaCodeServiceMock;
+    @Mock
+    private ReactiveMongoTemplate reactiveMongoTemplateMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -31,7 +46,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock);
 
         onboardingDTO =OnboardingDTO.builder()
                 .userId("USERID")
@@ -44,6 +59,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .build();
 
         LocalDate now = LocalDate.now();
+        List<IseeTypologyEnum> typology = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
         initiativeConfig = InitiativeConfig.builder()
                 .initiativeId("INITIATIVEID")
                 .initiativeName("INITITIATIVE_NAME")
@@ -55,9 +71,20 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
+                .automatedCriteria(List.of(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology)))
                 .build();
 
         message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+
+        Mockito.lenient().when(criteriaCodeServiceMock.getCriteriaCodeConfig(Mockito.anyString())).thenReturn(new CriteriaCodeConfig(
+                "ISEE",
+                "INPS",
+                "Istituto Nazionale Previdenza Sociale",
+                "ISEE"
+        ));
+
+        Mockito.lenient().when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.any(), Mockito.eq("mocked_isee")))
+                .thenReturn(Mono.empty());
     }
 
     @Test
@@ -72,7 +99,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
     }
 
     @Test
@@ -87,7 +114,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("74585"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
     }
 
     @Test
@@ -123,7 +150,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("25729"), result.getIsee());
+        Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
     }
 }
