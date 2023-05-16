@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
@@ -11,6 +12,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -38,6 +40,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final CriteriaCodeService criteriaCodeService;
     private final ReactiveMongoTemplate mongoTemplate;
+    private final UserFiscalCodeRestClient userRestClient;
 
     private final StreamBridge streamBridge;
 
@@ -46,13 +49,15 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CriteriaCodeService criteriaCodeService,
-                                               ReactiveMongoTemplate mongoTemplate) {
+                                               ReactiveMongoTemplate mongoTemplate,
+                                               UserFiscalCodeRestClient userRestClient) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
         this.delaySeconds = delaySeconds;
         this.nextDay = nextDay;
         this.criteriaCodeService = criteriaCodeService;
         this.mongoTemplate = mongoTemplate;
+        this.userRestClient = userRestClient;
     }
 
     @Override
@@ -63,7 +68,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         return Mono.just(onboardingRequest)
                 // ISEE
                 .flatMap(o -> {
-                    if (o.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE)) {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_ISEE, onboardingRequest, initiativeConfig)) {
                         return retrieveIsee(o, initiativeConfig);
                     }
 
@@ -71,7 +76,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 })
                 // RESIDENCE
                 .doOnNext(o -> {
-                    if (onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE)) {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_RESIDENCE, onboardingRequest, initiativeConfig)) {
                         onboardingRequest.setResidence(
                                 userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
                                         ? Residence.builder()
@@ -95,15 +100,52 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     }
                 })
                 // BIRTHDATE
-                .doOnNext(o -> {
-                    if (onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)) {
-                        int age = userIdBasedIntegerGenerator(onboardingRequest).nextInt(18, 99);
-                        onboardingRequest.setBirthDate(BirthDate.builder()
-                                .age(age)
-                                .year((LocalDate.now().getYear() - age) + "")
-                                .build());
+                .flatMap(o -> {
+                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_BIRTHDATE, onboardingRequest, initiativeConfig)) {
+                        return userRestClient.retrieveUserInfo(o.getUserId())
+                                .map(u -> validateCFAndCalculateBirthDate(u.getPii()))
+                                .doOnNext(bd -> o.setBirthDate(
+                                        BirthDate.builder()
+                                                .age(Utils.getAge(bd))
+                                                .year(bd.getYear()+"")
+                                                .build()
+                                ))
+                                .then(Mono.just(o));
                     }
+
+                    return Mono.just(o);
                 });
+    }
+
+    private boolean requiresCritierium(String criterium, OnboardingDTO o, InitiativeConfig initiativeConfig) {
+        return switch (criterium) {
+            case OnboardingConstants.CRITERIA_CODE_ISEE ->
+                    o.getIsee() == null && is2retrieve(initiativeConfig, criterium);
+            case OnboardingConstants.CRITERIA_CODE_RESIDENCE ->
+                    o.getResidence() == null && is2retrieve(initiativeConfig, criterium);
+            case OnboardingConstants.CRITERIA_CODE_BIRTHDATE ->
+                    o.getBirthDate() == null && is2retrieve(initiativeConfig, criterium);
+            default -> false;
+        };
+    }
+
+    private LocalDate validateCFAndCalculateBirthDate(String cf) {
+        // Check if input fiscal code matches the legal structure
+        try {
+            return Utils.calculateBirthDateFromFiscalCode(cf);
+        } catch (IllegalArgumentException e) {
+            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
+            throw new OnboardingException(
+                    List.of(new OnboardingRejectionReason(
+                            OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO,
+                            OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO,
+                            criteriaCodeConfig.getAuthority(),
+                            criteriaCodeConfig.getAuthorityLabel(),
+                            "Data di nascita non disponibile"
+                    )),
+                    "[ADMISSIBILITY] Fiscal code is not valid!"
+            );
+        }
     }
 
     private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
