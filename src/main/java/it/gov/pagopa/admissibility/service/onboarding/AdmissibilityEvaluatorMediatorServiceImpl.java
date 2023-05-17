@@ -115,16 +115,29 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
-                .doFinally(o -> {
-                    Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
-                    if (checkpointer != null) {
-                        checkpointer.success()
-                                .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
-                                .doOnError(e -> log.error("Fail to checkpoint the message", e))
-                                .subscribe();
-                    }
-                   PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
-                });
+
+                .switchIfEmpty(commitMessage(startTime, message, Mono.empty()))
+                .flatMap(o -> commitMessage(startTime, message, Mono.just(o)));
+    }
+
+    private Mono<EvaluationDTO> commitMessage(long startTime, Message<String> message, Mono<EvaluationDTO> then) {
+        return Mono.defer(() -> {
+            Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
+            Mono<EvaluationDTO> mono;
+            if (checkpointer != null) {
+                mono = checkpointer.success()
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
+                        .doOnError(e -> log.error("Fail to checkpoint the message", e))
+                        .then(then);
+            } else {
+                mono = then;
+            }
+            return PerformanceLogger.logTimingFinally(
+                    "ONBOARDING_REQUEST", startTime,
+                    mono,
+                    message.getPayload()
+            );
+        });
     }
 
     private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
