@@ -29,6 +29,7 @@ public class OnboardingRejectionReason implements Serializable {
         AUTOMATED_CRITERIA_FAIL,
         ISEE_TYPE_KO,
         FAMILY_KO,
+        BIRTHDATE_KO,
         OUT_OF_RANKING
     }
 }

@@ -31,6 +31,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.ContextConfiguration;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -39,6 +40,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorConfigTest {
 
     @TestConfiguration
