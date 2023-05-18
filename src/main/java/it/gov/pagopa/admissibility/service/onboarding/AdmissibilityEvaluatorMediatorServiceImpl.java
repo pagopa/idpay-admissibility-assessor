@@ -169,9 +169,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                     onboardingRequest.isBudgetReserved() ? "(BUDGET_RESERVED)" : "",
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
-                            Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
-
-                            String retryHeaderValue = readRetryHeader(retryHeader);
+                            String retryHeaderValue = readRetryHeader(message);
 
                             if (retryHeaderValue == null || Integer.parseInt(retryHeaderValue) < maxOnboardingRequestRetry) {
                                 log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
@@ -191,7 +189,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         }
     }
 
-    private static String readRetryHeader(Object retryHeader) {
+    private static String readRetryHeader(Message<String> message) {
+        Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
+
         String retryHeaderValue;
         if(retryHeader instanceof String retryString){ // ServiceBus return it as String
             retryHeaderValue = retryString;
