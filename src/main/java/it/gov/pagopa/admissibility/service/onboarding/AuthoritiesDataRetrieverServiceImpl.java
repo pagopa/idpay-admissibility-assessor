@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.data.annotation.Id;
@@ -202,7 +203,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
         for (AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()) {
             if (automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)) {
-                for (IseeTypologyEnum iseeTypologyEnum : automatedCriteriaDTO.getIseeTypes()) {
+                for (IseeTypologyEnum iseeTypologyEnum : ObjectUtils.firstNonNull(automatedCriteriaDTO.getIseeTypes(), List.of(IseeTypologyEnum.ORDINARIO))) {
                     if (iseeMap.containsKey(iseeTypologyEnum.name())) {
                         onboardingRequest.setIsee(iseeMap.get(iseeTypologyEnum.name()));
                         break;

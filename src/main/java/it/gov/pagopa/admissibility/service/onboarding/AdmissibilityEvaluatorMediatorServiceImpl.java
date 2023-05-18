@@ -169,8 +169,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                     onboardingRequest.isBudgetReserved() ? "(BUDGET_RESERVED)" : "",
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
-                            byte[] retryHeaderValue = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY, byte[].class);
-                            if (retryHeaderValue == null || Integer.parseInt(new String(retryHeaderValue, StandardCharsets.UTF_8)) < maxOnboardingRequestRetry) {
+                            String retryHeaderValue = readRetryHeader(message);
+
+                            if (retryHeaderValue == null || Integer.parseInt(retryHeaderValue) < maxOnboardingRequestRetry) {
                                 log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
                                 return Mono.error(e);
                             } else {
@@ -186,6 +187,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } else {
             return Mono.empty();
         }
+    }
+
+    private static String readRetryHeader(Message<String> message) {
+        Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
+
+        String retryHeaderValue;
+        if(retryHeader instanceof String retryString){ // ServiceBus return it as String
+            retryHeaderValue = retryString;
+        } else if(retryHeader instanceof byte[] retryBytes) { // Kafka return it as byte[]
+            retryHeaderValue = new String(retryBytes, StandardCharsets.UTF_8);
+        } else {
+            retryHeaderValue = null;
+        }
+        return retryHeaderValue;
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
