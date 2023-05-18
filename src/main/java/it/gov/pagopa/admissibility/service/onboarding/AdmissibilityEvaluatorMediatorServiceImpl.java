@@ -29,6 +29,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -93,10 +94,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
         long startTime = System.currentTimeMillis();
-
-        return Mono.just(message)
-                .flatMap(this::execute)
-                .map(req2ev -> {
+        return Mono.just(message).flatMap(this::execute).map(req2ev -> {
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
@@ -108,23 +106,32 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
-
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
                     errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
-                .doFinally(o -> {
-                    Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
-                    if (checkpointer != null) {
-                        checkpointer.success()
-                                .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
-                                .doOnError(e -> log.error("Fail to checkpoint the message", e))
-                                .subscribe();
-                    }
-                   PerformanceLogger.logTiming("ONBOARDING_REQUEST", startTime, message.getPayload());
-                });
+
+                .publishOn(Schedulers.boundedElastic())
+                .switchIfEmpty(commitMessage(startTime, message, Mono.empty()))
+                .flatMap(o -> commitMessage(startTime, message, Mono.just(o)));
+    }
+
+    private Mono<EvaluationDTO> commitMessage(long startTime, Message<String> message, Mono<EvaluationDTO> then) {
+        return Mono.defer(() -> {
+            Checkpointer checkpointer = message.getHeaders().get(AzureHeaders.CHECKPOINTER, Checkpointer.class);
+            Mono<EvaluationDTO> mono;
+            if (checkpointer != null) {
+                mono = checkpointer.success()
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
+                        .doOnError(e -> log.error("Fail to checkpoint the message", e))
+                        .then(then);
+            } else {
+                mono = then;
+            }
+            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, message.getPayload());
+        });
     }
 
     private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
