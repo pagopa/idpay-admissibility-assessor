@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.connector.rest;
 
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
+import it.gov.pagopa.admissibility.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -12,7 +13,6 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -39,16 +39,15 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
 
     @Override
     public Mono<UserInfoPDV> retrieveUserInfo(String userId) {
-        Map<String, String> params = new HashMap<>();
-        params.put("token", userId);
-        long startTime = System.currentTimeMillis();
-
-        return webClient
-                .method(HttpMethod.GET)
-                .uri(URI, params)
-                .retrieve()
-                .toEntity(UserInfoPDV.class)
-                .doOnNext(x -> log.info("[PERFORMANCE_LOG] [PDV_INTEGRATION] Time occurred to call pdv {} ms and resolved into httpStatus {}", System.currentTimeMillis() - startTime, x.getStatusCodeValue()))
+        return PerformanceLogger.logTimingOnNext(
+                        "PDV_INTEGRATION",
+                        webClient
+                                .method(HttpMethod.GET)
+                                .uri(URI, Map.of("token", userId))
+                                .retrieve()
+                                .toEntity(UserInfoPDV.class),
+                        x -> "httpStatus %s".formatted(x.getStatusCodeValue())
+                )
                 .map(HttpEntity::getBody)
                 .retryWhen(Retry.fixedDelay(pdvMaxAttempts, Duration.ofMillis(pdvRetryDelay))
                         .filter(ex -> {

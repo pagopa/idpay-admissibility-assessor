@@ -67,12 +67,12 @@ class OnboardingFamiliesRepositoryTest extends BaseIntegrationTest {
     @Test
     void testCreateIfNotExists(){
         // Given
+        LocalDateTime beforeCreate = LocalDateTime.now();
+
         Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
         OnboardingFamilies expectedResult = new OnboardingFamilies(f1, "INITIATIVEID");
         expectedResult.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
         testData.add(expectedResult);
-
-        LocalDateTime beforeCreate = LocalDateTime.now();
 
         // When not exists
         OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId()).block();

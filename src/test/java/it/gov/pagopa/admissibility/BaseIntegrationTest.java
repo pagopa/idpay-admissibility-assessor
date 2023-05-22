@@ -397,7 +397,7 @@ public abstract class BaseIntegrationTest {
         try {
             Awaitility.await().timeout(timeout, timeoutUnit).until(() -> false);
         } catch (ConditionTimeoutException ex) {
-// Do Nothing
+            // Do Nothing
         }
     }
 
@@ -451,13 +451,13 @@ public abstract class BaseIntegrationTest {
     public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
-// setting wiremock HTTP baseUrl
+            // setting wiremock HTTP baseUrl
             Stream.of(
                     Pair.of("app.pdv.base-url","pdv"),
                     Pair.of("app.pdnd.access.token-base-url","pdnd")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
 
-// setting wiremock HTTPS baseUrl
+            // setting wiremock HTTPS baseUrl
             Stream.of(
                     Pair.of("app.anpr.c020-residenceAssessment.base-url","anpr/residence"),
                             Pair.of("app.inps.iseeConsultation.base-url","inps/isee")

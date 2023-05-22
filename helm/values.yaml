@@ -69,8 +69,6 @@ microservice-chart:
       KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
       KAFKA_ERRORS_BROKER: kafka_broker
       KAFKA_ERRORS_TOPIC: idpay_error_topic
-    rest-client:
-      PDV_BASE_URL: pdv_decrypt_base_url
 
 
   envSecret:

@@ -29,6 +29,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -93,10 +94,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
         long startTime = System.currentTimeMillis();
-
-        return Mono.just(message)
-                .flatMap(this::execute)
-                .map(req2ev -> {
+        return Mono.just(message).flatMap(this::execute).map(req2ev -> {
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
@@ -108,7 +106,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
-
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
@@ -116,6 +113,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return Mono.empty();
                 })
 
+                .publishOn(Schedulers.boundedElastic())
                 .switchIfEmpty(commitMessage(startTime, message, Mono.empty()))
                 .flatMap(o -> commitMessage(startTime, message, Mono.just(o)));
     }
@@ -126,17 +124,13 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             Mono<EvaluationDTO> mono;
             if (checkpointer != null) {
                 mono = checkpointer.success()
-                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", Utils.readMessagePayload(message)))
                         .doOnError(e -> log.error("Fail to checkpoint the message", e))
                         .then(then);
             } else {
                 mono = then;
             }
-            return PerformanceLogger.logTimingFinally(
-                    "ONBOARDING_REQUEST", startTime,
-                    mono,
-                    message.getPayload()
-            );
+            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, Utils.readMessagePayload(message));
         });
     }
 
@@ -175,8 +169,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                     onboardingRequest.isBudgetReserved() ? "(BUDGET_RESERVED)" : "",
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
-                            byte[] retryHeaderValue = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY, byte[].class);
-                            if (retryHeaderValue == null || Integer.parseInt(new String(retryHeaderValue, StandardCharsets.UTF_8)) < maxOnboardingRequestRetry) {
+                            String retryHeaderValue = readRetryHeader(message);
+
+                            if (retryHeaderValue == null || Integer.parseInt(retryHeaderValue) < maxOnboardingRequestRetry) {
                                 log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
                                 return Mono.error(e);
                             } else {
@@ -192,6 +187,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         } else {
             return Mono.empty();
         }
+    }
+
+    private static String readRetryHeader(Message<String> message) {
+        Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
+
+        String retryHeaderValue;
+        if(retryHeader instanceof String retryString){ // ServiceBus return it as String
+            retryHeaderValue = retryString;
+        } else if(retryHeader instanceof byte[] retryBytes) { // Kafka return it as byte[]
+            retryHeaderValue = new String(retryBytes, StandardCharsets.UTF_8);
+        } else {
+            retryHeaderValue = null;
+        }
+        return retryHeaderValue;
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {

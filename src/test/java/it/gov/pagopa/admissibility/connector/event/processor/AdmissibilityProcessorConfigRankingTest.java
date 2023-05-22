@@ -32,7 +32,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-
 @ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessorConfigTest {
     @SpyBean

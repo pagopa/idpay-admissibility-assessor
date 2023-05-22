@@ -24,6 +24,7 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
+        log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Fetching initiative having id: {}", initiativeId);
         return droolsRuleRepository.findById(initiativeId)
                 .flatMap(droolsRule ->
                         initiativeCountersRepository.findById(initiativeId)
@@ -37,6 +38,9 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                                 initiativeConfig.getBeneficiaryInitiativeBudget()
                                         )
                                 );
+
+                                log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
+                                        initiativeId, initiativeStatus.getStatus(), initiativeStatus.isBudgetAvailable());
                                 return initiativeStatus;
                                 })
                 );
