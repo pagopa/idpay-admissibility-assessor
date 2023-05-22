@@ -124,13 +124,13 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             Mono<EvaluationDTO> mono;
             if (checkpointer != null) {
                 mono = checkpointer.success()
-                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", message.getPayload()))
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", Utils.readMessagePayload(message)))
                         .doOnError(e -> log.error("Fail to checkpoint the message", e))
                         .then(then);
             } else {
                 mono = then;
             }
-            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, message.getPayload());
+            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, Utils.readMessagePayload(message));
         });
     }
 
