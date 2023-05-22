@@ -94,7 +94,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
         long startTime = System.currentTimeMillis();
-        return Mono.just(message).flatMap(this::execute).map(req2ev -> {
+
+        return Mono.just(message)
+                .flatMap(this::execute)
+                .map(req2ev -> {
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
@@ -106,6 +109,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
+
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {

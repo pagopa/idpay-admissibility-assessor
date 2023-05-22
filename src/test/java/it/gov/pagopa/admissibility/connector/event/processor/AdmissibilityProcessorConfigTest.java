@@ -54,7 +54,6 @@ import java.util.stream.Stream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=OFF",
 })
-@ContextConfiguration(inheritInitializers = false)
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
 
     public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
