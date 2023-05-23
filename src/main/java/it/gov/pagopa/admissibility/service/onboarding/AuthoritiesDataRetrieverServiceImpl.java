@@ -134,7 +134,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         // Check if input fiscal code matches the legal structure
         try {
             return Utils.calculateBirthDateFromFiscalCode(cf);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
             throw new OnboardingException(
                     List.of(new OnboardingRejectionReason(
@@ -144,7 +144,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                             criteriaCodeConfig.getAuthorityLabel(),
                             "Data di nascita non disponibile"
                     )),
-                    "[ADMISSIBILITY] Fiscal code is not valid!"
+                    "[ADMISSIBILITY] Fiscal code is not valid!",
+                    e
             );
         }
     }
