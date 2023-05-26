@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.notifier;
 
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,18 +21,18 @@ import java.time.OffsetDateTime;
 class OnboardingRescheduleServiceTest {
 
     @Mock private StreamBridge streamBridgeMock;
-    @Mock private ErrorNotifierService errorNotifierServiceMock;
+    @Mock private AdmissibilityErrorNotifierService admissibilityErrorNotifierServiceMock;
 
     private OnboardingRescheduleService service;
 
     @BeforeEach
     void init(){
-        service = new OnboardingRescheduleServiceImpl(streamBridgeMock, errorNotifierServiceMock);
+        service = new OnboardingRescheduleServiceImpl(streamBridgeMock, admissibilityErrorNotifierServiceMock);
     }
 
     @AfterEach
     void verifyNotMoreMockInvocations(){
-        Mockito.verifyNoMoreInteractions(streamBridgeMock, errorNotifierServiceMock);
+        Mockito.verifyNoMoreInteractions(streamBridgeMock, admissibilityErrorNotifierServiceMock);
     }
 
     private final OnboardingDTO request = new OnboardingDTO();
@@ -57,7 +57,7 @@ class OnboardingRescheduleServiceTest {
         callService();
 
         // Then
-        Mockito.verify(errorNotifierServiceMock).notifyAdmissibility(Mockito.argThat(m -> {assertMessage(m); return true;}), Mockito.any(), Mockito.eq(true), Mockito.isNull());
+        Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibility(Mockito.argThat(m -> {assertMessage(m); return true;}), Mockito.any(), Mockito.eq(true), Mockito.isNull());
     }
 
     private void callService() {

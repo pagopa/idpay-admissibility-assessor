@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.config.EmbeddedRedisTestConfiguration;
+import it.gov.pagopa.common.redis.config.EmbeddedRedisTestConfiguration;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.kie.api.KieBase;
@@ -84,7 +85,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         KieBase kieBase = kieContainerBuilderService.build(Flux.just(dr)).block();
         onboardingContextHolderService.setBeneficiaryRulesKieBase(kieBase);
-        waitFor(
+        TestUtils.waitFor(
                 ()->(reactiveRedisTemplate.opsForValue().get(OnboardingContextHolderServiceImpl.ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).block()) != null,
                 ()->"KieBase not saved in cache",
                 10,
@@ -111,7 +112,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         // Set a null kieBase
         onboardingContextHolderService.setBeneficiaryRulesKieBase(null);
-        waitFor(
+        TestUtils.waitFor(
                 ()->(reactiveRedisTemplate.opsForValue().get(OnboardingContextHolderServiceImpl.ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).block()) == null,
                 ()->"KieBase not saved in cache",
                 10,
@@ -119,7 +120,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
         );
 
         onboardingContextHolderService.refreshKieContainer();
-        waitFor(
+        TestUtils.waitFor(
                 ()-> (reactiveRedisTemplate.opsForValue().get(OnboardingContextHolderServiceImpl.ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).block()) != null,
                 ()-> "KieBase is null",
                 10,
@@ -135,7 +136,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
     private void refreshAndAssertKieContainerRuleSize(int expectedRuleSize) {
         onboardingContextHolderService.refreshKieContainer();
-        waitFor(
+        TestUtils.waitFor(
                 ()-> onboardingContextHolderService.getBeneficiaryRulesKieBase() != null,
                 ()->"KieBase is null",
                 10,

@@ -11,7 +11,7 @@ import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverSe
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
@@ -39,8 +39,8 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.build=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
-        "logging.level.it.gov.pagopa.admissibility.utils.PerformanceLogger=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
         "logging.level.it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClientImpl=WARN",
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
@@ -135,7 +135,7 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
         checkpointers.forEach(checkpointer -> Mockito.verify(checkpointer).success());
 
         long timeCommitChecked = System.currentTimeMillis();
-        final Map<TopicPartition, Long> destPublishedOffsets = checkPublishedOffsets(outputTopic, exptectedPublishedResults);
+        final Map<TopicPartition, Long> destPublishedOffsets = kafkaTestUtilitiesService.checkPublishedOffsets(outputTopic, exptectedPublishedResults);
         long timePublishChecked = System.currentTimeMillis();
         System.out.printf("""
                         ************************

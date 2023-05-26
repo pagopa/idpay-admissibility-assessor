@@ -5,7 +5,7 @@ import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

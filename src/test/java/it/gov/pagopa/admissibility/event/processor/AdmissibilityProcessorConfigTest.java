@@ -10,13 +10,14 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.utils.TestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
@@ -75,11 +76,11 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
+        onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
-        List<ConsumerRecord<String, String>> payloadConsumed = consumeMessages(topicAdmissibilityProcessorOutcome, validOnboardings, maxWaitingMs);
+        List<ConsumerRecord<String, String>> payloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutcome, validOnboardings, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
@@ -151,7 +152,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                         )
                 )
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
-                .forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
+                .forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
     }
@@ -284,7 +285,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                         Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(
                                 Mockito.argThat(i->out.getUserId().equals(i.getUserId())), Mockito.any(), Mockito.any());
 
-                        return MessageBuilder.withPayload(out).setHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY, maxRetry+"").build();
+                        return MessageBuilder.withPayload(out).setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, maxRetry+"").build();
                     },
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
@@ -396,7 +397,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
@@ -412,7 +413,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
@@ -437,15 +438,20 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .initiativeId(onboardingDTO.getInitiativeId())
                 .initiativeName(initiativeExceptionWhenOnboardingPublishing.getInitiativeName())
                 .initiativeEndDate(initiativeExceptionWhenOnboardingPublishing.getGeneral().getEndDate())
+                .initiativeRewardType(initiativeExceptionWhenOnboardingPublishing.getInitiativeRewardType())
+                .isLogoPresent(initiativeExceptionWhenOnboardingPublishing.getAdditionalInfo() != null && !StringUtils.isEmpty(initiativeExceptionWhenOnboardingPublishing.getAdditionalInfo().getLogoFileName()))
                 .organizationId(initiativeExceptionWhenOnboardingPublishing.getOrganizationId())
+                .organizationName(initiativeExceptionWhenOnboardingPublishing.getOrganizationName())
                 .status(OnboardingEvaluationStatus.ONBOARDING_OK)
                 .onboardingRejectionReasons(Collections.emptyList())
                 .beneficiaryBudget(initiativeExceptionWhenOnboardingPublishing.getGeneral().getBeneficiaryBudget())
+                .admissibilityCheckDate(LocalDateTime.now())
+                .criteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp())
                 .build();
     }
 
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, "", errorMessage, errorDescription, expectedPayload,true,true,false);
+        checkErrorMessageHeaders(serviceBusServers, topicAdmissibilityProcessorRequest, "", errorMessage, errorDescription, expectedPayload,null,true,true);
     }
     //endregion
 
