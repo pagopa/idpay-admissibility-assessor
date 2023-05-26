@@ -2,10 +2,10 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,7 +65,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
         Assertions.assertEquals("accessToken_1", result);
 
         int deltaMillis = 10;
-        BaseIntegrationTest.wait((expireInSeconds*1000L)+ deltaMillis, TimeUnit.MILLISECONDS);
+        TestUtils.wait((expireInSeconds*1000L)+ deltaMillis, TimeUnit.MILLISECONDS);
 
         Cache<String, String> cacheChange = retrieveCache();
         //noinspection SuspiciousMethodCalls

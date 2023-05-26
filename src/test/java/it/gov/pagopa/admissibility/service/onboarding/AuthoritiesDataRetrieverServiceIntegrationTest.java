@@ -9,7 +9,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

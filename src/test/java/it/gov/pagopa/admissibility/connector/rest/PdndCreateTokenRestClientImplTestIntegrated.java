@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.connector.rest;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

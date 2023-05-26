@@ -1,8 +1,10 @@
 package it.gov.pagopa.admissibility.dto.in_memory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.admissibility.config.JsonConfig;
-import lombok.*;
+import it.gov.pagopa.common.config.JsonConfig;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
 
 import java.util.Base64;
 @Data

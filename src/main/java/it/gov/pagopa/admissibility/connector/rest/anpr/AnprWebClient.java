@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr;
 
-import it.gov.pagopa.admissibility.config.WebClientConfig;
+import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;

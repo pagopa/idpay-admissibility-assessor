@@ -16,7 +16,7 @@ import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverServ
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.utils.CommonConstants;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -151,9 +151,9 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         LocalDate today = LocalDate.now();
         if (this.nextDay) {
             LocalTime midnight = LocalTime.MIDNIGHT;
-            return LocalDateTime.of(today, midnight).plusDays(1).atZone(Utils.ZONE_ID).toOffsetDateTime();
+            return LocalDateTime.of(today, midnight).plusDays(1).atZone(CommonConstants.ZONEID).toOffsetDateTime();
         } else {
-            return LocalDateTime.now().plusMinutes(this.delayMinutes).atZone(Utils.ZONE_ID).toOffsetDateTime();
+            return LocalDateTime.now().plusMinutes(this.delayMinutes).atZone(CommonConstants.ZONEID).toOffsetDateTime();
         }
     }
 

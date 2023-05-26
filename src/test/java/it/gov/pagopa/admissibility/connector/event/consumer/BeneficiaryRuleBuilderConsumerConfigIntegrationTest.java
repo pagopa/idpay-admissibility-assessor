@@ -4,7 +4,6 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
