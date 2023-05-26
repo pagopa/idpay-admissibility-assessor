@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.notifier;
 
 import com.azure.spring.messaging.servicebus.support.ServiceBusMessageHeaders;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
@@ -21,11 +21,11 @@ import java.util.function.Supplier;
 public class OnboardingRescheduleServiceImpl implements OnboardingRescheduleService {
 
     private final StreamBridge streamBridge;
-    private final ErrorNotifierService errorNotifierService;
+    private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
 
-    public OnboardingRescheduleServiceImpl(StreamBridge streamBridge, ErrorNotifierService errorNotifierService) {
+    public OnboardingRescheduleServiceImpl(StreamBridge streamBridge, AdmissibilityErrorNotifierService admissibilityErrorNotifierService) {
         this.streamBridge = streamBridge;
-        this.errorNotifierService = errorNotifierService;
+        this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
     }
 
     /** Declared just to let know Spring to connect the producer at startup */
@@ -45,7 +45,7 @@ public class OnboardingRescheduleServiceImpl implements OnboardingRescheduleServ
                 .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, rescheduleDateTime)
                 .build();
         if(!streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage)){
-            errorNotifierService.notifyAdmissibility(delayedMessage,  "[ONBOARDING_REQUEST] [RETRIEVE_ERROR] Cannot reschedule onboarding request", true, null);
+            admissibilityErrorNotifierService.notifyAdmissibility(delayedMessage,  "[ONBOARDING_REQUEST] [RETRIEVE_ERROR] Cannot reschedule onboarding request", true, null);
         }
     }
 }

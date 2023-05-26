@@ -19,8 +19,8 @@ import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.TestUtils;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.utils.CommonUtilities;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -90,12 +90,12 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
+        onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
-        List<ConsumerRecord<String, String>> rankingRequestPayloadConsumed = consumeMessages(topicAdmissibilityProcessorOutRankingRequest, expectedRequestsPerInitiative, maxWaitingMs);
-        List<ConsumerRecord<String, String>> evaluationOutcomePayloadConsumed = consumeMessages(topicAdmissibilityProcessorOutcome, expectedEvaluationCompletedMessages, maxWaitingMs);
+        List<ConsumerRecord<String, String>> rankingRequestPayloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutRankingRequest, expectedRequestsPerInitiative, maxWaitingMs);
+        List<ConsumerRecord<String, String>> evaluationOutcomePayloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutcome, expectedEvaluationCompletedMessages, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
@@ -157,7 +157,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                     return initiative;
                 })
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
-                .peek(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i))
+                .peek(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i))
                 .toList();
 
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
@@ -185,9 +185,9 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         InitiativeCounters counter = new InitiativeCounters();
         counter.setId("INITIATIVEID");
-        counter.setInitiativeBudgetCents(Utils.euro2Cents(publishedInitiatives.get(0).getGeneral().getBudget()));
+        counter.setInitiativeBudgetCents(CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBudget()));
         counter.setOnboarded((long)expectedOnboardingKoFamilies);
-        counter.setReservedInitiativeBudgetCents(Utils.euro2Cents(publishedInitiatives.get(0).getGeneral().getBeneficiaryBudget()) * expectedOnboardingKoFamilies);
+        counter.setReservedInitiativeBudgetCents(CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBeneficiaryBudget()) * expectedOnboardingKoFamilies);
         counter.setResidualInitiativeBudgetCents(counter.getInitiativeBudgetCents() - counter.getReservedInitiativeBudgetCents());
         initiativeCountersRepository.save(counter).block();
     }
@@ -330,7 +330,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
             Assertions.assertEquals(0L, rankingCounter.getOnboarded());
             Assertions.assertEquals(
-                    Utils.euro2Cents(publishedInitiatives.get(0).getGeneral().getBudget())
+                    CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBudget())
                     , rankingCounter.getResidualInitiativeBudgetCents());
         }
     }

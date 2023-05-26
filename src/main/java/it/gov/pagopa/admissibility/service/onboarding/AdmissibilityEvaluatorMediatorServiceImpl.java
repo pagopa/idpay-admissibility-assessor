@@ -11,8 +11,7 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
@@ -20,8 +19,9 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifie
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.PerformanceLogger;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +48,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
-    private final ErrorNotifierService errorNotifierService;
+    private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
 
     private final ObjectReader objectReader;
 
@@ -64,7 +64,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
             OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
-            ErrorNotifierService errorNotifierService,
+            AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
             ObjectMapper objectMapper,
             OnboardingNotifierService onboardingNotifierService,
             RankingNotifierService rankingNotifierService) {
@@ -75,7 +75,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
-        this.errorNotifierService = errorNotifierService;
+        this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
 
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
         this.onboardingNotifierService = onboardingNotifierService;
@@ -113,7 +113,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
-                    errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
+                    admissibilityErrorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
 
@@ -128,19 +128,19 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             Mono<EvaluationDTO> mono;
             if (checkpointer != null) {
                 mono = checkpointer.success()
-                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", Utils.readMessagePayload(message)))
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", CommonUtilities.readMessagePayload(message)))
                         .doOnError(e -> log.error("Fail to checkpoint the message", e))
                         .then(then);
             } else {
                 mono = then;
             }
-            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, Utils.readMessagePayload(message));
+            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, CommonUtilities.readMessagePayload(message));
         });
     }
 
     private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
 
-        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
+        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", CommonUtilities.readMessagePayload(message));
 
         return Mono.just(message)
                 .mapNotNull(this::deserializeMessage)
@@ -194,7 +194,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private static String readRetryHeader(Message<String> message) {
-        Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
+        Object retryHeader = message.getHeaders().get(KafkaConstants.ERROR_MSG_HEADER_RETRY);
 
         String retryHeaderValue;
         if(retryHeader instanceof String retryString){ // ServiceBus return it as String
@@ -208,7 +208,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
+        return CommonUtilities.deserializeMessage(message, objectReader, e -> admissibilityErrorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
@@ -256,7 +256,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationCompletedDTO);
-            errorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", true, e);
+            admissibilityErrorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", true, e);
         }
     }
 
@@ -268,7 +268,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
-            errorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", true, e);
+            admissibilityErrorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", true, e);
         }
     }
 

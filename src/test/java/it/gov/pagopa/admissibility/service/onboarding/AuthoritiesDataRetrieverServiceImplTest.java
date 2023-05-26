@@ -23,7 +23,7 @@ import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverServ
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

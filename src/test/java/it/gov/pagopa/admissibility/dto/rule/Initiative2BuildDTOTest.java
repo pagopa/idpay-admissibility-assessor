@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.dto.rule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

@@ -9,7 +9,7 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
@@ -26,6 +26,7 @@ import org.springframework.test.context.ContextConfiguration;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -55,11 +56,11 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
+        onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
-        List<ConsumerRecord<String, String>> payloadConsumed = consumeMessages(topicAdmissibilityProcessorOutRankingRequest, validOnboardings, maxWaitingMs);
+        List<ConsumerRecord<String, String>> payloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutRankingRequest, validOnboardings, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
@@ -108,7 +109,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                     return initiative;
                 })
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
-                .forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
+                .forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
     }
@@ -168,7 +169,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 },
                 errorMessage-> {
                     RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(rankingFailinPublishing, rankingFailingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
@@ -184,7 +185,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 },
                 errorMessage-> {
                     RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenRankingPublishing, exceptionWhenRankingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),false, false, true);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
     }
@@ -192,7 +193,11 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     private RankingRequestDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO, int bias) {
         return RankingRequestDTO.builder()
                 .userId(onboardingDTO.getUserId())
+                .organizationId(Initiative2BuildDTOFaker.mockInstance(bias).getOrganizationId())
                 .initiativeId(onboardingDTO.getInitiativeId())
+                .admissibilityCheckDate(LocalDateTime.now())
+                .criteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp())
+                .rankingValue(2000L)
                 .build();
     }
     //endregion

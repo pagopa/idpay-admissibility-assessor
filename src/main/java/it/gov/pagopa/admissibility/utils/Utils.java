@@ -24,7 +24,6 @@ import java.time.ZoneId;
 import java.util.Base64;
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.function.Consumer;
 
 @Slf4j
 public final class Utils {
@@ -34,38 +33,10 @@ public final class Utils {
 
     public static final String FISCAL_CODE_STRUCTURE_REGEX = "^([A-Za-z]{6}[0-9lmnpqrstuvLMNPQRSTUV]{2}[abcdehlmprstABCDEHLMPRST]{1}[0-9lmnpqrstuvLMNPQRSTUV]{2}[A-Za-z]{1}[0-9lmnpqrstuvLMNPQRSTUV]{3}[A-Za-z]{1})$";
     public static final String FISCAL_CODE_MONTH_LETTERS = "ABCDEHLMPRST";
+    private Utils(){}
 
-    /** It will try to deserialize a message, eventually notifying the error  */
-    public static <T> T deserializeMessage(Message<?> message, ObjectReader objectReader, Consumer<Throwable> onError) {
-        try {
-            String payload = readMessagePayload(message);
-            return objectReader.readValue(payload);
-        } catch (JsonProcessingException e) {
-            onError.accept(e);
-            return null;
-        }
-    }
-
-    public static String readMessagePayload(Message<?> message) {
-        String payload;
-        if(message.getPayload() instanceof byte[] bytes){
-            payload=new String(bytes);
-        } else {
-            payload= message.getPayload().toString();
-        }
-        return payload;
-    }
-
-    /** To read Message header value */
-    @SuppressWarnings("unchecked")
-    public static <T> T getHeaderValue(Message<?> message, String headerName) {
-        return  (T)message.getHeaders().get(headerName);
-    }
-
-    public static final BigDecimal ONE_HUNDRED = BigDecimal.valueOf(100);
-    public static Long euro2Cents(BigDecimal euro){
-        return euro == null? null : euro.multiply(ONE_HUNDRED).longValue();
-    }
+    public static final String FISCAL_CODE_STRUCTURE_REGEX = "^([A-Za-z]{6}[0-9lmnpqrstuvLMNPQRSTUV]{2}[abcdehlmprstABCDEHLMPRST][0-9lmnpqrstuvLMNPQRSTUV]{2}[A-Za-z][0-9lmnpqrstuvLMNPQRSTUV]{3}[A-Za-z])$";
+    public static final String FISCAL_CODE_MONTH_LETTERS = "ABCDEHLMPRST";
 
     //region birthdate from fiscalcode
     public static LocalDate calculateBirthDateFromFiscalCode(String fiscalCode) {
