@@ -1,4 +1,4 @@
-package it.gov.pagopa.common.web.config.json;
+package it.gov.pagopa.common.config.json;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
