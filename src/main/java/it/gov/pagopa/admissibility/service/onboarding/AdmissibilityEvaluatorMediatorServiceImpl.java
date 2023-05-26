@@ -11,7 +11,7 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
@@ -19,7 +19,7 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifie
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.common.reactive.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +48,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
-    private final ErrorNotifierService errorNotifierService;
+    private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
 
     private final ObjectReader objectReader;
 
@@ -64,7 +64,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
             OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
-            ErrorNotifierService errorNotifierService,
+            AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
             ObjectMapper objectMapper,
             OnboardingNotifierService onboardingNotifierService,
             RankingNotifierService rankingNotifierService) {
@@ -75,7 +75,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
-        this.errorNotifierService = errorNotifierService;
+        this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
 
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
         this.onboardingNotifierService = onboardingNotifierService;
@@ -109,7 +109,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
-                    errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
+                    admissibilityErrorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", true, e);
                     return Mono.empty();
                 })
 
@@ -204,7 +204,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
-        return CommonUtilities.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
+        return CommonUtilities.deserializeMessage(message, objectReader, e -> admissibilityErrorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
@@ -252,7 +252,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationCompletedDTO);
-            errorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
+            admissibilityErrorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
         }
     }
 
@@ -264,7 +264,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
-            errorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
+            admissibilityErrorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
         }
     }
 

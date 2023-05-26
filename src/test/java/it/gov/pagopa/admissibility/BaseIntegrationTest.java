@@ -37,7 +37,6 @@ import javax.annotation.PostConstruct;
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -59,7 +58,7 @@ import java.util.stream.Stream;
 
                 //region common feature disabled
                 "app.beneficiary-rule.cache.refresh-ms-rate:60000",
-                "logging.level.it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl=WARN",
+                "logging.level.it.gov.pagopa.common.kafka.service.ErrorNotifierServiceImpl=WARN",
                 //endregion
 
                 //region kafka brokers
@@ -141,7 +140,7 @@ public abstract class BaseIntegrationTest {
     }
 
     @PostConstruct
-    public void logEmbeddedServerConfig() throws NoSuchFieldException, UnknownHostException {
+    public void logEmbeddedServerConfig() {
         String wiremockHttpBaseUrl = "UNKNOWN";
         String wiremockHttpsBaseUrl = "UNKNOWN";
         /*try{
