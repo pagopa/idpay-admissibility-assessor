@@ -4,12 +4,12 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.reactive.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -37,8 +37,8 @@ import java.util.stream.IntStream;
         "app.beneficiary-rule.build-delay-duration=PT1S",
         "logging.level.it.gov.pagopa.admissibility.service.build.BeneficiaryRule2DroolsRuleImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl=WARN",
-        "logging.level.it.gov.pagopa.admissibility.service.BaseKafkaConsumer=WARN",
-        "logging.level.it.gov.pagopa.admissibility.utils.PerformanceLogger=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
 })
 public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
@@ -62,13 +62,13 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         initiativePayloads.addAll(buildValidPayloads(errorUseCases.size() + (validRules / 2) + notValidRules, validRules / 2, expectedRules));
 
         long timeStart = System.currentTimeMillis();
-        initiativePayloads.forEach(i -> publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
-        publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, List.of(new RecordHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "OTHERAPPNAME".getBytes(StandardCharsets.UTF_8))), null, "OTHERAPPMESSAGE");
+        initiativePayloads.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
+        kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, List.of(new RecordHeader(KafkaConstants.ERROR_MSG_HEADER_APPLICATION_NAME, "OTHERAPPNAME".getBytes(StandardCharsets.UTF_8))), null, "OTHERAPPMESSAGE");
         long timePublishingEnd = System.currentTimeMillis();
 
         long[] countSaved = {0};
         //noinspection ConstantConditions
-        waitFor(() -> (countSaved[0] = droolsRuleRepository.count().block()) >= validRules, () -> "Expected %d saved rules, read %d".formatted(validRules, countSaved[0]), 15, 1000);
+        TestUtils.waitFor(() -> (countSaved[0] = droolsRuleRepository.count().block()) >= validRules, () -> "Expected %d saved rules, read %d".formatted(validRules, countSaved[0]), 15, 1000);
         long timeDroolsSavingCheckPublishingEnd = System.currentTimeMillis();
 
         int ruleBuiltSize = waitForKieContainerBuild(expectedRules[0]);
@@ -107,7 +107,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         );
 
         long timeCommitCheckStart = System.currentTimeMillis();
-        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer,initiativePayloads.size()+1); // +1 due to other applicationName useCase
+        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = kafkaTestUtilitiesService.checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer,initiativePayloads.size()+1); // +1 due to other applicationName useCase
         long timeCommitCheckEnd = System.currentTimeMillis();
         System.out.printf("""
                         ************************
@@ -135,7 +135,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     public static int waitForKieContainerBuild(int expectedRules, OnboardingContextHolderService onboardingContextHolderServiceSpy) {
         int[] ruleBuiltSize = {0};
-        waitFor(() -> (ruleBuiltSize[0] = getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, () -> "Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 1000);
+        TestUtils.waitFor(() -> (ruleBuiltSize[0] = getRuleBuiltSize(onboardingContextHolderServiceSpy)) >= expectedRules, () -> "Expected %d rules, read %d".formatted(expectedRules, ruleBuiltSize[0]), 20, 1000);
         return ruleBuiltSize[0];
     }
 
@@ -209,7 +209,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     }
 
     private void checkErrorMessageHeaders(ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload) {
-        checkErrorMessageHeaders(kafkaBootstrapServers, topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload, true, true, false);
+        checkErrorMessageHeaders(kafkaBootstrapServers, topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer, errorMessage, errorDescription, expectedPayload, null, true, true);
     }
     //endregion
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.BaseKafkaConsumer;
+import it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
@@ -113,7 +113,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
     }
 
     @Override
-    protected String getFlowName() {
+    public String getFlowName() {
         return "ADMISSIBILITY_RULE_BUILD";
     }
 }

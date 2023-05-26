@@ -8,8 +8,8 @@ import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.TestUtils;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.utils.CommonUtilities;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -194,7 +194,7 @@ class Onboarding2EvaluationMapperTest {
         commonAssertionsOnboarding2EvaluationCompleted(resultCompleted);
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
 
-        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, Utils.euro2Cents(onboardingRequest.getIsee()));
+        commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, CommonUtilities.euroToCents(onboardingRequest.getIsee()));
         Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudget(), resultCompleted.getBeneficiaryBudget());
         Assertions.assertNotNull(resultCompleted.getInitiativeEndDate());
 
@@ -213,7 +213,7 @@ class Onboarding2EvaluationMapperTest {
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.emptyList());
 
         // THEN
-        commonAssertionRankingRequestOk(result, Utils.euro2Cents(onboardingRequest.getIsee()));
+        commonAssertionRankingRequestOk(result, CommonUtilities.euroToCents(onboardingRequest.getIsee()));
     }
 
     private void configureRankingInitiative() {
@@ -288,6 +288,6 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(Optional.ofNullable(evaluationCompletedDTO.getRankingValue()).orElse(-1L), result.getRankingValue());
         Assertions.assertEquals(onboardingKo, result.isOnboardingKo());
 
-        commonAssertionRankingRequestOk(result, Utils.euro2Cents(onboardingRequest.getIsee()));
+        commonAssertionRankingRequestOk(result, CommonUtilities.euroToCents(onboardingRequest.getIsee()));
     }
 }

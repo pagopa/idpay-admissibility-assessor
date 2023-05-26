@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service;
 
+import it.gov.pagopa.common.reactive.kafka.utils.KafkaConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,16 +21,6 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 public class ErrorNotifierServiceImpl implements ErrorNotifierService {
-
-    public static final String ERROR_MSG_HEADER_APPLICATION_NAME = "applicationName";
-    public static final String ERROR_MSG_HEADER_GROUP = "group";
-    public static final String ERROR_MSG_HEADER_SRC_TYPE = "srcType";
-    public static final String ERROR_MSG_HEADER_SRC_SERVER = "srcServer";
-    public static final String ERROR_MSG_HEADER_SRC_TOPIC = "srcTopic";
-    public static final String ERROR_MSG_HEADER_DESCRIPTION = "description";
-    public static final String ERROR_MSG_HEADER_RETRYABLE = "retryable";
-    public static final String ERROR_MSG_HEADER_RETRY = "retry";
-    public static final String ERROR_MSG_HEADER_STACKTRACE = "stacktrace";
 
     private final StreamBridge streamBridge;
     private final String applicationName;
@@ -134,12 +125,12 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
     public void notify(String srcType, String srcServer, String srcTopic, String group, Message<?> message, String description, boolean retryable, boolean resendApplication, Throwable exception) {
         log.info("[ERROR_NOTIFIER] notifying error: {}", description, exception);
         final MessageBuilder<?> errorMessage = MessageBuilder.fromMessage(message)
-                .setHeader(ERROR_MSG_HEADER_SRC_TYPE, srcType)
-                .setHeader(ERROR_MSG_HEADER_SRC_SERVER, srcServer)
-                .setHeader(ERROR_MSG_HEADER_SRC_TOPIC, srcTopic)
-                .setHeader(ERROR_MSG_HEADER_DESCRIPTION, description)
-                .setHeader(ERROR_MSG_HEADER_RETRYABLE, retryable)
-                .setHeader(ERROR_MSG_HEADER_STACKTRACE, ExceptionUtils.getStackTrace(exception));
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_SRC_TYPE, srcType)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_SRC_SERVER, srcServer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_SRC_TOPIC, srcTopic)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_DESCRIPTION, description)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRYABLE, retryable)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_STACKTRACE, ExceptionUtils.getStackTrace(exception));
 
         addExceptionInfo(errorMessage, "rootCause", ExceptionUtils.getRootCause(exception));
         addExceptionInfo(errorMessage, "cause", exception.getCause());
@@ -149,8 +140,8 @@ public class ErrorNotifierServiceImpl implements ErrorNotifierService {
             errorMessage.setHeader(KafkaHeaders.MESSAGE_KEY, new String(receivedKey, StandardCharsets.UTF_8));
         }
         if(resendApplication){
-            errorMessage.setHeader(ERROR_MSG_HEADER_APPLICATION_NAME, applicationName);
-            errorMessage.setHeader(ERROR_MSG_HEADER_GROUP, group);
+            errorMessage.setHeader(KafkaConstants.ERROR_MSG_HEADER_APPLICATION_NAME, applicationName);
+            errorMessage.setHeader(KafkaConstants.ERROR_MSG_HEADER_GROUP, group);
         }
 
         if (!streamBridge.send("errors-out-0", errorMessage.build())) {

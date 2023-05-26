@@ -12,7 +12,6 @@ import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.ErrorNotifierService;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
@@ -20,8 +19,9 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifie
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.PerformanceLogger;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.reactive.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
@@ -124,19 +124,19 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             Mono<EvaluationDTO> mono;
             if (checkpointer != null) {
                 mono = checkpointer.success()
-                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", Utils.readMessagePayload(message)))
+                        .doOnSuccess(success -> log.debug("Successfully checkpoint {}", CommonUtilities.readMessagePayload(message)))
                         .doOnError(e -> log.error("Fail to checkpoint the message", e))
                         .then(then);
             } else {
                 mono = then;
             }
-            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, Utils.readMessagePayload(message));
+            return PerformanceLogger.logTimingFinally("ONBOARDING_REQUEST", startTime, mono, CommonUtilities.readMessagePayload(message));
         });
     }
 
     private Mono<Pair<OnboardingDTO, EvaluationDTO>> execute(Message<String> message) {
 
-        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", Utils.readMessagePayload(message));
+        log.info("[ONBOARDING_REQUEST] Evaluating onboarding request {}", CommonUtilities.readMessagePayload(message));
 
         return Mono.just(message)
                 .mapNotNull(this::deserializeMessage)
@@ -190,7 +190,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private static String readRetryHeader(Message<String> message) {
-        Object retryHeader = message.getHeaders().get(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_RETRY);
+        Object retryHeader = message.getHeaders().get(KafkaConstants.ERROR_MSG_HEADER_RETRY);
 
         String retryHeaderValue;
         if(retryHeader instanceof String retryString){ // ServiceBus return it as String
@@ -204,7 +204,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {
-        return Utils.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
+        return CommonUtilities.deserializeMessage(message, objectReader, e -> errorNotifierService.notifyAdmissibility(message, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", true, e));
     }
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {

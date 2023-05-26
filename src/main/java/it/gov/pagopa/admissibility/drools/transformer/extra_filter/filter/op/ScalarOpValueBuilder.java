@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.drools.transformer.extra_filter.filter.op;
 
 import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.drools.utils.DroolsTemplateRuleUtils;
+import it.gov.pagopa.common.drools.utils.DroolsTemplateRuleUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +55,7 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
     /**
      * it will deserialize the input String
      */
+    @SuppressWarnings("squid:S3776")
     private Object deserializeValue(String value, Class<?> fieldType) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if(value == null){
             return null;

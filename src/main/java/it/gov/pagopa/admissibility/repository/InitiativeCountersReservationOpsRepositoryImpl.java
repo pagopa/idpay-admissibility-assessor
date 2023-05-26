@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.repository;
 
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -30,7 +30,7 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
 
     public Mono<InitiativeCounters> reserveBudget(String initiativeId, BigDecimal reservation) {
         log.trace("[ONBOARDING_REQUEST] [BUDGET_RESERVATION] Reserving budget {} on initiative {}", reservation, initiativeId);
-        long reservationCents = Utils.euro2Cents(reservation);
+        long reservationCents = CommonUtilities.euroToCents(reservation);
 
         return mongoTemplate.findAndModify(
                 Query.query(Criteria
