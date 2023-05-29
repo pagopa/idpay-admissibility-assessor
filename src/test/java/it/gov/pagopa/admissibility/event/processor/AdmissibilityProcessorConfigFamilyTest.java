@@ -18,6 +18,7 @@ import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.utils.CommonUtilities;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -87,6 +88,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
+        MongoTestUtilitiesService.startMongoCommandListener();
+
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
@@ -97,6 +100,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
+
+        MongoTestUtilitiesService.stopAndPrintMongoCommands();
 
         checkResponses(expectedRequestsPerInitiative, rankingRequestPayloadConsumed, RankingRequestDTO.class);
         checkResponses(expectedEvaluationCompletedMessages, evaluationOutcomePayloadConsumed, EvaluationCompletedDTO.class);
@@ -134,6 +139,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     private void publishOnboardingRules() {
+        MongoTestUtilitiesService.startMongoCommandListener();
+
         int[] expectedRules = {0};
         publishedInitiatives = IntStream.range(0, 2)
                 .mapToObj(i -> {
@@ -159,6 +166,8 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                 .toList();
 
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
+
+        MongoTestUtilitiesService.stopAndPrintMongoCommands();
     }
 
     @Override
