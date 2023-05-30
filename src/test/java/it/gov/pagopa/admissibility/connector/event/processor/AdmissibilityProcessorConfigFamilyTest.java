@@ -1,16 +1,16 @@
-package it.gov.pagopa.admissibility.event.processor;
+package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
-import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverServiceImpl;

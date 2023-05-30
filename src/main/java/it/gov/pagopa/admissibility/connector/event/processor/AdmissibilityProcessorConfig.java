@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.event.processor;
+package it.gov.pagopa.admissibility.connector.event.processor;
 
 
 import it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorService;

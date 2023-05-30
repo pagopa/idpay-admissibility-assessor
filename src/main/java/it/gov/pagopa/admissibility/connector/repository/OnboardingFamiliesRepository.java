@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.repository;
+package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;

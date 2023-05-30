@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.repository;
+package it.gov.pagopa.admissibility.connector.repository;
 
 import com.mongodb.client.result.UpdateResult;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;

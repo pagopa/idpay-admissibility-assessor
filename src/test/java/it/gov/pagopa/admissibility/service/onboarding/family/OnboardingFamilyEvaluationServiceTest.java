@@ -11,7 +11,7 @@ import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;

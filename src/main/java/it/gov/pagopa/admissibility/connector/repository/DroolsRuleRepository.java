@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.repository;
+package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;

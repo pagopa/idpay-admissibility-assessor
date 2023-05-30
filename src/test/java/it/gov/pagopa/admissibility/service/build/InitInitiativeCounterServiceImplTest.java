@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

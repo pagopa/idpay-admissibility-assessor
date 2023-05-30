@@ -9,7 +9,7 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;

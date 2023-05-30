@@ -1,11 +1,11 @@
-package it.gov.pagopa.admissibility.event.processor;
+package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorService;
 import it.gov.pagopa.admissibility.service.onboarding.AuthoritiesDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;

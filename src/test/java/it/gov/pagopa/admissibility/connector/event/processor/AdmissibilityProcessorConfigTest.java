@@ -1,6 +1,7 @@
-package it.gov.pagopa.admissibility.event.processor;
+package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -9,7 +10,6 @@ import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
-import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
