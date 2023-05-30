@@ -3,9 +3,10 @@ package it.gov.pagopa.admissibility.service;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
+import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +23,7 @@ class InitiativeStatusServiceImplTest {
     void test() {
         // Given
         InitiativeCountersRepository initiativeCountersRepositoryMock = Mockito.mock(InitiativeCountersRepository.class);
-        DroolsRuleRepository droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
+        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
 
         InitiativeConfig initiativeConfigMock = InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
@@ -30,13 +31,7 @@ class InitiativeStatusServiceImplTest {
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .status("STATUS1")
                 .build();
-        DroolsRule droolsRuleMock = DroolsRule.builder()
-                .id("ID1")
-                .name("TEST1")
-                .rule("RULE1")
-                .initiativeConfig(initiativeConfigMock)
-                .build();
-        Mockito.when(droolsRuleRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.just(droolsRuleMock));
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString())).thenReturn(Mono.just(initiativeConfigMock));
 
         InitiativeCounters initiativeCountersMock = InitiativeCounters.builder()
                 .id("INITIATIVE1")
@@ -47,7 +42,7 @@ class InitiativeStatusServiceImplTest {
                 .build();
         Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.just(initiativeCountersMock));
 
-        InitiativeStatusService initiativeStatusService = new InitiativeStatusServiceImpl(droolsRuleRepositoryMock, initiativeCountersRepositoryMock);
+        InitiativeStatusService initiativeStatusService = new InitiativeStatusServiceImpl(onboardingContextHolderServiceMock, initiativeCountersRepositoryMock);
 
         InitiativeStatusDTO expected = new InitiativeStatusDTO("STATUS1", true);
 
@@ -62,7 +57,7 @@ class InitiativeStatusServiceImplTest {
     void testNoInitiative() {
         // Given
         InitiativeCountersRepository initiativeCountersRepositoryMock = Mockito.mock(InitiativeCountersRepository.class);
-        DroolsRuleRepository droolsRuleRepositoryMock = Mockito.mock(DroolsRuleRepository.class);
+        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
 
         InitiativeConfig initiativeConfigMock = InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
@@ -70,17 +65,11 @@ class InitiativeStatusServiceImplTest {
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .status("STATUS1")
                 .build();
-        DroolsRule droolsRuleMock = DroolsRule.builder()
-                .id("ID1")
-                .name("TEST1")
-                .rule("RULE1")
-                .initiativeConfig(initiativeConfigMock)
-                .build();
-        Mockito.when(droolsRuleRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.just(droolsRuleMock));
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString())).thenReturn(Mono.just(initiativeConfigMock));
 
         Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString())).thenReturn(Mono.empty());
 
-        InitiativeStatusService initiativeStatusService = new InitiativeStatusServiceImpl(droolsRuleRepositoryMock, initiativeCountersRepositoryMock);
+        InitiativeStatusService initiativeStatusService = new InitiativeStatusServiceImpl(onboardingContextHolderServiceMock, initiativeCountersRepositoryMock);
 
         // When
         InitiativeStatusDTO result = initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
