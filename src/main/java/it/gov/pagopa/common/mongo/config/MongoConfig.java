@@ -11,19 +11,17 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.data.convert.ReadingConverter;
 import org.springframework.data.convert.WritingConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
-import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRepositories;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 @Configuration
-@EnableReactiveMongoRepositories(basePackages = "it.gov.pagopa")
-public class DbConfig {
+public class MongoConfig {
 
     @Configuration
     @ConfigurationProperties(prefix = "spring.data.mongodb.config")
-    static class MongoDbCustomProperties {
+    public static class MongoDbCustomProperties {
         @Setter
         ConnectionPoolSettings connectionPool;
 

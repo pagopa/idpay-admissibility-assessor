@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.event.consumer.BeneficiaryRuleBuilderConsumer
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
@@ -53,6 +54,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
+        MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
+
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
@@ -62,6 +65,9 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         long timeEnd = System.currentTimeMillis();
 
         long timeConsumerResponseEnd = timeEnd - timeConsumerResponse;
+
+        MongoTestUtilitiesService.stopAndPrintMongoCommands();
+
         Assertions.assertEquals(validOnboardings, payloadConsumed.size());
 
         for (ConsumerRecord<String, String> p : payloadConsumed) {
@@ -91,6 +97,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
+        MongoTestUtilitiesService.startMongoCommandListener("RULE PUBLISHING");
+
         int[] expectedRules = {0};
         IntStream.range(0, initiativesNumber)
                 .mapToObj(i -> {
@@ -110,6 +118,8 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 .forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
         BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
+
+        MongoTestUtilitiesService.stopAndPrintMongoCommands();
     }
 
     //region useCases
