@@ -6,9 +6,13 @@ import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.Map;
 
+@TestPropertySource(properties = {
+        "logging.level.it.gov.pagopa.admissibility.service.CriteriaCodeServiceImpl=WARN",
+})
 class CriteriaCodeServiceIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private CriteriaCodesConfiguration criteriaCodesConfiguration;

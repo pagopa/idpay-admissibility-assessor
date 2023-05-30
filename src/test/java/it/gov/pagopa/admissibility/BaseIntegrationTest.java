@@ -3,8 +3,8 @@ package it.gov.pagopa.admissibility;
 import com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
@@ -57,7 +57,7 @@ import java.util.stream.Stream;
 //                "spring.jmx.enabled=true",
 
                 //region common feature disabled
-                "app.beneficiary-rule.cache.refresh-ms-rate:60000",
+                "app.beneficiary-rule.cache.refresh-ms-rate:600000",
                 "logging.level.it.gov.pagopa.common.kafka.service.ErrorNotifierServiceImpl=WARN",
                 //endregion
 
@@ -141,14 +141,14 @@ public abstract class BaseIntegrationTest {
 
     @PostConstruct
     public void logEmbeddedServerConfig() {
-        String wiremockHttpBaseUrl = "UNKNOWN";
-        String wiremockHttpsBaseUrl = "UNKNOWN";
-        /*try{
+        String wiremockHttpBaseUrl="UNKNOWN";
+        String wiremockHttpsBaseUrl="UNKNOWN";
+        try{
             wiremockHttpBaseUrl = serverWireMock.getRuntimeInfo().getHttpBaseUrl();
             wiremockHttpsBaseUrl = serverWireMock.getRuntimeInfo().getHttpsBaseUrl();
         } catch (Exception e){
             System.out.println("Cannot read wiremock urls");
-        }*/
+        }
         System.out.printf("""
                         ************************
                         Embedded mongo: %s
@@ -208,9 +208,10 @@ public abstract class BaseIntegrationTest {
         public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
             // setting wiremock HTTP baseUrl
             Stream.of(
-                    Pair.of("app.pdv.base-url", "pdv"),
-                    Pair.of("app.pdnd.access.token-base-url", "pdnd")
+                    Pair.of("app.pdv.base-url","pdv"),
+                    Pair.of("app.pdnd.access.token-base-url","pdnd")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
+
             // setting wiremock HTTPS baseUrl
             Stream.of(
                     Pair.of("app.anpr.c020-residenceAssessment.base-url", "anpr/residence"),

@@ -1,8 +1,9 @@
-package it.gov.pagopa.admissibility.event.processor;
+package it.gov.pagopa.admissibility.connector.event.processor;
 
 
 import it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.binder.Binding;
 import org.springframework.cloud.stream.binder.BindingCreatedEvent;
@@ -15,8 +16,8 @@ import org.springframework.messaging.Message;
 import org.springframework.util.ReflectionUtils;
 import reactor.core.publisher.Flux;
 
-import java.util.function.Consumer;
 import java.lang.reflect.Field;
+import java.util.function.Consumer;
 
 @Configuration
 @Slf4j
@@ -72,7 +73,7 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
     }
 
     @Override
-    public void onApplicationEvent(OnboardingContextHolderServiceImpl.OnboardingContextHolderReadyEvent event) {
+    public void onApplicationEvent(@NonNull OnboardingContextHolderServiceImpl.OnboardingContextHolderReadyEvent event) {
         if(!contextReady) {
             synchronized (this) {
                 contextReady = true;

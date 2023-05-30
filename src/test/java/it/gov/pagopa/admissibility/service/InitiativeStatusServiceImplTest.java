@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.service;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
