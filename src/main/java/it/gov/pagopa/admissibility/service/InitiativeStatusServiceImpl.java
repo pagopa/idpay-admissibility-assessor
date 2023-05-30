@@ -1,9 +1,7 @@
 package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
