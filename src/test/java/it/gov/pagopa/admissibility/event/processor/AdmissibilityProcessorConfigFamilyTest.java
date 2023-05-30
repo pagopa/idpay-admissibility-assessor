@@ -88,7 +88,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 
-        MongoTestUtilitiesService.startMongoCommandListener();
+        MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
 
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
@@ -139,7 +139,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     private void publishOnboardingRules() {
-        MongoTestUtilitiesService.startMongoCommandListener();
+        MongoTestUtilitiesService.startMongoCommandListener("RULE PUBLISHING");
 
         int[] expectedRules = {0};
         publishedInitiatives = IntStream.range(0, 2)

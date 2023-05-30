@@ -54,7 +54,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
 
-        MongoTestUtilitiesService.startMongoCommandListener();
+        MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
 
         long timePublishOnboardingStart = System.currentTimeMillis();
         onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
@@ -97,7 +97,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     }
 
     private void publishOnboardingRules(int onboardingsNumber) {
-        MongoTestUtilitiesService.startMongoCommandListener();
+        MongoTestUtilitiesService.startMongoCommandListener("RULE PUBLISHING");
 
         int[] expectedRules = {0};
         IntStream.range(0, initiativesNumber)

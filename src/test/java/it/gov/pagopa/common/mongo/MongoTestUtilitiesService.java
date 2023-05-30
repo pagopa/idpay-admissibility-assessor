@@ -24,6 +24,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Utilities when performing Mongo tests
@@ -44,7 +45,7 @@ public class MongoTestUtilitiesService {
     //region retrieve mongo operations
     @Value
     @EqualsAndHashCode(of = "command", callSuper = false)
-    static class MongoCommand {
+    public static class MongoCommand {
         String type;
         String collection;
         LocalTime firstOccurrence;
@@ -52,7 +53,8 @@ public class MongoTestUtilitiesService {
         String sample;
     }
 
-    protected static Queue<MongoCommand> mongoCommands = null;
+    protected static Queue<MongoCommand> mongoCommands;
+    private static String mongoCommandsListenerDesc;
     static {
         startMongoCommandListener();
     }
@@ -61,7 +63,14 @@ public class MongoTestUtilitiesService {
      * To be called before each test in order to perform the asserts on {@link #stopAndGetMongoCommands()}
      */
     public static void startMongoCommandListener() {
+        startMongoCommandListener("");
+    }
+    public static void startMongoCommandListener(String desc) {
         mongoCommands = new ConcurrentLinkedQueue<>();
+        mongoCommandsListenerDesc = desc;
+        if(mongoCommandsListenerDesc.length()>0){
+            mongoCommandsListenerDesc = ": " + mongoCommandsListenerDesc;
+        }
     }
 
     /**
@@ -85,18 +94,21 @@ public class MongoTestUtilitiesService {
         if (commands != null) {
             System.out.printf("""
                                 
-                    ********** MONGO COMMANDS **********
+                    ********** MONGO COMMANDS%s **********
                     %s
-                    ************************************
+                    ************************************%s
                                 
-                    """, commands.stream()
+                    """,
+                    mongoCommandsListenerDesc,
+                    commands.stream()
                     .map(c -> "Times %d: %s".formatted(c.getValue(), c.getKey()))
-                    .collect(Collectors.joining("\n")));
+                    .collect(Collectors.joining("\n")),
+                    IntStream.range(0, mongoCommandsListenerDesc.length()).mapToObj(x->"*").collect(Collectors.joining()));
         }
     }
 
     @Configuration
-    static class TestMongoConfiguration {
+    public static class TestMongoConfiguration {
 
         @Primary
         @Bean

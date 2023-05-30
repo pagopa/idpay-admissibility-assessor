@@ -80,7 +80,7 @@ class OnboardingFamiliesRepositoryTest extends BaseIntegrationTest {
         // Then after create
         Assertions.assertNotNull(result);
         Assertions.assertNotNull(result.getCreateDate());
-        Assertions.assertTrue(result.getCreateDate().isAfter(beforeCreate));
+        Assertions.assertFalse(result.getCreateDate().isBefore(beforeCreate));
         result.setCreateDate(result.getCreateDate().truncatedTo(ChronoUnit.MILLIS));
         expectedResult.setCreateDate(result.getCreateDate());
         Assertions.assertEquals(expectedResult, result);
