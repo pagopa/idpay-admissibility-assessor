@@ -94,7 +94,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> executeAndCommit(Message<String> message) {
         long startTime = System.currentTimeMillis();
-        return Mono.just(message).flatMap(this::execute).map(req2ev -> {
+
+        return Mono.just(message)
+                .flatMap(this::execute)
+                .map(req2ev -> {
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
@@ -106,6 +109,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
+
                     return evaluationDTO;
                 })
                 .onErrorResume(e -> {
@@ -252,7 +256,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", evaluationCompletedDTO);
-            admissibilityErrorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", true, e);
+            admissibilityErrorNotifierService.notifyAdmissibilityOutcome(OnboardingNotifierServiceImpl.buildMessage(evaluationCompletedDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", true, e);
         }
     }
 
@@ -264,7 +268,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             }
         } catch (Exception e) {
             log.error("[UNEXPECTED_ONBOARDING_PROCESSOR_ERROR] Unexpected error occurred publishing onboarding result: {}", rankingRequestDTO);
-            admissibilityErrorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ADMISSIBILITY] An error occurred while publishing the ranking request", true, e);
+            admissibilityErrorNotifierService.notifyRankingRequest(RankingNotifierServiceImpl.buildMessage(rankingRequestDTO), "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", true, e);
         }
     }
 

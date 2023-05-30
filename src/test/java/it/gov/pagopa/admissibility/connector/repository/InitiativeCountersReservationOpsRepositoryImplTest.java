@@ -12,7 +12,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
@@ -32,13 +31,13 @@ class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegration
         final BigDecimal expectedBudgetResidual = BigDecimal.valueOf(99);
         final int expectedReservations = 100;
 
-        storeInitiative(budget, budgetReservedPerRequest);
+        storeInitiative(budget);
 
         final ExecutorService executorService = Executors.newFixedThreadPool(N);
 
         final List<Future<InitiativeCounters>> tasks = IntStream.range(0, N)
                 .mapToObj(i -> executorService.submit(() -> initiativeCountersReservationOpsRepositoryImpl.reserveBudget("prova", budgetReservedPerRequest).block()))
-                .collect(Collectors.toList());
+                .toList();
 
         final long successfulReservation = tasks.stream().filter(t -> {
             try {
@@ -52,7 +51,7 @@ class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegration
         Assertions.assertEquals(expectedReservations, successfulReservation);
     }
 
-    private void storeInitiative(BigDecimal budget, BigDecimal reservedPerRequest) {
+    private void storeInitiative(BigDecimal budget) {
         initiativeCountersRepository.save(InitiativeCounters.builder()
                 .id("prova")
                 .initiativeBudgetCents(euro2cents(budget))

@@ -170,7 +170,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 },
                 errorMessage-> {
                     RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(rankingFailinPublishing, rankingFailingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
@@ -186,7 +186,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 },
                 errorMessage-> {
                     RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenRankingPublishing, exceptionWhenRankingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
     }

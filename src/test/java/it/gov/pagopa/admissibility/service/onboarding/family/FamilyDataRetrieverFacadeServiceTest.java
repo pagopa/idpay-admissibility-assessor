@@ -47,7 +47,7 @@ class FamilyDataRetrieverFacadeServiceTest {
     void init(){
         service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper);
 
-        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c -> Mockito.lenient().when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
+        CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
     }
 
     @AfterEach

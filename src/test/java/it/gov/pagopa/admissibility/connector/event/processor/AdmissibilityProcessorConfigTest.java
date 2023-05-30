@@ -406,7 +406,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailinPublishing, onboardingFailinPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
@@ -422,7 +422,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 },
                 errorMessage-> {
                     EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing, exceptionWhenOnboardingPublishingInitiativeId);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ADMISSIBILITY] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
+                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 

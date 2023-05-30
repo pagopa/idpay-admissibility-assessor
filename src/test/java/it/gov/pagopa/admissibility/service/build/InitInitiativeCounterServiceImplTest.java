@@ -1,8 +1,8 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +34,7 @@ class InitInitiativeCounterServiceImplTest {
     }
 
     @BeforeEach
-    private void initMocks(){
+    void initMocks(){
         Mockito.when(initiativeCountersRepositoryMock.findById("ID")).thenReturn(Mono.empty());
         Mockito.when(initiativeCountersRepositoryMock.save(Mockito.any())).thenAnswer(i->Mono.just(i.getArgument(0)));
     }
