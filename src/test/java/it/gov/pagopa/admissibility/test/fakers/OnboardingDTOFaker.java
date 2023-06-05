@@ -8,7 +8,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Random;
 
 public final class OnboardingDTOFaker {

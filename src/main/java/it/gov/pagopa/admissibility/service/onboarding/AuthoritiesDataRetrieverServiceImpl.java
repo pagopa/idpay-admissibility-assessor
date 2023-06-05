@@ -36,7 +36,7 @@ import java.util.*;
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService {
-    private final Long delaySeconds;
+    private final Long delayMinutes;
     private final boolean nextDay;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final CriteriaCodeService criteriaCodeService;
@@ -47,14 +47,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
                                                StreamBridge streamBridge,
-                                               @Value("${app.onboarding-request.delay-message.delay-duration}") Long delaySeconds,
+                                               @Value("${app.onboarding-request.delay-message.delay-minutes}") Long delayMinutes,
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CriteriaCodeService criteriaCodeService,
                                                ReactiveMongoTemplate mongoTemplate,
                                                UserFiscalCodeRestClient userRestClient) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
-        this.delaySeconds = delaySeconds;
+        this.delayMinutes = delayMinutes;
         this.nextDay = nextDay;
         this.criteriaCodeService = criteriaCodeService;
         this.mongoTemplate = mongoTemplate;

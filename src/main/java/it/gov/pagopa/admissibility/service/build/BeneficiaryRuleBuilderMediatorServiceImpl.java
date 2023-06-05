@@ -2,12 +2,12 @@ package it.gov.pagopa.admissibility.service.build;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.BaseKafkaConsumer;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
@@ -30,7 +30,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
     private final KieContainerBuilderService kieContainerBuilderService;
     private final OnboardingContextHolderService onboardingContextHolderService;
     private final InitInitiativeCounterService initInitiativeCounterService;
-    private final ErrorNotifierService errorNotifierService;
+    private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
     private final BeneficiaryRuleFilterService beneficiaryRuleFilterService;
 
     private final ObjectReader objectReader;
@@ -46,7 +46,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
             KieContainerBuilderService kieContainerBuilderService,
             OnboardingContextHolderService onboardingContextHolderService,
             InitInitiativeCounterService initInitiativeCounterService,
-            ErrorNotifierService errorNotifierService,
+            AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
             BeneficiaryRuleFilterService beneficiaryRuleFilterService,
 
             ObjectMapper objectMapper) {
@@ -63,7 +63,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.initInitiativeCounterService = initInitiativeCounterService;
-        this.errorNotifierService = errorNotifierService;
+        this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
         this.beneficiaryRuleFilterService = beneficiaryRuleFilterService;
 
         this.objectReader = objectMapper.readerFor(Initiative2BuildDTO.class);
@@ -89,12 +89,12 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
 
     @Override
     protected Consumer<Throwable> onDeserializationError(Message<String> message) {
-        return e -> errorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", true, e);
+        return e -> admissibilityErrorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", true, e);
     }
 
     @Override
     protected void notifyError(Message<String> message, Throwable e) {
-        errorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", true, e);
+        admissibilityErrorNotifierService.notifyBeneficiaryRuleBuilder(message, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", true, e);
     }
 
     @Override
@@ -113,7 +113,7 @@ public class BeneficiaryRuleBuilderMediatorServiceImpl extends BaseKafkaConsumer
     }
 
     @Override
-    protected String getFlowName() {
+    public String getFlowName() {
         return "ADMISSIBILITY_RULE_BUILD";
     }
 }

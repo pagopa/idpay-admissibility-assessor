@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.service.build;
 
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacade;
-import it.gov.pagopa.admissibility.drools.utils.DroolsTemplateRuleUtils;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
@@ -13,6 +12,7 @@ import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.drools.utils.DroolsTemplateRuleUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;

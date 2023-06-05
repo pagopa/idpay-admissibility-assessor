@@ -191,7 +191,7 @@ app:
     max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
       next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
-      delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
+      delay-minutes: ${ONBOARDING_REQUEST_DELAY_MINUTES:60}
     delay-family-in-progress:
       delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}
   beneficiary-rule:

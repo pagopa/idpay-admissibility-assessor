@@ -1,14 +1,14 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.service.ErrorNotifierService;
-import it.gov.pagopa.admissibility.service.ErrorNotifierServiceImpl;
+import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,7 +34,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
     private final InitInitiativeCounterService initInitiativeCounterServiceMock;
     private final KieContainerBuilderService kieContainerBuilderServiceMock;
     private final OnboardingContextHolderService onboardingContextHolderServiceMock;
-    private final ErrorNotifierService errorNotifierServiceMock;
+    private final AdmissibilityErrorNotifierService admissibilityErrorNotifierServiceMock;
     private final BeneficiaryRuleFilterService beneficiaryRuleFilterServiceMock;
 
     private final KieBase newKieBaseBuiltMock = Mockito.mock(KieBase.class);
@@ -45,7 +45,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         this.initInitiativeCounterServiceMock = Mockito.mock(InitInitiativeCounterService.class);
         this.kieContainerBuilderServiceMock = Mockito.mock(KieContainerBuilderService.class);
         this.onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
-        this.errorNotifierServiceMock = Mockito.mock(ErrorNotifierService.class);
+        this.admissibilityErrorNotifierServiceMock = Mockito.mock(AdmissibilityErrorNotifierService.class);
         this.beneficiaryRuleFilterServiceMock = Mockito.mock(BeneficiaryRuleFilterService.class);
     }
 
@@ -84,7 +84,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                 )
                 .map(MessageBuilder::build);
 
-        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", commitDelay,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, admissibilityErrorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
 
         Mockito.when(beneficiaryRuleFilterServiceMock.filter(Mockito.any())).thenReturn(true);
 
@@ -100,13 +100,13 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
         Mockito.verify(kieContainerBuilderServiceMock, Mockito.atLeast(1)).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
-        Mockito.verifyNoInteractions(errorNotifierServiceMock);
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
     }
 
     @Test
     void filterInitiativeTest(){
         // Given
-        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", 1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", 1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, admissibilityErrorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
 
         Initiative2BuildDTO initiative1 = Initiative2BuildDTOFaker.mockInstance(1);
         Initiative2BuildDTO initiative2 = Initiative2BuildDTOFaker.mockInstance(2);
@@ -134,13 +134,13 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
 
         Mockito.verify(kieContainerBuilderServiceMock).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
-        Mockito.verifyNoInteractions(errorNotifierServiceMock);
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
     }
 
     @Test
     void otherApplicationRetryTest(){
         // Given
-        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", 1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
+        BeneficiaryRuleBuilderMediatorService service = new BeneficiaryRuleBuilderMediatorServiceImpl("appName", 1000,"PT1S", beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock, kieContainerBuilderServiceMock, onboardingContextHolderServiceMock, initInitiativeCounterServiceMock, admissibilityErrorNotifierServiceMock, beneficiaryRuleFilterServiceMock, TestUtils.objectMapper);
 
         Initiative2BuildDTO initiative1 = Initiative2BuildDTOFaker.mockInstance(1);
         Initiative2BuildDTO initiative2 = Initiative2BuildDTOFaker.mockInstance(2);
@@ -152,7 +152,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                         .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
                         .setHeader(KafkaHeaders.OFFSET, 0L)
                 )
-                .doOnNext(m->m.setHeader(ErrorNotifierServiceImpl.ERROR_MSG_HEADER_APPLICATION_NAME, "otherAppName".getBytes(StandardCharsets.UTF_8)))
+                .doOnNext(m->m.setHeader(KafkaConstants.ERROR_MSG_HEADER_APPLICATION_NAME, "otherAppName".getBytes(StandardCharsets.UTF_8)))
                 .map(MessageBuilder::build);
 
         // When
@@ -162,6 +162,6 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
         Mockito.verify(kieContainerBuilderServiceMock).buildAll();
         Mockito.verify(onboardingContextHolderServiceMock, Mockito.atLeast(1)).setBeneficiaryRulesKieBase(Mockito.same(newKieBaseBuiltMock));
 
-        Mockito.verifyNoInteractions(errorNotifierServiceMock, beneficiaryRuleFilterServiceMock, beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock);
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock, beneficiaryRuleFilterServiceMock, beneficiaryRule2DroolsRuleMock, droolsRuleRepositoryMock);
     }
 }
