@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;

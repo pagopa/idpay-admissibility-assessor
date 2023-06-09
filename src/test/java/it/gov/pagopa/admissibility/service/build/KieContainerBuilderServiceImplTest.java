@@ -4,7 +4,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.model.DroolsRule;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

@@ -8,7 +8,7 @@ import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.utils.PerformanceLogger;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
 import org.kie.api.command.Command;

@@ -8,7 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;

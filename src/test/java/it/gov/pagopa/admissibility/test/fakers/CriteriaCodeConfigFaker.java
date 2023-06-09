@@ -1,6 +1,8 @@
 package it.gov.pagopa.admissibility.test.fakers;
 
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Random;
@@ -31,6 +33,10 @@ public final class CriteriaCodeConfigFaker {
             new CriteriaCodeConfig(CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_RESIDENCE_AUTH, CRITERIA_CODE_RESIDENCE_AUTH_LABEL, "residence"),
             new CriteriaCodeConfig(CRITERIA_CODE_FAMILY, CRITERIA_CODE_FAMILY_AUTH, CRITERIA_CODE_FAMILY_AUTH_LABEL, "residence")
     );
+
+    public static void configCriteriaCodeServiceMock(CriteriaCodeService criteriaCodeServiceMock){
+        CriteriaCodeConfigFaker.mockedCriteriaCodes.forEach(c -> Mockito.lenient().when(criteriaCodeServiceMock.getCriteriaCodeConfig(c.getCode())).thenReturn(c));
+    }
 
     private static final Random random = new Random();
 

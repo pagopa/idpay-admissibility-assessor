@@ -4,7 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -71,7 +71,7 @@ public class Onboarding2EvaluationMapper {
 
     private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
         if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
-            out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? Utils.euro2Cents(onboardingDTO.getIsee()) : -1);
+            out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? CommonUtilities.euroToCents(onboardingDTO.getIsee()) : -1);
         }
     }
 

@@ -157,9 +157,12 @@ spring:
     enabled: ${REDIS_CACHE_ENABLED:false}
     url: ${REDIS_CONNECTION_URL:redis://@localhost:6379}
 
-management.endpoints:
-  web:
-    exposure.include: info, health
+management:
+  endpoint:
+    health.logging.slow-indicator-threshold: ${HEALTH_ACTUATOR_LOGGER_TIMEOUT_DURATION:PT1S}
+  endpoints:
+    web:
+      exposure.include: info, health
 
 logging:
   level:
@@ -191,7 +194,7 @@ app:
     max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
       next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
-      delay-duration: ${ONBOARDING_REQUEST_DELAY_DURATION:60}
+      delay-minutes: ${ONBOARDING_REQUEST_DELAY_MINUTES:60}
     delay-family-in-progress:
       delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}
   beneficiary-rule:
@@ -220,3 +223,15 @@ app:
       authority: "INPS"
       authorityLabel: "Istituto Nazionale Previdenza Sociale"
       onboardingField: "family"
+  pdv:
+    base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
+    headers:
+      x-api-key: ${PDV_DECRYPT_API_KEY:x_api_key}
+    retry:
+      delay-millis: ${PDV_RETRY_DELAY_MILLIS:2000}
+      max-attempts: ${PDV_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
+  web-client:
+    connect.timeout.millis: ${CONNECT_TIMEOUT_MILLIS:10000}
+    response.timeout: ${RESPONSE_TIMEOUT:60000}
+    read.handler.timeout: ${READ_TIMEOUT_HANDLER:60000}
+    write.handler.timeout: ${WRITE_TIMEOUT_HANDLER:60000}

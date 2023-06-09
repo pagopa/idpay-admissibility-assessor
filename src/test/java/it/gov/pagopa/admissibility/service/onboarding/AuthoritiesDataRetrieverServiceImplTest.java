@@ -1,19 +1,23 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.TestUtils;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.function.Executable;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,6 +31,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
@@ -37,6 +42,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private CriteriaCodeService criteriaCodeServiceMock;
     @Mock
     private ReactiveMongoTemplate reactiveMongoTemplateMock;
+    @Mock
+    private UserFiscalCodeRestClient userRestClientMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
@@ -46,9 +53,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock, userRestClientMock);
 
-        onboardingDTO =OnboardingDTO.builder()
+        onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
                 .initiativeId("INITIATIVEID")
                 .tc(true)
@@ -93,6 +100,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
+        Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("PTRGNL73S51X000Q").build()));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -100,6 +108,19 @@ class AuthoritiesDataRetrieverServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
+    }
+
+    @Test
+    void retrieveBirthdateNotValidCF() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("BIRTHDATE"));
+        Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("123456789AB").build()));
+
+        // When
+        Executable executable = () -> authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        //Then
+        Assertions.assertThrows(OnboardingException.class, executable);
     }
 
     @Test
@@ -152,5 +173,22 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
+    }
+
+    @Test
+    void retrieveIseeTypeNotCompatible() {
+        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE"));
+
+        Mockito.when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.eq(Isee.class), Mockito.eq("mocked_isee")))
+                .thenReturn(Mono.just(
+                        Isee.builder()
+                        .userId(onboardingDTO.getUserId())
+                        .iseeTypeMap(Map.of("MINORENNE", BigDecimal.ONE))
+                        .build()
+                ));
+
+        Executable executable = () -> authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+
+        Assertions.assertThrows(OnboardingException.class, executable);
     }
 }

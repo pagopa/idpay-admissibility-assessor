@@ -1,9 +1,8 @@
 package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,21 +13,21 @@ import java.math.BigDecimal;
 @Slf4j
 public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
-    private final DroolsRuleRepository droolsRuleRepository;
+    private final OnboardingContextHolderService contextHolderService;
     private final InitiativeCountersRepository initiativeCountersRepository;
 
-    public InitiativeStatusServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository) {
-        this.droolsRuleRepository = droolsRuleRepository;
+    public InitiativeStatusServiceImpl(OnboardingContextHolderService contextHolderService, InitiativeCountersRepository initiativeCountersRepository) {
+        this.contextHolderService = contextHolderService;
         this.initiativeCountersRepository = initiativeCountersRepository;
     }
 
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
-        return droolsRuleRepository.findById(initiativeId)
-                .flatMap(droolsRule ->
+        log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Fetching initiative having id: {}", initiativeId);
+        return contextHolderService.getInitiativeConfig(initiativeId)
+                .flatMap(initiativeConfig ->
                         initiativeCountersRepository.findById(initiativeId)
                                 .map(initiativeCounters -> {
-                                    InitiativeConfig initiativeConfig = droolsRule.getInitiativeConfig();
                                 InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
                                 initiativeStatus.setStatus(initiativeConfig.getStatus());
                                 initiativeStatus.setBudgetAvailable(
@@ -37,6 +36,9 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                                 initiativeConfig.getBeneficiaryInitiativeBudget()
                                         )
                                 );
+
+                                log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
+                                        initiativeId, initiativeStatus.getStatus(), initiativeStatus.isBudgetAvailable());
                                 return initiativeStatus;
                                 })
                 );
