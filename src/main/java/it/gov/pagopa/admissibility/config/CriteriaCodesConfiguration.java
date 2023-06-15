@@ -1,12 +1,11 @@
 package it.gov.pagopa.admissibility.config;
 
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import jakarta.annotation.PostConstruct;
+import java.util.Map;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import javax.annotation.PostConstruct;
-import java.util.Map;
 
 @Configuration
 @ConfigurationProperties(prefix = "app")

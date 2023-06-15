@@ -1,10 +1,21 @@
 package it.gov.pagopa.common.reactive.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectReader;
-import it.gov.pagopa.common.reactive.kafka.exception.UncommittableError;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.reactive.kafka.exception.UncommittableError;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import it.gov.pagopa.common.utils.CommonUtilities;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Consumer;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.kafka.support.Acknowledgment;
@@ -13,13 +24,6 @@ import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.context.Context;
-
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  * Base class to extend in order to configure a timed commit behavior when using KafkaBinder.
@@ -67,7 +71,7 @@ public abstract class BaseKafkaConsumer<T, R> {
     }
 
     private static Integer getMessagePartitionId(Message<?> message) {
-        return CommonUtilities.getHeaderValue(message, KafkaHeaders.RECEIVED_PARTITION_ID);
+        return CommonUtilities.getHeaderValue(message, KafkaHeaders.RECEIVED_PARTITION);
     }
 
     private static Long getMessageOffset(Message<?> message) {
