@@ -1,15 +1,18 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
-import net.minidev.json.annotate.JsonIgnore;
-
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+import net.minidev.json.annotate.JsonIgnore;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

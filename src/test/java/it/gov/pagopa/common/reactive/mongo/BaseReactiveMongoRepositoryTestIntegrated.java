@@ -7,6 +7,9 @@ import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.mongo.config.MongoConfig;
 import it.gov.pagopa.common.reactive.mongo.config.ReactiveMongoConfig;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.Data;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -29,15 +32,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.query.MongoEntityInformation;
 import org.springframework.data.mongodb.repository.support.MappingMongoEntityInformation;
-import org.springframework.data.util.ClassTypeInformation;
+import org.springframework.data.util.TypeInformation;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * See confluence page: <a href="https://pagopa.atlassian.net/wiki/spaces/IDPAY/pages/615974424/Secrets+UnitTests">Secrets for UnitTests</a>
@@ -87,7 +86,7 @@ class BaseReactiveMongoRepositoryTestIntegrated {
 
         @Bean
         public TestRepository configureTestRepository(ReactiveMongoOperations mongoOperations) throws NoSuchFieldException {
-            ClassTypeInformation<TestCollection> testTypeInformation = ClassTypeInformation.from(TestCollection.class);
+            TypeInformation<TestCollection> testTypeInformation = TypeInformation.of(TestCollection.class);
             BasicMongoPersistentEntity<TestCollection> testPersistentEntity = new BasicMongoPersistentEntity<>(testTypeInformation);
             testPersistentEntity.addPersistentProperty(new BasicMongoPersistentProperty(
                     Property.of(testTypeInformation, TestCollection.class.getDeclaredField("id")),

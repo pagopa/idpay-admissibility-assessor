@@ -9,6 +9,10 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderSer
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.utils.TestUtils;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -20,11 +24,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class BeneficiaryRuleBuilderMediatorServiceTest {
 
@@ -79,7 +78,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                 .map(TestUtils::jsonSerializer)
                 .map(payload -> MessageBuilder
                         .withPayload(payload)
-                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION, 0)
                         .setHeader(KafkaHeaders.OFFSET, 0L)
                 )
                 .map(MessageBuilder::build);
@@ -115,7 +114,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                 .map(TestUtils::jsonSerializer)
                 .map(payload -> MessageBuilder
                         .withPayload(payload)
-                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION, 0)
                         .setHeader(KafkaHeaders.OFFSET, 0L)
                 )
                 .map(MessageBuilder::build);
@@ -149,7 +148,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                 .map(TestUtils::jsonSerializer)
                 .map(payload -> MessageBuilder
                         .withPayload(payload)
-                        .setHeader(KafkaHeaders.RECEIVED_PARTITION_ID, 0)
+                        .setHeader(KafkaHeaders.RECEIVED_PARTITION, 0)
                         .setHeader(KafkaHeaders.OFFSET, 0L)
                 )
                 .doOnNext(m->m.setHeader(KafkaConstants.ERROR_MSG_HEADER_APPLICATION_NAME, "otherAppName".getBytes(StandardCharsets.UTF_8)))
