@@ -1,27 +1,35 @@
 package it.gov.pagopa.common.redis.config;
 
+import it.gov.pagopa.common.utils.TestUtils;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.boot.test.context.TestConfiguration;
 import redis.embedded.RedisServer;
-
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
 @TestConfiguration
 public class EmbeddedRedisTestConfiguration {
     private final RedisServer redisServer;
 
     public EmbeddedRedisTestConfiguration(RedisProperties redisProperties) {
-        this.redisServer = new RedisServer(redisProperties.getPort());
+        if(TestUtils.availableLocalPort(redisProperties.getPort())){
+            this.redisServer = new RedisServer(redisProperties.getPort());
+        } else {
+            this.redisServer=null;
+        }
     }
 
     @PostConstruct
     public void postConstruct() {
-        redisServer.start();
+        if(redisServer!=null){
+            redisServer.start();
+        }
     }
 
     @PreDestroy
     public void preDestroy() {
-        redisServer.stop();
+        if(redisServer!=null){
+            redisServer.stop();
+        }
     }
 }
