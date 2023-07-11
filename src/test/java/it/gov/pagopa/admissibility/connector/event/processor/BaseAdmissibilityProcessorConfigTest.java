@@ -12,6 +12,14 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingCheckService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.common.utils.TestUtils;
+import jakarta.annotation.PostConstruct;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
@@ -23,15 +31,6 @@ import org.springframework.test.context.TestPropertySource;
 import reactor.core.Scannable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import javax.annotation.PostConstruct;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.IntStream;
 
 @Slf4j
 @TestPropertySource(properties = {

@@ -1,9 +1,8 @@
 package it.gov.pagopa.admissibility.drools.model.filter;
 
 import it.gov.pagopa.admissibility.drools.model.ExtraFilter;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import javax.validation.constraints.NotNull;
 
 /** to express a filter */
 @Data

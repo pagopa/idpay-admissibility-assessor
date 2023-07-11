@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility;
 
-import com.azure.spring.cloud.autoconfigure.kafka.AzureEventHubsKafkaOAuth2AutoConfiguration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
@@ -13,6 +12,14 @@ import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.stream.StreamsHealthIndicator;
 import it.gov.pagopa.common.utils.TestIntegrationUtils;
 import it.gov.pagopa.common.utils.TestUtils;
+import jakarta.annotation.PostConstruct;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
 import lombok.NonNull;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.Assertions;
@@ -35,17 +42,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
-import javax.annotation.PostConstruct;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 @SpringBootTest
-@EnableAutoConfiguration(exclude = AzureEventHubsKafkaOAuth2AutoConfiguration.class)
+@EnableAutoConfiguration
 @EmbeddedKafka(topics = {
         "${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.destination}",
         "${spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination}",
@@ -87,8 +85,8 @@ import java.util.stream.Stream;
 
                 //region mongodb
                 "logging.level.org.mongodb.driver=WARN",
-                "logging.level.org.springframework.boot.autoconfigure.mongo.embedded=WARN",
-                "spring.mongodb.embedded.version=4.0.21",
+                "logging.level.de.flapdoodle.embed.mongo.spring.autoconfigure=WARN",
+                "de.flapdoodle.mongodb.embedded.version=4.0.21",
                 //endregion
 
                 //region pdv
@@ -133,7 +131,7 @@ public abstract class BaseIntegrationTest {
     @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}")
     protected String groupIdBeneficiaryRuleConsumer;
 
-    @Value("${spring.redis.url}")
+    @Value("${spring.data.redis.url}")
     protected String redisUrl;
 
     @BeforeAll

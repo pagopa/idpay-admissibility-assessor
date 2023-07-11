@@ -4,13 +4,13 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.7.2</version>
+		<version>3.0.6</version>
 		<relativePath/>
 		<!-- lookup parent from repository -->
 	</parent>
 	<groupId>it.gov.pagopa</groupId>
 	<artifactId>idpay-admissibility-assessor</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>idpay-admissibility-assessor</name>
 	<properties>
 		<java.version>17</java.version>
@@ -63,7 +63,7 @@
 		<dependency>
 			<groupId>com.azure.spring</groupId>
 			<artifactId>spring-cloud-azure-stream-binder-servicebus</artifactId>
-			<version>4.3.0</version>
+			<version>5.0.0</version>
 		</dependency>
 
 		<!--JAX-WS-->
@@ -104,11 +104,6 @@
 			<version>1.10.0</version>
 		</dependency>
 		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-boot-starter</artifactId>
-			<version>3.0.0</version>
-		</dependency>
-		<dependency>
 			<groupId>org.codehaus.janino</groupId>
 			<artifactId>janino</artifactId>
 			<version>3.1.9</version>
@@ -127,6 +122,42 @@
 			<groupId>com.auth0</groupId>
 			<artifactId>java-jwt</artifactId>
 			<version>4.3.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.12.0</version>
+		</dependency>
+
+		<!-- Security fixes -->
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<!-- Forced to 1.5 due to https://nvd.nist.gov/vuln/detail/CVE-2023-24998 -->
+			<version>1.5</version>
+		</dependency>
+		<dependency>
+			<groupId>org.yaml</groupId>
+			<artifactId>snakeyaml</artifactId>
+			<!-- Forced to 2.0 due to https://nvd.nist.gov/vuln/detail/CVE-2022-1471 -->
+			<version>2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty-core</artifactId>
+			<!-- Forced to 1.1.7 due to https://nvd.nist.gov/vuln/detail/CVE-2021-37136 -->
+			<version>1.1.7</version>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty-http</artifactId>
+			<!-- Forced to 1.1.7 due to https://nvd.nist.gov/vuln/detail/CVE-2021-37136 -->
+			<version>1.1.7</version>
 		</dependency>
 
 		<!--TEST-->
@@ -155,8 +186,8 @@
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-contract-wiremock</artifactId>
+			<version>4.0.2</version>
 			<scope>test</scope>
-			<version>3.1.7</version>
 		</dependency>
 		<dependency>
 			<groupId>io.projectreactor</groupId>
@@ -171,8 +202,8 @@
 		</dependency>
 		<dependency>
 			<groupId>de.flapdoodle.embed</groupId>
-			<artifactId>de.flapdoodle.embed.mongo</artifactId>
-			<version>3.5.0</version>
+			<artifactId>de.flapdoodle.embed.mongo.spring30x</artifactId>
+			<version>4.6.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -200,7 +231,7 @@
 			<dependency>
 				<groupId>org.springframework.cloud</groupId>
 				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>2021.0.3</version>
+				<version>2022.0.2</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>

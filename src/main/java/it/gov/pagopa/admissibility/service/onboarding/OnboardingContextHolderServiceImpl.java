@@ -1,12 +1,16 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
 
 @Service
 @Slf4j
@@ -109,7 +108,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
                         if(!Arrays.equals(c, kieBaseSerialized)){
                             this.kieBaseSerialized = c;
                             try{
-                                KieBase newKieBase = (KieBase) SerializationUtils.deserialize(c);
+                                KieBase newKieBase = org.apache.commons.lang3.SerializationUtils.deserialize(c);
                                 preLoadKieBase(newKieBase);
 
                                 this.kieBase = newKieBase;
