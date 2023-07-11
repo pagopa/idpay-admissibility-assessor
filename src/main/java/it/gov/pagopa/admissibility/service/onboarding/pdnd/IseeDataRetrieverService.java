@@ -6,7 +6,7 @@ import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicat
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import reactor.core.publisher.Mono;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 

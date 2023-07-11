@@ -299,7 +299,7 @@
 			<plugin>
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
-				<version>6.4.0</version>
+				<version>6.6.0</version>
 				<executions>
 					<execution>
 						<id>idpay-admissibility-assessor-pdnd-client</id>
@@ -327,6 +327,7 @@
 								</configPackage>
 								<dateLibrary>java17</dateLibrary>
 								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
 							</configOptions>
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
@@ -357,6 +358,7 @@
 								</configPackage>
 								<dateLibrary>java17</dateLibrary>
 								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
 							</configOptions>
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
