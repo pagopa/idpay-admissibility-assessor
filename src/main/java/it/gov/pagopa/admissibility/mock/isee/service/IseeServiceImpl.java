@@ -1,10 +1,11 @@
-package it.gov.pagopa.admissibility.controller;
+package it.gov.pagopa.admissibility.mock.isee.service;
 
-import it.gov.pagopa.admissibility.model.mock.Isee;
+import it.gov.pagopa.admissibility.mock.isee.controller.IseeController;
+import it.gov.pagopa.admissibility.mock.isee.model.Isee;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -12,22 +13,21 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
-@RestController
-public class MockIseeControllerImpl implements MockIseeController {
+@Service
+public class IseeServiceImpl implements IseeService{
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public MockIseeControllerImpl(ReactiveMongoTemplate mongoTemplate) {
+    public IseeServiceImpl(ReactiveMongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
     }
 
     @Override
-    public Mono<Void> createIsee(String userId, IseeRequestDTO iseeRequestDTO) {
+    public Mono<Isee> saveIsee(String userId, IseeController.IseeRequestDTO iseeRequestDTO) {
         return buildAndCheckIseeEntity(userId,iseeRequestDTO)
-                .flatMap(isee -> mongoTemplate.save(isee, "mocked_isee"))
-                .then();
+                .flatMap(isee -> mongoTemplate.save(isee, "mocked_isee"));
     }
 
-    private Mono<Isee> buildAndCheckIseeEntity(String userId, IseeRequestDTO iseeRequestDTO){
+    private Mono<Isee> buildAndCheckIseeEntity(String userId, IseeController.IseeRequestDTO iseeRequestDTO){
         Map<String, BigDecimal> iseeTypeMap = new HashMap<>();
         iseeRequestDTO.getIseeTypeMap()
                 .forEach((type, value) -> {
@@ -44,5 +44,4 @@ public class MockIseeControllerImpl implements MockIseeController {
                 .iseeTypeMap(iseeTypeMap)
                 .build());
     }
-
 }

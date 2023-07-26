@@ -1,8 +1,9 @@
-package it.gov.pagopa.admissibility.controller;
+package it.gov.pagopa.admissibility.mock.isee;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.mock.isee.controller.IseeController;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.model.mock.Isee;
+import it.gov.pagopa.admissibility.mock.isee.model.Isee;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,7 @@ import org.springframework.web.reactive.function.BodyInserters;
 import java.math.BigDecimal;
 import java.util.Map;
 
-class MockIseeControllerImplTest extends BaseIntegrationTest {
+class IseeControllerImplTest extends BaseIntegrationTest {
 
     private static final String USERID = "USERID";
     private static final String MOCKED_ISEE_COLLECTION_NAME = "mocked_isee";
@@ -40,7 +41,7 @@ class MockIseeControllerImplTest extends BaseIntegrationTest {
                 IseeTypologyEnum.UNIVERSITARIO, BigDecimal.TEN
         );
 
-        MockIseeController.IseeRequestDTO request = MockIseeController.IseeRequestDTO.builder()
+        IseeController.IseeRequestDTO request = IseeController.IseeRequestDTO.builder()
                 .iseeTypeMap(iseeMap)
                 .build();
 
@@ -63,7 +64,7 @@ class MockIseeControllerImplTest extends BaseIntegrationTest {
                 IseeTypologyEnum.UNIVERSITARIO, BigDecimal.ZERO
         );
 
-        MockIseeController.IseeRequestDTO request = MockIseeController.IseeRequestDTO.builder()
+        IseeController.IseeRequestDTO request = IseeController.IseeRequestDTO.builder()
                 .iseeTypeMap(iseeMap)
                 .build();
 
@@ -76,7 +77,7 @@ class MockIseeControllerImplTest extends BaseIntegrationTest {
     }
 
 
-    private WebTestClient.ResponseSpec createIsee(String userId, MockIseeController.IseeRequestDTO iseeRequestDTO){
+    private WebTestClient.ResponseSpec createIsee(String userId, IseeController.IseeRequestDTO iseeRequestDTO){
         return webClient.post()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/isee/mock/{userId}")
                         .build(userId))

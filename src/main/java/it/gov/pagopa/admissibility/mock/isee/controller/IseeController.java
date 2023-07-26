@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.controller;
+package it.gov.pagopa.admissibility.mock.isee.controller;
 
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import lombok.AllArgsConstructor;
@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 @RequestMapping("idpay/isee/mock")
-public interface MockIseeController {
+public interface IseeController {
     @PostMapping("/{userId}")
     Mono<Void> createIsee(@PathVariable String userId, @RequestBody IseeRequestDTO iseeRequestDTO);
 

@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.model.mock;
+package it.gov.pagopa.admissibility.mock.isee.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
