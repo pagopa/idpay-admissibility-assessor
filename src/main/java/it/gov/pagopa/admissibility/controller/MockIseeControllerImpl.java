@@ -20,20 +20,17 @@ public class MockIseeControllerImpl implements MockIseeController {
     }
 
     @Override
-    public Mono<Void> createIsee(String fiscalCode, IseeRequestDTO iseeRequestDTO) {
-        //CallPDV se arriva come fiscalcode
-        return Mono.just(fiscalCode)
-//                .flatMap(request -> callPDV)
-                .map(userId -> buildAndCheckIseeEntity(userId,iseeRequestDTO))
+    public Mono<Void> createIsee(String userId, IseeRequestDTO iseeRequestDTO) {
+        return buildAndCheckIseeEntity(userId,iseeRequestDTO)
                 .map(isee -> mongoTemplate.save(isee, "mocked_isee"))
                 .then();
     }
 
-    private Isee buildAndCheckIseeEntity(String userId, IseeRequestDTO iseeRequestDTO){
+    private Mono<Isee> buildAndCheckIseeEntity(String userId, IseeRequestDTO iseeRequestDTO){
         Map<String, BigDecimal> iseeTypeMap = new HashMap<>();
         iseeRequestDTO.getIseeTypeMap()
                 .forEach((type, value) -> {
-                    if(!chekValue(value)){
+                    if(BigDecimal.ZERO.compareTo(value) < 1){
                         throw new ClientExceptionWithBody(HttpStatus.BAD_REQUEST,
                                 "INVALID_VALUE",
                                 "Invalid value for isee type %s".formatted(type.name()));
@@ -41,14 +38,10 @@ public class MockIseeControllerImpl implements MockIseeController {
                     iseeTypeMap.put(type.name(), value);
                 });
 
-        return Isee.builder()
+        return Mono.just(Isee.builder()
                 .userId(userId)
                 .iseeTypeMap(iseeTypeMap)
-                .build();
-    }
-
-    private boolean chekValue(BigDecimal value){
-        return BigDecimal.ZERO.compareTo(value)>0;
+                .build());
     }
 
 }
