@@ -10,6 +10,7 @@ import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.model.mock.Isee;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.utils.TestUtils;

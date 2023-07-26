@@ -10,21 +10,15 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.model.mock.Isee;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.FieldNameConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -245,17 +239,4 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
     */
-}
-
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-@FieldNameConstants
-@Document("mocked_isee")
-class Isee {
-
-    @Id
-    private String userId;
-    private Map<String,BigDecimal> iseeTypeMap;
 }
