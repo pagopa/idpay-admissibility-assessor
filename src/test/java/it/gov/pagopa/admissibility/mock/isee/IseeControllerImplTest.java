@@ -15,6 +15,7 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.Map;
 
 class IseeControllerImplTest extends BaseIntegrationTest {
@@ -36,14 +37,7 @@ class IseeControllerImplTest extends BaseIntegrationTest {
     @Test
     void createIsee() {
 
-        Map<IseeTypologyEnum, BigDecimal> iseeMap = Map.of(
-                IseeTypologyEnum.ORDINARIO, BigDecimal.TEN,
-                IseeTypologyEnum.UNIVERSITARIO, BigDecimal.TEN
-        );
-
-        IseeController.IseeRequestDTO request = IseeController.IseeRequestDTO.builder()
-                .iseeTypeMap(iseeMap)
-                .build();
+        IseeController.IseeRequestDTO request = getIseeRequestDTO();
 
         WebTestClient.ResponseSpec result = createIsee(USERID, request);
         result.expectStatus().isOk();
@@ -59,14 +53,8 @@ class IseeControllerImplTest extends BaseIntegrationTest {
     @Test
     void createIseeBadRequest() {
 
-        Map<IseeTypologyEnum, BigDecimal> iseeMap = Map.of(
-                IseeTypologyEnum.ORDINARIO, BigDecimal.TEN,
-                IseeTypologyEnum.UNIVERSITARIO, BigDecimal.ZERO
-        );
-
-        IseeController.IseeRequestDTO request = IseeController.IseeRequestDTO.builder()
-                .iseeTypeMap(iseeMap)
-                .build();
+        IseeController.IseeRequestDTO request = getIseeRequestDTO();
+        request.getIseeTypeMap().put(IseeTypologyEnum.RESIDENZIALE, BigDecimal.ZERO);
 
         WebTestClient.ResponseSpec result = createIsee(USERID, request);
         result.expectStatus().isBadRequest();
@@ -76,6 +64,16 @@ class IseeControllerImplTest extends BaseIntegrationTest {
         Assertions.assertNull(repositoryResult);
     }
 
+    private IseeController.IseeRequestDTO getIseeRequestDTO() {
+        Map<IseeTypologyEnum, BigDecimal> iseeMap =new HashMap<>(Map.of(
+                IseeTypologyEnum.ORDINARIO, BigDecimal.TEN,
+                IseeTypologyEnum.UNIVERSITARIO, BigDecimal.TEN
+        ));
+
+        return IseeController.IseeRequestDTO.builder()
+                .iseeTypeMap(iseeMap)
+                .build();
+    }
 
     private WebTestClient.ResponseSpec createIsee(String userId, IseeController.IseeRequestDTO iseeRequestDTO){
         return webClient.post()
