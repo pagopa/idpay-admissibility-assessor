@@ -91,7 +91,7 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
         useCases.add(i -> {
             IseeController.IseeRequestDTO request = getIseeRequestDTO();
 
-            extractResponse(createIsee(USERID.formatted(i), request), HttpStatus.OK, null);
+            extractResponse(createIsee(USERID.formatted(i), request), HttpStatus.CREATED, null);
 
             Map<String, BigDecimal> repositoryResult = mongoTemplate.findById(USERID.formatted(i), Isee.class, MOCKED_ISEE_COLLECTION_NAME)
                     .map(Isee::getIseeTypeMap).block();

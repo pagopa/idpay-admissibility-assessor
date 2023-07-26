@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -13,6 +14,7 @@ import java.util.Map;
 
 @RequestMapping("idpay/isee/mock")
 public interface IseeController {
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/{userId}")
     Mono<Void> createIsee(@PathVariable String userId, @RequestBody IseeRequestDTO iseeRequestDTO);
 
