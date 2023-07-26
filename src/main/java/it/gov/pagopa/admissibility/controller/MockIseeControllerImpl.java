@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -35,7 +36,7 @@ public class MockIseeControllerImpl implements MockIseeController {
                                 "INVALID_VALUE",
                                 "Invalid value for isee type %s".formatted(type.name()));
                     }
-                    iseeTypeMap.put(type.name(), value);
+                    iseeTypeMap.put(type.name(), value.setScale(2, RoundingMode.HALF_DOWN));
                 });
 
         return Mono.just(Isee.builder()
