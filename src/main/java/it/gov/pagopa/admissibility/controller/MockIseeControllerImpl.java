@@ -31,7 +31,7 @@ public class MockIseeControllerImpl implements MockIseeController {
         Map<String, BigDecimal> iseeTypeMap = new HashMap<>();
         iseeRequestDTO.getIseeTypeMap()
                 .forEach((type, value) -> {
-                    if(BigDecimal.ZERO.compareTo(value) > 0){
+                    if(BigDecimal.ZERO.compareTo(value) >= 0){
                         throw new ClientExceptionWithBody(HttpStatus.BAD_REQUEST,
                                 "INVALID_VALUE",
                                 "Invalid value for isee type %s".formatted(type.name()));
