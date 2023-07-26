@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.mock.isee.controller.IseeController;
 import it.gov.pagopa.admissibility.mock.isee.model.Isee;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.common.web.dto.ErrorDTO;
 import it.gov.pagopa.common.web.exception.ErrorManager;
 import org.apache.commons.lang3.function.FailableConsumer;
 import org.junit.jupiter.api.Assertions;
@@ -13,6 +14,7 @@ import org.opentest4j.AssertionFailedError;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -38,6 +40,9 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
     private final List<FailableConsumer<Integer, Exception>> useCases = new ArrayList<>();
     private static final int parallelism = 8;
     private static final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+
+    ErrorDTO errorValueResidenzialeExpectedDTO = new ErrorDTO("INVALID_VALUE","Invalid value for isee type %s".formatted(IseeTypologyEnum.RESIDENZIALE));
+    ErrorDTO errorNotIseeExpectedDTO = new ErrorDTO("ISEE_NOT_PRESENT","The request has no isee");
 
     @Autowired
     private WebTestClient webClient;
@@ -86,8 +91,7 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
         useCases.add(i -> {
             IseeController.IseeRequestDTO request = getIseeRequestDTO();
 
-            WebTestClient.ResponseSpec result = createIsee(USERID.formatted(i), request);
-            result.expectStatus().isOk();
+            extractResponse(createIsee(USERID.formatted(i), request), HttpStatus.OK, null);
 
             Map<String, BigDecimal> repositoryResult = mongoTemplate.findById(USERID.formatted(i), Isee.class, MOCKED_ISEE_COLLECTION_NAME)
                     .map(Isee::getIseeTypeMap).block();
@@ -104,16 +108,44 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
 
         //usecase1: isee bad request
         useCases.add(i -> {
+
+            //ISEE value 0
             IseeController.IseeRequestDTO request = getIseeRequestDTO();
             request.getIseeTypeMap().put(IseeTypologyEnum.RESIDENZIALE, BigDecimal.ZERO);
 
-            WebTestClient.ResponseSpec result = createIsee(USERID.formatted(i), request);
-            result.expectStatus().isBadRequest();
+            checkResponse(
+                    extractResponse(createIsee(USERID.formatted(i), request), HttpStatus.BAD_REQUEST, ErrorDTO.class),
+                    errorValueResidenzialeExpectedDTO);
 
-            Isee repositoryResult = mongoTemplate.findById(USERID.formatted(i), Isee.class, MOCKED_ISEE_COLLECTION_NAME).block();
+            checkNotStoredIsee(USERID.formatted(i));
 
-            Assertions.assertNull(repositoryResult);
+            //ISEE negative value
+            IseeController.IseeRequestDTO negativeRequest = getIseeRequestDTO();
+            negativeRequest.getIseeTypeMap().put(IseeTypologyEnum.RESIDENZIALE, BigDecimal.valueOf(-1L));
+
+            checkResponse(
+                    extractResponse(createIsee(USERID.formatted(i), negativeRequest), HttpStatus.BAD_REQUEST, ErrorDTO.class),
+                    errorValueResidenzialeExpectedDTO);
+
+            checkNotStoredIsee(USERID.formatted(i));
+
+            // not ISEE in request
+            checkResponse(
+                    extractResponse(createIsee(USERID.formatted(i), new IseeController.IseeRequestDTO()), HttpStatus.BAD_REQUEST, ErrorDTO.class),
+                    errorNotIseeExpectedDTO);
+
+            checkNotStoredIsee(USERID.formatted(i));
+
         });
+    }
+
+    private void checkResponse(ErrorDTO errorResult, ErrorDTO errorExpectedDTO) {
+        Assertions.assertEquals(errorExpectedDTO, errorResult);
+    }
+
+    private void checkNotStoredIsee(String userId){
+        Isee repositoryResult = mongoTemplate.findById(userId, Isee.class, MOCKED_ISEE_COLLECTION_NAME).block();
+        Assertions.assertNull(repositoryResult);
     }
 
     private IseeController.IseeRequestDTO getIseeRequestDTO() {
@@ -133,5 +165,13 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
                         .build(userId))
                 .body(BodyInserters.fromValue(iseeRequestDTO))
                 .exchange();
+    }
+
+    protected <T> T extractResponse(WebTestClient.ResponseSpec response, HttpStatus expectedHttpStatus, Class<T> expectedBodyClass) {
+        response = response.expectStatus().value(httpStatus -> Assertions.assertEquals(expectedHttpStatus.value(), httpStatus));
+        if (expectedBodyClass != null) {
+            return response.expectBody(expectedBodyClass).returnResult().getResponseBody();
+        }
+        return null;
     }
 }

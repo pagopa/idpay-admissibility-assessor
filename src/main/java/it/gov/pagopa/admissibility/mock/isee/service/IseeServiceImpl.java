@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.mock.isee.service;
 
 import it.gov.pagopa.admissibility.mock.isee.controller.IseeController;
 import it.gov.pagopa.admissibility.mock.isee.model.Isee;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.web.exception.ClientExceptionWithBody;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.http.HttpStatus;
@@ -29,8 +30,14 @@ public class IseeServiceImpl implements IseeService{
 
     private Mono<Isee> buildAndCheckIseeEntity(String userId, IseeController.IseeRequestDTO iseeRequestDTO){
         Map<String, BigDecimal> iseeTypeMap = new HashMap<>();
-        iseeRequestDTO.getIseeTypeMap()
-                .forEach((type, value) -> {
+        Map<IseeTypologyEnum, BigDecimal> requestMap = iseeRequestDTO.getIseeTypeMap();
+        if(requestMap == null || requestMap.isEmpty()){
+            throw new ClientExceptionWithBody(HttpStatus.BAD_REQUEST,
+                    "ISEE_NOT_PRESENT",
+                    "The request has no isee");
+        }
+
+        requestMap.forEach((type, value) -> {
                     if(BigDecimal.ZERO.compareTo(value) >= 0){
                         throw new ClientExceptionWithBody(HttpStatus.BAD_REQUEST,
                                 "INVALID_VALUE",
