@@ -1,10 +1,7 @@
 package it.gov.pagopa.admissibility.mock.isee.controller;
 
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -18,7 +15,8 @@ public interface IseeController {
     @PostMapping("/{userId}")
     Mono<Void> createIsee(@PathVariable String userId, @RequestBody IseeRequestDTO iseeRequestDTO);
 
-    @Data
+    @Getter
+    @Setter
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor

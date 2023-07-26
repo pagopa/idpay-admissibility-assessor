@@ -136,6 +136,13 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
 
             checkNotStoredIsee(USERID.formatted(i));
 
+            // ISEE in request empty
+            checkResponse(
+                    extractResponse(createIsee(USERID.formatted(i), new IseeController.IseeRequestDTO(new HashMap<>())), HttpStatus.BAD_REQUEST, ErrorDTO.class),
+                    errorNotIseeExpectedDTO);
+
+            checkNotStoredIsee(USERID.formatted(i));
+
         });
     }
 
