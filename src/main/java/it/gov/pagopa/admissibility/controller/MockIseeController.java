@@ -1,12 +1,11 @@
 package it.gov.pagopa.admissibility.controller;
 
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -15,10 +14,12 @@ import java.util.Map;
 @RequestMapping("idpay/isee/mock")
 public interface MockIseeController {
     @PostMapping("/{userId}")
-    Mono<Void> createIsee(@RequestParam("userId") String userId, @RequestBody IseeRequestDTO iseeRequestDTO);
+    Mono<Void> createIsee(@PathVariable String userId, @RequestBody IseeRequestDTO iseeRequestDTO);
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     class IseeRequestDTO {
         private Map<IseeTypologyEnum, BigDecimal> iseeTypeMap;
     }
