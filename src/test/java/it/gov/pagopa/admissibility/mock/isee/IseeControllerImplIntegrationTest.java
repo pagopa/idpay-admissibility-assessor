@@ -18,15 +18,17 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-class IseeControllerImplTest extends BaseIntegrationTest {
+class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
 
     private static final String USERID = "USERID";
     private static final String MOCKED_ISEE_COLLECTION_NAME = "mocked_isee";
+
     @Autowired
     private WebTestClient webClient;
 
     @Autowired
     private ReactiveMongoTemplate mongoTemplate;
+
     @AfterEach
     void cleanData() {
         mongoTemplate.remove(
@@ -47,6 +49,12 @@ class IseeControllerImplTest extends BaseIntegrationTest {
 
         Assertions.assertNotNull(repositoryResult);
         Assertions.assertEquals(2, repositoryResult.size());
+        request.getIseeTypeMap()
+                .forEach((type, value) -> {
+                    BigDecimal storedValue = repositoryResult.get(type.name());
+                    Assertions.assertNotNull(storedValue);
+                    Assertions.assertEquals(0, storedValue.compareTo(value));
+                });
 
     }
 
