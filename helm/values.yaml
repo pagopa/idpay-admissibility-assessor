@@ -29,7 +29,7 @@ microservice-chart:
 
   ingress:
     create: true
-    path: /idpay/admissibility/(.*)
+    path: /idpayadmissibility/(.*)
 
   serviceAccount:
     create: false
