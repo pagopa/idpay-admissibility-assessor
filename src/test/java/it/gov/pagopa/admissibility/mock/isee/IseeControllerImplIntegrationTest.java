@@ -41,8 +41,8 @@ class IseeControllerImplIntegrationTest extends BaseIntegrationTest {
     private static final int parallelism = 8;
     private static final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
 
-    ErrorDTO errorValueResidenzialeExpectedDTO = new ErrorDTO("INVALID_VALUE","Invalid value for isee type %s".formatted(IseeTypologyEnum.RESIDENZIALE));
-    ErrorDTO errorNotIseeExpectedDTO = new ErrorDTO("ISEE_NOT_PRESENT","The request has no isee");
+    private final ErrorDTO errorValueResidenzialeExpectedDTO = new ErrorDTO("INVALID_VALUE","Invalid value for isee type %s".formatted(IseeTypologyEnum.RESIDENZIALE));
+    private final ErrorDTO errorNotIseeExpectedDTO = new ErrorDTO("ISEE_NOT_PRESENT","The request has no isee");
 
     @Autowired
     private WebTestClient webClient;
