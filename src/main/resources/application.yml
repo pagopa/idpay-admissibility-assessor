@@ -25,7 +25,7 @@ spring:
       servicebus:
         connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     function:
-      definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest
+      definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest;consumerCommands
     stream:
       bindings:
         admissibilityProcessor-in-0:
@@ -54,6 +54,11 @@ spring:
           destination: ${KAFKA_ERRORS_TOPIC:idpay-errors}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-errors
+        consumerCommands-in-0:
+          binder: kafka-commands
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          destination: ${KAFKA_TOPIC_COMMANDS:idpay-commands}
+          group: ${KAFKA_COMMANDS_GROUP_IN:idpay-commands-admissibility-assessor-consumer-group}
       servicebus:
         bindings:
           admissibilityProcessor-in-0:
@@ -94,6 +99,13 @@ spring:
               configuration:
                 sasl.jaas.config: ${KAFKA_ERRORS_SASL_JAAS_CONFIG:}
                 key.serializer: org.apache.kafka.common.serialization.StringSerializer
+        kafka-commands:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_BINDER_BROKER_ENDPOINT_LIST_01:}
+              configuration:
+               sasl.jaas.config: ${KAFKA_COMMANDS_IN_SASL_JAAS_CONFIG:}
       kafka:
         binder:
           auto-create-topics: false
@@ -123,6 +135,22 @@ spring:
                 socket.connection.setup.timeout:
                   max.ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
                   ms: ${KAFKA_BENEFICIARY_RULE_REQUEST_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+          consumerCommands-in-0:
+            consumer:
+              startOffset: ${KAFKA_COMMANDS_START_OFFSET:${KAFKA_CONSUMER_CONFIG_START_OFFSET:earliest}}
+              autoCommitOffset: false
+              ackMode: MANUAL_IMMEDIATE
+              ackTime: ${KAFKA_COMMANDS_ACK_MILLIS:500}
+              standardHeaders: ${KAFKA_COMMANDS_STANDARD_HEADERS:${KAFKA_CONSUMER_CONFIG_STANDARD_HEADERS:both}}
+              configuration:
+                max.poll:
+                  records: ${KAFKA_COMMANDS_MAX_POLL_SIZE:${KAFKA_CONSUMER_CONFIG_MAX_POLL_SIZE:500}}
+                  interval.ms: ${KAFKA_COMMANDS_INTERVAL_TIMEOUT_MS:${KAFKA_CONFIG_MAX_POLL_INTERVAL_TIMEOUT_MS:300000}}
+                connections.max.idle.ms: ${KAFKA_COMMANDS_CONNECTIONS_MAX_IDLE_MS:${KAFKA_CONSUMER_CONFIG_CONNECTIONS_MAX_IDLE_MS:180000}}
+                socket.connection.setup.timeout:
+                  max.ms: ${KAFKA_COMMANDS_CONNECTION_TIMEOUT_MAX_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MAX_MS:200000}}
+                  ms: ${KAFKA_COMMANDS_CONNECTION_TIMEOUT_MS:${KAFKA_CONSUMER_CONFIG_CONNECTION_TIMEOUT_MS:100000}}
+
           admissibilityProcessorOut-out-0:
             producer:
               configuration:

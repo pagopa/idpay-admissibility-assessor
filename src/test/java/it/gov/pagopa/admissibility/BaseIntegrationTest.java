@@ -48,6 +48,7 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
         "${spring.cloud.stream.bindings.admissibilityProcessorOut-out-0.destination}",
         "${spring.cloud.stream.bindings.rankingRequest-out-0.destination}",
         "${spring.cloud.stream.bindings.errors-out-0.destination}",
+        "${spring.cloud.stream.bindings.consumerCommands-in-0.destination}",
 }, controlledShutdown = true)
 @TestPropertySource(
         properties = {
@@ -71,6 +72,7 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
                 "spring.cloud.stream.binders.kafka-onboarding-outcome.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 "spring.cloud.stream.binders.kafka-errors.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
+                "spring.cloud.stream.binders.kafka-commands.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
                 //endregion
 
                 //region service bus
@@ -125,9 +127,13 @@ public abstract class BaseIntegrationTest {
     protected String topicAdmissibilityProcessorOutRankingRequest;
     @Value("${spring.cloud.stream.bindings.errors-out-0.destination}")
     protected String topicErrors;
+    @Value("${spring.cloud.stream.bindings.consumerCommands-in-0.destination}")
+    protected String topicCommands;
 
     @Value("${spring.cloud.stream.bindings.beneficiaryRuleBuilderConsumer-in-0.group}")
     protected String groupIdBeneficiaryRuleConsumer;
+    @Value("${spring.cloud.stream.bindings.consumerCommands-in-0.group}")
+    protected String groupIdCommands;
 
     @Value("${spring.data.redis.url}")
     protected String redisUrl;
@@ -169,10 +175,12 @@ public abstract class BaseIntegrationTest {
         Assertions.assertEquals(Status.UP, health.getStatus());
     }
 
-    private final Pattern errorUseCaseIdPatternMatch = Pattern.compile("\"initiativeId\":\"id_([0-9]+)_?[^\"]*\"");
+    protected Pattern getErrorUseCaseIdPatternMatch() {
+        return Pattern.compile("\"initiativeId\":\"id_([0-9]+)_?[^\"]*\"");
+    }
 
     protected void checkErrorsPublished(int expectedErrorMessagesNumber, long maxWaitingMs, List<Pair<Supplier<String>, java.util.function.Consumer<ConsumerRecord<String, String>>>> errorUseCases) {
-        kafkaTestUtilitiesService.checkErrorsPublished(topicErrors, errorUseCaseIdPatternMatch, expectedErrorMessagesNumber, maxWaitingMs, errorUseCases);
+        kafkaTestUtilitiesService.checkErrorsPublished(topicErrors, getErrorUseCaseIdPatternMatch(), expectedErrorMessagesNumber, maxWaitingMs, errorUseCases);
     }
 
     protected void checkErrorMessageHeaders(String srcTopic,String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey) {
