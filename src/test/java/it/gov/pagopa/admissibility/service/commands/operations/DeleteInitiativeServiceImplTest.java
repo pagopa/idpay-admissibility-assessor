@@ -5,8 +5,6 @@ import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
-import it.gov.pagopa.admissibility.model.DroolsRule;
-import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
@@ -45,19 +43,8 @@ class DeleteInitiativeServiceImplTest {
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
 
-        DroolsRule droolsRule = DroolsRule.builder()
-                .id(initiativeId)
-                .build();
-
-        Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
-                .thenReturn(Flux.just(droolsRule).then());
-
-        InitiativeCounters initiativeCounters = InitiativeCounters.builder()
-                .id(initiativeId)
-                .build();
-
         Mockito.when(initiativeCountersRepositoryMock.deleteById(initiativeId))
-                .thenReturn(Flux.just(initiativeCounters).then());
+                .thenReturn(Mono.just(Mockito.mock(Void.class)));
 
         Family family = Family.builder()
                 .familyId(familyid)
