@@ -37,7 +37,7 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
         return droolsRuleRepository.deleteById(initiativeId)
                 .doOnNext(d -> {
                     log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
-                auditUtilities.logDeletedDroolsRule(initiativeId);
+                    auditUtilities.logDeletedDroolsRule(initiativeId);
                 });
     }
 
