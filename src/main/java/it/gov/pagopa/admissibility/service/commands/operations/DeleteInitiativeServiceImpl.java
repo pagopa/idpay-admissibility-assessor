@@ -35,25 +35,28 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
         return droolsRuleRepository.deleteById(initiativeId)
-                .doOnNext(d -> {
+                .map(d -> {
                     log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
                     auditUtilities.logDeletedDroolsRule(initiativeId);
+                    return d;
                 });
     }
 
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {
         return initiativeCountersRepository.deleteById(initiativeId)
-                .doOnNext(i -> {
+                .map(i -> {
                     log.info("[DELETE_INITIATIVE_COUNTERS] Initiative counters deleted on initiative {}", initiativeId);
                     auditUtilities.logDeletedInitiativeCounters(initiativeId);
+                    return i;
                 });
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
         return onboardingFamiliesRepository.deleteByInitiativeId(initiativeId)
-                .doOnNext(familyId -> {
-                    log.info("[DELETE_FAMILIES] Families deleted on initiatve {}", initiativeId);
+                .map(familyId -> {
+                    log.info("[DELETE_FAMILIES] Families deleted on initiative {}", initiativeId);
                     auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId);
+                    return familyId;
                 })
                 .then();
     }
