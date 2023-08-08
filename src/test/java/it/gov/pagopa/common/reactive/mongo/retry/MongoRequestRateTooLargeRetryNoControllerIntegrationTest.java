@@ -1,6 +1,5 @@
-package it.gov.pagopa.common.mongo.retry;
+package it.gov.pagopa.common.reactive.mongo.retry;
 
-import it.gov.pagopa.common.reactive.mongo.retry.MongoRequestRateTooLargeRetryWhenNotControllerAspect;
 import it.gov.pagopa.common.reactive.mongo.retry.exception.MongoRequestRateTooLargeRetryExpiredException;
 import it.gov.pagopa.common.reactive.web.ReactiveRequestContextFilter;
 import it.gov.pagopa.common.reactive.web.ReactiveRequestContextHolder;
@@ -31,19 +30,19 @@ import java.time.LocalDateTime;
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {
         ReactiveRequestContextFilter.class,
-        MongoRequestRateTooLargeRetryWhenNotControllerAspect.class,
+        MongoRequestRateTooLargeAutomaticRetryAspect.class,
         ErrorManager.class,
         MongoExceptionHandler.class,
 
-        MongoRequestRateTooLargeRetryWhenNoControllerTest.TestController.class,
-        MongoRequestRateTooLargeRetryWhenNoControllerTest.TestRepository.class
+        MongoRequestRateTooLargeRetryNoControllerIntegrationTest.TestController.class,
+        MongoRequestRateTooLargeRetryNoControllerIntegrationTest.TestRepository.class
 })
 @WebFluxTest
-class MongoRequestRateTooLargeRetryWhenNoControllerTest {
+class MongoRequestRateTooLargeRetryNoControllerIntegrationTest {
 
-    @Value("${mongo.request-rate-too-large.max-retry:3}")
+    @Value("${mongo.request-rate-too-large.batch.max-retry:3}")
     private int maxRetry;
-    @Value("${mongo.request-rate-too-large.max-millis-elapsed:0}")
+    @Value("${mongo.request-rate-too-large.batch.max-millis-elapsed:0}")
     private int maxMillisElapsed;
 
     @SpyBean

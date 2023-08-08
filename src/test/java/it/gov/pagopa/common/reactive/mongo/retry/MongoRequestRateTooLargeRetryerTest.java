@@ -1,4 +1,4 @@
-package it.gov.pagopa.common.mongo.retry;
+package it.gov.pagopa.common.reactive.mongo.retry;
 
 import ch.qos.logback.classic.LoggerContext;
 import com.mongodb.MongoQueryException;
