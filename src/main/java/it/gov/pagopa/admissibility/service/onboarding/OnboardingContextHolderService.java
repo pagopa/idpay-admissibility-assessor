@@ -15,4 +15,5 @@ public interface OnboardingContextHolderService {
 
     Mono<InitiativeConfig> getInitiativeConfig(String initiativeId);
     void setInitiativeConfig(InitiativeConfig initiativeConfig);
+    Mono<KieBase> refreshKieContainerCacheMiss();
 }

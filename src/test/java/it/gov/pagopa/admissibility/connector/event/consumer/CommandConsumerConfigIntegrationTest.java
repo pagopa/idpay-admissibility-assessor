@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesReposi
 import it.gov.pagopa.admissibility.dto.commands.QueueCommandOperationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.DroolsRule;
+import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.utils.CommandConstants;
@@ -33,8 +34,9 @@ import java.util.stream.IntStream;
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.commands.CommandMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.commands.operations.DeleteInitiativeServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=WARN",
 })
-class CommandConsumerConfigTest extends BaseIntegrationTest {
+class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
     private final String INITIATIVEID = "INITIATIVEID_%d";
     private final Set<String> INITIATIVES_DELETED = new HashSet<>();
     @SpyBean
@@ -129,8 +131,14 @@ class CommandConsumerConfigTest extends BaseIntegrationTest {
     }
 
     private void initializeDB(int bias) {
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder()
+                .initiativeId(INITIATIVEID.formatted(bias))
+                .build();
+
         DroolsRule droolsRule = DroolsRule.builder()
                 .id(INITIATIVEID.formatted(bias))
+                .initiativeConfig(initiativeConfig)
+                .rule("")
                 .build();
         droolsRuleRepository.save(droolsRule).block();
 

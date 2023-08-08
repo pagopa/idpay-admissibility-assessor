@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.commands.operations;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,12 +17,14 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private final InitiativeCountersRepository initiativeCountersRepository;
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final AuditUtilities auditUtilities;
+    private final OnboardingContextHolderService onboardingContextHolderService;
 
-    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository, OnboardingFamiliesRepository onboardingFamiliesRepository, AuditUtilities auditUtilities) {
+    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository, OnboardingFamiliesRepository onboardingFamiliesRepository, AuditUtilities auditUtilities, OnboardingContextHolderService onboardingContextHolderService) {
         this.droolsRuleRepository = droolsRuleRepository;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.auditUtilities = auditUtilities;
+        this.onboardingContextHolderService = onboardingContextHolderService;
     }
 
     @Override
@@ -35,10 +38,11 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
         return droolsRuleRepository.deleteById(initiativeId)
-                .doOnSuccess(d -> {
-                    log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
-                    auditUtilities.logDeletedDroolsRule(initiativeId);
-                });
+                .doOnSuccess(d -> onboardingContextHolderService.refreshKieContainerCacheMiss()
+                        .subscribe(k -> {
+                            log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
+                            auditUtilities.logDeletedDroolsRule(initiativeId);
+                        }));
     }
 
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {

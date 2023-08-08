@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersReposi
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,6 +24,7 @@ class DeleteInitiativeServiceImplTest {
     @Mock private InitiativeCountersRepository initiativeCountersRepositoryMock;
     @Mock private OnboardingFamiliesRepository onboardingFamiliesRepositoryMock;
     @Mock private AuditUtilities auditUtilitiesMock;
+    @Mock private OnboardingContextHolderService onboardingContextHolderService;
 
     private DeleteInitiativeService deleteInitiativeService;
 
@@ -32,7 +34,7 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
-                auditUtilitiesMock);
+                auditUtilitiesMock, onboardingContextHolderService);
     }
 
     @Test
