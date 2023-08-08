@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.kie.api.KieBase;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -44,6 +45,9 @@ class DeleteInitiativeServiceImplTest {
 
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
+
+        Mockito.when(onboardingContextHolderService.refreshKieContainerCacheMiss())
+                .thenReturn(Mono.just(Mockito.mock(KieBase.class)));
 
         Mockito.when(initiativeCountersRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
