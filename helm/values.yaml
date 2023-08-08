@@ -74,7 +74,7 @@ microservice-chart:
       KAFKA_ERRORS_BROKER: kafka_broker
       KAFKA_ERRORS_TOPIC: idpay_error_topic
       KAFKA_COMMANDS_BROKER: kafka_broker
-      KAFKA_COMMANDS_TOPIC: idpay-commands
+      #KAFKA_COMMANDS_TOPIC: idpay-commands
     rest-client:
       PDV_BASE_URL: pdv_decrypt_base_url
 
