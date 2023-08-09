@@ -118,8 +118,8 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             refreshKieContainerCacheMiss().subscribe(subscriber);
         }
     }
-
-    private Mono<KieBase> refreshKieContainerCacheMiss() {
+    @Override
+    public Mono<KieBase> refreshKieContainerCacheMiss() {
         final Flux<DroolsRule> droolsRuleFlux = Mono.defer(() -> {
             log.info("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
             initiativeId2Config.clear();
