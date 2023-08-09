@@ -38,11 +38,11 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
         return droolsRuleRepository.deleteById(initiativeId)
-                .doOnSuccess(d -> onboardingContextHolderService.refreshKieContainerCacheMiss()
-                        .subscribe(k -> {
-                            log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
-                            auditUtilities.logDeletedDroolsRule(initiativeId);
-                        }));
+                .doOnSuccess(d -> {
+                    log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
+                    auditUtilities.logDeletedDroolsRule(initiativeId);
+                })
+                .then(onboardingContextHolderService.refreshKieContainerCacheMiss()).then();
     }
 
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {
