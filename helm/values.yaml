@@ -51,7 +51,7 @@ microservice-chart:
   envConfig:
     APP: "idpay-admissibility-assessor"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
-    KAFKA_COMMANDS_GROUP_ID: ""idpay-commands-admissibility-consumer-group""
+    KAFKA_COMMANDS_GROUP_ID: "idpay-commands-admissibility-consumer-group"
     MONGODB_DBNAME: "idpay"
     APPLICATIONINSIGHTS_ROLE_NAME: "idpayadmissibilityassessor"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
