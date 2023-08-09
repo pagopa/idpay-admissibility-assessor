@@ -42,7 +42,8 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
                     log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
                     auditUtilities.logDeletedDroolsRule(initiativeId);
                 })
-                .then(onboardingContextHolderService.refreshKieContainerCacheMiss()).then();
+                .then(onboardingContextHolderService.refreshKieContainerCacheMiss())
+                .then();
     }
 
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {

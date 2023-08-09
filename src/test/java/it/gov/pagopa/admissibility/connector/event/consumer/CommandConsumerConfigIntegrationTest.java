@@ -109,8 +109,8 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
         return countSaved[0];
     }
 
-    private List<String> buildValidPayloads(int startValue, int messagesNumber) {
-        return IntStream.range(startValue, messagesNumber)
+    private List<String> buildValidPayloads(int startValue, int endValue) {
+        return IntStream.range(startValue, endValue)
                 .mapToObj(i -> {
                     initializeDB(i);
                     QueueCommandOperationDTO command = QueueCommandOperationDTO.builder()
