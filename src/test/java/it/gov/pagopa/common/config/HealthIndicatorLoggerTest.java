@@ -11,7 +11,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.health.HealthEndpointAutoConfiguration;
 import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthComponent;
 import org.springframework.boot.actuate.health.HealthEndpoint;
+import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.actuate.system.DiskSpaceHealthIndicator;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,11 +45,25 @@ class HealthIndicatorLoggerTest {
                 .thenReturn(Health.down().withDetails(Map.of("DETAILKEY", "DETAILVALUE")).build());
     }
     @Test
-    void test(){
-        healthEndpoint.health();
+    void testDown(){
+        test(Status.DOWN);
+    }
+
+    @Test
+    void testOutOfService(){
+        Mockito.when(diskSpaceHealthIndicatorMock.health())
+                .thenReturn(Health.outOfService().withDetails(Map.of("DETAILKEY", "DETAILVALUE")).build());
+
+        test(Status.OUT_OF_SERVICE);
+    }
+
+    private void test(Status expectedStatus) {
+        HealthComponent health = healthEndpoint.health();
+
+        Assertions.assertEquals(expectedStatus, health.getStatus());
 
         Assertions.assertEquals(1, memoryAppender.getLoggedEvents().size());
-        Assertions.assertEquals("[HEALTH][DOWN] DiskSpaceHealthIndicator: {DETAILKEY=DETAILVALUE}",
+        Assertions.assertEquals("[HEALTH][%s] DiskSpaceHealthIndicator: {DETAILKEY=DETAILVALUE}".formatted(expectedStatus),
                 memoryAppender.getLoggedEvents().get(0).getFormattedMessage());
     }
 }
