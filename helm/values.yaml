@@ -51,7 +51,7 @@ microservice-chart:
   envConfig:
     APP: "idpay-admissibility-assessor"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
-    KAFKA_COMMANDS_GROUP_ID: "idpay-commands-admissibility-assessor-consumer-group"
+    KAFKA_COMMANDS_GROUP_ID: "idpay-commands-admissibility-consumer-group"
     MONGODB_DBNAME: "idpay"
     APPLICATIONINSIGHTS_ROLE_NAME: "idpayadmissibilityassessor"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
@@ -74,7 +74,7 @@ microservice-chart:
       KAFKA_ERRORS_BROKER: kafka_broker
       KAFKA_ERRORS_TOPIC: idpay_error_topic
       KAFKA_COMMANDS_BROKER: kafka_broker
-      KAFKA_COMMANDS_TOPIC: idpay-commands
+      KAFKA_COMMANDS_TOPIC: idpay_commands_topic
     rest-client:
       PDV_BASE_URL: pdv_decrypt_base_url
 
