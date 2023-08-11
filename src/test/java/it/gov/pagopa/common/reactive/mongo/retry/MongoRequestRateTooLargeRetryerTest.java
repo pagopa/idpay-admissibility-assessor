@@ -1,9 +1,12 @@
 package it.gov.pagopa.common.reactive.mongo.retry;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import ch.qos.logback.classic.LoggerContext;
 import com.mongodb.MongoQueryException;
 import com.mongodb.ServerAddress;
-import it.gov.pagopa.common.reactive.mongo.retry.MongoRequestRateTooLargeRetryer;
 import it.gov.pagopa.common.reactive.mongo.retry.exception.MongoRequestRateTooLargeRetryExpiredException;
 import it.gov.pagopa.common.utils.MemoryAppender;
 import org.bson.BsonDocument;
@@ -14,8 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 
 class MongoRequestRateTooLargeRetryerTest {
@@ -133,7 +134,7 @@ class MongoRequestRateTooLargeRetryerTest {
     void testMonoRequestRateTooLargeRetryAfterMsNull() {
         long[] counter = {0};
         UncategorizedMongoDbException expectedException = new UncategorizedMongoDbException(
-                "RequestRateTooLarge", new Throwable());
+                "TooManyRequests", new Throwable());
         Mono<Object> testPublisher = Mono.fromSupplier(() -> counter[0]++)
                 .map(x -> {
                     if (counter[0] <= REQUEST_RATE_TOO_LARGE_MAX_RETRY) {
@@ -248,7 +249,7 @@ class MongoRequestRateTooLargeRetryerTest {
     void testFluxRequestRateTooLargeRetryAfterMsNull() {
         long[] counter = {0};
         UncategorizedMongoDbException expectedException = new UncategorizedMongoDbException(
-                "RequestRateTooLarge", new Throwable());
+                "TooManyRequests", new Throwable());
         Flux<Object> testPublisher = Flux.defer(() -> Flux.just(counter[0]++))
                 .map(x -> {
                     if (counter[0] <= REQUEST_RATE_TOO_LARGE_MAX_RETRY) {
