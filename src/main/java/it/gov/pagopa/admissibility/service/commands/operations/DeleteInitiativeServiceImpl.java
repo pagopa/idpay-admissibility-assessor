@@ -39,7 +39,7 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private Mono<Void> deleteDroolsRule(String initiativeId) {
         return droolsRuleRepository.deleteById(initiativeId)
                 .doOnSuccess(d -> {
-                    log.info("[DELETE_DROOLS_RULE] Drools Rule deleted on initiative {}", initiativeId);
+                    log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: beneficiary_rule", initiativeId);
                     auditUtilities.logDeletedDroolsRule(initiativeId);
                 })
                 .then(onboardingContextHolderService.refreshKieContainerCacheMiss())
@@ -49,17 +49,15 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {
         return initiativeCountersRepository.deleteById(initiativeId)
                 .doOnSuccess(i -> {
-                    log.info("[DELETE_INITIATIVE_COUNTERS] Initiative counters deleted on initiative {}", initiativeId);
+                    log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: initiative_counters", initiativeId);
                     auditUtilities.logDeletedInitiativeCounters(initiativeId);
                 });
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
         return onboardingFamiliesRepository.deleteByInitiativeId(initiativeId)
-                .doOnNext(familyId -> {
-                    log.info("[DELETE_FAMILIES] Families deleted on initiative {}", initiativeId);
-                    auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId);
-                })
-                .then();
+                .doOnNext(familyId -> auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId))
+                .then()
+                .doOnSuccess(i -> log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: onboarding_families", initiativeId));
     }
 }
