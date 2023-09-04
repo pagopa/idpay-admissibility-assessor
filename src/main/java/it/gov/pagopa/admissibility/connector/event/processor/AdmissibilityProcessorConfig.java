@@ -28,6 +28,7 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
     private final AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService;
 
     private boolean contextReady = false;
+    private Binding<?> admissibilityAssessorConsumerBinding;
 
     public AdmissibilityProcessorConfig(BindingsLifecycleController bindingsLifecycleController, AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService) {
         this.bindingsLifecycleController = bindingsLifecycleController;
@@ -44,10 +45,17 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
 
     @EventListener(BindingCreatedEvent.class)
     public void onBindingCreatedEvent(BindingCreatedEvent event) {
-        if (event.getSource() instanceof Binding<?> binding && ADMISSIBILITY_PROCESSOR_BINDING_NAME.equals(binding.getBindingName()) && contextReady) {
-            synchronized (this) {
-                makeServiceBusBindingRestartable(binding);
-                binding.start();
+        if (event.getSource() instanceof Binding<?> binding && ADMISSIBILITY_PROCESSOR_BINDING_NAME.equals(binding.getBindingName())) {
+            admissibilityAssessorConsumerBinding = binding;
+
+            if (contextReady) {
+                log.info("[BENEFICIARY_CONTEXT_START] Application started and context ready");
+                synchronized (this) {
+                    makeServiceBusBindingRestartable(binding);
+                    binding.start();
+                }
+            } else {
+                log.info("[BENEFICIARY_CONTEXT_START] Application started but context not ready");
             }
         }
     }
@@ -56,12 +64,12 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
      * Only setting "group" property makes the binding restartable.
      * We are using a queue, and group is a configuration valid just for topics, so we cannot configure it.
      * Because we are setting the auto-startup to false, we are not more able to start it when the container is ready without changing this flag
-    */
+     */
     @SuppressWarnings("squid:S3011") // suppressing reflection accesses
     private static void makeServiceBusBindingRestartable(Binding<?> binding) {
         try {
             Field restartableField = ReflectionUtils.findField(binding.getClass(), "restartable");
-            if(restartableField==null){
+            if (restartableField == null) {
                 throw new IllegalStateException("Cannot make servicebus binding restartable");
             }
 
@@ -74,9 +82,13 @@ public class AdmissibilityProcessorConfig implements ApplicationListener<Onboard
 
     @Override
     public void onApplicationEvent(@NonNull OnboardingContextHolderServiceImpl.OnboardingContextHolderReadyEvent event) {
-        if(!contextReady) {
+        if (!contextReady) {
             synchronized (this) {
                 contextReady = true;
+                log.info("[BENEFICIARY_CONTEXT_START] Context ready! Setting consumer as ready to start");
+                if (admissibilityAssessorConsumerBinding != null) {
+                    makeServiceBusBindingRestartable(admissibilityAssessorConsumerBinding);
+                }
                 bindingsLifecycleController.changeState(ADMISSIBILITY_PROCESSOR_BINDING_NAME, BindingsLifecycleController.State.STARTED);
             }
         }
