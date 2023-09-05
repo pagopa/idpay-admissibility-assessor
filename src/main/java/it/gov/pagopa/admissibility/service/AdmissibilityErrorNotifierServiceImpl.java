@@ -33,6 +33,11 @@ public class AdmissibilityErrorNotifierServiceImpl implements AdmissibilityError
     private final String admissibilityRankingRequestServer;
     private final String admissibilityRankingRequestTopic;
 
+    private final String admissibilityCommandServiceType;
+    private final String admissibilityCommandServer;
+    private final String admissibilityCommandTopic;
+    private final String admissibilityCommandGroup;
+
     @SuppressWarnings("squid:S00107") // suppressing too many parameters constructor alert
     public AdmissibilityErrorNotifierServiceImpl(ErrorNotifierService errorNotifierService,
 
@@ -52,7 +57,12 @@ public class AdmissibilityErrorNotifierServiceImpl implements AdmissibilityError
 
                                                  @Value("${spring.cloud.stream.binders.kafka-ranking-request.type}") String admissibilityRankingRequestServiceType,
                                                  @Value("${spring.cloud.stream.binders.kafka-ranking-request.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityRankingRequestServer,
-                                                 @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}") String admissibilityRankingRequestTopic) {
+                                                 @Value("${spring.cloud.stream.bindings.rankingRequest-out-0.destination}") String admissibilityRankingRequestTopic,
+
+                                                 @Value("${spring.cloud.stream.binders.kafka-commands.type}") String admissibilityCommandServiceType,
+                                                 @Value("${spring.cloud.stream.binders.kafka-commands.environment.spring.cloud.stream.kafka.binder.brokers}") String admissibilityCommandServer,
+                                                 @Value("${spring.cloud.stream.bindings.consumerCommands-in-0.destination}") String admissibilityCommandTopic,
+                                                 @Value("${spring.cloud.stream.bindings.consumerCommands-in-0.group}") String admissibilityCommandGroup ) {
         this.errorNotifierService = errorNotifierService;
 
         this.beneficiaryRuleBuilderMessagingServiceType = beneficiaryRuleBuilderMessagingServiceType;
@@ -72,6 +82,11 @@ public class AdmissibilityErrorNotifierServiceImpl implements AdmissibilityError
         this.admissibilityRankingRequestServiceType = admissibilityRankingRequestServiceType;
         this.admissibilityRankingRequestServer = admissibilityRankingRequestServer;
         this.admissibilityRankingRequestTopic = admissibilityRankingRequestTopic;
+
+        this.admissibilityCommandServiceType = admissibilityCommandServiceType;
+        this.admissibilityCommandServer = admissibilityCommandServer;
+        this.admissibilityCommandTopic = admissibilityCommandTopic;
+        this.admissibilityCommandGroup = admissibilityCommandGroup;
     }
 
     private final Pattern serviceBusEndpointPattern = Pattern.compile("Endpoint=sb://([^;]+)/?;");
@@ -98,6 +113,11 @@ public class AdmissibilityErrorNotifierServiceImpl implements AdmissibilityError
     @Override
     public void notifyRankingRequest(Message<?> message, String description, boolean retryable, Throwable exception) {
         notify(admissibilityRankingRequestServiceType, admissibilityRankingRequestServer, admissibilityRankingRequestTopic,null, message, description, retryable, false, exception);
+    }
+
+    @Override
+    public void notifyAdmissibilityCommands(Message<String> message, String description, boolean retryable, Throwable exception) {
+        notify(admissibilityCommandServiceType, admissibilityCommandServer, admissibilityCommandTopic, admissibilityCommandGroup, message, description, retryable, true, exception);
     }
 
     @Override

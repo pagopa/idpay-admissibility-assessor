@@ -4,6 +4,7 @@ microservice-chart:
   fullnameOverride: ""
 
   livenessProbe:
+    handlerType: httpGet
     httpGet:
       path: /actuator/health/liveness
       port: 8080
@@ -12,10 +13,11 @@ microservice-chart:
     periodSeconds: 10
 
   readinessProbe:
+    handlerType: httpGet
     httpGet:
       path: /actuator/health/readiness
       port: 8080
-    initialDelaySeconds: 120
+    initialDelaySeconds: 125
     failureThreshold: 15
     periodSeconds: 10
 
@@ -25,11 +27,13 @@ microservice-chart:
   service:
     create: true
     type: ClusterIP
-    port: 8080
+    ports:
+      - 8080
 
   ingress:
     create: true
-    path: /idpay/admissibility/(.*)
+    path: /idpayadmissibility/(.*)
+    servicePort: 8080
 
   serviceAccount:
     create: false
@@ -44,15 +48,20 @@ microservice-chart:
 
   securityContext:
     allowPrivilegeEscalation: false
+    runAsNonRoot: true
+    runAsUser: 10000
+    runAsGroup: 10000
 
   envConfig:
     APP: "idpay-admissibility-assessor"
     KAFKA_BENEFICIARY_RULE_REQUEST_GROUP_ID: "idpay-beneficiary-rule-update-consumer-group"
+    KAFKA_COMMANDS_GROUP_ID: "idpay-commands-admissibility-consumer-group"
     MONGODB_DBNAME: "idpay"
     APPLICATIONINSIGHTS_ROLE_NAME: "idpayadmissibilityassessor"
     APPLICATIONINSIGHTS_INSTRUMENTATION_LOGGING_LEVEL: "OFF"
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
     APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
+    _JAVA_OPTIONS: "-Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -Dreactor.netty.ioWorkerCount=4 -Dreactor.netty.pool.maxConnections=16"
 
   envConfigMapExternals:
     idpay-common:
@@ -69,6 +78,8 @@ microservice-chart:
       KAFKA_BENEFICIARY_RULE_REQUEST_TOPIC: idpay_rule_update_topic
       KAFKA_ERRORS_BROKER: kafka_broker
       KAFKA_ERRORS_TOPIC: idpay_error_topic
+      KAFKA_COMMANDS_BROKER: kafka_broker
+      KAFKA_COMMANDS_TOPIC: idpay_commands_topic
     rest-client:
       PDV_BASE_URL: pdv_decrypt_base_url
 
@@ -82,6 +93,8 @@ microservice-chart:
     KAFKA_ERRORS_SASL_JAAS_CONFIG: evh-idpay-errors-idpay-errors-producer-jaas-config-idpay-01
     REDIS_CONNECTION_URL: idpay-redis-00-primary-connection-url
     PDV_DECRYPT_API_KEY: pdv-api-key
+    KAFKA_COMMANDS_SASL_JAAS_CONFIG: evh-idpay-commands-idpay-commands-consumer-jaas-config-idpay-01
+
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT: notification-token-salt
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
     UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv

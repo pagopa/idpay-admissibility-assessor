@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -11,6 +12,7 @@ import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
+import it.gov.pagopa.common.utils.TestUtils;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,7 +23,10 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.availability.ApplicationAvailability;
+import org.springframework.boot.availability.ReadinessState;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.util.ReflectionUtils;
@@ -40,6 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @ExtendWith(MockitoExtension.class)
 class OnboardingContextHolderServiceImplTest {
 
+    @Mock private ApplicationAvailability applicationAvailabilityMock;
+    @Mock private GenericApplicationContext applicationContextMock;
     @Mock private KieContainerBuilderService kieContainerBuilderServiceMock;
     @Mock private DroolsRuleRepository droolsRuleRepositoryMock;
     @Mock private ApplicationEventPublisher applicationEventPublisherMock;
@@ -52,6 +59,15 @@ class OnboardingContextHolderServiceImplTest {
     private Field apiKeysCacheField;
 
     void init(boolean isRedisCacheEnabled){
+        configureMocks(isRedisCacheEnabled);
+        buildService(isRedisCacheEnabled);
+
+        apiKeysCacheField = ReflectionUtils.findField(OnboardingContextHolderServiceImpl.class, "apiKeysPDNDConcurrentMap");
+        Assertions.assertNotNull(apiKeysCacheField);
+        ReflectionUtils.makeAccessible(apiKeysCacheField);
+    }
+
+    private void configureMocks(boolean isRedisCacheEnabled) {
         Assertions.assertNotNull(expectedKieBase);
 
         Mockito.when(droolsRuleRepositoryMock.findAll()).thenReturn(Flux.empty());
@@ -62,12 +78,10 @@ class OnboardingContextHolderServiceImplTest {
             Assertions.assertNotNull(expectedKieBaseSerialized);
             Mockito.when(reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString())).thenReturn(Mono.just(expectedKieBaseSerialized));
         }
+    }
 
-        apiKeysCacheField = ReflectionUtils.findField(OnboardingContextHolderServiceImpl.class, "apiKeysPDNDConcurrentMap");
-        Assertions.assertNotNull(apiKeysCacheField);
-        ReflectionUtils.makeAccessible(apiKeysCacheField);
-
-        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, aesTokenServiceMock, isRedisCacheEnabled, true);
+    private void buildService(boolean isRedisCacheEnabled) {
+        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(applicationAvailabilityMock, applicationContextMock, kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled, true);
     }
 
     @ParameterizedTest
@@ -84,6 +98,8 @@ class OnboardingContextHolderServiceImplTest {
         if (!isRedisCacheEnabled) {
             Assertions.assertSame(expectedKieBase, result);
         }
+
+        checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
     @ParameterizedTest
@@ -100,6 +116,8 @@ class OnboardingContextHolderServiceImplTest {
         //Then
         Assertions.assertNull(result);
         Mockito.verify(droolsRuleRepositoryMock).findById(Mockito.same(initiativeId));
+
+        checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
     @ParameterizedTest
@@ -118,6 +136,8 @@ class OnboardingContextHolderServiceImplTest {
         //Then
         Assertions.assertNotNull(result);
         Mockito.verify(droolsRuleRepositoryMock).findById(Mockito.same(initiativeId));
+
+        checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
     @ParameterizedTest
@@ -155,6 +175,43 @@ class OnboardingContextHolderServiceImplTest {
 
         //Then
         Assertions.assertSame(initiativeConfig, result);
+
+        checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void testFailingContextStart(boolean isRedisCacheEnabled){
+        int[] counter = {0};
+        Mono<?> monoError = Mono.defer(() -> {
+            counter[0]++;
+            return Mono.error(new IllegalStateException("DUMMYEXCEPTION"));
+        });
+
+        configureMocks(isRedisCacheEnabled);
+        if(isRedisCacheEnabled){
+            //noinspection unchecked
+            Mockito.when(reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString())).thenReturn((Mono<byte[]>) monoError);
+        } else {
+            //noinspection unchecked
+            Mockito.when(kieContainerBuilderServiceMock.build(Mockito.notNull())).thenReturn((Mono<KieBase>) monoError);
+        }
+
+        buildService(isRedisCacheEnabled);
+
+        TestUtils.waitFor(()-> {
+            Mockito.verify(applicationContextMock).close();
+            Assertions.assertEquals(4, counter[0]);
+            checkReadiness(ReadinessState.REFUSING_TRAFFIC);
+            return true;
+        }, () -> "Context not closed!", 10, 100);
+    }
+
+    private void checkReadiness(ReadinessState expectedState) {
+        Assertions.assertEquals(
+                expectedState,
+                ((OnboardingContextHolderServiceImpl)onboardingContextHolderService).getState(null)
+        );
     }
 
     @ParameterizedTest

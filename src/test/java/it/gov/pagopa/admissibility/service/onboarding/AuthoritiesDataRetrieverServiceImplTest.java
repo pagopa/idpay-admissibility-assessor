@@ -22,6 +22,8 @@ import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieve
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
+import it.gov.pagopa.admissibility.mock.isee.model.Isee;
+import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;

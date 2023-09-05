@@ -7,14 +7,23 @@ import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import java.util.function.Function;
+
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.actuate.availability.ReadinessStateHealthIndicator;
+import org.springframework.boot.availability.ApplicationAvailability;
+import org.springframework.boot.availability.AvailabilityState;
+import org.springframework.boot.availability.ReadinessState;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
@@ -23,17 +32,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
 @Service
 @Slf4j
-public class OnboardingContextHolderServiceImpl implements OnboardingContextHolderService {
+public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndicator implements OnboardingContextHolderService {
 
     public static final String ONBOARDING_CONTEXT_HOLDER_CACHE_NAME = "beneficiary_rule";
 
     private final KieContainerBuilderService kieContainerBuilderService;
     private final DroolsRuleRepository droolsRuleRepository;
     private final ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate;
-    private final Map<String, InitiativeConfig> initiativeId2Config=new ConcurrentHashMap<>();
+    private final Map<String, InitiativeConfig> initiativeId2Config = new ConcurrentHashMap<>();
     private final Map<String, ApiKeysPDND> apiKeysPDNDConcurrentMap = new ConcurrentHashMap<>();
     private final AESTokenService aesTokenService;
 
@@ -43,8 +53,11 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     private KieBase kieBase;
     private byte[] kieBaseSerialized;
 
+    private boolean contextReady=false;
 
     public OnboardingContextHolderServiceImpl(
+            ApplicationAvailability applicationAvailability,
+            ApplicationContext appContext,
             KieContainerBuilderService kieContainerBuilderService,
             DroolsRuleRepository droolsRuleRepository,
             ApplicationEventPublisher applicationEventPublisher,
@@ -53,14 +66,25 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
             @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
             @Value("${app.beneficiary-rule.pre-load}") boolean preLoadContainer
     ) {
+        super(applicationAvailability);
+
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
-        this.aesTokenService = aesTokenService;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
         this.preLoadContainer = preLoadContainer;
 
-        refreshKieContainer(x -> applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this)));
+        refreshKieContainer(
+                x -> {
+                    contextReady=true;
+                    applicationEventPublisher.publishEvent(new OnboardingContextHolderReadyEvent(this));
+                },
+                Retry.max(3),
+                e -> {
+                    log.error("[BENEFICIARY_CONTEXT_START] Cannot build Drools container! Shutdown application!");
+                    SpringApplication.exit(appContext, () -> 503);
+                    return Mono.error(e);
+                });
     }
 
     public static class OnboardingContextHolderReadyEvent extends ApplicationEvent {
@@ -78,15 +102,15 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
         if (isRedisCacheEnabled) {
             kieBaseSerialized = SerializationUtils.serialize(newKieBase);
             if (kieBaseSerialized != null) {
-                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> log.info("KieContainer build and stored in cache"));
+                reactiveRedisTemplate.opsForValue().set(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME, kieBaseSerialized).subscribe(x -> log.info("[BENEFICIARY_RULE_BUILDER] KieContainer build and stored in cache"));
             } else {
-                reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.info("KieContainer removed from the cache"));
+                reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.info("[BENEFICIARY_RULE_BUILDER] KieContainer removed from the cache"));
             }
         }
     }
 
-    private void preLoadKieBase(KieBase kieBase){
-        if(preLoadContainer) {
+    private void preLoadKieBase(KieBase kieBase) {
+        if (preLoadContainer) {
             kieContainerBuilderService.preLoadKieBase(kieBase);
         }
     }
@@ -97,22 +121,25 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     }
 
     @Scheduled(initialDelayString = "${app.beneficiary-rule.cache.refresh-ms-rate}", fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
-    public void refreshKieContainer(){
-        refreshKieContainer(x -> log.trace("Refreshed KieContainer"));
+    public void refreshKieContainer() {
+        refreshKieContainer(x -> log.trace("Refreshed KieContainer"), Retry.max(3), Mono::error);
     }
 
-    public void refreshKieContainer(Consumer<? super KieBase> subscriber){
+    public void refreshKieContainer(
+            Consumer<? super KieBase> subscriber,
+            Retry retrier,
+            Function<? super Throwable, ? extends Mono<? extends KieBase>> onErrorResumer) {
         if (isRedisCacheEnabled) {
             reactiveRedisTemplate.opsForValue().get(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME)
                     .mapNotNull(c -> {
-                        if(!Arrays.equals(c, kieBaseSerialized)){
+                        if (!Arrays.equals(c, kieBaseSerialized)) {
                             this.kieBaseSerialized = c;
-                            try{
+                            try {
                                 KieBase newKieBase = org.apache.commons.lang3.SerializationUtils.deserialize(c);
                                 preLoadKieBase(newKieBase);
 
                                 this.kieBase = newKieBase;
-                            } catch (Exception e){
+                            } catch (Exception e) {
                                 log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
                                 return null;
                             }
@@ -120,13 +147,19 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
                         return this.kieBase;
                     })
                     .switchIfEmpty(refreshKieContainerCacheMiss())
+                    .retryWhen(retrier)
+                    .onErrorResume(onErrorResumer)
                     .subscribe(subscriber);
         } else {
-            refreshKieContainerCacheMiss().subscribe(subscriber);
+            refreshKieContainerCacheMiss()
+                    .retryWhen(retrier)
+                    .onErrorResume(onErrorResumer)
+                    .subscribe(subscriber);
         }
     }
 
-    private Mono<KieBase> refreshKieContainerCacheMiss() {
+    @Override
+    public Mono<KieBase> refreshKieContainerCacheMiss() {
         final Flux<DroolsRule> droolsRuleFlux = Mono.defer(() -> {
             log.info("[BENEFICIARY_RULE_BUILDER] Refreshing KieContainer");
             initiativeId2Config.clear();
@@ -140,8 +173,8 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
     @Override
     public Mono<InitiativeConfig> getInitiativeConfig(String initiativeId) {
         InitiativeConfig cachedInitiativeConfig = initiativeId2Config.get(initiativeId);
-        if(cachedInitiativeConfig==null){
-        return retrieveInitiativeConfig(initiativeId)
+        if (cachedInitiativeConfig == null) {
+            return retrieveInitiativeConfig(initiativeId)
                     .doOnNext(initiativeConfig -> initiativeId2Config.put(initiativeId, initiativeConfig));
         } else {
             return Mono.just(cachedInitiativeConfig);
@@ -150,7 +183,7 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
 
     @Override
     public void setInitiativeConfig(InitiativeConfig initiativeConfig) {
-        initiativeId2Config.put(initiativeConfig.getInitiativeId(),initiativeConfig);
+        initiativeId2Config.put(initiativeConfig.getInitiativeId(), initiativeConfig);
     }
 
     private Mono<InitiativeConfig> retrieveInitiativeConfig(String initiativeId) {
@@ -165,6 +198,13 @@ public class OnboardingContextHolderServiceImpl implements OnboardingContextHold
                 .doFinally(x -> log.info("[CACHE_MISS] [PERFORMANCE_LOG] Time spent fetching initiativeId {} ({}): {} ms", initiativeId, x.toString(), System.currentTimeMillis() - startTime));
     }
     //endregion
+
+    @Override
+    protected AvailabilityState getState(ApplicationAvailability applicationAvailability) {
+        return contextReady
+                ? ReadinessState.ACCEPTING_TRAFFIC
+                : ReadinessState.REFUSING_TRAFFIC;
+    }
 
     //region PDND Api Keys holder
     @Override
