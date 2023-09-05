@@ -15,16 +15,11 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingResched
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
-import it.gov.pagopa.admissibility.mock.isee.model.Isee;
-import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.Utils;
 import it.gov.pagopa.common.utils.CommonConstants;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
