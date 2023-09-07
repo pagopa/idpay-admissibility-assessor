@@ -288,3 +288,5 @@ app:
     response.timeout: ${RESPONSE_TIMEOUT:60000}
     read.handler.timeout: ${READ_TIMEOUT_HANDLER:60000}
     write.handler.timeout: ${WRITE_TIMEOUT_HANDLER:60000}
+  idpay-mock:
+    base-url: ${IDPAY_MOCK_BASE_URL:https://idpay/mock}
