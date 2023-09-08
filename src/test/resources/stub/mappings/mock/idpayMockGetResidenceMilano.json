@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/pdndMock/residence/user/(userId_[0-9]+)"
+    "urlPathPattern": "/pdndMock/idpay/mock/residence/user/(userId_[0-9]+)"
   },
   "response": {
     "status": "200",

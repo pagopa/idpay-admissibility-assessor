@@ -16,7 +16,7 @@ import java.util.Map;
 @Slf4j
 public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
 
-    private static final String RESIDENCE_URI = "/residence/user/{userId}";
+    private static final String RESIDENCE_URI = "/idpay/mock/residence/user/{userId}";
     private final WebClient webClient;
 
     public ResidenceMockRestClientImpl(@Value("${app.idpay-mock.base-url}") String idpayMockBaseUrl,

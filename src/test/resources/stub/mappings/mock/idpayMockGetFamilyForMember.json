@@ -1,13 +1,13 @@
 {
   "request": {
     "method": "GET",
-    "urlPathPattern": "/pdndMock/family/user/(.*_FAMILYMEMBER[0-9]+$)"
+    "urlPathPattern": "/pdndMock/idpay/mock/family/user/(.*_FAMILYMEMBER[0-9]+$)"
   },
   "response": {
     "status": "200",
     "jsonBody": {
-      "familyId": "FAMILYID_{{regexExtract request.path.[3] '.*?(?=_FAMILYMEMBER)'}}",
-      "memberIds": [ "{{regexExtract request.path.[3] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER0", "{{regexExtract request.path.[3] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER1", "{{regexExtract request.path.[3] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER2" ]
+      "familyId": "FAMILYID_{{regexExtract request.path.[5] '.*?(?=_FAMILYMEMBER)'}}",
+      "memberIds": [ "{{regexExtract request.path.[5] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER0", "{{regexExtract request.path.[5] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER1", "{{regexExtract request.path.[5] '.*?(?=_FAMILYMEMBER)'}}_FAMILYMEMBER2" ]
     },
     "headers": {
       "Content-Type": "application/json"

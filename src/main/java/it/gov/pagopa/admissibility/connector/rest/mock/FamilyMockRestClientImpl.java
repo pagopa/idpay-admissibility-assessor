@@ -15,7 +15,7 @@ import java.util.Map;
 @Service
 @Slf4j
 public class FamilyMockRestClientImpl implements FamilyMockRestClient{
-    private static final String FAMILY_URI = "/family/user/{userId}";
+    private static final String FAMILY_URI = "/idpay/mock/family/user/{userId}";
     private final WebClient webClient;
 
     public FamilyMockRestClientImpl(@Value("${app.idpay-mock.base-url}") String idpayMockBaseUrl,
