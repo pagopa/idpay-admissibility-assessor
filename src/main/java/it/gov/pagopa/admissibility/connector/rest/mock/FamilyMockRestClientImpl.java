@@ -36,6 +36,5 @@ public class FamilyMockRestClientImpl implements FamilyMockRestClient{
                         x -> "httpStatus %s".formatted(x.getStatusCodeValue())
                 )
                 .map(HttpEntity::getBody);
-                //TODO 1513 added retry?
     }
 }

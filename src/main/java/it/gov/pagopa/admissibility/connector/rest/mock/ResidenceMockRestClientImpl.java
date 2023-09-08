@@ -8,7 +8,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
@@ -37,18 +36,6 @@ public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
                         .toEntity(Residence.class),
                 x -> "httpStatus %s".formatted(x.getStatusCodeValue())
         )
-                .map(HttpEntity::getBody)
-
-                //TODO 1513 added retry?
-
-                .onErrorResume(WebClientResponseException.NotFound.class, x -> {
-                    log.warn("userId not found into pdv: {}", userId);
-                    return Mono.empty();
-                })
-
-                .onErrorResume(WebClientResponseException.BadRequest.class, x -> {
-                    log.warn("userId not valid: {}", userId);
-                    return Mono.empty();
-                });
+                .map(HttpEntity::getBody);
     }
 }
