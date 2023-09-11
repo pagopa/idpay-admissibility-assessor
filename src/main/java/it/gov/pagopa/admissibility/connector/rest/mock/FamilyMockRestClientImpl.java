@@ -33,7 +33,7 @@ public class FamilyMockRestClientImpl implements FamilyMockRestClient{
                                 .uri(FAMILY_URI, Map.of("userId", userId))
                                 .retrieve()
                                 .toEntity(Family.class),
-                        x -> "httpStatus %s".formatted(x.getStatusCodeValue())
+                        x -> "httpStatus %s".formatted(x.getStatusCode().value())
                 )
                 .map(HttpEntity::getBody);
     }

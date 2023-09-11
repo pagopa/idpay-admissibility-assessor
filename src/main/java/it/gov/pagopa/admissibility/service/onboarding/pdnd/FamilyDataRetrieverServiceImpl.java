@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 import it.gov.pagopa.admissibility.connector.rest.mock.FamilyMockRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,11 +13,9 @@ import java.util.Optional;
 public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverService {
     private final FamilyMockRestClient familyMockRestClient;
 
-    private final ReactiveMongoTemplate mongoTemplate;
 
-    public FamilyDataRetrieverServiceImpl(FamilyMockRestClient familyMockRestClient, ReactiveMongoTemplate mongoTemplate) {
+    public FamilyDataRetrieverServiceImpl(FamilyMockRestClient familyMockRestClient) {
         this.familyMockRestClient = familyMockRestClient;
-        this.mongoTemplate = mongoTemplate;
     }
 
     @Override

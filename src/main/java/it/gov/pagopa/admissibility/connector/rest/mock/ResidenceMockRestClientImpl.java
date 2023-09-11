@@ -34,7 +34,7 @@ public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
                         .uri(RESIDENCE_URI, Map.of("userId", userId))
                         .retrieve()
                         .toEntity(Residence.class),
-                x -> "httpStatus %s".formatted(x.getStatusCodeValue())
+                x -> "httpStatus %s".formatted(x.getStatusCode().value())
         )
                 .map(HttpEntity::getBody);
     }
