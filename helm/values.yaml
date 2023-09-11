@@ -82,7 +82,7 @@ microservice-chart:
       KAFKA_COMMANDS_TOPIC: idpay_commands_topic
     rest-client:
       PDV_BASE_URL: pdv_decrypt_base_url
-#      IDPAY_MOCK_BASE_URL: idpay-mock-baseurl
+      IDPAY_MOCK_BASE_URL: idpay_mock_base_url
 
 
   envSecret:

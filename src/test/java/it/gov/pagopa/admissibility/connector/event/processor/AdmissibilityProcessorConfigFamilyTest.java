@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@ContextConfiguration(inheritInitializers = true)
+@ContextConfiguration
 class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorConfigTest {
 
     @TestConfiguration
