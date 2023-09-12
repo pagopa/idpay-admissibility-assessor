@@ -8,8 +8,11 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
 
+import java.time.Duration;
 import java.util.Map;
 
 @Service
@@ -17,10 +20,16 @@ import java.util.Map;
 public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
 
     private static final String RESIDENCE_URI = "/idpay/mock/residence/user/{userId}";
+    private final int idpayMockRetryDelay;
+    private final long idpayMockMaxAttempts;
     private final WebClient webClient;
 
     public ResidenceMockRestClientImpl(@Value("${app.idpay-mock.base-url}") String idpayMockBaseUrl,
+                                       @Value("${app.idpay-mock.retry.delay-millis}") int idpayMockRetryDelay,
+                                       @Value("${app.idpay-mock.retry.max-attempts}") long idpayMockMaxAttempts,
                                        WebClient.Builder webClientBuilder) {
+        this.idpayMockRetryDelay = idpayMockRetryDelay;
+        this.idpayMockMaxAttempts = idpayMockMaxAttempts;
         this.webClient = webClientBuilder.clone()
                 .baseUrl(idpayMockBaseUrl)
                 .build();
@@ -36,6 +45,16 @@ public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
                         .toEntity(Residence.class),
                 x -> "httpStatus %s".formatted(x.getStatusCode().value())
         )
-                .map(HttpEntity::getBody);
+                .map(HttpEntity::getBody)
+
+                .retryWhen(Retry.fixedDelay(idpayMockMaxAttempts, Duration.ofMillis(idpayMockRetryDelay))
+                        .filter(ex -> {
+                            boolean retry = (ex instanceof WebClientResponseException.TooManyRequests) || ex.getMessage().startsWith("Connection refused");
+                            if (retry) {
+                                log.info("[IDPAY_MOCK_INTEGRATION][RESIDENCE_RETRIEVE] Retrying invocation due to exception: {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+                            }
+                            return retry;
+                        })
+                );
     }
 }

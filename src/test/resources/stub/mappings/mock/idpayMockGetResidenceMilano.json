@@ -6,9 +6,9 @@
   "response": {
     "status": "200",
     "jsonBody": {
-      "city": "MILANO",
-      "cityCouncil": "MILANO",
-      "province": "MILANO",
+      "city": "Milano",
+      "cityCouncil": "Milano",
+      "province": "Milano",
       "region": "Lombardia",
       "postalCode": "20124",
       "nation": "Italia"

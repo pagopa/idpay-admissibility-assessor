@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import reactor.core.Exceptions;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.rest.mock.ResidenceMockRestClientImpl=WARN",
@@ -34,5 +35,19 @@ class ResidenceMockRestClientImplTest extends BaseIntegrationTest {
                 .nation("Italia")
                 .build();
 
+        Assertions.assertEquals(expectedResidence, result);
+
+    }
+
+    @Test
+    void retrieveResidenceTooManyRequest() {
+        String userId = "USERID_TOOMANYREQUEST_1";
+
+        try{
+            residenceMockRestClient.retrieveResidence(userId).block();
+            Assertions.fail();
+        }catch (Throwable e){
+            Assertions.assertTrue(Exceptions.isRetryExhausted(e));
+        }
     }
 }
