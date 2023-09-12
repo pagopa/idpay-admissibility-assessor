@@ -21,6 +21,7 @@ import org.kie.api.definition.KiePackage;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
@@ -40,6 +41,7 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
 })
+@DirtiesContext
 public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @SpyBean
