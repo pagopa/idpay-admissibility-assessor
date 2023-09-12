@@ -11,7 +11,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
-import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -182,7 +182,7 @@ class MongoRequestRateTooLargeAutomaticRetryAspectTest {
     Mono<?> mono = (Mono<?>) aspect.decorateMonoRepositoryMethods(pjpMock);
     if(!isBatch){
       mono = mono.contextWrite(ctx -> ctx.put(ReactiveRequestContextHolder.CONTEXT_KEY, Mockito.mock(
-          ServerHttpRequest.class)));
+          ServerWebExchange.class)));
     }
     return mono;
   }
@@ -223,7 +223,7 @@ class MongoRequestRateTooLargeAutomaticRetryAspectTest {
     Flux<Object> flux = (Flux<Object>) aspect.decorateFluxRepositoryMethods(pjpMock);
     if(!isBatch){
       flux = flux.contextWrite(ctx -> ctx.put(ReactiveRequestContextHolder.CONTEXT_KEY, Mockito.mock(
-          ServerHttpRequest.class)));
+          ServerWebExchange.class)));
     }
     return flux;
   }
