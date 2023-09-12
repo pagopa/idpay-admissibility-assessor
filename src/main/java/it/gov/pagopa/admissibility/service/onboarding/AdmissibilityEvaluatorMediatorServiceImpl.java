@@ -103,7 +103,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
-                            callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));
+                            callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
                         }
                         inviteFamilyMembers(request, evaluation);
                     } else {

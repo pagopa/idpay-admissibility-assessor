@@ -104,6 +104,7 @@ class ExistentFamilyHandlerServiceTest {
 
         // Then
         expectedResult.setFamilyId(family.getFamilyId());
+        expectedResult.setMemberIds(family.getMemberIds());
         expectedResult.setStatus(expectedStatus);
 
         Assertions.assertNotNull(result);
