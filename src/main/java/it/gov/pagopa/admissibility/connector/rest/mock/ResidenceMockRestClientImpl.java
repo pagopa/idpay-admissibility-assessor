@@ -49,7 +49,7 @@ public class ResidenceMockRestClientImpl implements ResidenceMockRestClient{
 
                 .retryWhen(Retry.fixedDelay(idpayMockMaxAttempts, Duration.ofMillis(idpayMockRetryDelay))
                         .filter(ex -> {
-                            boolean retry = (ex instanceof WebClientResponseException.TooManyRequests) || ex.getMessage().startsWith("Connection refused");
+                            boolean retry = ex instanceof WebClientResponseException.TooManyRequests;
                             if (retry) {
                                 log.info("[IDPAY_MOCK_INTEGRATION][RESIDENCE_RETRIEVE] Retrying invocation due to exception: {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
                             }
