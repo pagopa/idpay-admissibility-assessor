@@ -79,12 +79,12 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         storeInitiativeCountersInitialState();
 
-        int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
+        int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily; //TODO output no ranking /2 * member -> ranking /2
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
         int expectedEvaluationCompletedMessages =
                 expectedRequestsPerInitiative
                 + expectedOnboardingKoFamilies * membersPerFamily // rankingKO are published also here
-                + (onboardingFamilies - expectedOnboardingKoFamilies) * (membersPerFamily - 1); // DEMANDED for each other member when ONBOARDING_OK
+                + (onboardingFamilies - expectedOnboardingKoFamilies) * (membersPerFamily - 1); // DEMANDED for each other member when ONBOARDING_OK //TODO /2 not NF+ranking
 
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
 

@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
+import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
@@ -104,8 +105,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
+                        } else {
+                            inviteFamilyMembers(request, evaluation);
                         }
-                        inviteFamilyMembers(request, evaluation);
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
@@ -167,6 +169,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
 
                         .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
+
+                        .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(e -> {
                             log.error("[ONBOARDING_REQUEST] something gone wrong while handling onboarding request {} of userId {} into initiativeId {}",

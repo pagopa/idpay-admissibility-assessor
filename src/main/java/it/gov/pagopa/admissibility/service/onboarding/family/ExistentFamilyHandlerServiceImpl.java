@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
+import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
@@ -52,11 +53,14 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
                     message);
             return Mono.error(WaitingFamilyOnBoardingException::new);
         } else {
-            return Mono.just(mapFamilyOnboardingResult(onboardingRequest, family, initiativeConfig));
+            return mapFamilyOnboardingResult(onboardingRequest, family, initiativeConfig);
         }
     }
 
-    private EvaluationDTO mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig) {
+    private Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig) {
+        if(initiativeConfig.isRankingInitiative()){
+            return Mono.error(SkipAlreadyRankingFamilyOnBoardingException::new);
+        }
         EvaluationDTO evaluation = mapper.apply(onboardingRequest, initiativeConfig, family.getOnboardingRejectionReasons());
         if(evaluation instanceof EvaluationCompletedDTO evaluationCompletedDTO){
             if(OnboardingFamilyEvaluationStatus.ONBOARDING_OK.equals(family.getStatus())){
@@ -65,6 +69,6 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
                 evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.REJECTED);
             }
         }
-        return evaluation;
+        return Mono.just(evaluation);
     }
 }
