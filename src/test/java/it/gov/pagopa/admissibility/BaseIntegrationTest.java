@@ -215,7 +215,8 @@ public abstract class BaseIntegrationTest {
             // setting wiremock HTTP baseUrl
             Stream.of(
                     Pair.of("app.pdv.base-url","pdv"),
-                    Pair.of("app.pdnd.access.token-base-url","pdnd")
+                    Pair.of("app.pdnd.access.token-base-url","pdnd"),
+                    Pair.of("app.idpay-mock.base-url","pdndMock")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
 
             // setting wiremock HTTPS baseUrl
