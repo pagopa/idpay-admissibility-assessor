@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.utils;
 
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
 
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
@@ -17,6 +18,7 @@ public class RestTestUtils {
                 .needClientAuth(true)
                 .trustStorePath(USE_TRUSTSTORE_KO ? TRUSTSTORE_KO_PATH : TRUSTSTORE_PATH)
                 .trustStorePassword("idpay")
-                .usingFilesUnderClasspath("src/test/resources/stub");
+                .usingFilesUnderClasspath("src/test/resources/stub")
+                .extensions(new ResponseTemplateTransformer.Builder().global(true).build());
     }
 }

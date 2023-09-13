@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@ContextConfiguration(inheritInitializers = false)
+@ContextConfiguration
 class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorConfigTest {
 
     @TestConfiguration
@@ -199,22 +199,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         initiativeCountersRepository.save(counter).block();
     }
 
-    private void storeMockedFamilyMembers(String userId) {
-        String membersMockedBaseId = userId;
-        if (membersMockedBaseId.matches(".*_FAMILYMEMBER\\d+$")) {
-            membersMockedBaseId = membersMockedBaseId.substring(0, membersMockedBaseId.indexOf("_FAMILYMEMBER"));
-        }
-
-        mongoTemplate.save(FamilyDataRetrieverServiceImpl.MockedFamily.builder()
-                                .familyId("FAMILYID_" + membersMockedBaseId)
-                                .memberIds(new HashSet<>(List.of(
-                                        membersMockedBaseId + "_FAMILYMEMBER0",
-                                        membersMockedBaseId + "_FAMILYMEMBER1",
-                                        membersMockedBaseId + "_FAMILYMEMBER2"
-                                )))
-                                .build())
-                .block();
-    }
 
     private <T extends EvaluationDTO> void checkResponses(int expectedRequestsPerInitiative, List<ConsumerRecord<String, String>> payloadConsumed,Class<T> clazz) throws JsonProcessingException {
         assertInitiativePublishedMessagesCount(expectedRequestsPerInitiative, payloadConsumed, clazz);
@@ -351,7 +335,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO request = OnboardingDTOFaker.mockInstance(bias, 1);
-                        storeMockedFamilyMembers(request.getUserId());
                         return request;
                     },
                     evaluation -> {
@@ -371,7 +354,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                         OnboardingDTO request = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
                                 .isee(BigDecimal.ZERO)
                                 .build();
-                        storeMockedFamilyMembers(request.getUserId());
                         return request;
                     },
                     evaluation -> {

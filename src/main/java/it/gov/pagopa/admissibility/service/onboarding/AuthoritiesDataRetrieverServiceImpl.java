@@ -1,10 +1,10 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
+import it.gov.pagopa.admissibility.connector.rest.mock.ResidenceMockRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
@@ -37,6 +37,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     private final ReactiveMongoTemplate mongoTemplate;
     private final UserFiscalCodeRestClient userRestClient;
 
+    private final ResidenceMockRestClient residenceMockRestClient;
+
     private final StreamBridge streamBridge;
 
     public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
@@ -45,7 +47,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                                @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
                                                CriteriaCodeService criteriaCodeService,
                                                ReactiveMongoTemplate mongoTemplate,
-                                               UserFiscalCodeRestClient userRestClient) {
+                                               UserFiscalCodeRestClient userRestClient, ResidenceMockRestClient residenceMockRestClient) {
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.streamBridge = streamBridge;
         this.delayMinutes = delayMinutes;
@@ -53,6 +55,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.criteriaCodeService = criteriaCodeService;
         this.mongoTemplate = mongoTemplate;
         this.userRestClient = userRestClient;
+        this.residenceMockRestClient = residenceMockRestClient;
     }
 
     @Override
@@ -70,29 +73,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     return Mono.just(o);
                 })
                 // RESIDENCE
-                .doOnNext(o -> {
+                .flatMap(o -> {
                     if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_RESIDENCE, onboardingRequest, initiativeConfig)) {
-                        onboardingRequest.setResidence(
-                                userIdBasedIntegerGenerator(onboardingRequest).nextInt(0, 2) == 0
-                                        ? Residence.builder()
-                                        .city("Milano")
-                                        .cityCouncil("Milano")
-                                        .province("Milano")
-                                        .region("Lombardia")
-                                        .postalCode("20124")
-                                        .nation("Italia")
-                                        .build()
-                                        : Residence.builder()
-                                        .city("Roma")
-                                        .cityCouncil("Roma")
-                                        .province("Roma")
-                                        .region("Lazio")
-                                        .postalCode("00187")
-                                        .nation("Italia")
-                                        .build()
-
-                        );
+                        return retrieveResidence(onboardingRequest);
                     }
+                    return Mono.just(o);
                 })
                 // BIRTHDATE
                 .flatMap(o -> {
@@ -110,6 +95,15 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
                     return Mono.just(o);
                 });
+    }
+
+    private Mono<OnboardingDTO> retrieveResidence(OnboardingDTO onboardingRequest) {
+        return residenceMockRestClient.retrieveResidence(onboardingRequest.getUserId())
+                .map(r -> {
+                    onboardingRequest.setResidence(r);
+                    return  onboardingRequest;
+                });
+
     }
 
     private boolean requiresCritierium(String criterium, OnboardingDTO o, InitiativeConfig initiativeConfig) {
@@ -208,11 +202,6 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
 
-    private static Random userIdBasedIntegerGenerator(OnboardingDTO onboardingRequest) {
-        @SuppressWarnings("squid:S2245")
-        Random random = new Random(onboardingRequest.getUserId().hashCode());
-        return random;
-    }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {
         return (initiativeConfig.getAutomatedCriteriaCodes() != null && initiativeConfig.getAutomatedCriteriaCodes().contains(criteriaCode))
