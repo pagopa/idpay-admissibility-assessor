@@ -41,7 +41,6 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
 })
-@DirtiesContext
 public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @SpyBean
