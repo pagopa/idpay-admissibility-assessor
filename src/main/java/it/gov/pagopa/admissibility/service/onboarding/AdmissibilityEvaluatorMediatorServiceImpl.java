@@ -102,12 +102,15 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
+                        log.info("NOTIFY ONBOARDING"); //TODO
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
+                            log.info("NOTIFY Ranking 1"); //TODO
                             callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
                         }
                         inviteFamilyMembers(request, evaluation);
                     } else {
+                        log.info("NOTIFY Ranking 2"); //TODO
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
 
@@ -264,7 +267,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void callRankingNotifier(RankingRequestDTO rankingRequestDTO) {
-        log.info("[ONBOARDING_REQUEST] notifying onboarding request to ranking topic: {}", rankingRequestDTO);
         try {
             if (!rankingNotifierService.notify(rankingRequestDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");
@@ -276,6 +278,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
+        log.info("[FAMILY_MEMBERS_NOTIFY] notify onboarding family members");
         if(request.getFamily()!=null){
             if(OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
                 callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.DEMANDED);
