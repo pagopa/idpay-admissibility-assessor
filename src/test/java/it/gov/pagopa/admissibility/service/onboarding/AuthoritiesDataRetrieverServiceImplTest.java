@@ -1,8 +1,10 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
+import it.gov.pagopa.admissibility.connector.rest.mock.ResidenceMockRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
@@ -46,6 +48,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Mock
     private UserFiscalCodeRestClient userRestClientMock;
 
+    @Mock
+    private ResidenceMockRestClient residenceMockRestClientMock;
+
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
     private OnboardingDTO onboardingDTO;
@@ -54,7 +59,15 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(onboardingContextHolderServiceMock, null, 60L, false, criteriaCodeServiceMock, reactiveMongoTemplateMock, userRestClientMock);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(
+                onboardingContextHolderServiceMock,
+                null,
+                60L,
+                false,
+                criteriaCodeServiceMock,
+                reactiveMongoTemplateMock,
+                userRestClientMock,
+                residenceMockRestClientMock);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
@@ -103,6 +116,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
         Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("PTRGNL73S51X000Q").build()));
 
+        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
+                .thenReturn(Mono.just(getResidence()));
+
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
 
@@ -131,6 +147,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
 
+        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
+                .thenReturn(Mono.just(getResidence()));
+
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
 
@@ -145,6 +164,18 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
         initiativeConfig.setRankingFields(List.of(
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
+
+        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
+                .thenReturn(Mono.just(
+                        Residence.builder()
+                                        .city("Roma")
+                                        .cityCouncil("Roma")
+                                        .province("Roma")
+                                        .region("Lazio")
+                                        .postalCode("00187")
+                                        .nation("Italia")
+                                        .build()
+                ));
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
@@ -167,6 +198,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         ));
 
+        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID2"))
+                .thenReturn(Mono.just(getResidence()));
+
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
 
@@ -174,6 +208,17 @@ class AuthoritiesDataRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
         Assertions.assertEquals("Milano", result.getResidence().getCity());
+    }
+
+    private Residence getResidence() {
+        return Residence.builder()
+                .city("Milano")
+                .cityCouncil("Milano")
+                .province("Milano")
+                .region("Lombardia")
+                .postalCode("20124")
+                .nation("Italia")
+                .build();
     }
 
     @Test

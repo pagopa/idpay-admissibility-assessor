@@ -11,6 +11,7 @@ import org.springframework.util.CollectionUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class Onboarding2EvaluationMapper {
@@ -29,6 +30,7 @@ public class Onboarding2EvaluationMapper {
         EvaluationCompletedDTO out = new EvaluationCompletedDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setFamilyId(getFamilyId(onboardingDTO));
+        out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
@@ -53,6 +55,7 @@ public class Onboarding2EvaluationMapper {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setFamilyId(getFamilyId(onboardingDTO));
+        out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setOrganizationId(initiative.getOrganizationId());
         out.setAdmissibilityCheckDate(LocalDateTime.now());
@@ -69,13 +72,17 @@ public class Onboarding2EvaluationMapper {
         return onboardingDTO.getFamily() != null ? onboardingDTO.getFamily().getFamilyId() : null;
     }
 
+    private static Set<String> getFamilyMembers(OnboardingDTO onboardingDTO) {
+        return onboardingDTO.getFamily() != null ? onboardingDTO.getFamily().getMemberIds() : null;
+    }
+
     private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
         if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
             out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? CommonUtilities.euroToCents(onboardingDTO.getIsee()) : -1);
         }
     }
 
-    public RankingRequestDTO apply(EvaluationCompletedDTO evaluationCompletedDTO) {
+    public RankingRequestDTO apply(OnboardingDTO request, EvaluationCompletedDTO evaluationCompletedDTO) {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(evaluationCompletedDTO.getUserId());
         out.setFamilyId(evaluationCompletedDTO.getFamilyId());
@@ -88,6 +95,11 @@ public class Onboarding2EvaluationMapper {
         out.setOnboardingKo(
                 OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluationCompletedDTO.getStatus()) ||
                         OnboardingEvaluationStatus.REJECTED.equals(evaluationCompletedDTO.getStatus()));
+
+        if(request.getFamily() != null) {
+            out.setFamilyId(request.getFamily().getFamilyId());
+            out.setMemberIds(request.getFamily().getMemberIds());
+        }
 
         return out;
     }

@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 class Onboarding2EvaluationMapperTest {
 
@@ -48,7 +49,9 @@ class Onboarding2EvaluationMapperTest {
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),
-                Family.builder().familyId("FAMILYID").build(),
+                Family.builder()
+                        .familyId("FAMILYID")
+                        .memberIds(Set.of("USERID")).build(),
                 false
         );
 
@@ -123,7 +126,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "familyId", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
+        TestUtils.checkNotNullFields(resultCompleted, "familyId", "memberIds", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
     }
 
     @Test
@@ -277,7 +280,7 @@ class Onboarding2EvaluationMapperTest {
             evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
         }
 
-        RankingRequestDTO result = onboarding2EvaluationMapper.apply(evaluationCompletedDTO);
+        RankingRequestDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, evaluationCompletedDTO);
         Assertions.assertNotNull(result);
 
         Assertions.assertEquals(evaluationCompletedDTO.getUserId(), result.getUserId());
