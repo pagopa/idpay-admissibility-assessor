@@ -282,7 +282,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         if(request.getFamily()!=null){
             if(OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
                 callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.DEMANDED);
-            } else if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluation.getStatus())){
+            } else if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluation.getStatus()) && evaluation.getRankingValue() != null){
                 log.info("[FAMILY_MEMBERS_NOTIFY_KO] notify onboarding family members");
                 evaluation.getOnboardingRejectionReasons()
                         .add(OnboardingRejectionReason.builder()
