@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.*;
-import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -46,14 +45,7 @@ public class Onboarding2EvaluationMapper {
             out.setBeneficiaryBudget(initiative.getBeneficiaryInitiativeBudget());
             out.setInitiativeRewardType(initiative.getInitiativeRewardType());
             out.setIsLogoPresent(initiative.getIsLogoPresent());
-
-            if(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiative.getBeneficiaryType())
-                    && OnboardingEvaluationStatus.ONBOARDING_KO.equals(out.getStatus())){
-                out.setRankingValue(-1L);
-            } else {
-                setRankingValue(onboardingDTO, initiative, out);
-            }
-
+            setRankingValue(onboardingDTO, initiative, out);
         }
 
         return out;

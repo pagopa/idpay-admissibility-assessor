@@ -58,10 +58,9 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
     }
 
     private Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig) {
-        if(initiativeConfig.isRankingInitiative() && OnboardingFamilyEvaluationStatus.ONBOARDING_OK.equals(family.getStatus())){
+        if(initiativeConfig.isRankingInitiative()){
             return Mono.error(SkipAlreadyRankingFamilyOnBoardingException::new);
         }
-
         EvaluationDTO evaluation = mapper.apply(onboardingRequest, initiativeConfig, family.getOnboardingRejectionReasons());
         if(evaluation instanceof EvaluationCompletedDTO evaluationCompletedDTO){
             if(OnboardingFamilyEvaluationStatus.ONBOARDING_OK.equals(family.getStatus())){
