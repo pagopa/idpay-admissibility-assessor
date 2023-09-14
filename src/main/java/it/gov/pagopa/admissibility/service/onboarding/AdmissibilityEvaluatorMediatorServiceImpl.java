@@ -278,8 +278,9 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
         if(request.getFamily()!=null){
             if(OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
-                callFamilyMembersNotifier(request, evaluation);
+                callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.DEMANDED);
             } else if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluation.getStatus())){
+                log.info("[FAMILY_MEMBERS_NOTIFY_KO] notify onboarding family members");
                 evaluation.getOnboardingRejectionReasons()
                         .add(OnboardingRejectionReason.builder()
                                 .type(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)
@@ -287,18 +288,18 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 .detail("Nucleo familiare non soddisfa i requisiti")
                                 .build());
 
-                callFamilyMembersNotifier(request, evaluation);
+                callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.ONBOARDING_KO);
             }
         }
 
     }
 
-    private void callFamilyMembersNotifier(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
+    private void callFamilyMembersNotifier(OnboardingDTO request, EvaluationCompletedDTO evaluation, OnboardingEvaluationStatus status) {
         request.getFamily().getMemberIds().forEach(userId -> {
             if(!userId.equals(request.getUserId())){
                 callOnboardingNotifier(evaluation.toBuilder()
                         .userId(userId)
-                        .status(OnboardingEvaluationStatus.DEMANDED)
+                        .status(status)
                         .build());
             }
         });
