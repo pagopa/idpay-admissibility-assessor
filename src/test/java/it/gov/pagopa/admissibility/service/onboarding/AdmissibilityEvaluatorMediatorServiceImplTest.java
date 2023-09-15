@@ -236,12 +236,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
+                .rankingInitiative(false)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
                 .build();
 
         EvaluationDTO expectedEvaluationOnboardingFirst = onboarding2EvaluationMapper.apply(onboarding_first, initiativeConfig, Collections.emptyList());
         EvaluationDTO expectedEvaluationOnboardingFamilyOk = onboarding2EvaluationMapper.apply(onboarding_familyOk, initiativeConfig, Collections.emptyList());
-        EvaluationDTO expectedEvaluationOnboardingFamilyKo = onboarding2EvaluationMapper.apply(onboarding_familyKo, initiativeConfig, List.of(new OnboardingRejectionReason()));
+        EvaluationDTO expectedEvaluationOnboardingFamilyKo = onboarding2EvaluationMapper.apply(onboarding_familyKo, initiativeConfig, new ArrayList<>(List.of(new OnboardingRejectionReason())));
 
         Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
 

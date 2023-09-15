@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
+import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
@@ -103,7 +104,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
-                            callRankingNotifier(onboarding2EvaluationMapper.apply(evaluation));
+                            callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
                         }
                         inviteFamilyMembers(request, evaluation);
                     } else {
@@ -167,6 +168,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
 
                         .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
+
+                        .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(e -> {
                             log.error("[ONBOARDING_REQUEST] something gone wrong while handling onboarding request {} of userId {} into initiativeId {}",
@@ -261,7 +264,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void callRankingNotifier(RankingRequestDTO rankingRequestDTO) {
-        log.info("[ONBOARDING_REQUEST] notifying onboarding request to ranking topic: {}", rankingRequestDTO);
         try {
             if (!rankingNotifierService.notify(rankingRequestDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");
@@ -273,16 +275,33 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
-        if(request.getFamily()!=null && OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
-            request.getFamily().getMemberIds().forEach(userId -> {
-                if(!userId.equals(request.getUserId())){
-                    callOnboardingNotifier(evaluation.toBuilder()
-                            .userId(userId)
-                            .status(OnboardingEvaluationStatus.DEMANDED)
-                            .build());
-                }
-            });
+        if(request.getFamily()!=null){
+            if(OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
+                callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.DEMANDED);
+            } else if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluation.getStatus())){
+                log.info("[FAMILY_MEMBERS_NOTIFY_KO] Notify onboarding KO to member of the family {}", request.getFamily().getFamilyId());
+                evaluation.getOnboardingRejectionReasons()
+                        .add(OnboardingRejectionReason.builder()
+                                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)
+                                .code(OnboardingConstants.REJECTION_REASON_FAMILY_CRITERIA_FAIL)
+                                .detail("Nucleo familiare non soddisfa i requisiti")
+                                .build());
+
+                callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.ONBOARDING_KO);
+            }
         }
+
+    }
+
+    private void callFamilyMembersNotifier(OnboardingDTO request, EvaluationCompletedDTO evaluation, OnboardingEvaluationStatus status) {
+        request.getFamily().getMemberIds().forEach(userId -> {
+            if(!userId.equals(request.getUserId())){
+                callOnboardingNotifier(evaluation.toBuilder()
+                        .userId(userId)
+                        .status(status)
+                        .build());
+            }
+        });
     }
 
 }

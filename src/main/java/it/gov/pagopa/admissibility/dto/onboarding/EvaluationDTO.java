@@ -3,6 +3,8 @@ package it.gov.pagopa.admissibility.dto.onboarding;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.Set;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,4 +28,5 @@ public abstract class EvaluationDTO {
 
     public abstract Long getRankingValue();
     public abstract void setRankingValue(Long rankingValue);
+    private Set<String> memberIds;
 }
