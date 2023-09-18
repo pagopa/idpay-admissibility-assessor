@@ -264,6 +264,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void callRankingNotifier(RankingRequestDTO rankingRequestDTO) {
+        log.info("[ONBOARDING_REQUEST] notifying onboarding request to ranking topic: {}", rankingRequestDTO);
         try {
             if (!rankingNotifierService.notify(rankingRequestDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");

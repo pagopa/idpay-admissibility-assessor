@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-@ContextConfiguration(inheritInitializers = false)
+@ContextConfiguration
 class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorConfigTest {
 
     @TestConfiguration
@@ -79,7 +79,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
 
         storeInitiativeCountersInitialState();
-
 
         int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
@@ -351,10 +350,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private final List<OnboardingUseCase<EvaluationDTO>> useCases = List.of(
             // useCase 0: onboardingOk
             OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO request = buildOnboardingRequestBuilder(bias).build();
-                        return request;
-                    },
+                    bias -> buildOnboardingRequestBuilder(bias).build(),
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
                             Assertions.assertFalse(rankingRequest.isOnboardingKo());
@@ -369,10 +365,9 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
-                        OnboardingDTO request = buildOnboardingRequestBuilder(bias)
+                        return buildOnboardingRequestBuilder(bias)
                                 .isee(BigDecimal.ZERO)
                                 .build();
-                        return request;
                     },
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){

@@ -21,7 +21,6 @@ import org.kie.api.definition.KiePackage;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 

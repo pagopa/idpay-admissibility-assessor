@@ -184,6 +184,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     @Override
     public void setInitiativeConfig(InitiativeConfig initiativeConfig) {
         initiativeId2Config.put(initiativeConfig.getInitiativeId(), initiativeConfig);
+        setPDNDapiKeys(initiativeConfig);
     }
 
     private Mono<InitiativeConfig> retrieveInitiativeConfig(String initiativeId) {

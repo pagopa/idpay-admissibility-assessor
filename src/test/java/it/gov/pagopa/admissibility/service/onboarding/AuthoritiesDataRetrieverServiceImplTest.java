@@ -18,14 +18,13 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
-import it.gov.pagopa.admissibility.mock.isee.model.Isee;
-import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.utils.TestUtils;
+import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,6 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 
-import jakarta.xml.bind.JAXBException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -89,16 +87,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @BeforeEach
     void setUp() throws JAXBException {
         authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(60L, false, onboardingRescheduleServiceMock, pdndAccessTokenRetrieverServiceMock, userFiscalCodeServiceMock, iseeDataRetrieverServiceSpy, residenceDataRetrieverServiceSpy, onboardingContextHolderServiceMock);
-    void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(
-                onboardingContextHolderServiceMock,
-                null,
-                60L,
-                false,
-                criteriaCodeServiceMock,
-                reactiveMongoTemplateMock,
-                userRestClientMock,
-                residenceMockRestClientMock);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
