@@ -288,6 +288,11 @@ app:
     response.timeout: ${RESPONSE_TIMEOUT:60000}
     read.handler.timeout: ${READ_TIMEOUT_HANDLER:60000}
     write.handler.timeout: ${WRITE_TIMEOUT_HANDLER:60000}
+  idpay-mock:
+    base-url: ${IDPAY_MOCK_BASE_URL:http//idpay-mock-baseurl}
+    retry:
+      delay-millis: ${IDPAY_MOCK_RETRY_DELAY_MILLIS:2000}
+      max-attempts: ${IDPAY_MOCK_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
   pdnd:
     access.token-base-url: ${PDND_ACCESS_TOKEN_BASE_URL:https://uat.gateway.test.pdnd-interop.pagopa.it/authorization-server}
     time-expire-token: ${PDND_TIME_EXPIRE_TOKEN_SECONDS:420} # 7 minutes

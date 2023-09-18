@@ -21,6 +21,9 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_RESIDENCE_KO = "RESIDENCE_FAIL";
     public static final String REJECTION_REASON_BIRTHDATE_KO = "BIRTHDATE_FAIL";
     public static final String REJECTION_REASON_GENERIC_ERROR = "GENERIC_ERROR";
+
+    /** Rejection reason for the second family member due to the family not meeting the requirements of the initiative */
+    public static final String REJECTION_REASON_FAMILY_CRITERIA_FAIL = "FAMILY_CRITERIA_FAIL";
     //endregion
 
     //region criteria code

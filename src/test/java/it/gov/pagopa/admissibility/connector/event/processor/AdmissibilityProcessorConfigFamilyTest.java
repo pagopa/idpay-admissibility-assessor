@@ -14,7 +14,6 @@ import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverServiceImpl;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -51,7 +50,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
     private List<Initiative2BuildDTO> publishedInitiatives;
 
-    private final int onboardingFamilies =50;
+    private final int onboardingFamilies = 50;
     private final int membersPerFamily=3;
 
     private int expectedOnboardingKoFamilies=0;
@@ -81,14 +80,19 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         storeInitiativeCountersInitialState();
 
+
         int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
         int expectedEvaluationCompletedMessages =
                 expectedRequestsPerInitiative
-                + expectedOnboardingKoFamilies * membersPerFamily // rankingKO are published also here
-                + (onboardingFamilies - expectedOnboardingKoFamilies) * (membersPerFamily - 1); // DEMANDED for each other member when ONBOARDING_OK
+                + (expectedOnboardingKoFamilies * membersPerFamily) + (expectedOnboardingKoFamilies*2) // rankingKO are published also here + rejected for ko family
+                + (onboardingFamilies - expectedOnboardingKoFamilies - expectedFamilyRetrieveKo) * (membersPerFamily - 1) // DEMANDED for each other member when ONBOARDING_OK
+                + (expectedFamilyRetrieveKo * membersPerFamily * (publishedInitiatives.size() - 1)); // Family not retriever
+
 
         expectedOnboardedFamilies = onboardingFamilies - expectedFamilyRetrieveKo;
+
+        int expectedRankingQueue = expectedOnboardedFamilies + (expectedFamilyRetrieveKo * membersPerFamily) ;
 
         MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
 
@@ -97,7 +101,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
-        List<ConsumerRecord<String, String>> rankingRequestPayloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutRankingRequest, expectedRequestsPerInitiative, maxWaitingMs);
+        List<ConsumerRecord<String, String>> rankingRequestPayloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutRankingRequest, expectedRankingQueue, maxWaitingMs);
         List<ConsumerRecord<String, String>> evaluationOutcomePayloadConsumed = kafkaTestUtilitiesService.consumeMessages(topicAdmissibilityProcessorOutcome, expectedEvaluationCompletedMessages, maxWaitingMs);
         long timeEnd = System.currentTimeMillis();
 
@@ -105,7 +109,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
         MongoTestUtilitiesService.stopAndPrintMongoCommands();
 
-        checkResponses(expectedRequestsPerInitiative, rankingRequestPayloadConsumed, RankingRequestDTO.class);
+        checkResponses(expectedRankingQueue, rankingRequestPayloadConsumed, RankingRequestDTO.class);
         checkResponses(expectedEvaluationCompletedMessages, evaluationOutcomePayloadConsumed, EvaluationCompletedDTO.class);
 
         checkStoredOnboardingFamilies();
@@ -136,7 +140,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                 timeEnd - timePublishOnboardingStart
         );
 
-        checkOffsets(onboardings.size() + rescheduled, expectedRequestsPerInitiative, topicAdmissibilityProcessorOutRankingRequest);
+        checkOffsets(onboardings.size() + rescheduled, expectedRankingQueue, topicAdmissibilityProcessorOutRankingRequest);
         checkOffsets(onboardings.size() + rescheduled, expectedEvaluationCompletedMessages, topicAdmissibilityProcessorOutcome);
     }
 
@@ -190,33 +194,17 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     private void storeInitiativeCountersInitialState() {
-        Assertions.assertTrue(expectedOnboardingKoFamilies>0, "Call this method after payload build in order to set the residual equals to onboardingOk expected");
+        Assertions.assertTrue(expectedOnboardingKoFamilies + expectedFamilyRetrieveKo>0, "Call this method after payload build in order to set the residual equals to onboardingOk expected");
 
         InitiativeCounters counter = new InitiativeCounters();
         counter.setId("INITIATIVEID");
         counter.setInitiativeBudgetCents(CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBudget()));
-        counter.setOnboarded((long)expectedOnboardingKoFamilies);
-        counter.setReservedInitiativeBudgetCents(CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBeneficiaryBudget()) * expectedOnboardingKoFamilies);
+        counter.setOnboarded((long)expectedOnboardingKoFamilies + (long) expectedFamilyRetrieveKo);
+        counter.setReservedInitiativeBudgetCents(CommonUtilities.euroToCents(publishedInitiatives.get(0).getGeneral().getBeneficiaryBudget()) * (expectedOnboardingKoFamilies + expectedFamilyRetrieveKo));
         counter.setResidualInitiativeBudgetCents(counter.getInitiativeBudgetCents() - counter.getReservedInitiativeBudgetCents());
         initiativeCountersRepository.save(counter).block();
     }
 
-    private void storeMockedFamilyMembers(String userId) {
-        String membersMockedBaseId = userId;
-        if (membersMockedBaseId.matches(".*_FAMILYMEMBER\\d+$")) {
-            membersMockedBaseId = membersMockedBaseId.substring(0, membersMockedBaseId.indexOf("_FAMILYMEMBER"));
-        }
-
-        mongoTemplate.save(FamilyDataRetrieverServiceImpl.MockedFamily.builder()
-                                .familyId("FAMILYID_" + membersMockedBaseId)
-                                .memberIds(new HashSet<>(List.of(
-                                        membersMockedBaseId + "_FAMILYMEMBER0",
-                                        membersMockedBaseId + "_FAMILYMEMBER1",
-                                        membersMockedBaseId + "_FAMILYMEMBER2"
-                                )))
-                                .build())
-                .block();
-    }
 
     private <T extends EvaluationDTO> void checkResponses(int expectedRequestsPerInitiative, List<ConsumerRecord<String, String>> payloadConsumed,Class<T> clazz) throws JsonProcessingException {
         assertInitiativePublishedMessagesCount(expectedRequestsPerInitiative, payloadConsumed, clazz);
@@ -261,10 +249,15 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                                     OnboardingEvaluationStatus.JOINED, (long) (membersPerFamily - 1),
                                     OnboardingEvaluationStatus.DEMANDED, (long) (membersPerFamily - 1)
                             );
+                        } else if (membersByStatusCount.containsKey(OnboardingEvaluationStatus.REJECTED)
+                            && members.stream().allMatch(o -> "INITIATIVEID".equals(o.getInitiativeId()))) {
+                            expected = Map.of(
+                                    OnboardingEvaluationStatus.ONBOARDING_KO, 3L,
+                                    OnboardingEvaluationStatus.REJECTED, (long) (membersPerFamily - 1)
+                            );
                         } else {
                             expected = Map.of(
-                                    OnboardingEvaluationStatus.ONBOARDING_KO, 1L,
-                                    OnboardingEvaluationStatus.REJECTED, (long) (membersPerFamily - 1)
+                                    OnboardingEvaluationStatus.ONBOARDING_KO, 3L
                             );
                         }
 
@@ -313,7 +306,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                     "Initiative %s has an unexpected onboarding families count".formatted(i.getInitiativeId())
             );
 
-            Assertions.assertEquals(expectedOnboardingKoFamilies - expectedFamilyRetrieveKo,
+            Assertions.assertEquals(expectedOnboardingKoFamilies,
                     onboardingFamilies.stream().filter(f->OnboardingFamilyEvaluationStatus.ONBOARDING_KO.equals(f.getStatus())).count());
 
             Assertions.assertTrue(onboardingFamilies.stream().allMatch(f->
@@ -360,7 +353,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO request = buildOnboardingRequestBuilder(bias).build();
-                        storeMockedFamilyMembers(request.getUserId());
                         return request;
                     },
                     evaluation -> {
@@ -380,7 +372,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                         OnboardingDTO request = buildOnboardingRequestBuilder(bias)
                                 .isee(BigDecimal.ZERO)
                                 .build();
-                        storeMockedFamilyMembers(request.getUserId());
                         return request;
                     },
                     evaluation -> {
@@ -388,6 +379,11 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                             Assertions.assertTrue(rankingRequest.isOnboardingKo());
                         } else if(evaluation instanceof EvaluationCompletedDTO evaluationCompleted) {
                             Assertions.assertTrue(expectedOnboardingKoStatuses.contains(evaluationCompleted.getStatus()));
+                            evaluationCompleted.getOnboardingRejectionReasons().remove(OnboardingRejectionReason.builder()
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_CRITERIA_KO)
+                                            .code(OnboardingConstants.REJECTION_REASON_FAMILY_CRITERIA_FAIL)
+                                            .detail("Nucleo familiare non soddisfa i requisiti")
+                                    .build());
                             Assertions.assertEquals(
                                     List.of(new OnboardingRejectionReason(
                                             OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL,
@@ -404,7 +400,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             // useCase 2: onboardingKo case due to family not found
             OnboardingUseCase.withJustPayload(
                     bias -> {
-                        expectedOnboardingKoFamilies++;
                         expectedFamilyRetrieveKo++;
                         OnboardingDTO request = buildOnboardingRequestBuilder(bias)
                                 .userId("NOFAMILYuserId_" + bias)

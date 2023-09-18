@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/pdndMock/idpay/mock/family/user/(userId_[0-9]+$)"
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "familyId": "FAMILYID_{{request.path.[5]}}",
+      "memberIds": [ "{{request.path.[5]}}_FAMILYMEMBER0", "{{request.path.[5]}}_FAMILYMEMBER1", "{{request.path.[5]}}_FAMILYMEMBER2" ]
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

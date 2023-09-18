@@ -89,6 +89,16 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @BeforeEach
     void setUp() throws JAXBException {
         authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(60L, false, onboardingRescheduleServiceMock, pdndAccessTokenRetrieverServiceMock, userFiscalCodeServiceMock, iseeDataRetrieverServiceSpy, residenceDataRetrieverServiceSpy, onboardingContextHolderServiceMock);
+    void setUp() {
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(
+                onboardingContextHolderServiceMock,
+                null,
+                60L,
+                false,
+                criteriaCodeServiceMock,
+                reactiveMongoTemplateMock,
+                userRestClientMock,
+                residenceMockRestClientMock);
 
         onboardingDTO = OnboardingDTO.builder()
                 .userId("USERID")
