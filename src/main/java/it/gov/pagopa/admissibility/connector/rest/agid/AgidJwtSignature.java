@@ -24,16 +24,19 @@ import java.util.*;
 public abstract class AgidJwtSignature {
     private final AgidJwtToken.AgidJwtTokenHeader tokenHeader;
 
-    private final String cert;
+    private final String aud;
+    private final String kid;
     private final String key;
     private final String pub;
 
     protected AgidJwtSignature(AgidJwtToken agidJwtToken,
-                            String cert,
+                            String aud,
+                            String kid,
                             String key,
                             String pub) {
         this.tokenHeader = agidJwtToken.getHeader();
-        this.cert = cert;
+        this.aud = aud;
+        this.kid = kid;
         this.key = key;
         this.pub = pub;
     }
@@ -54,7 +57,7 @@ public abstract class AgidJwtSignature {
         Map<String, Object> map = new HashMap<>();
         map.put(HeaderParams.TYPE, tokenHeader.getTyp());
         map.put(HeaderParams.ALGORITHM, tokenHeader.getAlg());
-        map.put("x5c", List.of(cert));
+        map.put(HeaderParams.KEY_ID, this.kid);
         log.debug("HeaderMap: {}",map);
         return map;
     }
@@ -67,7 +70,7 @@ public abstract class AgidJwtSignature {
         map.put(RegisteredClaims.ISSUER, tokenPayload.getIss());
         map.put(RegisteredClaims.SUBJECT, tokenPayload.getSub());
         map.put(RegisteredClaims.EXPIRES_AT, expireSeconds);
-        map.put(RegisteredClaims.AUDIENCE, tokenPayload.getAud());
+        map.put(RegisteredClaims.AUDIENCE, aud);
         map.put(RegisteredClaims.ISSUED_AT, nowSeconds);
         map.put(RegisteredClaims.JWT_ID, UUID.randomUUID().toString());
         map.put("signed_headers", createSignedHeaders(digest));

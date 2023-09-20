@@ -115,7 +115,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .automatedCriteria(List.of(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology)))
                 .build();
 
-        agidTokenPayload = AgidJwtTokenPayload.builder().iss("ISS").sub("SUB").aud("AUD").build();
+        agidTokenPayload = AgidJwtTokenPayload.builder().iss("ISS").sub("SUB").build();
         ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId(DECRYPTED_API_KEY_CLIENT_ID)
                 .apiKeyClientAssertion(DECRYPTED_API_KEY_CLIENT_ASSERTION)

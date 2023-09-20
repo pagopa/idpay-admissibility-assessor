@@ -5,5 +5,5 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 
 /**
  * it will handle the persistence of {@link CustomSequenceGenerator} entity*/
-public interface CustomSequenceGeneratorGeneratorRepository extends ReactiveMongoRepository<CustomSequenceGenerator, String>, CustomSequenceGeneratorOpsRepository {
+public interface CustomSequenceGeneratorRepository extends ReactiveMongoRepository<CustomSequenceGenerator, String>, CustomSequenceGeneratorOpsRepository {
 }

@@ -223,7 +223,7 @@ public abstract class BaseIntegrationTest {
 
             // setting wiremock HTTPS baseUrl
             Stream.of(
-                    Pair.of("app.anpr.c020-residenceAssessment.base-url","anpr/residence"),
+                    Pair.of("app.anpr.c001-residenceAssessment.base-url","anpr/residence"),
                             Pair.of("app.inps.iseeConsultation.base-url","inps/isee")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
 

@@ -12,5 +12,4 @@ import lombok.NoArgsConstructor;
 public class AgidJwtTokenPayload {
     private String iss;
     private String sub;
-    private String aud;
 }

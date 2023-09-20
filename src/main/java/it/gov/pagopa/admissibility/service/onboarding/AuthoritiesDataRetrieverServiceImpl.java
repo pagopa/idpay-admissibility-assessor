@@ -92,7 +92,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
             ApiKeysPDND pdndApiKeys = onboardingContextHolderService.getPDNDapiKeys(initiativeConfig);
-            return  pdndAccessTokenRetrieverService.getToken(pdndApiKeys)
+            return  pdndAccessTokenRetrieverService.getToken(pdndApiKeys) // TODO each PDND service will require a separate accessToken
                     .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
                     .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message, pdndApiKeys.getAgidJwtTokenPayload()));
         }

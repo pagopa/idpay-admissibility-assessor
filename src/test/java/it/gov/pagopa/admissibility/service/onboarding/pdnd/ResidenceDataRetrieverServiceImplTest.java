@@ -71,8 +71,7 @@ class ResidenceDataRetrieverServiceImplTest {
 
         agidJwtTokenPayload = AgidJwtTokenPayload.builder()
                 .iss("ISS")
-                .sub("SUB")
-                .aud("AUD").build();
+                .sub("SUB").build();
     }
 
     @Test
@@ -150,7 +149,6 @@ class ResidenceDataRetrieverServiceImplTest {
     void testExtractWhenNoResidence() {
         //Given
 
-        //noinspection ConstantConditions
         anprAnswer.getListaSoggetti().getDatiSoggetto().get(0).setResidenza(null);
 
         // When
@@ -167,7 +165,6 @@ class ResidenceDataRetrieverServiceImplTest {
 
     @Test
     void testExtractWhenNoBirthDate() {
-        //noinspection ConstantConditions
         anprAnswer.getListaSoggetti().getDatiSoggetto().get(0).setGeneralita(null);
         testExtractWhenNoBirthDateInner();
 

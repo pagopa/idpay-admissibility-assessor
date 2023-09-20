@@ -58,11 +58,9 @@ public class ResidenceDataRetrieverServiceImpl implements ResidenceDataRetriever
 
             if (anprResponse != null) {
                 if (checkResidenceDataPresence(anprResponse)) {
-                    //noinspection ConstantConditions: all condition are checked
                     residence = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0);
                 }
                 if (checkPersonalInfoPresence(anprResponse)) {
-                    //noinspection ConstantConditions: all condition are checked
                     personalInfo = anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita();
                 }
             }
@@ -75,7 +73,6 @@ public class ResidenceDataRetrieverServiceImpl implements ResidenceDataRetriever
     }
 
     private boolean checkResidenceDataPresence(RispostaE002OKDTO anprResponse) {
-        //noinspection ConstantConditions: all condition are checked
         return anprResponse.getListaSoggetti() != null
                 &&
                 !CollectionUtils.isEmpty(anprResponse.getListaSoggetti().getDatiSoggetto())

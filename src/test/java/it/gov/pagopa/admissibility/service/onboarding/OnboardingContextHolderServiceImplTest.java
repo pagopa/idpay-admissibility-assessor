@@ -143,6 +143,8 @@ class OnboardingContextHolderServiceImplTest {
     void testSetInitiativeConfig(boolean isRedisCacheEnabled){
         init(isRedisCacheEnabled);
 
+        Mockito.when(aesTokenServiceMock.decrypt(Mockito.anyString())).thenAnswer(i -> i.getArguments()[0]);
+
         String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
@@ -155,7 +157,7 @@ class OnboardingContextHolderServiceImplTest {
                 .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
-                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION")
+                .apiKeyClientAssertion("eyJhbGciOiJSUzI1NiIsImtpZCI6IktJRCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJJU1MiLCJzdWIiOiJTVUIiLCJhdWQiOiJBVUQiLCJwdXJwb3NlSWQiOiJQVVJQT1NFSUQiLCJqdGkiOiJKVEkiLCJpYXQiOjE2OTUxMTYyNDIsImV4cCI6MTY5NzcwODI0Mn0=.U0lHTg==")
                 .organizationId("ORGANIZATION-ID")
                 .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)
@@ -225,7 +227,6 @@ class OnboardingContextHolderServiceImplTest {
         AgidJwtTokenPayload agidJwtTokenPayloadMock = AgidJwtTokenPayload.builder()
                 .iss("ISS1")
                 .sub("SUB1")
-                .aud("AUD1")
                 .build();
         apiKeysPDNDMapMock.put(initiativeConfig.getInitiativeId(),
                 ApiKeysPDND.builder()
@@ -297,7 +298,6 @@ class OnboardingContextHolderServiceImplTest {
 
         Assertions.assertEquals("SUB1", apiKeysPdndInCache.getAgidJwtTokenPayload().getSub());
         Assertions.assertEquals("ISS1", apiKeysPdndInCache.getAgidJwtTokenPayload().getIss());
-        Assertions.assertEquals("AUD1", apiKeysPdndInCache.getAgidJwtTokenPayload().getAud());
     }
 
     @ParameterizedTest

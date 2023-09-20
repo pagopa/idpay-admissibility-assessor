@@ -19,7 +19,7 @@ public class AnprWebClient {
                          @Value("${app.anpr.web-client.timeouts.response-timeout-millis}")  int residenceAssessmentResponseTimeoutMillis,
                          @Value("${app.anpr.web-client.timeouts.read-timeout-handler}") int residenceAssessmentReadTimeoutHandlerMillis) {
 
-
+//TODO Mutual auth not more required
         HttpClient httpClientSecure = WebClientConfig
                 .getHttpClientWithReadTimeoutHandlerConfig(residenceAssessmentConnectTimeOutMillis, residenceAssessmentResponseTimeoutMillis, residenceAssessmentReadTimeoutHandlerMillis)
                 .secure(t -> t.sslContext(WebClientConfig.buildSSLHttpClient(stringCert, clientKeyPem)));

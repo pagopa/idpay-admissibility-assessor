@@ -37,8 +37,7 @@ class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
 
         AgidJwtTokenPayload agidTokenPayload = AgidJwtTokenPayload.builder()
                 .iss("ISS")
-                .sub("SUB")
-                .aud("AUD").build();
+                .sub("SUB").build();
 
         // When
         RispostaE002OKDTO result = residenceAssessmentRestClient.getResidenceAssessment(accessToken, fiscalCode,agidTokenPayload).block();
@@ -90,8 +89,7 @@ class ResidenceAssessmentRestClientImplTest extends BaseIntegrationTest {
         // Given
         AgidJwtTokenPayload agidTokenPayload = AgidJwtTokenPayload.builder()
                 .iss("ISS")
-                .sub("SUB")
-                .aud("AUD").build();
+                .sub("SUB").build();
         Mockito.when(objectMapper.writeValueAsString(Mockito.any())).thenThrow(JsonProcessingException.class);
 
         // When

@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import static it.gov.pagopa.admissibility.connector.soap.inps.ReactorAsyncHandler.into;
@@ -42,7 +43,8 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                     }
                 })
 
-                .doOnError(e -> { //TODO define error code for retry
+                //TODO define error code for retry
+                .doOnError(WebClientResponseException.TooManyRequests.class, e -> {
                     throw new InpsDailyRequestLimitException(e);
                 });
 

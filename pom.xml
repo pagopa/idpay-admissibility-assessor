@@ -333,7 +333,7 @@
 						</goals>
 						<phase>process-resources</phase>
 						<configuration>
-							<inputSpec>${project.basedir}/docs/wsclient/pdnd/C020-servizioAccertamentoResidenza.yml</inputSpec>
+							<inputSpec>${project.basedir}/docs/wsclient/anpr/C001-consultazioneANPR.yml</inputSpec>
 							<generatorName>java</generatorName>
 							<library>webclient</library>
 							<generateApiDocumentation>false</generateApiDocumentation>

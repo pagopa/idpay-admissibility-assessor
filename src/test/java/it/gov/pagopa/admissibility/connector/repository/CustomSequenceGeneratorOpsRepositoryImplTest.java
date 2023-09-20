@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseIntegrationTest {
     @Autowired
-    protected CustomSequenceGeneratorGeneratorRepository customSequenceGeneratorRepository;
+    protected CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
 
     private final String TEST_ID = "testSequenceId";
 
