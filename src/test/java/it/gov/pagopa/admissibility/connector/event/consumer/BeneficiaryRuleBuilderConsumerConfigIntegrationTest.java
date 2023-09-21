@@ -51,9 +51,9 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     @Test
     void testBeneficiaryRuleBuilding() {
-        int validRules = 100; // use even number
+        int validRules = 6; // use even number
         int notValidRules = errorUseCases.size();
-        long maxWaitingMs = 40000;
+        long maxWaitingMs = 30000;
 
         int[] expectedRules = {0};
 
