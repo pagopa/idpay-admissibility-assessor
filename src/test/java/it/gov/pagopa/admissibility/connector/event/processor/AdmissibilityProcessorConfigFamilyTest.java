@@ -47,8 +47,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration {}
 
     private List<Initiative2BuildDTO> publishedInitiatives;
-
-    private final int onboardingFamilies = 10;
     private final int membersPerFamily=3;
 
     private int expectedOnboardingKoFamilies=0;
@@ -71,7 +69,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     @Test
     void testFamilyAdmissibilityOnboarding() throws IOException {
         long maxWaitingMs = 30000;
-
         publishOnboardingRules();
 
         List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
@@ -422,7 +419,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             )
     );
     //endregion
-
+    private final int onboardingFamilies = Math.max(10, useCases.size());
 
     protected void checkPayload(String errorMessage, String expectedPayload) {
         try {
