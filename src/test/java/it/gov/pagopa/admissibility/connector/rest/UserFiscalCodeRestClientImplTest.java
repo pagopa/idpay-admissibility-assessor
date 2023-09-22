@@ -12,6 +12,8 @@ import reactor.core.Exceptions;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.rest.UserFiscalCodeRestClientImpl=WARN",
+        "app.pdv.retry.max-attempts=1",
+        "app.pdv.retry.delay-millis=100"
 })
 class UserFiscalCodeRestClientImplTest extends BaseIntegrationTest {
     @Autowired
