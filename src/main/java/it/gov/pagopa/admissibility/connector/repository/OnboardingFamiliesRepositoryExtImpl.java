@@ -5,10 +5,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -28,6 +31,15 @@ public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRe
                 new Update()
                         .set(OnboardingFamilies.Fields.status, resultedStatus)
                         .set(OnboardingFamilies.Fields.onboardingRejectionReasons, resultedOnboardingRejectionReasons),
+                OnboardingFamilies.class
+        );
+    }
+
+    @Override
+    public Flux<OnboardingFamilies> deletePaged(String initiativeId, int pageSize) {
+        Pageable pageable = PageRequest.of(0, pageSize);
+        return mongoTemplate.findAllAndRemove(
+                Query.query(Criteria.where(OnboardingFamilies.Fields.initiativeId).is(initiativeId)).with(pageable),
                 OnboardingFamilies.class
         );
     }

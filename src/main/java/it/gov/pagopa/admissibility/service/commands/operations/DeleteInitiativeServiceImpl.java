@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
+
 @Service
 @Slf4j
 public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
@@ -28,11 +30,11 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     }
 
     @Override
-    public Mono<String> execute(String initiativeId) {
+    public Mono<String> execute(String initiativeId, int pageSize, long delay) {
         log.info("[DELETE_INITIATIVE] Starting handle delete initiative {}", initiativeId);
         return  deleteDroolsRule(initiativeId)
                 .then(deleteInitiativeCounters(initiativeId))
-                .then(deleteOnboardingFamilies(initiativeId))
+                .then(deleteOnboardingFamilies(initiativeId, pageSize, delay))
                 .then(Mono.just(initiativeId));
     }
 
@@ -54,10 +56,23 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
                 });
     }
 
-    private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
-        return onboardingFamiliesRepository.deleteByInitiativeId(initiativeId)
+    private Mono<Void> deleteOnboardingFamilies(String initiativeId, int pageSize, long delay) {
+        return onboardingFamiliesRepository.deletePaged(initiativeId,pageSize)
+                .collectList()
+                .delayElement(Duration.ofMillis(delay))
+                .expand(onboardingFamiliesList -> {
+                    if (onboardingFamiliesList.size() < pageSize) {
+                        return Mono.empty();
+                    } else {
+                        return onboardingFamiliesRepository.deletePaged(initiativeId, pageSize)
+                                .collectList()
+                                .delayElement(Duration.ofMillis(delay));
+                    }
+                })
+                .flatMapIterable(onboardingFamiliesList -> onboardingFamiliesList)
                 .doOnNext(familyId -> auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId))
                 .then()
                 .doOnSuccess(i -> log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: onboarding_families", initiativeId));
+
     }
 }

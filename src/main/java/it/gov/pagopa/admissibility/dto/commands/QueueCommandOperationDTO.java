@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
@@ -13,4 +14,5 @@ public class QueueCommandOperationDTO {
     private String entityId;
     private String operationType;
     private LocalDateTime operationTime;
+    private Map<String, String> additionalParams;
 }

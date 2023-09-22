@@ -3,5 +3,5 @@ package it.gov.pagopa.admissibility.service.commands.operations;
 import reactor.core.publisher.Mono;
 
 public interface DeleteInitiativeService {
-    Mono<String> execute(String initiativeId);
+    Mono<String> execute(String initiativeId, int pageSize, long delay);
 }
