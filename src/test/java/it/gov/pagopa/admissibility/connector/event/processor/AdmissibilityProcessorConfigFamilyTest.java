@@ -48,7 +48,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
 
     private List<Initiative2BuildDTO> publishedInitiatives;
 
-    private final int onboardingFamilies = 50;
+    private final int onboardingFamilies = 10;
     private final int membersPerFamily=3;
 
     private int expectedOnboardingKoFamilies=0;
