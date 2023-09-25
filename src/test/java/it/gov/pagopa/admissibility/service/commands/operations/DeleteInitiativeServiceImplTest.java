@@ -10,7 +10,6 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderSer
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.api.KieBase;
@@ -40,10 +39,11 @@ class DeleteInitiativeServiceImplTest {
     }
 
     @Test
-    @Disabled
     void executeOK() {
         String initiativeId = "INITIATIVEID";
         String familyid = "FAMILYID";
+        int pageSize = 2;
+        long delay = 1;
 
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
@@ -60,12 +60,12 @@ class DeleteInitiativeServiceImplTest {
 
         OnboardingFamilies onboardingFamilies = OnboardingFamilies.builder(family, initiativeId).build();
 
-        Mockito.when(onboardingFamiliesRepositoryMock.deleteByInitiativeId(initiativeId))
+        Mockito.when(onboardingFamiliesRepositoryMock.deletePaged(initiativeId,pageSize))
                 .thenReturn(Flux.just(onboardingFamilies));
 
-        //String result = deleteInitiativeService.execute(initiativeId).block();
+        String result = deleteInitiativeService.execute(initiativeId, pageSize, delay).block();
 
-        //Assertions.assertNotNull(result);
+        Assertions.assertNotNull(result);
 
         Mockito.verify(droolsRuleRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
         Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
@@ -73,14 +73,15 @@ class DeleteInitiativeServiceImplTest {
     }
 
     @Test
-    @Disabled
     void executeError() {
         String initiativeId = "INITIATIVEID";
+        int pageSize = 2;
+        long delay = 1;
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenThrow(new MongoException("DUMMY_EXCEPTION"));
 
         try{
-            //deleteInitiativeService.execute(initiativeId).block();
+            deleteInitiativeService.execute(initiativeId,pageSize, delay).block();
             Assertions.fail();
         }catch (Throwable t){
             Assertions.assertTrue(t instanceof  MongoException);
