@@ -36,7 +36,7 @@ public class RuServiceImpl implements RuService{
 
     @Override
     public Mono<Void> deleteOnboardingFamiliesRangeLimit(String initiativeId, int pageSize, long delay) {
-        return onboardingFamiliesRepository.deletePaged(initiativeId, pageSize)
+        return onboardingFamiliesRepository.findByInitiativeId(initiativeId)
                 .limitRate(pageSize, 0)
                 .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId()))
                 .delayElements(Duration.ofMillis(delay))

@@ -32,4 +32,5 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
                     return Mono.empty();
                 });
     }
+    Flux<OnboardingFamilies> findByInitiativeId(String initiativeId);
 }
