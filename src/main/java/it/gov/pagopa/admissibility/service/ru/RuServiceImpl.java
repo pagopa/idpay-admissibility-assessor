@@ -4,12 +4,13 @@ import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesReposi
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.commands.operations.DeleteInitiativeService;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Set;
 import java.util.stream.IntStream;
-
+@Service
 public class RuServiceImpl implements RuService{
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final DeleteInitiativeService deleteInitiativeService;

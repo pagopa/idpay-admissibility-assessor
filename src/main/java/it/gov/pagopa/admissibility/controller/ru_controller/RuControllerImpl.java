@@ -1,8 +1,11 @@
 package it.gov.pagopa.admissibility.controller.ru_controller;
 
 import it.gov.pagopa.admissibility.service.ru.RuService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Mono;
-
+@RestController
+@Slf4j
 public class RuControllerImpl implements RuController{
     private final RuService ruService;
 
