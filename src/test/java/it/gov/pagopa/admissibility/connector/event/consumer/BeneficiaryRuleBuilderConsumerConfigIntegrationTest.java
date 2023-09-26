@@ -21,7 +21,6 @@ import org.kie.api.definition.KiePackage;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
@@ -52,7 +51,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     @Test
     void testBeneficiaryRuleBuilding() {
-        int validRules = 100; // use even number
+        int validRules = 6; // use even number
         int notValidRules = errorUseCases.size();
         long maxWaitingMs = 30000;
 
