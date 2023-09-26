@@ -12,5 +12,5 @@ import java.util.List;
 
 public interface OnboardingFamiliesRepositoryExt {
     Mono<UpdateResult> updateOnboardingFamilyOutcome(Family family, String initiativeId, OnboardingFamilyEvaluationStatus resultedStatus, List<OnboardingRejectionReason> resultedOnboardingRejectionReasons);
-    Flux<OnboardingFamilies> deletePaged(String initiativeId, int pageSize);
+    Flux<OnboardingFamilies> findByInitiativeIdWithBatch(String initiativeId, int batchSize);
 }

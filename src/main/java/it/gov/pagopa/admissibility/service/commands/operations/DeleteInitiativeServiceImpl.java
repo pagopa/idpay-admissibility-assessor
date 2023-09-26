@@ -3,12 +3,10 @@ package it.gov.pagopa.admissibility.service.commands.operations;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
-import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
@@ -59,25 +57,12 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId, int pageSize, long delay) {
-        return getOnboardingFamiliesFlux(initiativeId, pageSize)
-                .collectList()
-                .delayElement(Duration.ofMillis(delay))
-                .expand(onboardingFamiliesList -> {
-                    if (onboardingFamiliesList.size() < pageSize) {
-                        return Mono.empty();
-                    } else {
-                        return getOnboardingFamiliesFlux(initiativeId, pageSize)
-                                .collectList()
-                                .delayElement(Duration.ofMillis(delay));
-                    }
-                })
-                .flatMapIterable(onboardingFamiliesList -> onboardingFamiliesList)
+
+        return onboardingFamiliesRepository.findByInitiativeIdWithBatch(initiativeId, pageSize)
+                .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId())
+                        .then(Mono.just(of).delayElement(Duration.ofMillis(delay))), pageSize)
                 .doOnNext(familyId -> auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId))
                 .then()
                 .doOnSuccess(i -> log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: onboarding_families", initiativeId));
-    }
-
-    private Flux<OnboardingFamilies> getOnboardingFamiliesFlux(String initiativeId, int pageSize) {
-        return onboardingFamiliesRepository.deletePaged(initiativeId, pageSize);
     }
 }

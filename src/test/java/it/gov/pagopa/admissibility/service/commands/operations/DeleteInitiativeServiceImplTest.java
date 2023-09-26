@@ -60,8 +60,12 @@ class DeleteInitiativeServiceImplTest {
 
         OnboardingFamilies onboardingFamilies = OnboardingFamilies.builder(family, initiativeId).build();
 
-        Mockito.when(onboardingFamiliesRepositoryMock.deletePaged(initiativeId,pageSize))
+        Mockito.when(onboardingFamiliesRepositoryMock.findByInitiativeIdWithBatch(initiativeId,pageSize))
                 .thenReturn(Flux.just(onboardingFamilies));
+
+        Mockito.when(onboardingFamiliesRepositoryMock.deleteById(onboardingFamilies.getId()))
+                .thenReturn(Mono.empty());
+
 
         String result = deleteInitiativeService.execute(initiativeId, pageSize, delay).block();
 
@@ -69,7 +73,9 @@ class DeleteInitiativeServiceImplTest {
 
         Mockito.verify(droolsRuleRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
         Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
-        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteByInitiativeId(Mockito.anyString());
+        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).findByInitiativeIdWithBatch(Mockito.anyString(),Mockito.anyInt());
+        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
+
     }
 
     @Test
