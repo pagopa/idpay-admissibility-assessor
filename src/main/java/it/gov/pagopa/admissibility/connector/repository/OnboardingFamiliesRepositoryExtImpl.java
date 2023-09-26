@@ -43,4 +43,10 @@ public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRe
                 OnboardingFamilies.class
         );
     }
+
+    @Override
+    public Flux<OnboardingFamilies> findByInitiativeId(String initiativeId, int batchSize) {
+        Query query = Query.query(Criteria.where(OnboardingFamilies.Fields.initiativeId).is(initiativeId)).cursorBatchSize(batchSize);
+        return mongoTemplate.find(query, OnboardingFamilies.class);
+    }
 }

@@ -10,6 +10,9 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Set;
 import java.util.stream.IntStream;
+
+import static it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository.log;
+
 @Service
 public class RuServiceImpl implements RuService{
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
@@ -36,10 +39,18 @@ public class RuServiceImpl implements RuService{
 
     @Override
     public Mono<Void> deleteOnboardingFamiliesRangeLimit(String initiativeId, int pageSize, long delay) {
-        return onboardingFamiliesRepository.findByInitiativeId(initiativeId)
+        /*return onboardingFamiliesRepository.findByInitiativeId(initiativeId)
                 .limitRate(pageSize, 0)
                 .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId()))
                 .delayElements(Duration.ofMillis(delay))
+                .then();
+         */
+        Mono<Long> monoDelay = Mono.delay(Duration.ofMillis(delay));
+        return onboardingFamiliesRepository.findByInitiativeId(initiativeId, pageSize)
+                .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId())
+                        .then(monoDelay), pageSize)
+                .count()
+                .doOnNext(counter -> log.info("Deleted elements " + counter))
                 .then();
     }
 }
