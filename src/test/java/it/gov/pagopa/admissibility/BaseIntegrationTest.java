@@ -217,13 +217,13 @@ public abstract class BaseIntegrationTest {
             // setting wiremock HTTP baseUrl
             Stream.of(
                     Pair.of("app.pdv.base-url","pdv"),
-                    Pair.of("app.pdnd.access.token-base-url","pdnd"),
+                    Pair.of("app.pdnd.base-url","pdnd"),
                     Pair.of("app.idpay-mock.base-url","pdndMock") //TODO removeme once integrated real system
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
 
             // setting wiremock HTTPS baseUrl
             Stream.of(
-                    Pair.of("app.anpr.c001-residenceAssessment.base-url","anpr/residence"),
+                    Pair.of("app.anpr.c001-consultazioneANPR.base-url","anpr/residence"),
                             Pair.of("app.inps.iseeConsultation.base-url","inps/isee")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
 

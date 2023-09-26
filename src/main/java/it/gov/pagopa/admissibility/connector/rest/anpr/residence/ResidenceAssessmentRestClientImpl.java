@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.connector.rest.anpr.AnprWebClient;
 import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.crypto.utils.CryptoUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -35,7 +36,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
     public ResidenceAssessmentRestClientImpl(AnprWebClient anprWebClient,
                                              AnprJwtSignature anprJwtSignature,
 
-                                             @Value("${app.anpr.c001-residenceAssessment.base-url}") String residenceAssessmentBaseUrl,
+                                             @Value("${app.anpr.c001-consultazioneANPR.base-url}") String residenceAssessmentBaseUrl,
 
                                              CustomSequenceGeneratorRepository customSequenceGeneratorRepository, ObjectMapper objectMapper) {
         this.anprJwtSignature = anprJwtSignature;
@@ -57,7 +58,7 @@ public class ResidenceAssessmentRestClientImpl implements ResidenceAssessmentRes
 
     private Mono<RispostaE002OKDTO> callAnprService(String accessToken, AgidJwtTokenPayload agidJwtTokenPayload, RichiestaE002DTO richiestaE002DTO) {
         String requestDtoString = Utils.convertToJson(richiestaE002DTO, objectMapper);
-        String digest = Utils.createSHA256Digest(requestDtoString);
+        String digest = "SHA-256="+ CryptoUtils.sha256Base64(requestDtoString);
         return webClient.post()
                 .uri("/anpr-service-e002")
                 .contentType(MediaType.APPLICATION_JSON)

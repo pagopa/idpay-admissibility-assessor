@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
+import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
@@ -73,7 +73,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     @SpyBean
     private UserFiscalCodeService userFiscalCodeServiceSpy;
     @SpyBean
-    private PdndCreateTokenRestClient pdndCreateTokenRestClientSpy;
+    private PdndRestClient pdndRestClientSpy;
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
@@ -138,7 +138,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     }
 
     private void checkPdndAccessTokenInvocations() {
-        Map<String, Long> pdndClientIdsInvocations = Mockito.mockingDetails(pdndCreateTokenRestClientSpy).getInvocations().stream()
+        Map<String, Long> pdndClientIdsInvocations = Mockito.mockingDetails(pdndRestClientSpy).getInvocations().stream()
                 .map(i -> i.getArgument(0, ApiKeysPDND.class))
                 .collect(Collectors.groupingBy(ApiKeysPDND::getApiKeyClientId, Collectors.counting()));
 

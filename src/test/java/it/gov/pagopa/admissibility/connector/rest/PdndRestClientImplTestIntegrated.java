@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.connector.rest;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.common.utils.TestUtils;
@@ -19,10 +20,10 @@ import org.springframework.test.context.TestPropertySource;
         "classpath:/secrets/pdndConfig.properties"
 })
 @ContextConfiguration(inheritInitializers = false)
-class PdndCreateTokenRestClientImplTestIntegrated extends BaseIntegrationTest {
+class PdndRestClientImplTestIntegrated extends BaseIntegrationTest {
 
     @Autowired
-    private PdndCreateTokenRestClient pdndCreateTokenRestClient;
+    private PdndRestClient pdndRestClient;
 
     @Value("${app.pdnd.token-pdnd}")
     private String apiKeyClientAssertion;
@@ -37,7 +38,7 @@ class PdndCreateTokenRestClientImplTestIntegrated extends BaseIntegrationTest {
                 .apiKeyClientAssertion(apiKeyClientAssertion)
                 .build();
 
-        ClientCredentialsResponseDTO result = pdndCreateTokenRestClient.createToken(apiKeysPDND_1).block();
+        ClientCredentialsResponseDTO result = pdndRestClient.createToken(apiKeysPDND_1).block();
 
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);

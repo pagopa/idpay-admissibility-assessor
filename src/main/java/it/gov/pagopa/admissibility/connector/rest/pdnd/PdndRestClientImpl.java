@@ -1,8 +1,7 @@
-package it.gov.pagopa.admissibility.connector.rest;
+package it.gov.pagopa.admissibility.connector.rest.pdnd;
 
 import io.netty.channel.ChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.ApiClient;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.api.AuthApi;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
@@ -17,23 +16,18 @@ import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 @Service
-public class PdndCreateTokenRestClientImpl implements PdndCreateTokenRestClient {
+public class PdndRestClientImpl implements PdndRestClient {
+
+    private static final String CLIENT_ASSERTION_TYPE = "urn:ietf:params:oauth:client-assertion-type:jwt-bearer";
+    private static final String GRANT_TYPE = "client_credentials";
 
     private final AuthApi authApi;
 
-    private final String clientAssertionType;
-    private final String grantType;
+    public PdndRestClientImpl(@Value("${app.pdnd.base-url}") String pdndAccessTokenBaseUrl,
 
-    public PdndCreateTokenRestClientImpl(@Value("${app.pdnd.access.token-base-url}") String pdndAccessTokenBaseUrl,
-                                         @Value("${app.pdnd.properties.clientAssertionType}") String clientAssertionType,
-                                         @Value("${app.pdnd.properties.grant-type}") String grantType,
-
-                                         @Value("${app.pdnd.web-client.timeouts.connect-timeout-millis}") int pdndConnectTimeOutMillis,
-                                         @Value("${app.pdnd.web-client.timeouts.response-timeout-millis}") int pdndResponseTimeOutMillis,
-                                         @Value("${app.pdnd.web-client.timeouts.read-timeout-handler}") int pdndReadTimeoutHandlerMillis) {
-        this.clientAssertionType = clientAssertionType;
-        this.grantType = grantType;
-
+                              @Value("${app.pdnd.web-client.timeouts.connect-timeout-millis}") int pdndConnectTimeOutMillis,
+                              @Value("${app.pdnd.web-client.timeouts.response-timeout-millis}") int pdndResponseTimeOutMillis,
+                              @Value("${app.pdnd.web-client.timeouts.read-timeout-handler}") int pdndReadTimeoutHandlerMillis) {
         HttpClient httpClient = HttpClient.create()
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, pdndConnectTimeOutMillis)
                 .responseTimeout(Duration.ofMillis(pdndResponseTimeOutMillis))
@@ -50,12 +44,13 @@ public class PdndCreateTokenRestClientImpl implements PdndCreateTokenRestClient 
     }
 
     @Override
-    public Mono<ClientCredentialsResponseDTO> createToken(ApiKeysPDND pdndTokens) {
+    public Mono<ClientCredentialsResponseDTO>
+    createToken(String clientId, String clientAssertion) {
         return authApi.createToken(
-                pdndTokens.getApiKeyClientAssertion(),
-                clientAssertionType,
-                grantType,
-                pdndTokens.getApiKeyClientId()
+                clientAssertion,
+                CLIENT_ASSERTION_TYPE,
+                GRANT_TYPE,
+                clientId
         );
     }
 }

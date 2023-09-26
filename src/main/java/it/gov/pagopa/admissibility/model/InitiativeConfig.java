@@ -28,6 +28,7 @@ public class InitiativeConfig {
     private LocalDate endDate;
     private String apiKeyClientId;
     private String apiKeyClientAssertion;
+    // TODO AnprConfig
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;

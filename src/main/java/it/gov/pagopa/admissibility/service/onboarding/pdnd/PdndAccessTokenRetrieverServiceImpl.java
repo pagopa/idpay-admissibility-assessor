@@ -2,9 +2,9 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
-import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -14,12 +14,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class PdndAccessTokenRetrieverServiceImpl implements PdndAccessTokenRetrieverService {
 
-    private final PdndCreateTokenRestClient pdndCreateTokenRestClient;
+    private final PdndRestClient pdndRestClient;
     private final Cache<ApiKeysPDND,String> accessTokenCache;
 
-    public PdndAccessTokenRetrieverServiceImpl(PdndCreateTokenRestClient pdndCreateTokenRestClient,
+    public PdndAccessTokenRetrieverServiceImpl(PdndRestClient pdndRestClient,
                                                @Value("${app.pdnd.time-expire-token}") int expireIn) {
-        this.pdndCreateTokenRestClient = pdndCreateTokenRestClient;
+        this.pdndRestClient = pdndRestClient;
         if (expireIn!=0){
             accessTokenCache = CacheBuilder.newBuilder().expireAfterWrite(expireIn, TimeUnit.SECONDS).build();
         }
@@ -44,7 +44,7 @@ public class PdndAccessTokenRetrieverServiceImpl implements PdndAccessTokenRetri
     }
 
     private Mono<String> retrieveAccessToken(ApiKeysPDND apiKeysPDND){
-        return pdndCreateTokenRestClient.createToken(apiKeysPDND)
+        return pdndRestClient.createToken(apiKeysPDND)
                 .map(ClientCredentialsResponseDTO::getAccessToken);
     }
 }

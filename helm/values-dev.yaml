@@ -38,8 +38,11 @@ microservice-chart:
     JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar -agentlib:jdwp=transport=dt_socket,server=y,address=8001,suspend=n -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=3002 -Dcom.sun.management.jmxremote.rmi.port=3003 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
-    #Now we are using MOCK on APIM for ANPR and ISEE
-    ANPR_C001_RESIDENCE_ASSESSMENT_ACCESS_TOKEN_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
+    #TODO to mock?
+    PDND_BASE_URL: https://auth.uat.interop.pagopa.it
+    PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
+    ANPR_ENV: dev
+    ANPR_AUTH_USERID: pagopa-idpay
+    #Now we are using MOCK on APIM for ANPR and INPS
+    ANPR_C001_CONSULTAZIONE_ANPR_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
     INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps
-    #TODO Temporary External MOCK for PDND
-    PDND_ACCESS_TOKEN_BASE_URL: https://uat.gateway.test.pdnd-interop.pagopa.it/authorization-server

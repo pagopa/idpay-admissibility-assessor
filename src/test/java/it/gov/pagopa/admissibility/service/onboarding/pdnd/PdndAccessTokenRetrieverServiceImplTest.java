@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import it.gov.pagopa.admissibility.connector.rest.PdndCreateTokenRestClient;
+import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.common.utils.TestUtils;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 class PdndAccessTokenRetrieverServiceImplTest {
 
     @Mock
-    private PdndCreateTokenRestClient pdndCreateTokenRestClientMock;
+    private PdndRestClient pdndRestClientMock;
 
     private PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService;
 
@@ -33,7 +33,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndCreateTokenRestClientMock, expireInSeconds);
+        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndRestClientMock, expireInSeconds);
 
         ApiKeysPDND apiKeysPDND = ApiKeysPDND.builder()
                 .apiKeyClientId("API_KEY_CLIENT_ID")
@@ -70,7 +70,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
         Cache<String, String> cacheChange = retrieveCache();
         //noinspection SuspiciousMethodCalls
         Assertions.assertNull(cacheChange.getIfPresent(apiKeysPDND_given));
-        Mockito.verify(pdndCreateTokenRestClientMock, Mockito.never()).createToken(apiKeysPDND_given);
+        Mockito.verify(pdndRestClientMock, Mockito.never()).createToken(apiKeysPDND_given);
     }
 
     @Test
@@ -84,7 +84,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
 
         ClientCredentialsResponseDTO clientCredentialsResponseDTOMock = new ClientCredentialsResponseDTO();
         clientCredentialsResponseDTOMock.setAccessToken(expectedToken);
-        Mockito.when(pdndCreateTokenRestClientMock.createToken(apiKeysPDND_NEW))
+        Mockito.when(pdndRestClientMock.createToken(apiKeysPDND_NEW))
                 .thenReturn(Mono.just(clientCredentialsResponseDTOMock));
 
         // When
@@ -95,7 +95,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
 
         Assertions.assertEquals("NEW_ACCESS_TOKEN", result);
 
-        Mockito.verify(pdndCreateTokenRestClientMock).createToken(apiKeysPDND_NEW);
+        Mockito.verify(pdndRestClientMock).createToken(apiKeysPDND_NEW);
 
         Cache<String, String> cacheChange = retrieveCache();
         //noinspection SuspiciousMethodCalls
@@ -107,7 +107,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
     @Test
     void getTokenPresentWithoutCache() {
         // Given
-        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndCreateTokenRestClientMock, 0);
+        pdndAccessTokenRetrieverService = new PdndAccessTokenRetrieverServiceImpl(pdndRestClientMock, 0);
         ApiKeysPDND apiKeysPDND1 = ApiKeysPDND.builder()
                 .apiKeyClientId("API_KEY_CLIENT_ID_1")
                 .apiKeyClientAssertion("API_KEY_CLIENT_ASSERTION_1")
@@ -116,7 +116,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
         String expectedToken = "NEW_ACCESS_TOKEN";
         ClientCredentialsResponseDTO clientCredentialsResponseDTOMock = new ClientCredentialsResponseDTO();
         clientCredentialsResponseDTOMock.setAccessToken(expectedToken);
-        Mockito.when(pdndCreateTokenRestClientMock.createToken(apiKeysPDND1))
+        Mockito.when(pdndRestClientMock.createToken(apiKeysPDND1))
                 .thenReturn(Mono.just(clientCredentialsResponseDTOMock));
 
         // When
@@ -132,7 +132,7 @@ class PdndAccessTokenRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertEquals("NEW_ACCESS_TOKEN", result);
 
-        Mockito.verify(pdndCreateTokenRestClientMock).createToken(apiKeysPDND1);
+        Mockito.verify(pdndRestClientMock).createToken(apiKeysPDND1);
     }
 
     private Cache<String,String> retrieveCache() {

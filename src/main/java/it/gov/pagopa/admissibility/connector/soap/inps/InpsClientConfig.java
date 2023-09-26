@@ -7,7 +7,7 @@ import it.gov.pagopa.admissibility.connector.soap.inps.utils.SoapLoggingHandler;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ISvcConsultazione;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.Identity;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.SvcConsultazione;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.crypto.utils.CertUtils;
 import jakarta.xml.ws.BindingProvider;
 import jakarta.xml.ws.handler.Handler;
 import lombok.Data;
@@ -73,8 +73,8 @@ public class InpsClientConfig {
     private void settingSSL() throws NoSuchAlgorithmException, CertificateException, IOException, KeyStoreException, UnrecoverableKeyException, KeyManagementException, InvalidKeySpecException {
         SSLContext sslContext = SSLContext.getInstance("TLS");
 
-        X509Certificate cert = Utils.getCertificate(certInps);
-        RSAPrivateKey pKey = Utils.getPrivateKey(keyInps);
+        X509Certificate cert = CertUtils.pemCert2Certificate(certInps);
+        RSAPrivateKey pKey = CertUtils.pemKey2PrivateKey(keyInps);
 
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(null);
