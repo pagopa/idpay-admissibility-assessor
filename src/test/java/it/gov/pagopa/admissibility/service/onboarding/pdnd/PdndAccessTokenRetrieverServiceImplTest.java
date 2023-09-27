@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
+import it.gov.pagopa.admissibility.connector.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.common.utils.TestUtils;

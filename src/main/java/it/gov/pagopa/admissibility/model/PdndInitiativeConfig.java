@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class PdndInitiativeConfig {
-    private final String clientId;
-    private final String kid;
-    private final String purposeId;
+    private String clientId;
+    private String kid;
+    private String purposeId;
 }

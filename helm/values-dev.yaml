@@ -44,5 +44,5 @@ microservice-chart:
     ANPR_ENV: dev
     ANPR_AUTH_USERID: pagopa-idpay
     #Now we are using MOCK on APIM for ANPR and INPS
-    ANPR_C001_CONSULTAZIONE_ANPR_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
+    ANPR_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
     INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps

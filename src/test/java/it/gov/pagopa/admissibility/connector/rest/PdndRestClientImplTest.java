@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.connector.rest;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.connector.rest.pdnd.PdndRestClient;
+import it.gov.pagopa.admissibility.connector.pdnd.PdndRestClient;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import org.junit.jupiter.api.Assertions;

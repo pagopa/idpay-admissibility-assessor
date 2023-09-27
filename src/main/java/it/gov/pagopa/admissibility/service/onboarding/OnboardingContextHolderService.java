@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import org.kie.api.KieBase;
 import reactor.core.publisher.Mono;
@@ -18,7 +17,4 @@ public interface OnboardingContextHolderService {
     void setInitiativeConfig(InitiativeConfig initiativeConfig);
     Mono<KieBase> refreshKieContainerCacheMiss();
 
-    void setPDNDapiKeys(InitiativeConfig initiativeConfig);
-
-    ApiKeysPDND getPDNDapiKeys(InitiativeConfig initiativeConfig);
 }

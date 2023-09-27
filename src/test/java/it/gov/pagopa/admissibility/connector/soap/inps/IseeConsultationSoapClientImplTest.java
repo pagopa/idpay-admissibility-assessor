@@ -5,7 +5,7 @@ import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicat
 import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverServiceImpl;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -31,7 +31,7 @@ class IseeConsultationSoapClientImplTest extends BaseIntegrationTest {
         Assertions.assertEquals(EsitoEnum.OK, result.getEsito());
         Assertions.assertEquals(0, result.getIdRichiesta());
 
-        TypeEsitoConsultazioneIndicatore indicatore = IseeDataRetrieverServiceImpl.readResultFromXmlString(new String(result.getXmlEsitoIndicatore(), StandardCharsets.UTF_8));
+        TypeEsitoConsultazioneIndicatore indicatore = InpsDataRetrieverServiceImpl.readResultFromXmlString(new String(result.getXmlEsitoIndicatore(), StandardCharsets.UTF_8));
         Assertions.assertNotNull(indicatore);
         Assertions.assertEquals(BigDecimal.valueOf(10_000), indicatore.getISEE());
     }

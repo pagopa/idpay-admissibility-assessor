@@ -1,23 +1,21 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.pdnd.services.rest.anpr.service.AnprDataRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.IseeDataRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndAccessTokenRetrieverService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
+import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.utils.CommonConstants;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
@@ -37,35 +35,32 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService {
+    public static final Mono<Optional<List<OnboardingRejectionReason>>> MONO_OPTIONAL_EMPTY_LIST = Mono.just(Optional.of(Collections.emptyList()));
+
     private final Long delayMinutes;
     private final boolean nextDay;
-    private final OnboardingContextHolderService onboardingContextHolderService;
 
-    private final PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService;
     private final UserFiscalCodeService userFiscalCodeService;
-    private final IseeDataRetrieverService iseeDataRetrieverService;
-    private final ResidenceDataRetrieverService residenceDataRetrieverService;
+    private final InpsDataRetrieverService inpsDataRetrieverService;
+    private final AnprDataRetrieverService anprDataRetrieverService;
     private final OnboardingRescheduleService onboardingRescheduleService;
-
+    private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
 
     public AuthoritiesDataRetrieverServiceImpl(
-                                               @Value("${app.onboarding-request.delay-message.delay-minutes}") Long delayMinutes,
-                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
+            @Value("${app.onboarding-request.delay-message.delay-minutes}") Long delayMinutes,
+            @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
 
-                                               OnboardingRescheduleService onboardingRescheduleService,
-                                               PdndAccessTokenRetrieverService pdndAccessTokenRetrieverService,
-                                               UserFiscalCodeService userFiscalCodeService,
-                                               IseeDataRetrieverService iseeDataRetrieverService,
-                                               ResidenceDataRetrieverService residenceDataRetrieverService,
-                                               OnboardingContextHolderService onboardingContextHolderService) {
+            OnboardingRescheduleService onboardingRescheduleService,
+            UserFiscalCodeService userFiscalCodeService,
+            InpsDataRetrieverService inpsDataRetrieverService,
+            AnprDataRetrieverService anprDataRetrieverService, PagoPaAnprPdndConfig pagoPaAnprPdndConfig) {
         this.onboardingRescheduleService = onboardingRescheduleService;
         this.delayMinutes = delayMinutes;
         this.nextDay = nextDay;
-        this.pdndAccessTokenRetrieverService = pdndAccessTokenRetrieverService;
         this.userFiscalCodeService = userFiscalCodeService;
-        this.iseeDataRetrieverService = iseeDataRetrieverService;
-        this.residenceDataRetrieverService = residenceDataRetrieverService;
-        this.onboardingContextHolderService = onboardingContextHolderService;
+        this.inpsDataRetrieverService = inpsDataRetrieverService;
+        this.anprDataRetrieverService = anprDataRetrieverService;
+        this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
     }
 
     @Override
@@ -91,54 +86,48 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         );
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
-            ApiKeysPDND pdndApiKeys = onboardingContextHolderService.getPDNDapiKeys(initiativeConfig);
-            return  pdndAccessTokenRetrieverService.getToken(pdndApiKeys) // TODO each PDND service will require a separate accessToken
-                    .zipWith(userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId()))
-                    .flatMap(t -> invokePdndServices(t.getT1(), onboardingRequest, t.getT2(), pdndServicesInvocation, message, pdndApiKeys.getAgidJwtTokenPayload()));
+            //PdndInitiativeConfig pdndInitiativeConfig = initiativeConfig.getPdndInitiativeConfig(); TODO it should be read from initiative
+            return  userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
+                    .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message, pagoPaAnprPdndConfig));
         }
 
         return Mono.just(onboardingRequest);
     }
 
-    private Mono<OnboardingDTO> invokePdndServices(String accessToken, OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, AgidJwtTokenPayload agidJwtTokenPayload) {
-        Mono<Optional<ConsultazioneIndicatoreResponseType>> inpsInvocation = pdndServicesInvocation.requireInpsIseeInvocation()
-                ? iseeDataRetrieverService.invoke(fiscalCode, pdndServicesInvocation.iseeTypes.get(0)) // TODO invoke all until obtained a result
-                : Mono.just(Optional.empty());
+    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, PdndInitiativeConfig pdndInitiativeConfig) {
+        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
+                ? inpsDataRetrieverService.invoke(fiscalCode, pdndServicesInvocation.iseeTypes.get(0), pdndServicesInvocation, onboardingRequest)
+                : MONO_OPTIONAL_EMPTY_LIST;
 
-        Mono<Optional<RispostaE002OKDTO>> anprInvocation = pdndServicesInvocation.requireAnprResidenceInvocation()
-                ? residenceDataRetrieverService.invoke(accessToken, fiscalCode, agidJwtTokenPayload)
-                : Mono.just(Optional.empty());
+        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
+                ? anprDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest)
+                : MONO_OPTIONAL_EMPTY_LIST;
 
         return inpsInvocation
                 .zipWith(anprInvocation)
                 // Handle reschedule of failed invocation, storing the successful if any
                 .mapNotNull(t -> {
-                    extractPdndResponses(
-                            onboardingRequest,
-                            pdndServicesInvocation,
-                            t.getT1().orElse(null),
-                            t.getT2().orElse(null));
 
-                    if ((!pdndServicesInvocation.requireInpsIseeInvocation() || t.getT1().isPresent())
+                    List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
+                            t.getT1().stream().flatMap(Collection::stream),
+                            t.getT2().stream().flatMap(Collection::stream)
+                    ).toList();
+
+                    if(!rejectionReasons.isEmpty()){
+                        throw new OnboardingException(rejectionReasons, "Cannot retrieve all required authorities data");
+                    }
+
+                    // not require INPS or it returned data
+                    if ((!pdndServicesInvocation.requireInpsInvocation() || t.getT1().isPresent())
                             &&
-                            (!pdndServicesInvocation.requireAnprResidenceInvocation() || t.getT2().isPresent())) {
+                            // not require ANPR or it returned data
+                            (!pdndServicesInvocation.requireAnprInvocation() || t.getT2().isPresent())) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
                         return null;
                     }
                 });
-    }
-
-    private void extractPdndResponses(OnboardingDTO onboardingRequest, PdndServicesInvocation pdndServicesInvocation, ConsultazioneIndicatoreResponseType inpsResponse, RispostaE002OKDTO anprResponse) {
-        List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
-                iseeDataRetrieverService.extract(inpsResponse, pdndServicesInvocation.getIsee, onboardingRequest).stream(),
-                residenceDataRetrieverService.extract(anprResponse, pdndServicesInvocation.getResidence, pdndServicesInvocation.getBirthDate, onboardingRequest).stream()
-        ).toList();
-
-        if(!rejectionReasons.isEmpty()){
-            throw new OnboardingException(rejectionReasons, "Cannot retrieve all required authorities data");
-        }
     }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {
@@ -158,7 +147,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
     }
 
     @AllArgsConstructor
-    private static class PdndServicesInvocation {
+    @Getter
+    public static class PdndServicesInvocation {
 
         boolean getIsee;
         List<IseeTypologyEnum> iseeTypes;
@@ -169,11 +159,11 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             return getIsee || getResidence || getBirthDate;
         }
 
-        boolean requireInpsIseeInvocation() {
+        boolean requireInpsInvocation() {
             return getIsee;
         }
 
-        boolean requireAnprResidenceInvocation() {
+        boolean requireAnprInvocation() {
             return getResidence || getBirthDate;
         }
     }

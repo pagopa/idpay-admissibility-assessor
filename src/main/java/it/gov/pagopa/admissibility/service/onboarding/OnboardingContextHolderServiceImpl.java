@@ -1,11 +1,8 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
@@ -43,8 +40,6 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     private final DroolsRuleRepository droolsRuleRepository;
     private final ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate;
     private final Map<String, InitiativeConfig> initiativeId2Config = new ConcurrentHashMap<>();
-    private final Map<String, ApiKeysPDND> apiKeysPDNDConcurrentMap = new ConcurrentHashMap<>();
-    private final AESTokenService aesTokenService;
 
     private final boolean isRedisCacheEnabled;
     private final boolean preLoadContainer;
@@ -61,7 +56,6 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
             DroolsRuleRepository droolsRuleRepository,
             ApplicationEventPublisher applicationEventPublisher,
             @Autowired(required = false) ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplate,
-            AESTokenService aesTokenService,
             @Value("${spring.redis.enabled}") boolean isRedisCacheEnabled,
             @Value("${app.beneficiary-rule.pre-load}") boolean preLoadContainer
     ) {
@@ -70,7 +64,6 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
         this.kieContainerBuilderService = kieContainerBuilderService;
         this.droolsRuleRepository = droolsRuleRepository;
         this.reactiveRedisTemplate = reactiveRedisTemplate;
-        this.aesTokenService = aesTokenService;
         this.isRedisCacheEnabled = isRedisCacheEnabled;
         this.preLoadContainer = preLoadContainer;
 
@@ -184,7 +177,6 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     @Override
     public void setInitiativeConfig(InitiativeConfig initiativeConfig) {
         initiativeId2Config.put(initiativeConfig.getInitiativeId(), initiativeConfig);
-        setPDNDapiKeys(initiativeConfig);
     }
 
     private Mono<InitiativeConfig> retrieveInitiativeConfig(String initiativeId) {
@@ -207,30 +199,4 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
                 : ReadinessState.REFUSING_TRAFFIC;
     }
 
-    //region PDND Api Keys holder
-    @Override
-    public void setPDNDapiKeys(InitiativeConfig initiativeConfig) {
-        if(initiativeConfig.getApiKeyClientId() != null && initiativeConfig.getApiKeyClientAssertion() != null) {
-            apiKeysPDNDConcurrentMap.put(
-                    initiativeConfig.getInitiativeId(),
-                    getApiKeysPDND(initiativeConfig)
-            );
-        }
-    }
-
-    @Override
-    public ApiKeysPDND getPDNDapiKeys(InitiativeConfig initiativeConfig) {
-        return apiKeysPDNDConcurrentMap.computeIfAbsent(initiativeConfig.getInitiativeId(), initiativeId -> getApiKeysPDND(initiativeConfig));
-    }
-
-    private ApiKeysPDND getApiKeysPDND(InitiativeConfig initiativeConfig) {
-        try {
-            return new ApiKeysPDND(aesTokenService.decrypt(initiativeConfig.getApiKeyClientId()),
-                    aesTokenService.decrypt(initiativeConfig.getApiKeyClientAssertion())
-            );
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("[ONBOARDING_REQUEST] Error retrieving fields for AgidJWTTokenPayload",e);
-        }
-    }
-    //endregion
 }
