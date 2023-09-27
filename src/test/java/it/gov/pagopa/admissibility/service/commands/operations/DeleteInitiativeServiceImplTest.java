@@ -28,6 +28,8 @@ class DeleteInitiativeServiceImplTest {
     @Mock private OnboardingContextHolderService onboardingContextHolderService;
 
     private DeleteInitiativeService deleteInitiativeService;
+    private final static String PAGE_SIZE = "100";
+
 
     @BeforeEach
     void setUp() {
@@ -35,15 +37,14 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
-                auditUtilitiesMock, onboardingContextHolderService);
+                auditUtilitiesMock, onboardingContextHolderService, PAGE_SIZE, "1000");
     }
 
     @Test
     void executeOK() {
         String initiativeId = "INITIATIVEID";
         String familyid = "FAMILYID";
-        int pageSize = 2;
-        long delay = 1;
+        int pageSize = Integer.parseInt(PAGE_SIZE);
 
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
@@ -67,7 +68,7 @@ class DeleteInitiativeServiceImplTest {
                 .thenReturn(Mono.empty());
 
 
-        String result = deleteInitiativeService.execute(initiativeId, pageSize, delay).block();
+        String result = deleteInitiativeService.execute(initiativeId).block();
 
         Assertions.assertNotNull(result);
 
@@ -81,13 +82,11 @@ class DeleteInitiativeServiceImplTest {
     @Test
     void executeError() {
         String initiativeId = "INITIATIVEID";
-        int pageSize = 2;
-        long delay = 1;
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenThrow(new MongoException("DUMMY_EXCEPTION"));
 
         try{
-            deleteInitiativeService.execute(initiativeId,pageSize, delay).block();
+            deleteInitiativeService.execute(initiativeId).block();
             Assertions.fail();
         }catch (Throwable t){
             Assertions.assertTrue(t instanceof  MongoException);

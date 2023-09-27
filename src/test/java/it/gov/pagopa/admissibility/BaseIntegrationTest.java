@@ -93,6 +93,11 @@ import org.springframework.test.context.support.TestPropertySourceUtils;
                 "app.pdv.retry.delay-millis=5000",
                 "app.pdv.retry.max-attempts=3",
                 //endregion
+
+                //region delete
+                "app.delete.paginationSize=100",
+                "app.delete.delayTime=1000"
+                //end region
         })
 @AutoConfigureDataMongo
 @AutoConfigureWebTestClient

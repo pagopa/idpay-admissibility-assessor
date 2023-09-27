@@ -68,8 +68,7 @@ public class CommandMediatorServiceImpl extends BaseKafkaConsumer<QueueCommandOp
     @Override
     protected Mono<String> execute(QueueCommandOperationDTO payload, Message<String> message, Map<String, Object> ctx) {
         if (CommandConstants.OPERATION_TYPE_DELETE_INITIATIVE.equals(payload.getOperationType())) {
-            return deleteInitiativeService.execute(payload.getEntityId(),Integer.parseInt(payload.getAdditionalParams().get("pagination")),
-                    Long.parseLong(payload.getAdditionalParams().get("delay")));
+            return deleteInitiativeService.execute(payload.getEntityId());
         }
         log.debug("[ADMISSIBILITY_COMMANDS] Invalid operation type {}", payload.getOperationType());
         return Mono.empty();

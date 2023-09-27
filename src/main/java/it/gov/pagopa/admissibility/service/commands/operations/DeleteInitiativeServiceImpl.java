@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesReposi
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -20,21 +21,25 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final AuditUtilities auditUtilities;
     private final OnboardingContextHolderService onboardingContextHolderService;
+    private final String pagination;
+    private final String delayTime;
 
-    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository, OnboardingFamiliesRepository onboardingFamiliesRepository, AuditUtilities auditUtilities, OnboardingContextHolderService onboardingContextHolderService) {
+    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository, OnboardingFamiliesRepository onboardingFamiliesRepository, AuditUtilities auditUtilities, OnboardingContextHolderService onboardingContextHolderService, @Value("${app.delete.paginationSize}") String pagination, @Value("${app.delete.delayTime}") String delayTime) {
         this.droolsRuleRepository = droolsRuleRepository;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.auditUtilities = auditUtilities;
         this.onboardingContextHolderService = onboardingContextHolderService;
+        this.pagination = pagination;
+        this.delayTime = delayTime;
     }
 
     @Override
-    public Mono<String> execute(String initiativeId, int pageSize, long delay) {
+    public Mono<String> execute(String initiativeId) {
         log.info("[DELETE_INITIATIVE] Starting handle delete initiative {}", initiativeId);
         return  deleteDroolsRule(initiativeId)
                 .then(deleteInitiativeCounters(initiativeId))
-                .then(deleteOnboardingFamilies(initiativeId, pageSize, delay))
+                .then(deleteOnboardingFamilies(initiativeId))
                 .then(Mono.just(initiativeId));
     }
 
@@ -56,7 +61,9 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
                 });
     }
 
-    private Mono<Void> deleteOnboardingFamilies(String initiativeId, int pageSize, long delay) {
+    private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
+        int pageSize = Integer.parseInt(pagination);
+        long delay = Long.parseLong(delayTime);
 
         return onboardingFamiliesRepository.findByInitiativeIdWithBatch(initiativeId, pageSize)
                 .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId())

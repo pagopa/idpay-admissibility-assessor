@@ -39,3 +39,5 @@ microservice-chart:
     JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar"
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
+    DELETE_PAGINATION_SIZE: "100"
+    DELETE_DELAY_TIME: "1000"
