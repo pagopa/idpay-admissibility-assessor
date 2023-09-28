@@ -28,7 +28,7 @@ class DeleteInitiativeServiceImplTest {
     @Mock private OnboardingContextHolderService onboardingContextHolderService;
 
     private DeleteInitiativeService deleteInitiativeService;
-    private final static String PAGE_SIZE = "100";
+    private final static int PAGE_SIZE = 100;
 
 
     @BeforeEach
@@ -37,14 +37,13 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
-                auditUtilitiesMock, onboardingContextHolderService, PAGE_SIZE, "1000");
+                auditUtilitiesMock, onboardingContextHolderService, PAGE_SIZE, 1000L);
     }
 
     @Test
     void executeOK() {
         String initiativeId = "INITIATIVEID";
         String familyid = "FAMILYID";
-        int pageSize = Integer.parseInt(PAGE_SIZE);
 
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
@@ -61,7 +60,7 @@ class DeleteInitiativeServiceImplTest {
 
         OnboardingFamilies onboardingFamilies = OnboardingFamilies.builder(family, initiativeId).build();
 
-        Mockito.when(onboardingFamiliesRepositoryMock.findByInitiativeIdWithBatch(initiativeId,pageSize))
+        Mockito.when(onboardingFamiliesRepositoryMock.findByInitiativeIdWithBatch(initiativeId,PAGE_SIZE))
                 .thenReturn(Flux.just(onboardingFamilies));
 
         Mockito.when(onboardingFamiliesRepositoryMock.deleteById(onboardingFamilies.getId()))

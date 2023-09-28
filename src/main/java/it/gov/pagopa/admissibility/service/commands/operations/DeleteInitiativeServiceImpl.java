@@ -21,17 +21,23 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final AuditUtilities auditUtilities;
     private final OnboardingContextHolderService onboardingContextHolderService;
-    private final String pagination;
-    private final String delayTime;
+    private final int pageSize;
+    private final long delay;
 
-    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository, InitiativeCountersRepository initiativeCountersRepository, OnboardingFamiliesRepository onboardingFamiliesRepository, AuditUtilities auditUtilities, OnboardingContextHolderService onboardingContextHolderService, @Value("${app.delete.paginationSize}") String pagination, @Value("${app.delete.delayTime}") String delayTime) {
+    public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository,
+                                       InitiativeCountersRepository initiativeCountersRepository,
+                                       OnboardingFamiliesRepository onboardingFamiliesRepository,
+                                       AuditUtilities auditUtilities,
+                                       OnboardingContextHolderService onboardingContextHolderService,
+                                       @Value("${app.delete.paginationSize}") int pageSize,
+                                       @Value("${app.delete.delayTime}") long delay) {
         this.droolsRuleRepository = droolsRuleRepository;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.auditUtilities = auditUtilities;
         this.onboardingContextHolderService = onboardingContextHolderService;
-        this.pagination = pagination;
-        this.delayTime = delayTime;
+        this.pageSize = pageSize;
+        this.delay = delay;
     }
 
     @Override
@@ -62,8 +68,6 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
-        int pageSize = Integer.parseInt(pagination);
-        long delay = Long.parseLong(delayTime);
 
         return onboardingFamiliesRepository.findByInitiativeIdWithBatch(initiativeId, pageSize)
                 .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId())
