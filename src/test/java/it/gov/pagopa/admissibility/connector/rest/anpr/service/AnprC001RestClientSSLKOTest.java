@@ -33,7 +33,7 @@ class AnprC001RestClientSSLKOTest {
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectClass(AnprC001RestClientImplTest.class))
+                .selectors(selectClass(AnprC001RestClientImplIntegrationTest.class))
                 .build();
         Launcher launcher = LauncherFactory.create();
         launcher.discover(request);

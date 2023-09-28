@@ -348,7 +348,7 @@ app:
       auth-expiration-seconds: ${ANPR_AUTH_EXPIRATION_SECONDS:420} # 7 minutes
       agid-config:
         env: ${ANPR_ENV:uat}
-        user-id: ${ANPR_AUTH_USERID:uat}
+        user-id: ${ANPR_AUTH_USERID:pagopa-idpay}
       https-config:
         enabled: false
         cert: |-

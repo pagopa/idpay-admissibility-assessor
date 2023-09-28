@@ -52,7 +52,8 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             OnboardingRescheduleService onboardingRescheduleService,
             UserFiscalCodeService userFiscalCodeService,
             InpsDataRetrieverService inpsDataRetrieverService,
-            AnprDataRetrieverService anprDataRetrieverService, PagoPaAnprPdndConfig pagoPaAnprPdndConfig) {
+            AnprDataRetrieverService anprDataRetrieverService,
+            PagoPaAnprPdndConfig pagoPaAnprPdndConfig) {
         this.onboardingRescheduleService = onboardingRescheduleService;
         this.delayMinutes = delayMinutes;
         this.nextDay = nextDay;

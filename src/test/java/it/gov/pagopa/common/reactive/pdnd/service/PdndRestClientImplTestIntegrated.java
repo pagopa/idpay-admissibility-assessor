@@ -1,13 +1,11 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 
@@ -24,23 +22,15 @@ class PdndRestClientImplTestIntegrated extends BaseIntegrationTest {
     @Autowired
     private PdndRestClient pdndRestClient;
 
-    @Value("${app.pdnd.token-pdnd}")
-    private String apiKeyClientAssertion;
-
-    @Value("${app.pdnd.properties.clientId}")
-    private String apiKeyClientId;
-
     @Test
     void getToken(){
-        ApiKeysPDND apiKeysPDND_1 = ApiKeysPDND.builder()
-                .apiKeyClientId(apiKeyClientId)
-                .apiKeyClientAssertion(apiKeyClientAssertion)
-                .build();
+        String clientId="CLIENTID";
+        String clientAssertion="CLIENTASSERTION";
 
-        ClientCredentialsResponseDTO result = pdndRestClient.createToken(apiKeysPDND_1).block();
+        ClientCredentialsResponseDTO response = pdndRestClient.createToken(clientId, clientAssertion).block();
 
-        Assertions.assertNotNull(result);
-        TestUtils.checkNotNullFields(result);
+        Assertions.assertNotNull(response);
+        TestUtils.checkNotNullFields(response);
 
     }
 }

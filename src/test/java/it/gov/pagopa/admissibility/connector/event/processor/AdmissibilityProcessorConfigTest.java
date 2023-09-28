@@ -1,10 +1,9 @@
 package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
-import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
@@ -14,7 +13,6 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
@@ -22,6 +20,8 @@ import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
+import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -29,6 +29,7 @@ import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -45,6 +46,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -74,6 +76,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private UserFiscalCodeService userFiscalCodeServiceSpy;
     @SpyBean
     private PdndRestClient pdndRestClientSpy;
+
+    @Autowired
+    private PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
@@ -139,13 +144,11 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     private void checkPdndAccessTokenInvocations() {
         Map<String, Long> pdndClientIdsInvocations = Mockito.mockingDetails(pdndRestClientSpy).getInvocations().stream()
-                .map(i -> i.getArgument(0, ApiKeysPDND.class))
-                .collect(Collectors.groupingBy(ApiKeysPDND::getApiKeyClientId, Collectors.counting()));
+                .map(i -> i.getArgument(0, String.class))
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         Assertions.assertEquals(Set.of(
-                        PDND_CLIENT_ID_ISEE,
-                        PDND_CLIENT_ID_RESIDENCE,
-                        PDND_CLIENT_ID_BIRTHDATE
+                        pagoPaAnprPdndConfig.getClientId() // It should change based on initiative/authority
                 ),
                 pdndClientIdsInvocations.keySet());
 
