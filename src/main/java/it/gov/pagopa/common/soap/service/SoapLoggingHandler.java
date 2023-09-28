@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.connector.soap.inps.utils;
+package it.gov.pagopa.common.soap.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

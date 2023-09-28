@@ -10,7 +10,7 @@ import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestExc
 import it.gov.pagopa.common.reactive.pdnd.utils.AgidUtils;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.Utils;
-import it.gov.pagopa.common.web.utils.SslUtils;
+import it.gov.pagopa.common.http.utils.NettySslUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -47,12 +47,12 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
 
     private static void configureHttps(HttpClient httpClient, BasePdndServiceProviderConfig.HttpsConfig httpsConfig) {
         if (httpsConfig.isEnabled()) {
-            httpClient.secure(t -> t.sslContext(SslUtils.buildSSLHttpClient(
+            httpClient.secure(t -> t.sslContext(NettySslUtils.buildSSLContext(
                     httpsConfig.getCert(),
                     httpsConfig.getKey(),
                     httpsConfig.isMutualAuthEnabled() ?
                             httpsConfig.getTrustCertificatesCollection()
-                            : SslUtils.TRUST_ALL)));
+                            : NettySslUtils.TRUST_ALL)));
         }
     }
 

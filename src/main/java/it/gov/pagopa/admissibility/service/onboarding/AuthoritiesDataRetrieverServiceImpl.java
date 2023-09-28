@@ -1,7 +1,9 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
@@ -9,13 +11,11 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
-import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.common.utils.CommonConstants;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService {
-    public static final Mono<Optional<List<OnboardingRejectionReason>>> MONO_OPTIONAL_EMPTY_LIST = Mono.just(Optional.of(Collections.emptyList()));
 
     private final Long delayMinutes;
     private final boolean nextDay;
@@ -78,12 +77,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     .toList();
         }
 
-        PdndServicesInvocation pdndServicesInvocation = new PdndServicesInvocation(
-                onboardingRequest.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE),
-                iseeTypes,
-                onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE),
-                onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)
-        );
+        PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes);
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
             //PdndInitiativeConfig pdndInitiativeConfig = initiativeConfig.getPdndInitiativeConfig(); TODO it should be read from initiative
@@ -94,14 +88,22 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         return Mono.just(onboardingRequest);
     }
 
-    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, PdndInitiativeConfig pdndInitiativeConfig) {
-        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation = pdndServicesInvocation.requireInpsInvocation()
-                ? inpsDataRetrieverService.invoke(fiscalCode, pdndServicesInvocation.iseeTypes.get(0), pdndServicesInvocation, onboardingRequest)
-                : MONO_OPTIONAL_EMPTY_LIST;
+    @NonNull
+    private PdndServicesInvocation configurePdndServicesInvocation(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, List<IseeTypologyEnum> iseeTypes) {
+        return new PdndServicesInvocation(
+                onboardingRequest.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE),
+                iseeTypes,
+                onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)
+        );
+    }
 
-        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocation = pdndServicesInvocation.requireAnprInvocation()
-                ? anprDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest)
-                : MONO_OPTIONAL_EMPTY_LIST;
+    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, PdndInitiativeConfig pdndInitiativeConfig) {
+        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
+                inpsDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
+
+        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocation =
+                anprDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
 
         return inpsInvocation
                 .zipWith(anprInvocation)
@@ -118,10 +120,10 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     }
 
                     // not require INPS or it returned data
-                    if ((!pdndServicesInvocation.requireInpsInvocation() || t.getT1().isPresent())
+                    if (t.getT1().isEmpty()
                             &&
                             // not require ANPR or it returned data
-                            (!pdndServicesInvocation.requireAnprInvocation() || t.getT2().isPresent())) {
+                            t.getT2().isEmpty()) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
@@ -146,25 +148,4 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
     }
 
-    @AllArgsConstructor
-    @Getter
-    public static class PdndServicesInvocation {
-
-        boolean getIsee;
-        List<IseeTypologyEnum> iseeTypes;
-        boolean getResidence;
-        boolean getBirthDate;
-
-        boolean requirePdndInvocation() {
-            return getIsee || getResidence || getBirthDate;
-        }
-
-        boolean requireInpsInvocation() {
-            return getIsee;
-        }
-
-        boolean requireAnprInvocation() {
-            return getResidence || getBirthDate;
-        }
-    }
 }

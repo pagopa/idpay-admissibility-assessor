@@ -43,6 +43,6 @@ microservice-chart:
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
     ANPR_ENV: uat
     ANPR_AUTH_USERID: pagopa-idpay
-    ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND/C001-servizioNotifica/v1/anpr-service-e002
+    ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
     #TODO Now we are using MOCK on APIM for ISEE
     INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps

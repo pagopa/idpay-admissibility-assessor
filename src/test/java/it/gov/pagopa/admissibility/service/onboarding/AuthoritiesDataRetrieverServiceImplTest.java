@@ -18,7 +18,7 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.ResidenceDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;

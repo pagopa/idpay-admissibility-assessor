@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.connector.soap.inps.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;

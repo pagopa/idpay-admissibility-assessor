@@ -1,15 +1,15 @@
-package it.gov.pagopa.admissibility.connector.soap.inps;
+package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
+import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.*;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.common.reactive.soap.utils.SoapUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
-
-import static it.gov.pagopa.admissibility.connector.soap.inps.ReactorAsyncHandler.into;
 
 @Service
 @Slf4j
@@ -32,6 +32,7 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
     @Override
     public Mono<ConsultazioneIndicatoreResponseType> getIsee(String fiscalCode, IseeTypologyEnum iseeType) {
+        // TODO why pdnd's accessToken is not used?
         return callService(fiscalCode, iseeType)
                 .flatMap(response -> {
                     ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
@@ -50,9 +51,10 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
     }
 
-    public Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode, IseeTypologyEnum iseeType) {
-        return Mono.create(
-                sink -> portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode, iseeType), into(sink))); //TODO confirm operation to call
+    private Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode, IseeTypologyEnum iseeType) {
+        //TODO confirm operation to call
+        return SoapUtils.soapInvoke2Mono(asyncHandler ->
+                portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode, iseeType), asyncHandler));
     }
 
     private ConsultazioneIndicatoreRequestType getRequest(String fiscalCode, IseeTypologyEnum iseeType) {

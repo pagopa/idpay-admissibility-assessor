@@ -1,11 +1,12 @@
 package it.gov.pagopa.admissibility.connector.soap.inps;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverServiceImpl;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverServiceImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.SpyBean;

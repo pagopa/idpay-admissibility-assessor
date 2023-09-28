@@ -1,6 +1,8 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
-import it.gov.pagopa.admissibility.connector.soap.inps.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverServiceImpl;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
