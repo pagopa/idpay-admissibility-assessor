@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -30,5 +31,11 @@ public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRe
                         .set(OnboardingFamilies.Fields.onboardingRejectionReasons, resultedOnboardingRejectionReasons),
                 OnboardingFamilies.class
         );
+    }
+
+    @Override
+    public Flux<OnboardingFamilies> findByInitiativeIdWithBatch(String initiativeId, int batchSize) {
+        Query query = Query.query(Criteria.where(OnboardingFamilies.Fields.initiativeId).is(initiativeId)).cursorBatchSize(batchSize);
+        return mongoTemplate.find(query, OnboardingFamilies.class);
     }
 }

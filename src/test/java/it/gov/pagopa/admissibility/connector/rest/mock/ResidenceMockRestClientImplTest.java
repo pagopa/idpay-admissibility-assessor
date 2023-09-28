@@ -10,6 +10,8 @@ import reactor.core.Exceptions;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.rest.mock.ResidenceMockRestClientImpl=WARN",
+        "app.idpay-mock.retry.max-attempts=1",
+        "app.idpay-mock.retry.delay-millis=100"
 })
 class ResidenceMockRestClientImplTest extends BaseIntegrationTest {
 

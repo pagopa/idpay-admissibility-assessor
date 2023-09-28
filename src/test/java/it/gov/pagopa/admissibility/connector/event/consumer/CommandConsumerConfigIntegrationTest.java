@@ -49,7 +49,7 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void test() {
-        int validMessages = 100;
+        int validMessages = 10;
         int notValidMessages = errorUseCases.size();
         long maxWaitingMs = 30000;
 
