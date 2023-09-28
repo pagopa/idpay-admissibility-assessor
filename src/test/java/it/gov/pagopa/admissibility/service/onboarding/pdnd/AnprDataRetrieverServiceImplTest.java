@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
-import it.gov.pagopa.admissibility.connector.pdnd.services.rest.anpr.service.AnprC001RestClient;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClient;
 import it.gov.pagopa.admissibility.connector.rest.anpr.exception.AnprDailyRequestLimitException;
 import it.gov.pagopa.admissibility.dto.in_memory.AgidJwtTokenPayload;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;

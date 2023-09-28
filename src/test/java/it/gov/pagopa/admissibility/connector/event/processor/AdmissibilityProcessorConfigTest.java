@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.connector.pdnd.PdndRestClient;
+import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.in_memory.ApiKeysPDND;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
@@ -14,7 +14,7 @@ import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;

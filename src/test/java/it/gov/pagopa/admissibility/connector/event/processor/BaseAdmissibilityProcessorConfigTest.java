@@ -40,8 +40,7 @@ import reactor.core.publisher.Mono;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
-        "logging.level.it.gov.pagopa.admissibility.rest.UserFiscalCodeRestClientImpl=WARN",
-        "logging.level.it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClientImpl=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
 

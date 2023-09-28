@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
-import it.gov.pagopa.admissibility.connector.pdnd.services.rest.anpr.service.AnprDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
@@ -9,7 +9,7 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
-import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;

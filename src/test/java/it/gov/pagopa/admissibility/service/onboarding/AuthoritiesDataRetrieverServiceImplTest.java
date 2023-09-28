@@ -16,7 +16,7 @@ import it.gov.pagopa.admissibility.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.service.UserFiscalCodeService;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.PdndInvocationsTestUtils;
