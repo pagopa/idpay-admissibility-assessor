@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
@@ -106,16 +107,16 @@ public class AgidUtils {
                                 RegisteredClaims.ISSUED_AT, nowSeconds,
                                 RegisteredClaims.EXPIRES_AT, expireSeconds,
                                 RegisteredClaims.JWT_ID, UUID.randomUUID().toString(),
-                        "signed_headers", Map.of(
-                                        "digest", digest,
-                                        CONTENT_ENCODING_LOWERCASE, StandardCharsets.UTF_8.name(),
-                                        CONTENT_TYPE_LOWERCASE, MediaType.APPLICATION_JSON_VALUE
+                        "signed_headers", List.of(
+                                        Map.of("digest", digest),
+                                        Map.of(CONTENT_ENCODING_LOWERCASE, StandardCharsets.UTF_8.name()),
+                                        Map.of(CONTENT_TYPE_LOWERCASE, MediaType.APPLICATION_JSON_VALUE)
                                 )
                         ),
                         jwtSignAlgorithm));
     }
 
     public static String buildDigest(String value) {
-        return "SHA-256" + CryptoUtils.sha256Base64(value);
+        return "SHA-256=" + CryptoUtils.sha256Base64(value);
     }
 }

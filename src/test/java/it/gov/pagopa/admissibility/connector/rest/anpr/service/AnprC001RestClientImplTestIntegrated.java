@@ -44,14 +44,14 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
         Assertions.assertNotNull(result);
         Assertions.assertNotNull(result.getIdOperazioneANPR());
 
-        Assertions.assertEquals("SOGGETTO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCognome());
-        Assertions.assertEquals("SETTIMO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getNome());
+        Assertions.assertEquals("SOGGETTO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getNome());
+        Assertions.assertEquals("SETTIMO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCognome());
 
         Assertions.assertEquals("1990-01-01", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getDataNascita());
 
         Assertions.assertEquals("41026", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getCap());
         Assertions.assertEquals("036030", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getCodiceIstat());
-        Assertions.assertEquals("AVULLO NEL FRIGNANO", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getNomeComune());
+        Assertions.assertEquals("PAVULLO NEL FRIGNANO", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getNomeComune());
         Assertions.assertEquals("MO", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getSiglaProvinciaIstat());
     }
 }

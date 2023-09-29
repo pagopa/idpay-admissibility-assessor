@@ -1,8 +1,8 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.ApiClient;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.api.AuthApi;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
+import it.gov.pagopa.common.pdnd.generated.ApiClient;
+import it.gov.pagopa.common.pdnd.generated.api.AuthApi;
+import it.gov.pagopa.common.pdnd.generated.dto.ClientCredentialsResponseDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;

@@ -14,7 +14,7 @@ class AnprC001RestClientSSLKOTest {
 
     @BeforeAll
     static void setUp() {
-        BaseIntegrationTest.initServerWiremockBeforeAll(true, false);
+        BaseIntegrationTest.configureServerWiremockBeforeAll(true, false);
     }
 
     @Test

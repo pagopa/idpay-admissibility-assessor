@@ -34,7 +34,7 @@ public class JwtUtils {
 
     private static Map<String, Object> createHeaderMap(String kid) {
         return Map.of(
-                HeaderParams.TYPE, JOSEObjectType.JWT,
+                HeaderParams.TYPE, JOSEObjectType.JWT.getType(),
                 HeaderParams.ALGORITHM, JWSAlgorithm.ES256,
                 HeaderParams.KEY_ID, kid
         );

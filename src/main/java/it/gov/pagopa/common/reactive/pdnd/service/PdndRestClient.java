@@ -1,6 +1,6 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto.ClientCredentialsResponseDTO;
+import it.gov.pagopa.common.pdnd.generated.dto.ClientCredentialsResponseDTO;
 import reactor.core.publisher.Mono;
 
 public interface PdndRestClient {

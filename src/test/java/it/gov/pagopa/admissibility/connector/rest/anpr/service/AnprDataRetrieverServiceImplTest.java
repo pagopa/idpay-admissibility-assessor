@@ -6,7 +6,10 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiSoggettiEnteDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoIndirizzoDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoListaSoggettiDTO;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -68,7 +71,7 @@ class AnprDataRetrieverServiceImplTest {
 
     @AfterEach
     void checkNotMoreInvocation(){
-        Mockito.verifyNoMoreInteractions();
+        Mockito.verifyNoMoreInteractions(anprC001RestClientMock, criteriaCodeServiceMock);
     }
 
     @Test
@@ -134,38 +137,50 @@ class AnprDataRetrieverServiceImplTest {
 
     @Test
     void testInvoke_noResponse() {
-        anprAnswer=null;
-        testExtractWhenUnexpectedResponse();
+        // Given
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.empty());
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+
+        // Then
+        Assertions.assertNull(result);
     }
 
     @Test
     void testInvoke_noSubject() {
         anprAnswer.setListaSoggetti(null);
-        testExtractWhenUnexpectedResponse();
+        testExtractWhenUnexpectedResponse(0);
 
         TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
         anprAnswer.setListaSoggetti(listaSoggetti);
-        testExtractWhenUnexpectedResponse();
+        testExtractWhenUnexpectedResponse(1);
 
         listaSoggetti.setDatiSoggetto(Collections.emptyList());
-        testExtractWhenUnexpectedResponse();
+        testExtractWhenUnexpectedResponse(2);
     }
 
-    private void testExtractWhenUnexpectedResponse() {
+    private void testExtractWhenUnexpectedResponse(int previousCall) {
         // Given
         OnboardingDTO onboardingRequest = new OnboardingDTO();
         Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
 
         // When
-        Mono<Optional<List<OnboardingRejectionReason>>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest);
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
 
         // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
         Assertions.assertEquals(List.of(
                 buildExpectedResidenceKoRejectionReason(),
                 buildExpectedBirthdateKoRejectionReason()
-        ), result);
+        ), result.get());
         Assertions.assertNull(onboardingRequest.getResidence());
         Assertions.assertNull(onboardingRequest.getBirthDate());
+
+        Mockito.verify(criteriaCodeServiceMock, Mockito.times(previousCall + 1)).getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_RESIDENCE);
+        Mockito.verify(criteriaCodeServiceMock, Mockito.times(previousCall + 1)).getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
     }
 
     private OnboardingRejectionReason buildExpectedResidenceKoRejectionReason() {

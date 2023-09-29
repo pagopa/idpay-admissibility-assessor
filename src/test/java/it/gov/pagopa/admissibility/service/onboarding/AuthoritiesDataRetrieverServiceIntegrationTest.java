@@ -37,7 +37,7 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     private Message<String> message;
 
     static {
-        BaseIntegrationTest.initServerWiremockBeforeAll(false, false);
+        BaseIntegrationTest.configureServerWiremockBeforeAll(false, false);
     }
 
     @BeforeEach

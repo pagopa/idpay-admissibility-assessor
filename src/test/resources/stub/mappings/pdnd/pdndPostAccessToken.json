@@ -2,7 +2,6 @@
   "request": {
     "method": "POST",
     "urlPathPattern": "/pdnd/token.oauth2",
-    // TODO: check queryParams
     "headers": {
       "Content-Type": {
         "contains": "application/x-www-form-urlencoded"

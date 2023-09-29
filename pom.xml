@@ -312,13 +312,10 @@
 							<configOptions>
 								<swaggerAnnotations>false</swaggerAnnotations>
 								<openApiNullable>false</openApiNullable>
-								<basePackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1</basePackage>
-								<modelPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.dto
-								</modelPackage>
-								<apiPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.api
-								</apiPackage>
-								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.client.v1.config
-								</configPackage>
+								<basePackage>it.gov.pagopa.common.pdnd.generated</basePackage>
+								<modelPackage>it.gov.pagopa.common.pdnd.generated.dto</modelPackage>
+								<apiPackage>it.gov.pagopa.common.pdnd.generated.api</apiPackage>
+								<configPackage>it.gov.pagopa.common.pdnd.generated.config</configPackage>
 								<dateLibrary>java17</dateLibrary>
 								<useSpringBoot3>true</useSpringBoot3>
 								<useJakartaEe>true</useJakartaEe>

@@ -10,6 +10,7 @@ import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.rest.utils.WireMockUtils;
 import it.gov.pagopa.common.stream.StreamsHealthIndicator;
+import it.gov.pagopa.common.utils.JUnitExtensionContextHolder;
 import it.gov.pagopa.common.utils.TestIntegrationUtils;
 import it.gov.pagopa.common.utils.TestUtils;
 import jakarta.annotation.PostConstruct;
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +46,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+@ExtendWith(JUnitExtensionContextHolder.class)
 @SpringBootTest
 @EnableAutoConfiguration
 @EmbeddedKafka(topics = {
@@ -152,8 +155,8 @@ public abstract class BaseIntegrationTest {
         String wiremockHttpBaseUrl = "UNKNOWN";
         String wiremockHttpsBaseUrl = "UNKNOWN";
         try {
-            wiremockHttpBaseUrl = serverWireMock.getRuntimeInfo().getHttpBaseUrl();
-            wiremockHttpsBaseUrl = serverWireMock.getRuntimeInfo().getHttpsBaseUrl();
+            wiremockHttpBaseUrl = serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl();
+            wiremockHttpsBaseUrl = serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl();
         } catch (Exception e) {
             System.out.println("Cannot read wiremock urls");
         }
@@ -204,28 +207,46 @@ public abstract class BaseIntegrationTest {
     }
 
     //region desc=Setting WireMock
-    public static boolean WIREMOCK_REQUEST_CLIENT_AUTH = true;
-    public static boolean USE_TRUSTORE_OK = true;
-    private static final String TRUSTSTORE_PATH = "src/test/resources/wiremockTrustStoreOK.p12";
+    private static boolean WIREMOCK_REQUEST_CLIENT_AUTH = true;
+    private static boolean USE_TRUSTORE_OK = true;
+    private static final String TRUSTSTORE_PATH = "src/test/resources/wiremockKeyStore.p12";
     private static final String TRUSTSTORE_KO_PATH = "src/test/resources/wiremockTrustStoreKO.p12";
     @RegisterExtension
-    static WireMockExtension serverWireMock = initServerWiremockBeforeAll(WIREMOCK_REQUEST_CLIENT_AUTH, USE_TRUSTORE_OK);
+    static WireMockExtension serverWireMockExtension = initServerWiremock();
 
-    public static WireMockExtension initServerWiremockBeforeAll(boolean needClientAuth, boolean useTrustoreOk){
+    public static void configureServerWiremockBeforeAll(boolean needClientAuth, boolean useTrustoreOk) {
         WIREMOCK_REQUEST_CLIENT_AUTH = needClientAuth;
         USE_TRUSTORE_OK = useTrustoreOk;
+        initServerWiremock();
+    }
 
-        return serverWireMock = WireMockUtils.initServerWiremock(
+    private static WireMockExtension initServerWiremock() {
+        WireMockExtension newWireMockConfig = WireMockUtils.initServerWiremock(
                 "src/test/resources/stub",
                 WIREMOCK_REQUEST_CLIENT_AUTH,
                 USE_TRUSTORE_OK ? TRUSTSTORE_PATH : TRUSTSTORE_KO_PATH,
                 "idpay");
+
+        if (serverWireMockExtension != null && JUnitExtensionContextHolder.extensionContext != null) {
+            serverWireMockExtension.shutdownServer();
+
+            try {
+                newWireMockConfig.beforeAll(JUnitExtensionContextHolder.extensionContext);
+            } catch (Exception e) {
+                throw new IllegalStateException("Cannot start WireMock JUnit Extension", e);
+            }
+        }
+
+        return serverWireMockExtension = newWireMockConfig;
     }
 
     @AfterAll
     static void restoreWireMockConfig() {
-        USE_TRUSTORE_OK = true;
-        WIREMOCK_REQUEST_CLIENT_AUTH = true;
+        if(!USE_TRUSTORE_OK || !WIREMOCK_REQUEST_CLIENT_AUTH) {
+            USE_TRUSTORE_OK = true;
+            WIREMOCK_REQUEST_CLIENT_AUTH = true;
+            initServerWiremock();
+        }
     }
 
     public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -236,13 +257,13 @@ public abstract class BaseIntegrationTest {
                     Pair.of("app.pdv.base-url", "pdv"),
                     Pair.of("app.pdnd.base-url", "pdnd"),
                     Pair.of("app.idpay-mock.base-url", "pdndMock") //TODO removeme once integrated real system
-            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl()));
 
             // setting wiremock HTTPS baseUrl
             Stream.of(
                     Pair.of("app.anpr.config.base-url", "anpr/"),
                     Pair.of("app.inps.iseeConsultation.base-url", "inps/isee")
-            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
+            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl()));
 
             System.out.printf("""
                             ************************
@@ -251,8 +272,8 @@ public abstract class BaseIntegrationTest {
                             https base url: %s
                             ************************
                             """,
-                    serverWireMock.getRuntimeInfo().getHttpBaseUrl(),
-                    serverWireMock.getRuntimeInfo().getHttpsBaseUrl());
+                    serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl(),
+                    serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl());
         }
 
         private static java.util.function.Consumer<Pair<String, String>> setWireMockBaseMockedServicePath(ConfigurableApplicationContext applicationContext, String serverWireMock) {

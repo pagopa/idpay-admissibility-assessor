@@ -4,14 +4,14 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
+import it.gov.pagopa.common.reactive.pdnd.config.BasePdndServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.config.BasePdndServiceProviderConfig;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
 import it.gov.pagopa.common.reactive.pdnd.dto.PdndAuthData;
 import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
-import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.utils.AgidUtils;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -76,8 +76,7 @@ public abstract class BasePdndService<R> {
                         }));
     }
 
-    //TODO test
-    public static <R> PdndServiceConfig<R> buildDefaultPdndServiceConfig(BasePdndServiceProviderConfig providerConfig, AnprC001ServiceConfig serviceConfig, Class<R> responseBodyClass) {
+    public static <R> PdndServiceConfig<R> buildDefaultPdndServiceConfig(BasePdndServiceProviderConfig providerConfig, BasePdndServiceConfig serviceConfig, Class<R> responseBodyClass) {
         PdndServiceConfig<R> out = new PdndServiceConfig<>();
 
         // provider config
