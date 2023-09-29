@@ -37,7 +37,7 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
             HttpClient httpClient) {
         super(pdndServiceConfig, objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient);
 
-        configureHttps(httpClient, pdndServiceConfig.getHttpsConfig());
+        httpClient = configureHttps(httpClient, pdndServiceConfig.getHttpsConfig());
 
         this.webClient = webClientBuilder.clone()
                 .baseUrl(pdndServiceConfig.getBaseUrl())
@@ -45,14 +45,18 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
                 .build();
     }
 
-    private static void configureHttps(HttpClient httpClient, BasePdndServiceProviderConfig.HttpsConfig httpsConfig) {
+    private static HttpClient configureHttps(HttpClient httpClient, BasePdndServiceProviderConfig.HttpsConfig httpsConfig) {
+        String trustCertCollectionString = httpsConfig.isMutualAuthEnabled() ?
+                httpsConfig.getTrustCertificatesCollection()
+                : NettySslUtils.TRUST_ALL;
+
         if (httpsConfig.isEnabled()) {
-            httpClient.secure(t -> t.sslContext(NettySslUtils.buildSSLContext(
+            return httpClient.secure(t -> t.sslContext(NettySslUtils.buildSSLContext(
                     httpsConfig.getCert(),
                     httpsConfig.getKey(),
-                    httpsConfig.isMutualAuthEnabled() ?
-                            httpsConfig.getTrustCertificatesCollection()
-                            : NettySslUtils.TRUST_ALL)));
+                    trustCertCollectionString)));
+        } else {
+            return httpClient.secure(t -> t.sslContext(NettySslUtils.buildSSLContext(trustCertCollectionString)));
         }
     }
 

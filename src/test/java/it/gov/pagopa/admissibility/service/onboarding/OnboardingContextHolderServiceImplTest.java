@@ -5,7 +5,6 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.service.AESTokenService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.common.utils.TestUtils;
@@ -42,7 +41,6 @@ class OnboardingContextHolderServiceImplTest {
     @Mock private DroolsRuleRepository droolsRuleRepositoryMock;
     @Mock private ApplicationEventPublisher applicationEventPublisherMock;
     @Mock(answer = Answers.RETURNS_DEEP_STUBS) private ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplateMock;
-    @Mock private AESTokenService aesTokenServiceMock;
     private OnboardingContextHolderService onboardingContextHolderService;
 
     private final KieBase expectedKieBase = new KieContainerBuilderServiceImpl(droolsRuleRepositoryMock).build(Flux.empty()).block();
@@ -129,8 +127,6 @@ class OnboardingContextHolderServiceImplTest {
     @ValueSource(booleans = {false, true})
     void testSetInitiativeConfig(boolean isRedisCacheEnabled){
         init(isRedisCacheEnabled);
-
-        Mockito.when(aesTokenServiceMock.decrypt(Mockito.anyString())).thenAnswer(i -> i.getArguments()[0]);
 
         String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()

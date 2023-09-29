@@ -121,10 +121,10 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     }
 
                     // not require INPS or it returned data
-                    if (t.getT1().isEmpty()
+                    if (t.getT1().isPresent()
                             &&
                             // not require ANPR or it returned data
-                            t.getT2().isEmpty()) {
+                            t.getT2().isPresent()) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);

@@ -31,7 +31,7 @@ public class JdkSslUtils {
         }
     }
 
-    private static KeyStore buildEmptyKeyStore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
+    public static KeyStore buildEmptyKeyStore() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException {
         KeyStore keyStore = KeyStore.getInstance("JKS");
         keyStore.load(null);
         return keyStore;

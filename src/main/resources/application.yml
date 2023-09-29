@@ -350,7 +350,7 @@ app:
         env: ${ANPR_ENV:uat}
         user-id: ${ANPR_AUTH_USERID:pagopa-idpay}
       https-config:
-        enabled: false
+        enabled: false #TODO move test cert
         cert: |-
           ${ANPR_CLIENT_SSL_CERT:-----BEGIN CERTIFICATE-----
           MIIDnzCCAoegAwIBAgIUJ8/0z+sR6Llr9FcIGoc5nvZQydgwDQYJKoZIhvcNAQEL
@@ -405,7 +405,7 @@ app:
           NLHn1k0IpmXFOiFa1Y1D6Bc=
           -----END PRIVATE KEY-----
           }
-    c001-consultazioneANPR:
+    c001-consultazione-anpr:
       config:
         audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1}
         httpMethod: POST

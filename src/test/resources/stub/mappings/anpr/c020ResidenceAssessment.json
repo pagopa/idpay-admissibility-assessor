@@ -1,7 +1,7 @@
 {
   "request": {
     "method": "POST",
-    "urlPathPattern": "/anpr/residence/anpr-service-e002",
+    "urlPathPattern": "/anpr/C001-servizioNotifica/v1/anpr-service-e002",
     "headers": {
       "Authorization": {
         "matches": "Bearer VALID_ACCESS_TOKEN_([0-9]?)+"

@@ -22,7 +22,7 @@ import java.util.Base64;
 public class InpsInvokeTestUtils {
 
     //region build responses
-    public static ConsultazioneIndicatoreResponseType buildInpsResponse(EsitoEnum outcome) throws JAXBException {
+    public static ConsultazioneIndicatoreResponseType buildInpsResponse(EsitoEnum outcome) {
         ConsultazioneIndicatoreResponseType response = new ConsultazioneIndicatoreResponseType();
         response.setEsito(outcome);
 
@@ -31,28 +31,32 @@ public class InpsInvokeTestUtils {
         return response;
     }
 
-    public static byte[] buildXmlResult() throws JAXBException {
+    public static byte[] buildXmlResult() {
         return buildXmlResult(BigDecimal.valueOf(10000));
     }
 
-    public static byte[] buildXmlResult(BigDecimal isee) throws JAXBException {
+    public static byte[] buildXmlResult(BigDecimal isee) {
         TypeEsitoConsultazioneIndicatore xmlResult = new TypeEsitoConsultazioneIndicatore();
         xmlResult.setISEE(isee);
 
         return toByteArray(xmlResult);
     }
 
-    public static byte[] toByteArray(TypeEsitoConsultazioneIndicatore inpsResult) throws JAXBException {
-        JAXBContext jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    public static byte[] toByteArray(TypeEsitoConsultazioneIndicatore inpsResult) {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
 
-        JAXBElement<TypeEsitoConsultazioneIndicatore> je = new ObjectFactory().createIndicatore(inpsResult);
-        StringWriter sw = new StringWriter();
+            JAXBElement<TypeEsitoConsultazioneIndicatore> je = new ObjectFactory().createIndicatore(inpsResult);
+            StringWriter sw = new StringWriter();
 
-        marshaller.marshal(je, sw);
+            marshaller.marshal(je, sw);
 
-        return sw.toString().getBytes(StandardCharsets.UTF_8);
+            return sw.toString().getBytes(StandardCharsets.UTF_8);
+        } catch (JAXBException e){
+            throw new IllegalStateException("Cannot create mocked INPS response", e);
+        }
     }
 
     public static byte[] encodeByteArrayInB64(byte[] input) {

@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "app.anpr.config")
+@ConfigurationProperties(prefix = "app.anpr.c001-consultazione-anpr.config")
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)

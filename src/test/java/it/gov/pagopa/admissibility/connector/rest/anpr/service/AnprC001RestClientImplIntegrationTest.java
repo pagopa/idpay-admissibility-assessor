@@ -19,7 +19,7 @@ import java.util.List;
         "logging.level.it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImpl=WARN",
 })
 @DirtiesContext
-class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
+public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
     public static final String FISCAL_CODE = "fiscalCode";
     public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(

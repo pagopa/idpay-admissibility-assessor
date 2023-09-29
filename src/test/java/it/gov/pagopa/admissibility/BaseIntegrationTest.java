@@ -6,22 +6,16 @@ import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.utils.RestTestUtils;
 import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
+import it.gov.pagopa.common.rest.utils.WireMockUtils;
 import it.gov.pagopa.common.stream.StreamsHealthIndicator;
 import it.gov.pagopa.common.utils.TestIntegrationUtils;
 import it.gov.pagopa.common.utils.TestUtils;
 import jakarta.annotation.PostConstruct;
-import java.util.List;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanRegistrationException;
-import javax.management.MalformedObjectNameException;
 import lombok.NonNull;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -41,6 +35,14 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.support.TestPropertySourceUtils;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanRegistrationException;
+import javax.management.MalformedObjectNameException;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 @SpringBootTest
 @EnableAutoConfiguration
@@ -147,12 +149,12 @@ public abstract class BaseIntegrationTest {
 
     @PostConstruct
     public void logEmbeddedServerConfig() {
-        String wiremockHttpBaseUrl="UNKNOWN";
-        String wiremockHttpsBaseUrl="UNKNOWN";
-        try{
+        String wiremockHttpBaseUrl = "UNKNOWN";
+        String wiremockHttpsBaseUrl = "UNKNOWN";
+        try {
             wiremockHttpBaseUrl = serverWireMock.getRuntimeInfo().getHttpBaseUrl();
             wiremockHttpsBaseUrl = serverWireMock.getRuntimeInfo().getHttpsBaseUrl();
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println("Cannot read wiremock urls");
         }
         System.out.printf("""
@@ -185,15 +187,15 @@ public abstract class BaseIntegrationTest {
         kafkaTestUtilitiesService.checkErrorsPublished(topicErrors, getErrorUseCaseIdPatternMatch(), expectedErrorMessagesNumber, maxWaitingMs, errorUseCases);
     }
 
-    protected void checkErrorMessageHeaders(String srcTopic,String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey) {
+    protected void checkErrorMessageHeaders(String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey) {
         kafkaTestUtilitiesService.checkErrorMessageHeaders(kafkaBootstrapServers, srcTopic, group, errorMessage, errorDescription, expectedPayload, expectedKey, this::normalizePayload);
     }
 
-    protected void checkErrorMessageHeaders(String server, String srcTopic,String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey) {
+    protected void checkErrorMessageHeaders(String server, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey) {
         kafkaTestUtilitiesService.checkErrorMessageHeaders(server, srcTopic, group, errorMessage, errorDescription, expectedPayload, expectedKey, this::normalizePayload);
     }
 
-    protected void checkErrorMessageHeaders(String srcServer, String srcTopic,String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey, boolean expectRetryHeader, boolean expectedAppNameHeader) {
+    protected void checkErrorMessageHeaders(String srcServer, String srcTopic, String group, ConsumerRecord<String, String> errorMessage, String errorDescription, String expectedPayload, String expectedKey, boolean expectRetryHeader, boolean expectedAppNameHeader) {
         kafkaTestUtilitiesService.checkErrorMessageHeaders(srcServer, srcTopic, group, errorMessage, errorDescription, expectedPayload, expectedKey, expectRetryHeader, expectedAppNameHeader, this::normalizePayload);
     }
 
@@ -202,13 +204,28 @@ public abstract class BaseIntegrationTest {
     }
 
     //region desc=Setting WireMock
+    public static boolean WIREMOCK_REQUEST_CLIENT_AUTH = true;
+    public static boolean USE_TRUSTORE_OK = true;
+    private static final String TRUSTSTORE_PATH = "src/test/resources/wiremockTrustStoreOK.p12";
+    private static final String TRUSTSTORE_KO_PATH = "src/test/resources/wiremockTrustStoreKO.p12";
     @RegisterExtension
-    static WireMockExtension serverWireMock = initServerWiremock();
+    static WireMockExtension serverWireMock = initServerWiremockBeforeAll(WIREMOCK_REQUEST_CLIENT_AUTH, USE_TRUSTORE_OK);
 
-    public static WireMockExtension initServerWiremock() {
-        return serverWireMock = WireMockExtension.newInstance()
-                .options(RestTestUtils.getWireMockConfiguration())
-                .build();
+    public static WireMockExtension initServerWiremockBeforeAll(boolean needClientAuth, boolean useTrustoreOk){
+        WIREMOCK_REQUEST_CLIENT_AUTH = needClientAuth;
+        USE_TRUSTORE_OK = useTrustoreOk;
+
+        return serverWireMock = WireMockUtils.initServerWiremock(
+                "src/test/resources/stub",
+                WIREMOCK_REQUEST_CLIENT_AUTH,
+                USE_TRUSTORE_OK ? TRUSTSTORE_PATH : TRUSTSTORE_KO_PATH,
+                "idpay");
+    }
+
+    @AfterAll
+    static void restoreWireMockConfig() {
+        USE_TRUSTORE_OK = true;
+        WIREMOCK_REQUEST_CLIENT_AUTH = true;
     }
 
     public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
@@ -216,15 +233,15 @@ public abstract class BaseIntegrationTest {
         public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
             // setting wiremock HTTP baseUrl
             Stream.of(
-                    Pair.of("app.pdv.base-url","pdv"),
-                    Pair.of("app.pdnd.base-url","pdnd"),
-                    Pair.of("app.idpay-mock.base-url","pdndMock") //TODO removeme once integrated real system
+                    Pair.of("app.pdv.base-url", "pdv"),
+                    Pair.of("app.pdnd.base-url", "pdnd"),
+                    Pair.of("app.idpay-mock.base-url", "pdndMock") //TODO removeme once integrated real system
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpBaseUrl()));
 
             // setting wiremock HTTPS baseUrl
             Stream.of(
-                    Pair.of("app.anpr.c001-consultazioneANPR.base-url","anpr/residence"),
-                            Pair.of("app.inps.iseeConsultation.base-url","inps/isee")
+                    Pair.of("app.anpr.config.base-url", "anpr/"),
+                    Pair.of("app.inps.iseeConsultation.base-url", "inps/isee")
             ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMock.getRuntimeInfo().getHttpsBaseUrl()));
 
             System.out.printf("""
@@ -251,12 +268,12 @@ public abstract class BaseIntegrationTest {
     /**
      * Due to a bug into concurrency handling of com.github.tomakehurst.wiremock.common.xml.Xml.read,
      * current com.github.tomakehurst.wiremock.matching.EqualToXmlPattern implementation require to pre-load stubs using such configuration
-    */
+     */
     @PostConstruct
-    void initWiremockEqualToXmlPattern(){
-        try{
+    void initWiremockEqualToXmlPattern() {
+        try {
             iseeConsultationSoapClient.getIsee("CF_OK", IseeTypologyEnum.ORDINARIO).block();
-        } catch (Exception e){
+        } catch (Exception e) {
             //Do Nothing
         }
     }

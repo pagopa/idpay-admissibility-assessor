@@ -1,0 +1,28 @@
+package it.gov.pagopa.common.rest.utils;
+
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+
+public class WireMockUtils {
+    private WireMockUtils(){}
+
+    public static WireMockExtension initServerWiremock(String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword) {
+        return WireMockExtension.newInstance()
+                .options(getWireMockConfiguration(stubsFolder, needClientAuth, trustorePath, trustorePassword))
+                .build();
+    }
+
+    private static WireMockConfiguration getWireMockConfiguration(String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword){
+        return wireMockConfig()
+                .dynamicPort()
+                .httpsPort(0)
+                .needClientAuth(needClientAuth)
+                .trustStorePath(trustorePath)
+                .trustStorePassword(trustorePassword)
+                .usingFilesUnderClasspath(stubsFolder)
+                .extensions(new ResponseTemplateTransformer.Builder().global(true).build());
+    }
+}

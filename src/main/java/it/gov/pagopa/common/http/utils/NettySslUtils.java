@@ -4,11 +4,16 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 
 public class NettySslUtils {
     private NettySslUtils(){}
@@ -28,8 +33,21 @@ public class NettySslUtils {
         }
     }
 
+    public static SslContext buildSSLContext(String trustCertCollectionString) {
+        try {
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(JdkSslUtils.buildEmptyKeyStore(), "".toCharArray());
+            SslContextBuilder sslContextBuilder = SslContextBuilder.forClient()
+                    .keyManager(keyManagerFactory);
+            return getSslContext(sslContextBuilder, trustCertCollectionString);
+        } catch (IOException | NoSuchAlgorithmException | KeyStoreException | CertificateException |
+                 UnrecoverableKeyException e) {
+            throw new IllegalStateException("Something went wrong creating Netty ssl context",e);
+        }
+    }
+
     private static SslContext getSslContext(SslContextBuilder sslContextBuilder, String trustCertCollectionString) throws SSLException {
-        if(TRUST_ALL.equals(trustCertCollectionString)){
+        if(!TRUST_ALL.equals(trustCertCollectionString)){
             try(InputStream trustCertCollectionInputStream = string2InputStream(trustCertCollectionString)){
                 return sslContextBuilder.trustManager(trustCertCollectionInputStream).build();
             } catch (IOException e) {
