@@ -10,6 +10,7 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.TestPropertySource;
 
 @TestPropertySource(properties = {
+        "logging.level.WireMock=ERROR",
         "logging.level.it.gov.pagopa.common.reactive.pdnd.service.PdndRestClientImpl=WARN",
         "app.pdnd.base-url=http://localhost:${wiremock.server.port}/pdnd",
 
@@ -18,7 +19,7 @@ import org.springframework.test.context.TestPropertySource;
         "app.web-client.read.handler.timeout=60000",
         "app.web-client.write.handler.timeout=60000"
 })
-@AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings")
+@AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdnd")
 @SpringBootTest(classes = {PdndRestClientImpl.class, WebClientConfig.class})
 class PdndRestClientImplIntegrationTest {
 
@@ -28,11 +29,11 @@ class PdndRestClientImplIntegrationTest {
     @Test
     void createTokenOk() {
         String clientId="CLIENTID";
-        String clientAssertion="CLIENTASSERTION";
+        String clientAssertion="CLIENT.ASSERT.ION";
 
         ClientCredentialsResponseDTO response = pdndRestClient.createToken(clientId, clientAssertion).block();
 
         Assertions.assertNotNull(response);
-        Assertions.assertEquals("VALID_ACCESS_TOKEN_1",response.getAccessToken());
+        Assertions.assertEquals("PDND_ACCESS_TOKEN",response.getAccessToken());
     }
 }
