@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.common.redis.config.EmbeddedRedisTestConfiguration;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -9,6 +8,7 @@ import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.common.redis.config.EmbeddedRedisTestConfiguration;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -164,8 +164,6 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
-                .apiKeyClientAssertion("PDND-KEY-CLIENT-ASSERTION")
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .build();

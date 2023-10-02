@@ -20,15 +20,5 @@ public class InitiativeBeneficiaryRuleDTO   {
     private List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria;
     @JsonProperty("automatedCriteria")
     private List<AutomatedCriteriaDTO> automatedCriteria;
-    /**
-     * PDND Key/Token Id
-     */
-    @JsonProperty("apiKeyClientId")
-    private String apiKeyClientId;
-    /**
-     * PDND Key/Token Assertion
-     */
-    @JsonProperty("apiKeyClientAssertion")
-    private String apiKeyClientAssertion;
 
 }

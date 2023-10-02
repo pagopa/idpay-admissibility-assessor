@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -135,12 +136,10 @@ class Initiative2InitiativeConfigMapperTest {
 
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                 .automatedCriteria(List.of(
-                        AutomatedCriteriaDTO.builder().code("CODE1").orderDirection(Sort.Direction.ASC).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE3").build()
+                        AutomatedCriteriaDTO.builder().code("CODE1").orderDirection(Sort.Direction.ASC).pdndConfig(new PdndInitiativeConfig("CLIENTID1", "KID1", "PURPOSEID1")).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).pdndConfig(new PdndInitiativeConfig("CLIENTID2", "KID2", "PURPOSEID2")).build(),
+                        AutomatedCriteriaDTO.builder().code("CODE3").pdndConfig(new PdndInitiativeConfig("CLIENTID3", "KID3", "PURPOSEID3")).build()
                 ))
-                .apiKeyClientId("API_KEY_CLIENT_ID")
-                .apiKeyClientAssertion("API_KEY_CLIENT_ASSERTION")
                 .build());
 
         return initiative2BuildDTO;
@@ -152,8 +151,6 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getInitiativeName(), result.getInitiativeName());
         Assertions.assertSame(initiative2BuildDTO.getOrganizationId(), result.getOrganizationId());
         Assertions.assertSame(initiative2BuildDTO.getOrganizationName(), result.getOrganizationName());
-        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientId(), result.getApiKeyClientId());
-        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getApiKeyClientAssertion(), result.getApiKeyClientAssertion());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getStartDate(), result.getStartDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());

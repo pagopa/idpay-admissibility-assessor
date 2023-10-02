@@ -9,10 +9,6 @@ import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderSer
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.utils.TestUtils;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,6 +20,11 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 class BeneficiaryRuleBuilderMediatorServiceTest {
 
@@ -57,8 +58,6 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                             .initiativeId(i.getInitiativeId())
                             .startDate(i.getGeneral().getStartDate())
                             .endDate(i.getGeneral().getEndDate())
-                            .apiKeyClientId(i.getBeneficiaryRule().getApiKeyClientId())
-                            .apiKeyClientAssertion(i.getBeneficiaryRule().getApiKeyClientAssertion())
                             .automatedCriteriaCodes(List.of("CODE"))
                             .initiativeBudget(i.getGeneral().getBudget())
                             .beneficiaryInitiativeBudget(i.getGeneral().getBeneficiaryBudget())

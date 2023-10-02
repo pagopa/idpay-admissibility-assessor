@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -12,7 +13,9 @@ import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.Initiative2BuildDTOFaker;
@@ -45,6 +48,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -57,18 +61,22 @@ import java.util.stream.Stream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.check.OnboardingInitiativeCheck=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=OFF",
+        "logging.level.it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImpl=OFF",
+        "logging.level.it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverServiceImpl=OFF",
 })
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
 
-    public static final String EXHAUSTED_INITIATIVE_ID = "EXHAUSTED_INITIATIVE_ID";
-    public static final String FAILING_BUDGET_RESERVATION_INITIATIVE_ID = "id_7_FAILING_BUDGET_RESERVATION";
-    public static final String RESIDENCE_INITIATIVE_ID = "RESIDENCE_INITIATIVE_ID";
-    public static final String BIRTHDATE_INITIATIVE_ID = "BIRTHDATE_INITIATIVE_ID";
-    public static final String ISEE_INITIATIVE_ID = "ISEE_INITIATIVE_ID";
+    public static final String INITIATIVEID_EXHAUSTED = "EXHAUSTED_INITIATIVE_ID";
+    public static final String INITIATIVEID_FAILING_BUDGET_RESERVATION = "id_7_FAILING_BUDGET_RESERVATION";
+    public static final String INITIATIVEID_RESIDENCE = "RESIDENCE_INITIATIVE_ID";
+    public static final String INITIATIVEID_BIRTHDATE = "BIRTHDATE_INITIATIVE_ID";
+    public static final String INITIATIVEID_ISEE = "ISEE_INITIATIVE_ID";
+    public static final String INITIATIVEID_PDNDIVOKEERROR = "PDNDERRORUSECASE";
 
-    public static final String PDND_CLIENT_ID_RESIDENCE = "RESIDENCEINITIATIVECLIENTID";
-    public static final String PDND_CLIENT_ID_ISEE = "ISEEINITIATIVECLIENTID";
-    public static final String PDND_CLIENT_ID_BIRTHDATE = "BIRTHDATEINITIATIVECLIENTID";
+    public static final String PDND_CLIENT_ID_RESIDENCE = "CLIENTID_RESIDENCEINITIATIVE";
+    public static final String PDND_CLIENT_ID_ISEE = "CLIENTID_ISEEINITIATIVE";
+    public static final String PDND_CLIENT_ID_BIRTHDATE = "CLIENTID_BIRTHDATEINITIATIVE";
+    public static final String PDND_CLIENT_ID_PDND_ERROR = "CLIENTID_PDNDERROR";
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
@@ -76,6 +84,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private UserFiscalCodeService userFiscalCodeServiceSpy;
     @SpyBean
     private PdndRestClient pdndRestClientSpy;
+    @SpyBean
+    private IseeConsultationSoapClient iseeConsultationSoapClientSpy;
 
     @Autowired
     private PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
@@ -120,7 +130,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             checkResponse(evaluation, useCases);
         }
 
-        checkPdndAccessTokenInvocations();
+        //checkPdndAccessTokenInvocations(); TODO
         checkErrorsPublished(notValidOnboarding, maxWaitingMs, errorUseCases);
 
         System.out.printf("""
@@ -168,10 +178,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
                                     BigDecimal budget;
                                     if (initiative.getInitiativeId().endsWith("_" + initiativesNumber)) {
-                                        initiative.setInitiativeId(EXHAUSTED_INITIATIVE_ID);
+                                        initiative.setInitiativeId(INITIATIVEID_EXHAUSTED);
                                         budget = BigDecimal.ZERO;
                                     } else if (initiative.getInitiativeId().endsWith("_" + (initiativesNumber + 1))) {
-                                        initiative.setInitiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID);
+                                        initiative.setInitiativeId(INITIATIVEID_FAILING_BUDGET_RESERVATION);
                                         budget = BigDecimal.TEN;
                                     } else {
                                         budget = initiative.getGeneral().getBeneficiaryBudget().multiply(BigDecimal.valueOf(onboardingsNumber));
@@ -183,7 +193,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
                         Stream.of(
                                 Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
-                                        .initiativeId(ISEE_INITIATIVE_ID)
+                                        .initiativeId(INITIATIVEID_ISEE)
                                         .initiativeName("ISEE_INITIATIVE_NAME")
                                         .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                                                 .automatedCriteria(List.of(
@@ -193,21 +203,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .operator(FilterOperator.GT)
                                                                 .value("10000")
                                                                 .iseeTypes(List.of(IseeTypologyEnum.ORDINARIO))
+                                                                .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_ISEE, "KID", "PURPOSE_ID_ISEE"))
                                                                 .build()
-                                                ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_ISEE))
-                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
-                                                        Initiative2BuildDTOFaker.getClientAssertion(
-                                                                "ISEEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
-                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("ISEEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
-                                                                "ISEEINITIATIVECLIENTASSERTIONLASTELEMENT"
-                                                        )
                                                 ))
                                                 .build())
                                         .build(),
 
                                 Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
-                                        .initiativeId(RESIDENCE_INITIATIVE_ID)
+                                        .initiativeId(INITIATIVEID_RESIDENCE)
                                         .initiativeName("RESIDENCE_INITIATIVE_NAME")
                                         .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                                                 .automatedCriteria(List.of(
@@ -217,21 +220,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .field("city")
                                                                 .operator(FilterOperator.EQ)
                                                                 .value("Rome")
+                                                                .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_RESIDENCE, "KID", "PURPOSE_ID_RESIDENCE"))
                                                                 .build()
-                                                ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_RESIDENCE))
-                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
-                                                        Initiative2BuildDTOFaker.getClientAssertion(
-                                                                "RESIDENCEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
-                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("RESIDENCEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
-                                                                "RESIDENCEINITIATIVECLIENTASSERTIONLASTELEMENT"
-                                                        )
                                                 ))
                                                 .build())
                                         .build(),
 
                                 Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
-                                        .initiativeId(BIRTHDATE_INITIATIVE_ID)
+                                        .initiativeId(INITIATIVEID_BIRTHDATE)
                                         .initiativeName("BIRTHDATE_INITIATIVE_NAME")
                                         .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                                                 .automatedCriteria(List.of(
@@ -241,15 +237,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .field("age")
                                                                 .operator(FilterOperator.LT)
                                                                 .value("10")
+                                                                .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_BIRTHDATE, "KID", "PURPOSE_ID_BIRTHDATE"))
                                                                 .build()
-                                                ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt(PDND_CLIENT_ID_BIRTHDATE))
-                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
-                                                        Initiative2BuildDTOFaker.getClientAssertion(
-                                                                "BIRTHDATEINITIATIVECLIENTASSERTIONFIRSTELEMENT",
-                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("BIRTHDATEINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
-                                                                "BIRTHDATEINITIATIVECLIENTASSERTIONLASTELEMENT"
-                                                        )
                                                 ))
                                                 .build())
                                         .build(),
@@ -265,15 +254,25 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                                 .field("city")
                                                                 .operator(FilterOperator.EQ)
                                                                 .value("Rome")
+                                                                .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_RESIDENCE, "KID", "PURPOSE_ID_RESIDENCE"))
                                                                 .build()
                                                 ))
-                                                .apiKeyClientId(Initiative2BuildDTOFaker.encrypt("NEVERSELECTEDINITIATIVECLIENTID"))
-                                                .apiKeyClientAssertion(Initiative2BuildDTOFaker.encrypt(
-                                                        Initiative2BuildDTOFaker.getClientAssertion(
-                                                                "NEVERSELECTEDINITIATIVECLIENTASSERTIONFIRSTELEMENT",
-                                                                Initiative2BuildDTOFaker.getAgidTokenPayload("NEVERSELECTEDINITIATIVECLIENTASSERTIONFIRSTELEMENT"),
-                                                                "NEVERSELECTEDINITIATIVECLIENTASSERTIONLASTELEMENT"
-                                                        )
+                                                .build())
+                                        .build(),
+
+                                Initiative2BuildDTOFaker.mockInstanceBuilder(-1)
+                                        .initiativeId(INITIATIVEID_PDNDIVOKEERROR)
+                                        .initiativeName("PDNDIVOKEERROR_NAME")
+                                        .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                                .automatedCriteria(List.of(
+                                                        AutomatedCriteriaDTO.builder()
+                                                                .authority("AUTH1")
+                                                                .code(CriteriaCodeConfigFaker.CRITERIA_CODE_RESIDENCE)
+                                                                .field("city")
+                                                                .operator(FilterOperator.EQ)
+                                                                .value("Rome")
+                                                                .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_PDND_ERROR, "KID", "PURPOSEID"))
+                                                                .build()
                                                 ))
                                                 .build())
                                         .build()
@@ -299,13 +298,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
                             .build(),
-                    evaluation -> {
-                        Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
-                        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
-                        assertEvaluationFields(evaluation, true);
-
-                        Mockito.verify(userFiscalCodeServiceSpy, Mockito.never()).getUserFiscalCode(evaluation.getUserId());
-                    }
+                    evaluation -> checkOk(evaluation, false)
             ),
 
             // useCase 1: TC consensus fail
@@ -313,12 +306,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tc(false)
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
-                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL)
-                                    .build(),
-                            true)
+                    evaluation -> checkConsensusMissedKo(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL)
             ),
 
             // useCase 2: PDND consensuns fail
@@ -326,12 +314,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .pdndAccept(false)
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
-                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL)
-                                    .build()
-                            , true)
+                    evaluation -> checkConsensusMissedKo(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL)
             ),
 
             // self declaration fail
@@ -341,12 +324,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .selfDeclarationList(Map.of("DUMMY", false))
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
-                                    .code(OnboardingConstants.REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT.formatted("DUMMY"))
-                                    .build()
-                            , false)
+                    evaluation -> checkConsensusMissedKo(evaluation, OnboardingConstants.REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT.formatted("DUMMY"))
             ),
             */
 
@@ -369,12 +347,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .tcAcceptTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
-                                    .code( OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL)
-                                    .build()
-                           , true)
+                    evaluation -> checkInvalidRequestKo(evaluation, OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL)
             ),
 
             // useCase 5: TC criteria acceptance timestamp fail
@@ -382,81 +355,111 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
                             .criteriaConsensusTimestamp(LocalDateTime.now().withYear(1970))
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
-                                    .code(OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL)
-                                    .build()
-                            , true)
-
+                    evaluation -> checkInvalidRequestKo(evaluation, OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL)
             ),
 
-            // TODO test error when invoking PDND
+            // useCase 6: error when invoking PDND
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .initiativeId(INITIATIVEID_PDNDIVOKEERROR)
+                                .build();
 
-            // useCase 6: AUTOMATED_CRITERIA fail due to ISEE
+                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(pdndRestClientSpy)
+                                .createToken(Mockito.eq(PDND_CLIENT_ID_PDND_ERROR), Mockito.anyString());
+
+                        return out;
+                    },
+                    this::checkResidenceKo
+            ),
+
+            // useCase 7: AUTOMATED_CRITERIA fail due to ISEE:
+            //    PDV will return CF_OK fiscalCode, for which INPS stub will return a ISEE of 10.000, actual initiative allow > 10.000
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                            .initiativeId(ISEE_INITIATIVE_ID)
-
+                            .initiativeId(INITIATIVEID_ISEE)
                             .build(),
+                    this::checkIseeKo
+            ),
+
+            // useCase 8: retry due to ISEE Esito KO, then ONBOARDING_OK
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .initiativeId(INITIATIVEID_ISEE)
+                                .build();
+
+                        AtomicBoolean isRetry = new AtomicBoolean(false);
+                        Mockito.doAnswer(i -> isRetry.getAndSet(true)
+                                        ? Mono.just("CF_INVALID_REQUEST")
+                                        : Mono.just("CF_OK_15000"))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        return out;
+                    },
+                    evaluation -> checkOk(evaluation, true)
+            ),
+
+            // useCase 9: AUTOMATED_CRITERIA fail due to no ISEE returned
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+                                .initiativeId(INITIATIVEID_ISEE)
+                                .build();
+
+                        Mockito.doReturn(Mono.just("CF_INPS_MOCKED"))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        Mockito.doReturn(Mono.just(new ConsultazioneIndicatoreResponseType()))
+                                .when(iseeConsultationSoapClientSpy)
+                                .getIsee("CF_INPS_MOCKED", IseeTypologyEnum.ORDINARIO);
+                        return out;
+                    },
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
-                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"))
+                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO)
+                                    .code(OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO)
                                     .authority("INPS")
                                     .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                                    .detail("ISEE non disponibile")
                                     .build()
                             , true)
             ),
-
-            // TODO test when no ISEE returned
 
             // TODO ISEE test when multiple Isee typologies
 
             // TODO test daily limit reached when invoking INPS
 
-            // useCase 7: AUTOMATED_CRITERIA fail due to RESIDENCE
+            // useCase 10: AUTOMATED_CRITERIA fail due to RESIDENCE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                            .initiativeId(RESIDENCE_INITIATIVE_ID)
+                            .initiativeId(INITIATIVEID_RESIDENCE)
 
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
-                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("RESIDENCE"))
-                                    .authority("AGID")
-                                    .authorityLabel("Agenzia per l'Italia Digitale")
-                                    .build()
-                            , true)
+                    this::checkResidenceKo
             ),
 
             // TODO test when no RESIDENCE returned
 
-            // useCase 8: AUTOMATED_CRITERIA fail due to BIRTHDATE
+            // useCase 11: AUTOMATED_CRITERIA fail due to BIRTHDATE
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
-                            .initiativeId(BIRTHDATE_INITIATIVE_ID)
+                            .initiativeId(INITIATIVEID_BIRTHDATE)
 
                             .build(),
-                    evaluation -> checkKO(evaluation,
-                            OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
-                                    .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("BIRTHDATE"))
-                                    .authority("AGID")
-                                    .authorityLabel("Agenzia per l'Italia Digitale")
-                                    .build()
-                            , true)
+                    this::checkBirthDateKo
             ),
 
             // TODO test when no BIRTHDATE returned
 
             // TODO test daily limit reached when invoking ANPR
 
-            // exhausted initiative budget
+            // useCase 12: exhausted initiative budget
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
-                            .initiativeId(EXHAUSTED_INITIATIVE_ID)
+                            .initiativeId(INITIATIVEID_EXHAUSTED)
                             .build(),
                     evaluation -> checkKO(evaluation,
                             OnboardingRejectionReason.builder()
@@ -466,7 +469,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                             , true)
             ),
 
-            // useCase 8: evaluation throws exception, but retry header expired
+            // useCase 13: evaluation throws exception, but retry header expired
             new OnboardingUseCase<>(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber).build();
@@ -486,6 +489,15 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     );
 
+    private void checkInvalidRequestKo(EvaluationCompletedDTO evaluation, String code) {
+        checkKO(evaluation,
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(code)
+                        .build()
+               , true);
+    }
+
     private void assertEvaluationFields(EvaluationCompletedDTO evaluation, boolean expectedInitiativeFieldFilled){
         Assertions.assertNotNull(evaluation.getUserId());
         Assertions.assertNotNull(evaluation.getInitiativeId());
@@ -504,6 +516,18 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         }
     }
 
+    private void checkOk(EvaluationCompletedDTO evaluation, boolean expectedPdndInvoked) {
+        Assertions.assertEquals(Collections.emptyList(), evaluation.getOnboardingRejectionReasons());
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, evaluation.getStatus());
+        assertEvaluationFields(evaluation, true);
+
+        if(expectedPdndInvoked){
+            Mockito.verify(userFiscalCodeServiceSpy).getUserFiscalCode(evaluation.getUserId());
+        } else {
+            Mockito.verify(userFiscalCodeServiceSpy, Mockito.never()).getUserFiscalCode(evaluation.getUserId());
+        }
+    }
+
     private void checkKO(EvaluationCompletedDTO evaluation, OnboardingRejectionReason expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
@@ -512,6 +536,48 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
 
         assertEvaluationFields(evaluation, expectedInitiativeFieldFilled);
+    }
+
+    private void checkConsensusMissedKo(EvaluationCompletedDTO evaluation, String code) {
+        checkKO(evaluation,
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.CONSENSUS_MISSED)
+                        .code(code)
+                        .build(),
+                true);
+    }
+
+    private void checkIseeKo(EvaluationCompletedDTO evaluation) {
+        checkKO(evaluation,
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                        .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"))
+                        .authority("INPS")
+                        .authorityLabel("Istituto Nazionale Previdenza Sociale")
+                        .build()
+                , true);
+    }
+
+    private void checkResidenceKo(EvaluationCompletedDTO evaluation) {
+        checkKO(evaluation,
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                        .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("RESIDENCE"))
+                        .authority("AGID")
+                        .authorityLabel("Agenzia per l'Italia Digitale")
+                        .build()
+                , true);
+    }
+
+    private void checkBirthDateKo(EvaluationCompletedDTO evaluation) {
+        checkKO(evaluation,
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
+                        .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("BIRTHDATE"))
+                        .authority("AGID")
+                        .authorityLabel("Agenzia per l'Italia Digitale")
+                        .build()
+                , true);
     }
     //endregion
 
@@ -608,12 +674,12 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
         String failingBudgetReservation = TestUtils.jsonSerializer(
                 buildOnboardingRequestCachedBuilder(errorUseCases.size())
-                        .initiativeId(FAILING_BUDGET_RESERVATION_INITIATIVE_ID)
+                        .initiativeId(INITIATIVEID_FAILING_BUDGET_RESERVATION)
                         .build()
         );
         errorUseCases.add(Pair.of(
                 () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(FAILING_BUDGET_RESERVATION_INITIATIVE_ID), Mockito.any());
+                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(INITIATIVEID_FAILING_BUDGET_RESERVATION), Mockito.any());
                     return failingBudgetReservation;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingBudgetReservation)

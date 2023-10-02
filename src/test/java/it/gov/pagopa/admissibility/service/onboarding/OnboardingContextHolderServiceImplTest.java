@@ -139,8 +139,6 @@ class OnboardingContextHolderServiceImplTest {
                 .status("STATUS")
                 .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .apiKeyClientId("PDND-API-KEY-CLIENT-ID")
-                .apiKeyClientAssertion("eyJhbGciOiJSUzI1NiIsImtpZCI6IktJRCIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJJU1MiLCJzdWIiOiJTVUIiLCJhdWQiOiJBVUQiLCJwdXJwb3NlSWQiOiJQVVJQT1NFSUQiLCJqdGkiOiJKVEkiLCJpYXQiOjE2OTUxMTYyNDIsImV4cCI6MTY5NzcwODI0Mn0=.U0lHTg==")
                 .organizationId("ORGANIZATION-ID")
                 .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)

@@ -3,6 +3,7 @@ package it.gov.pagopa.common.reactive.pdnd.service;
 import it.gov.pagopa.common.pdnd.generated.ApiClient;
 import it.gov.pagopa.common.pdnd.generated.api.AuthApi;
 import it.gov.pagopa.common.pdnd.generated.dto.ClientCredentialsResponseDTO;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -30,11 +31,14 @@ public class PdndRestClientImpl implements PdndRestClient {
     @Override
     public Mono<ClientCredentialsResponseDTO>
     createToken(String clientId, String clientAssertion) {
-        return authApi.createToken(
-                clientAssertion,
-                CLIENT_ASSERTION_TYPE,
-                GRANT_TYPE,
-                clientId
-        );
+        return PerformanceLogger.logTimingOnNext(
+                "PDND_AUTH",
+                authApi.createToken(
+                        clientAssertion,
+                        CLIENT_ASSERTION_TYPE,
+                        GRANT_TYPE,
+                        clientId
+                ),
+                x -> clientId);
     }
 }

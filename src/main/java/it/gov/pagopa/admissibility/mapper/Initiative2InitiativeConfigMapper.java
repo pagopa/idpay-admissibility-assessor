@@ -27,8 +27,6 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .organizationName(initiative.getOrganizationName())
                 .status(initiative.getStatus())
                 .automatedCriteria(automatedCriteriaList)
-                .apiKeyClientId(initiative.getBeneficiaryRule().getApiKeyClientId())
-                .apiKeyClientAssertion(initiative.getBeneficiaryRule().getApiKeyClientAssertion())
                 .automatedCriteriaCodes(automatedCriteriaList != null ? automatedCriteriaList.stream().map(AutomatedCriteriaDTO::getCode).toList() : null)
                 .initiativeBudget(initiative.getGeneral().getBudget())
                 .beneficiaryInitiativeBudget(initiative.getGeneral().getBeneficiaryBudget())

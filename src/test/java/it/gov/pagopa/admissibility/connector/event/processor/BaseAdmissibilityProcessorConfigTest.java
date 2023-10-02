@@ -44,6 +44,11 @@ import reactor.core.publisher.Mono;
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
 
+    static {
+        //Disabling Client SSL auth: ANPR and INPS are configured to use HTTPS protocol
+        BaseIntegrationTest.configureServerWiremockBeforeAll(false, true);
+    }
+
     @SpyBean
     protected OnboardingContextHolderService onboardingContextHolderServiceSpy;
     @SpyBean
@@ -56,7 +61,6 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
     protected InitiativeCountersRepository initiativeCountersRepositorySpy;
 
     protected static List<Checkpointer> checkpointers;
-
 
     static class MediatorSpyConfiguration {
         @SpyBean

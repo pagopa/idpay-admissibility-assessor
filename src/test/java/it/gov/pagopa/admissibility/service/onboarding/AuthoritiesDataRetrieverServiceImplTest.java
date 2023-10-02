@@ -112,7 +112,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
                 .automatedCriteria(List.of(
-                        new AutomatedCriteriaDTO("AUTH1", CRITERIA_CODE_ISEE, null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, ISEE_TYPOLOGIES_REQUESTED)))
+                        new AutomatedCriteriaDTO("AUTH1", CRITERIA_CODE_ISEE, null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, ISEE_TYPOLOGIES_REQUESTED, PDND_INITIATIVE_CONFIG)))
                 .build();
 
         ConsultazioneIndicatoreResponseType inpsResponse = InpsInvokeTestUtils.buildInpsResponse(EsitoEnum.OK);

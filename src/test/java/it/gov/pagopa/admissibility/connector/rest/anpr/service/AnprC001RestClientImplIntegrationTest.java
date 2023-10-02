@@ -29,7 +29,7 @@ import org.springframework.test.context.TestPropertySource;
 })
 public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
-    public static final String FISCAL_CODE = "fiscalCode";
+    public static final String FISCAL_CODE = "STTSGT90A01H501J";
     public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
             "CLIENTID",
             "KID",
@@ -47,7 +47,6 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
     @Test
     void getResidenceAssessment(){
         // Given
-        String fiscalCode = "FISCAL_CODE";
         PdndInitiativeConfig pdndInitiativeConfig = new PdndInitiativeConfig(
                 "CLIENTID",
                 "KID",
@@ -55,14 +54,14 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
         );
 
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig).block();
+        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
 
         // Then
         RispostaE002OKDTO expectedResponse = buildExpectedResponse();
         Assertions.assertEquals(expectedResponse, result);
 
         // accessToken cached for each pdndInitiativeConfig
-        RispostaE002OKDTO result2ndInvoke = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig).block();
+        RispostaE002OKDTO result2ndInvoke = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
         Assertions.assertEquals(expectedResponse, result2ndInvoke);
 
         Mockito.verify(pdndRestClient).createToken(Mockito.eq(pdndInitiativeConfig.getClientId()), Mockito.anyString());
@@ -73,7 +72,7 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
                 "KID",
                 "PURPOSEID"
         );
-        RispostaE002OKDTO resultNewClientId = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig).block();
+        RispostaE002OKDTO resultNewClientId = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
         Assertions.assertEquals(expectedResponse, resultNewClientId);
 
         Mockito.verify(pdndRestClient, Mockito.times(2)).createToken(Mockito.anyString(), Mockito.anyString());

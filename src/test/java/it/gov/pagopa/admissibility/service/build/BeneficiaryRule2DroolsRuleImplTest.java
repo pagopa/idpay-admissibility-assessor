@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.build;
 
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
@@ -16,7 +17,7 @@ import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
@@ -42,9 +43,6 @@ import java.util.List;
  ******************
 */
 class BeneficiaryRule2DroolsRuleImplTest {
-    public static final String ENCRYPTED_API_KEY_CLIENT_ID = "ENCRYPTED_API_KEY_CLIENT_ID";
-    public static final String ENCRYPTED_API_KEY_CLIENT_ASSERTION = "ENCRYPTED_API_KEY_CLIENT_ASSERTION";
-
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final CriteriaCodeService criteriaCodeServiceMock;
 
@@ -131,8 +129,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .startDate(LocalDate.of(2021, 1, 1))
                 .endDate(LocalDate.of(2025, 12, 1))
                 .automatedCriteria(dto.getBeneficiaryRule().getAutomatedCriteria())
-                .apiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID)
-                .apiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION)
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudget(new BigDecimal("100000.00"))
                 .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
@@ -227,12 +223,10 @@ class BeneficiaryRule2DroolsRuleImplTest {
         List<AutomatedCriteriaDTO> criterias = new ArrayList<>();
 
         List<IseeTypologyEnum> typology = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
-        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology));
-        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, null, typology));
+        criterias.add(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology, new PdndInitiativeConfig("CLIENTID", "KID", "PURPOSEID_ISEE")));
+        criterias.add(new AutomatedCriteriaDTO("AUTH2", "BIRTHDATE", "year", FilterOperator.GT, "2000", null, null, typology, new PdndInitiativeConfig("CLIENTID", "KID", "PURPOSEID_BIRTHDATE")));
 
         dto.getBeneficiaryRule().setAutomatedCriteria(criterias);
-        dto.getBeneficiaryRule().setApiKeyClientId(ENCRYPTED_API_KEY_CLIENT_ID);
-        dto.getBeneficiaryRule().setApiKeyClientAssertion(ENCRYPTED_API_KEY_CLIENT_ASSERTION);
         dto.setGeneral(
                 InitiativeGeneralDTO.builder()
                         .name("NAME")

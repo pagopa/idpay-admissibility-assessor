@@ -26,9 +26,6 @@ public class InitiativeConfig {
     private String status;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String apiKeyClientId;
-    private String apiKeyClientAssertion;
-    // TODO PdndInitiativeConfig
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;

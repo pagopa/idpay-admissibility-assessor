@@ -11,6 +11,7 @@ import it.gov.pagopa.common.reactive.pdnd.utils.AgidUtils;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.Utils;
 import it.gov.pagopa.common.http.utils.NettySslUtils;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -69,27 +70,31 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
     }
 
     private Mono<R> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
-        return webClient.method(pdndServiceConfig.getHttpMethod())
-                .uri(pdndServiceConfig.getPath())
-                .headers(httpHeaders -> {
-                    httpHeadersConsumer.accept(httpHeaders);
-                    httpHeaders.setBearerAuth(pdndAuthData.getAccessToken());
-                    httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-                    httpHeaders.add(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());
-                    httpHeaders.add("Digest", digest);
-                    httpHeaders.add("Agid-JWT-TrackingEvidence", pdndAuthData.getAgidJwtTrackingEvidence());
-                    httpHeaders.add("Agid-JWT-Signature", agidJwtSignature);
-                })
-                .bodyValue(bodyString)
-                .retrieve()
-                .bodyToMono(pdndServiceConfig.getResponseBodyClass())
+        return PerformanceLogger.logTimingOnNext(
+                "PDND_SERVICE_INVOKE",
+                webClient.method(pdndServiceConfig.getHttpMethod())
+                        .uri(pdndServiceConfig.getPath())
+                        .headers(httpHeaders -> {
+                            httpHeadersConsumer.accept(httpHeaders);
+                            httpHeaders.setBearerAuth(pdndAuthData.getAccessToken());
+                            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                            httpHeaders.add(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());
+                            httpHeaders.add("Digest", digest);
+                            httpHeaders.add("Agid-JWT-TrackingEvidence", pdndAuthData.getAgidJwtTrackingEvidence());
+                            httpHeaders.add("Agid-JWT-Signature", agidJwtSignature);
+                        })
+                        .bodyValue(bodyString)
+                        .retrieve()
+                        .bodyToMono(pdndServiceConfig.getResponseBodyClass())
 
-                .doOnError(pdndServiceConfig.getTooManyRequestPredicate(), e -> {
-                    throw new PdndServiceTooManyRequestException(pdndServiceConfig, e);
-                })
-                .onErrorResume(e -> {
-                    log.error("[PDND] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
-                    return Mono.just(pdndServiceConfig.getEmptyResponseBody());
-                });
+                        .doOnError(pdndServiceConfig.getTooManyRequestPredicate(), e -> {
+                            throw new PdndServiceTooManyRequestException(pdndServiceConfig, e);
+                        })
+                        .onErrorResume(e -> {
+                            log.error("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
+                            return Mono.just(pdndServiceConfig.getEmptyResponseBody());
+                        }),
+                x -> "[" + getClass().getSimpleName() + "] "
+        );
     }
 }
