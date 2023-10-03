@@ -1,0 +1,44 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/anpr/C001-servizioNotifica/v1/anpr-service-e002",
+    "headers": {
+      "Authorization": {
+        "equalTo": "Bearer PDND_ACCESS_TOKEN"
+      },
+      "Content-Encoding": {
+        "equalTo": "UTF-8"
+      },
+      "Content-Type": {
+        "equalTo": "application/json"
+      },
+      "Digest": {
+        "matches": "SHA-256=[-A-Za-z0-9+/_]+={0,3}"
+      },
+      "Agid-JWT-TrackingEvidence": {
+        "matches": "[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}"
+      },
+      "Agid-JWT-Signature": {
+        "matches": "[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}"
+      }
+    },
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "idOperazioneClient": "${json-unit.regex}[0-9]+",
+          "criteriRicerca": {
+            "codiceFiscale": "CF_ANPR_TOO_MANY_REQUESTS"
+          },
+          "datiRichiesta": {
+            "dataRiferimentoRichiesta": "${json-unit.regex}[0-9]{4}-[0-9]{2}-[0-9]{2}",
+            "motivoRichiesta": "1",
+            "casoUso": "C001"
+          }
+        }
+      }
+    ]
+  },
+  "response": {
+    "status": "429"
+  }
+}

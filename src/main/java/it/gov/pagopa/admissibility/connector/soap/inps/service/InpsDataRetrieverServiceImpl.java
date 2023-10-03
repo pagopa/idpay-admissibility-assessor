@@ -69,6 +69,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
         // TODO invoke all until obtained a result
         return iseeConsultationSoapClient.getIsee(fiscalCode, pdndServicesInvocation.getIseeTypes().get(0))
                 .map(inpsResponse -> Optional.of(extractData(inpsResponse, onboardingRequest)))
+                .switchIfEmpty(MONO_EMPTY_RESPONSE)
 
                 .onErrorResume(InpsDailyRequestLimitException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] Daily limit occurred when calling ANPR service", e);
@@ -85,7 +86,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
         if (onboardingRequest.getIsee() == null) {
             CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
-            log.info("[ONBOARDING_REQUEST][INPS_INVOCATION] User having id {} has not compatible ISEE type for initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+            log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] User having id {} has not compatible ISEE type for initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
             return List.of(new OnboardingRejectionReason(
                             OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                             OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
@@ -100,13 +101,17 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
     }
 
     private BigDecimal getIseeFromResponse(ConsultazioneIndicatoreResponseType inpsResponse) {
-        try {
-            String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
+        if(inpsResponse.getXmlEsitoIndicatore() != null && inpsResponse.getXmlEsitoIndicatore().length>0) {
+            try {
+                String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
 
-            TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
-            return inpsResult.getISEE();
-        } catch (Exception e) {
-            log.error("Cannot read ISEE from INPS response", e);
+                TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
+                return inpsResult.getISEE();
+            } catch (Exception e) {
+                log.error("Cannot read ISEE from INPS response", e);
+                return null;
+            }
+        } else {
             return null;
         }
     }
@@ -120,7 +125,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
             JAXBElement<TypeEsitoConsultazioneIndicatore> je = unmarshaller.unmarshal(xsr, TypeEsitoConsultazioneIndicatore.class);
             return je.getValue();
         } catch (JAXBException | XMLStreamException e) {
-            throw new IllegalStateException("[ONBOARDING_REQUEST][INPS_INVOCATION] Cannot read XmlEsitoIndicatore to get ISEE from INPS' response", e);
+            throw new IllegalStateException("[ONBOARDING_REQUEST][INPS_INVOCATION] Cannot read XmlEsitoIndicatore to get ISEE from INPS response", e);
         }
     }
 }

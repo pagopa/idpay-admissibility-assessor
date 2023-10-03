@@ -108,7 +108,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
         return inpsInvocation
                 .zipWith(anprInvocation)
-                // Handle reschedule of failed invocation, storing the successful if any
+                // Handle reschedule of failed invocation, storing the successful if any inside re-published message
                 .mapNotNull(t -> {
 
                     List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
@@ -117,6 +117,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                     ).toList();
 
                     if(!rejectionReasons.isEmpty()){
+                        log.debug("[ONBOARDING_REQUEST][ONBOARDING_KO] Authorities data retrieve returned rejection reasons: {}", rejectionReasons);
                         throw new OnboardingException(rejectionReasons, "Cannot retrieve all required authorities data");
                     }
 

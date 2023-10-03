@@ -1,6 +1,9 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.http.utils.NettySslUtils;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
 import it.gov.pagopa.common.reactive.pdnd.config.BasePdndServiceProviderConfig;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
@@ -8,9 +11,6 @@ import it.gov.pagopa.common.reactive.pdnd.dto.PdndAuthData;
 import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
 import it.gov.pagopa.common.reactive.pdnd.utils.AgidUtils;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
-import it.gov.pagopa.admissibility.utils.Utils;
-import it.gov.pagopa.common.http.utils.NettySslUtils;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -88,13 +88,13 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
                         .retrieve()
                         .bodyToMono(pdndServiceConfig.getResponseBodyClass())
 
-                        .doOnError(pdndServiceConfig.getTooManyRequestPredicate(), e -> {
-                            throw new PdndServiceTooManyRequestException(pdndServiceConfig, e);
-                        })
                         .onErrorResume(e -> {
                             if(e instanceof WebClientResponseException.NotFound notFoundException){
                                 log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
-                            } else {
+                            } else if(pdndServiceConfig.getTooManyRequestPredicate().test(e)){
+                                return Mono.error(new PdndServiceTooManyRequestException(pdndServiceConfig, e));
+                            }
+                            else {
                                 log.error("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
                             }
                             return Mono.just(pdndServiceConfig.getEmptyResponseBody());

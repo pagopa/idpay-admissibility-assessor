@@ -87,7 +87,8 @@ import java.util.stream.Stream;
                 "spring.cloud.azure.servicebus.connection-string=Endpoint=sb://ServiceBusEndpoint;SharedAccessKeyName=sharedAccessKeyName;SharedAccessKey=sharedAccessKey;EntityPath=entityPath",
                 "spring.cloud.stream.binders.kafka-onboarding-request.type=kafka",
                 "spring.cloud.stream.binders.kafka-onboarding-request.environment.spring.cloud.stream.kafka.binder.brokers=${spring.embedded.kafka.brokers}",
-                "spring.cloud.stream.bindings.admissibilityProcessor-in-0.destination=idpay-onboarding-request",
+                "spring.cloud.stream.bindings.admissibilityDelayProducer-out-0.content-type=application/json",
+                "spring.cloud.stream.kafka.bindings.admissibilityDelayProducer-out-0.producer.configuration.linger.ms=2",
                 //endregion
 
                 //region mongodb

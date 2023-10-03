@@ -3,7 +3,8 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
-import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClient;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImplIntegrationTest;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -31,6 +32,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,9 +64,16 @@ import java.util.stream.Stream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=OFF",
         "logging.level.it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImpl=OFF",
-        "logging.level.it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverServiceImpl=OFF",
+        "logging.level.it.gov.pagopa.common.reactive.pdnd.service.BaseRestPdndServiceClient=OFF",
 })
 class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
+    public static final String CF_AUTHORITIES_DATA_ALLOWED = "CF_OK_2";
+    public static final String CF_INVALID_REQUEST = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_INVALIDREQUEST;
+    public static final String CF_INPS_RETRY = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_RETRY;
+    public static final String CF_INPS_UNEXPECTED_RESULTCODE = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_UNEXPECTED_RESULT_CODE;
+    public static final String CF_NOT_FOUND = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_NOTFOUND;
+    public static final String CF_ANPR_TOO_MANY_REQUESTS = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_TOOMANYREQUESTS;
+    public static final String CF_INPS_TOO_MANY_REQUESTS = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_TOOMANYREQUESTS;
 
     private static final String INITIATIVEID_EXHAUSTED = "EXHAUSTED_INITIATIVE_ID";
     private static final String INITIATIVEID_FAILING_BUDGET_RESERVATION = "FAILING_BUDGET_RESERVATION";
@@ -77,6 +86,28 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private static final String PDND_CLIENT_ID_PDND_ERROR = "CLIENTID_PDNDERROR";
 
 //region OnboardingRejectionReason constants
+    public static final OnboardingRejectionReason ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO = OnboardingRejectionReason.builder()
+            .type(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO)
+            .code(OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO)
+            .authority("INPS")
+            .authorityLabel("Istituto Nazionale Previdenza Sociale")
+            .detail("ISEE non disponibile")
+            .build();
+    public static final OnboardingRejectionReason ONBOARDING_REJECTION_REASON_RESIDENCE_KO = OnboardingRejectionReason.builder()
+            .type(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO)
+            .code(OnboardingConstants.REJECTION_REASON_RESIDENCE_KO)
+            .authority("AGID")
+            .authorityLabel("Agenzia per l'Italia Digitale")
+            .detail("Residenza non disponibile")
+            .build();
+    public static final OnboardingRejectionReason ONBOARDING_REJECTION_REASON_BIRTHDATE_KO = OnboardingRejectionReason.builder()
+            .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO)
+            .code(OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO)
+            .authority("AGID")
+            .authorityLabel("Agenzia per l'Italia Digitale")
+            .detail("Data di nascita non disponibile")
+            .build();
+
     public static final OnboardingRejectionReason ONBOARDING_REJECTION_REASON_ISEE = OnboardingRejectionReason.builder()
             .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)
             .code(OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted("ISEE"))
@@ -109,30 +140,21 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             .type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR)
             .code(OnboardingConstants.REJECTION_REASON_GENERIC_ERROR)
             .build();
-    public static final String FISCALCODE_AUTHORITIES_DATA_ALLOWED = "CF_OK_2";
 //endregion
 
     @SpyBean
     private OnboardingNotifierService onboardingNotifierServiceSpy;
-    public static final OnboardingRejectionReason ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO = OnboardingRejectionReason.builder()
-            .type(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO)
-            .code(OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO)
-            .authority("INPS")
-            .authorityLabel("Istituto Nazionale Previdenza Sociale")
-            .detail("ISEE non disponibile")
-            .build();
     @SpyBean
     private UserFiscalCodeService userFiscalCodeServiceSpy;
     @SpyBean
     private PdndRestClient pdndRestClientSpy;
-    @SpyBean
-    private IseeConsultationSoapClient iseeConsultationSoapClientSpy;
 
     @Autowired
     private PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
+    private int rescheduling=0;
 
     @TestConfiguration
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{}
@@ -188,7 +210,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 timeEnd - timePublishOnboardingStart
         );
 
-        checkOffsets(onboardings.size(), validOnboardings, topicAdmissibilityProcessorOutcome);
+        checkOffsets(onboardings.size() + rescheduling, validOnboardings, topicAdmissibilityProcessorOutcome);
     }
 
     private void checkPdndAccessTokenInvocations() {
@@ -393,7 +415,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just(FISCALCODE_AUTHORITIES_DATA_ALLOWED))
+                        Mockito.doReturn(Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
@@ -407,13 +429,13 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just("CF_NOT_FOUND"))
+                        Mockito.doReturn(Mono.just(CF_NOT_FOUND))
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
                         return out;
                     },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
             ),
 
             // useCase 10 AUTOMATED_CRITERIA fail due to invalid request
@@ -421,39 +443,89 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just("CF_INVALID_REQUEST"))
+                        Mockito.doReturn(Mono.just(CF_INVALID_REQUEST))
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
                         return out;
                     },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
             ),
 
-            // useCase 11: retry due to ISEE Esito KO, then ONBOARDING_OK
+            // useCase 11: retry due to ISEE Esito KO, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
                         AtomicBoolean isRetry = new AtomicBoolean(false);
-                        Mockito.doAnswer(i -> isRetry.getAndSet(true)
-                                        ? Mono.just("CF_INPS_RETRY")
-                                        : Mono.just(FISCALCODE_AUTHORITIES_DATA_ALLOWED))
+                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                                        ? Mono.just(CF_INPS_RETRY)
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        rescheduling++;
+
+                        return out;
+                    },
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+            ),
+
+            // useCase 12: INPS unexpected result code
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
+
+                        Mockito.doReturn(Mono.just(CF_INPS_UNEXPECTED_RESULTCODE))
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
                         return out;
                     },
-                    evaluation -> checkOk(evaluation, true)
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO), true)
             ),
 
             // TODO ISEE test when multiple Isee typologies
 
-            // TODO test daily limit reached when invoking INPS
+            // useCase 13: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-            // TODO test daily limit reached when invoking ANPR
+                        AtomicBoolean isRetry = new AtomicBoolean(false);
+                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                                        ? Mono.just(CF_INPS_TOO_MANY_REQUESTS)
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
 
-            // useCase 12: exhausted initiative budget
+                        rescheduling++;
+
+                        return out;
+                    },
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+            ),
+
+            // useCase 14: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
+
+                        AtomicBoolean isRetry = new AtomicBoolean(false);
+                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                                        ? Mono.just(CF_ANPR_TOO_MANY_REQUESTS)
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        rescheduling++;
+
+                        return out;
+                    },
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE), true)
+            ),
+
+            // useCase 15: exhausted initiative budget
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
                             .initiativeId(INITIATIVEID_EXHAUSTED)
@@ -461,7 +533,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_BUDGET_EXHAUSTED), true)
             ),
 
-            // useCase 13: evaluation throws exception, but retry header expired
+            // useCase 16: evaluation throws exception, but retry header expired
             new OnboardingUseCase<>(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -475,6 +547,10 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             )
 
     );
+
+    private static ArgumentMatcher<OnboardingDTO> buildOnboardingRequestOutcomeMatch(EvaluationCompletedDTO evaluation) {
+        return r -> r.getUserId().equals(evaluation.getUserId());
+    }
 
     private static OnboardingRejectionReason buildOnboardingRejectionReasonInvalidRequest(String code) {
         return OnboardingRejectionReason.builder()

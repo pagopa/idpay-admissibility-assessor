@@ -1,17 +1,19 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
+import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.*;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.reactive.soap.utils.SoapUtils;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -27,8 +29,8 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
     public IseeConsultationSoapClientImpl(InpsClientConfig inpsClientConfig,
                                           @Value("${app.inps.request.request-protocol-ente}") String requestProtocolEnte,
-                                          @Value("${app.inps.request.service-to-be-provided}")String serviceToBeProvided,
-                                          @Value("${app.inps.request.request-state}")String requestStateEnte){
+                                          @Value("${app.inps.request.service-to-be-provided}") String serviceToBeProvided,
+                                          @Value("${app.inps.request.request-state}") String requestStateEnte) {
 
         this.requestProtocolEnte = requestProtocolEnte;
         this.serviceToBeProvided = serviceToBeProvided;
@@ -39,24 +41,30 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
     @Override
     public Mono<ConsultazioneIndicatoreResponseType> getIsee(String fiscalCode, IseeTypologyEnum iseeType) {
         // TODO why pdnd's accessToken is not used?
-        return callService(fiscalCode, iseeType)
-                .flatMap(response -> {
-                    ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
-                    if (RETRYABLE_OUTCOMES.contains(result.getEsito())) {
-                        log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
-                        return Mono.empty(); // Returning empty in order to retry later
-                    } else {
-                        if(result.getEsito().equals(EsitoEnum.RICHIESTA_INVALIDA)){
-                            log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned invalid request!  {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
-                        }
-                        return Mono.just(result);
-                    }
-                })
+        return PerformanceLogger.logTimingOnNext(
+                "INPS_INVOCATION",
+                callService(fiscalCode, iseeType)
+                        .flatMap(response -> {
+                            ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
+                            if (RETRYABLE_OUTCOMES.contains(result.getEsito())) {
+                                log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
+                                return Mono.empty(); // Returning empty in order to retry later
+                            } else {
+                                log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned no data!  esito:{} id:{}: {}; {}", result.getEsito(), result.getIdRichiesta(), result.getDescrizioneErrore(), result);
+                                return Mono.just(result);
+                            }
+                        })
 
-                //TODO define error code for retry
-                .doOnError(WebClientResponseException.TooManyRequests.class, e -> {
-                    throw new InpsDailyRequestLimitException(e);
-                });
+                        //TODO define error code for retry
+                        .onErrorResume(ExecutionException.class, e -> {
+                            if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("HTTP 429")) {
+                                return Mono.error(new InpsDailyRequestLimitException(e));
+                            } else {
+                                log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e.getCause());
+                                return Mono.just(new ConsultazioneIndicatoreResponseType());
+                            }
+                        })
+                , x -> "");
 
     }
 

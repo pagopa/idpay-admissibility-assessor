@@ -6,6 +6,7 @@ import com.google.common.cache.Cache;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
 import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import it.gov.pagopa.common.utils.TestUtils;
 import lombok.SneakyThrows;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.ReflectionUtils;
+import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Field;
 
@@ -34,9 +36,10 @@ import java.lang.reflect.Field;
 })
 public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
-    public static final String FISCAL_CODE_OK = "STTSGT90A01H501J";
+    public static final String FISCAL_CODE_OK = "CF_OK";
     public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";
     public static final String FISCAL_CODE_INVALIDREQUEST = "CF_INVALID_REQUEST";
+    public static final String FISCAL_CODE_TOOMANYREQUESTS = "CF_ANPR_TOO_MANY_REQUESTS";
 
     public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
             "CLIENTID",
@@ -68,6 +71,7 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
         // Then
         RispostaE002OKDTO expectedResponse = buildExpectedResponse();
+        expectedResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCodiceFiscale().setCodFiscale(FISCAL_CODE_OK);
         Assertions.assertEquals(expectedResponse, result);
 
         // accessToken cached for each pdndInitiativeConfig
@@ -106,6 +110,12 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
         // Then
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getListaSoggetti());
+    }
+
+    @Test
+    void testTooManyRequests(){
+        Mono<RispostaE002OKDTO> mono = anprC001RestClient.invoke(FISCAL_CODE_TOOMANYREQUESTS, PDND_INITIATIVE_CONFIG);
+        Assertions.assertThrows(PdndServiceTooManyRequestException.class, mono::block);
     }
 
     @Test
