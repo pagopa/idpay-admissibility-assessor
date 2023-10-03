@@ -101,7 +101,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
         refreshAndAssertKieContainerRuleSize(1);
 
         // Execute rule and assert onboarding has the expected rejection reason
-        OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, 1);
+        OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, "INITIATIVEID");
         EvaluationDTO result = executeRules(onboardingMock);
 
         Assertions.assertNotNull(result);

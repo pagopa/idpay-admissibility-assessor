@@ -34,12 +34,13 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-@ContextConfiguration(inheritInitializers = false)
+@ContextConfiguration
 class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessorConfigTest {
+
+    private static final String INITIATIVEID = "INITIATIVEID_0";
+
     @SpyBean
     private RankingNotifierService rankingNotifierServiceSpy;
-
-    private final int initiativesNumber = 3;
 
     @TestConfiguration
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration {}
@@ -102,7 +103,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
         MongoTestUtilitiesService.startMongoCommandListener("RULE PUBLISHING");
 
         int[] expectedRules = {0};
-        IntStream.range(0, initiativesNumber)
+        IntStream.range(0, 2)
                 .mapToObj(i -> {
                     final Initiative2BuildDTO initiative = Initiative2BuildDTOFaker.mockInstanceBuilder(i)
                             .build();
@@ -157,7 +158,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     //endregion
 
     private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestBuilder(Integer bias) {
-        return OnboardingDTOFaker.mockInstanceBuilder(bias, initiativesNumber)
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, INITIATIVEID)
                 .isee(BigDecimal.valueOf(20))
                 .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
     }
@@ -167,43 +168,43 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
     // all use cases configured must have a unique id recognized by the regexp errorUseCaseIdPatternMatch
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
     {
-        final String failingRankingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING";
-        @SuppressWarnings("ConstantConditions") OnboardingDTO rankingFailinPublishing = buildOnboardingRequestBuilder(errorUseCases.size())
+        // errorUseCase 0
+        final String failingRankingPublishingUserId = "userId_0_FAILING_ONBOARDING_PUBLISHING";
+        OnboardingDTO rankingFailinPublishing = buildOnboardingRequestBuilder(0)
                 .userId(failingRankingPublishingUserId)
                 .build();
-        int rankingFailingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
         errorUseCases.add(Pair.of(
                 () -> {
                     Mockito.doReturn(false).when(rankingNotifierServiceSpy).notify(Mockito.argThat(i -> failingRankingPublishingUserId.equals(i.getUserId())));
                     return TestUtils.jsonSerializer(rankingFailinPublishing);
                 },
                 errorMessage-> {
-                    RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(rankingFailinPublishing, rankingFailingPublishingInitiativeId);
+                    RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(rankingFailinPublishing);
                     checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
 
-        final String exceptionWhenRankingPublishingUserId = "FAILING_ONBOARDING_PUBLISHING_DUE_EXCEPTION";
+        // errorUseCase 1
+        final String exceptionWhenRankingPublishingUserId = "userId_1_FAILING_ONBOARDING_PUBLISHING_DUE_EXCEPTION";
         OnboardingDTO exceptionWhenRankingPublishing = buildOnboardingRequestBuilder(errorUseCases.size())
                 .userId(exceptionWhenRankingPublishingUserId)
                 .build();
-        int exceptionWhenRankingPublishingInitiativeId = errorUseCases.size()%initiativesNumber;
         errorUseCases.add(Pair.of(
                 () -> {
                     Mockito.doThrow(new KafkaException()).when(rankingNotifierServiceSpy).notify(Mockito.argThat(i -> exceptionWhenRankingPublishingUserId.equals(i.getUserId())));
                     return TestUtils.jsonSerializer(exceptionWhenRankingPublishing);
                 },
                 errorMessage-> {
-                    RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenRankingPublishing, exceptionWhenRankingPublishingInitiativeId);
+                    RankingRequestDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenRankingPublishing);
                     checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutRankingRequest,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the ranking request", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
                 }
         ));
     }
 
-    private RankingRequestDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO, int bias) {
+    private RankingRequestDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO) {
         return RankingRequestDTO.builder()
                 .userId(onboardingDTO.getUserId())
-                .organizationId(Initiative2BuildDTOFaker.mockInstance(bias).getOrganizationId())
+                .organizationId(onboardingDTO.getInitiativeId().replace("INITIATIVEID", "ORGANIZATIONID"))
                 .initiativeId(onboardingDTO.getInitiativeId())
                 .admissibilityCheckDate(LocalDateTime.now())
                 .criteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp())

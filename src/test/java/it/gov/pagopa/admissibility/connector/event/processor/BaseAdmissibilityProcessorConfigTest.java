@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
@@ -131,6 +132,11 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
                     evaluation.getInitiativeId());
             throw e;
         }
+    }
+
+    @Override
+    protected Pattern getErrorUseCaseIdPatternMatch() {
+        return Pattern.compile("\"userId\":\"userId_([0-9]+)_?[^\"]*\"");
     }
 
     protected void checkOffsets(long expectedReadMessages, long exptectedPublishedResults, String outputTopic) {

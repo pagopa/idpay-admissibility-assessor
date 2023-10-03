@@ -11,9 +11,9 @@ public class TipoResidenzaDTO2ResidenceMapper {
         Residence out = new Residence();
 
         out.setPostalCode(residenzaDTO.getIndirizzo().getCap());
-        out.setProvince(residenzaDTO.getIndirizzo().getComune().getSiglaProvinciaIstat());
-        out.setCity(residenzaDTO.getIndirizzo().getComune().getNomeComune());
-        out.setCityCouncil(residenzaDTO.getIndirizzo().getComune().getNomeComune());
+        out.setProvince(residenzaDTO.getIndirizzo().getComune().getSiglaProvinciaIstat().toUpperCase());
+        out.setCity(residenzaDTO.getIndirizzo().getComune().getNomeComune().toUpperCase());
+        out.setCityCouncil(residenzaDTO.getIndirizzo().getComune().getNomeComune().toUpperCase());
         // TODO nation, region
 
         return out;

@@ -56,7 +56,7 @@ class OnboardingFamilyEvaluationServiceTest {
     @Test
     void testNewFamily(){
         // Given
-        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, 1);
+        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
 
         EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
@@ -76,7 +76,7 @@ class OnboardingFamilyEvaluationServiceTest {
     @Test
     void testExistentFamily(){
         // Given
-        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, 1);
+        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);

@@ -13,17 +13,17 @@ public final class OnboardingDTOFaker {
 
     private static final FakeValuesService fakeValuesServiceGlobal = new FakeValuesService(new Locale("it"), new RandomService());
 
-    public static OnboardingDTO mockInstance(Integer bias,Integer initiativeNumber){
-        return mockInstanceBuilder(bias, initiativeNumber).build();
+    public static OnboardingDTO mockInstance(Integer bias,String initiativeId){
+        return mockInstanceBuilder(bias, initiativeId).build();
     }
 
-    public static OnboardingDTO.OnboardingDTOBuilder mockInstanceBuilder(Integer bias,Integer initiativeNumber){
+    public static OnboardingDTO.OnboardingDTOBuilder mockInstanceBuilder(Integer bias,String initiativeId){
         OnboardingDTO.OnboardingDTOBuilder out = OnboardingDTO.builder();
 
         FakeValuesService fakeValuesService = getFakeValuesService(bias);
 
         out.userId(fakeValuesService.bothify(bias!=null? "userId_%d".formatted(bias) : "?????"));
-        out.initiativeId(bias!=null? "id_%d".formatted(bias%initiativeNumber) : "?????");
+        out.initiativeId(initiativeId);
         out.tc(true);
         out.status(bias!=null? "status_%d".formatted(bias) : "?????");
         out.pdndAccept(true);

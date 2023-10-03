@@ -55,7 +55,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         Mockito.verifyNoMoreInteractions(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock);
     }
 
-    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, 1);
+    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
     private final Family family = new Family("FAMILYID", Set.of(request.getUserId()));
     private final InitiativeConfig initiativeConfig = InitiativeConfig.builder()
             .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)

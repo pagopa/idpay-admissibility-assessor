@@ -29,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
@@ -67,8 +66,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private OnboardingFamiliesRepository onboardingFamiliesRepository;
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
-    @Autowired
-    private ReactiveMongoTemplate mongoTemplate;
 
     @Test
     void testFamilyAdmissibilityOnboarding() throws IOException {
@@ -183,7 +180,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                                 IntStream.range(0, membersPerFamily)
                                         .mapToObj(i ->
                                                 MessageBuilder.withPayload(message.getPayload()
-                                                                .replace("id_0", initiative.getInitiativeId())
+                                                                .replace("INITIATIVEID_0", initiative.getInitiativeId())
                                                                 .replaceAll("(userId_[^\"]+)", "$1_FAMILYMEMBER" + i)
                                                         )
                                                         .copyHeaders(message.getHeaders())
@@ -339,7 +336,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     //region useCases
 
     private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestBuilder(Integer bias) {
-        return OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, "INITIATIVEID_0")
                 .isee(BigDecimal.valueOf(20))
                 .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
     }

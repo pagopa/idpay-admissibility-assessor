@@ -16,6 +16,9 @@ import java.util.Locale;
 import java.util.Random;
 
 public final class Initiative2BuildDTOFaker {
+
+    public static final BigDecimal BENEFICIARY_BUDGET = new BigDecimal("1000.00");
+
     private Initiative2BuildDTOFaker(){}
 
     private static final FakeValuesService fakeValuesServiceGlobal = new FakeValuesService(new Locale("it"), new RandomService());
@@ -25,13 +28,16 @@ public final class Initiative2BuildDTOFaker {
         return mockInstanceBuilder(bias).build();
     }
     public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias){
+        return mockInstanceBuilder(bias, new BigDecimal("100000.00"));
+    }
+    public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias, BigDecimal budget){
         Initiative2BuildDTO.Initiative2BuildDTOBuilder out = Initiative2BuildDTO.builder();
 
         FakeValuesService fakeValuesService = getFakeValuesService(bias);
 
-        out.initiativeId(fakeValuesService.bothify(bias!=null? "id_%d".formatted(bias) : "?????"));
+        out.initiativeId("INITIATIVEID_%d".formatted(bias));
         out.initiativeName(fakeValuesService.bothify("?????"));
-        out.organizationId(fakeValuesService.bothify("?????"));
+        out.organizationId("ORGANIZATIONID_"+bias);
         out.organizationName(fakeValuesService.bothify("?????"));
         out.status(fakeValuesService.bothify(bias!=null? "status_%d".formatted(bias) : "?????"));
         out.initiativeRewardType("REFUND");
@@ -47,10 +53,10 @@ public final class Initiative2BuildDTOFaker {
         out.general(
                 InitiativeGeneralDTO.builder()
                         .name("NAME")
-                        .budget(new BigDecimal("100000.00"))
+                        .budget(budget)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
-                        .beneficiaryBudget(new BigDecimal("1000.00"))
+                        .beneficiaryBudget(BENEFICIARY_BUDGET)
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
                         .rankingEnabled(false)

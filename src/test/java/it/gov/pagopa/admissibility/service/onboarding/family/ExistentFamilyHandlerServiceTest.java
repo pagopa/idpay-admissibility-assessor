@@ -50,7 +50,7 @@ class ExistentFamilyHandlerServiceTest {
     }
 
 
-    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, 1);
+    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
     private final OnboardingFamilies family = OnboardingFamilies.builder(new Family("FAMILYID", Set.of(request.getUserId())), request.getInitiativeId())
             .build();
     private final InitiativeConfig initiativeConfig = InitiativeConfig.builder()
