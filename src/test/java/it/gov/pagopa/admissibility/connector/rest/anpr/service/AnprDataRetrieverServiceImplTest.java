@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest.FISCAL_CODE;
+import static it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest.FISCAL_CODE_OK;
 import static it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest.PDND_INITIATIVE_CONFIG;
 
 @ExtendWith(MockitoExtension.class)
@@ -101,13 +101,13 @@ class AnprDataRetrieverServiceImplTest {
         OnboardingDTO onboardingRequest = new OnboardingDTO();
 
         if(expectedAnprInvocation){
-            Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
+            Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
         }
 
         // When
         PdndServicesInvocation pdndServicesInvocation = buildPdndServicesInvocation(getResidence, getBirthDate);
 
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();
 
         // Then
         Assertions.assertNotNull(result);
@@ -123,11 +123,11 @@ class AnprDataRetrieverServiceImplTest {
     void testInvokeDailyLimitException() {
         // Given
         OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG))
+        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
                 .thenReturn(Mono.error(new PdndServiceTooManyRequestException(new PdndServiceConfig<>(), new RuntimeException("DUMMY"))));
 
         // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
 
         // Then
         Assertions.assertEquals(Optional.empty(), result);
@@ -139,10 +139,10 @@ class AnprDataRetrieverServiceImplTest {
     void testInvoke_noResponse() {
         // Given
         OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.empty());
+        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.empty());
 
         // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
 
         // Then
         Assertions.assertNull(result);
@@ -164,10 +164,10 @@ class AnprDataRetrieverServiceImplTest {
     private void testExtractWhenUnexpectedResponse(int previousCall) {
         // Given
         OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
+        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
 
         // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
 
         // Then
         Assertions.assertNotNull(result);

@@ -12,7 +12,6 @@ import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.utils.TestUtils;
-import jakarta.xml.bind.JAXBException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,7 +49,7 @@ class InpsDataRetrieverServiceImplTest {
     private BigDecimal expectedIsee;
 
     @BeforeEach
-    void setup() throws JAXBException {
+    void setup() {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
         inpsDataRetrieverService = new InpsDataRetrieverServiceImpl(criteriaCodeServiceMock, iseeConsultationSoapClientMock);
 
@@ -95,9 +94,9 @@ class InpsDataRetrieverServiceImplTest {
     }
 
     @Test
-    void testInvokeOk_koEsitoResult() {
+    void testInvokeOk_RetryEsitoResult() {
         // Given
-        inpsResponse.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
+        inpsResponse.setEsito(EsitoEnum.DATABASE_OFFLINE);
         OnboardingDTO onboardingRequest = new OnboardingDTO();
 
         Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.empty());
@@ -106,17 +105,13 @@ class InpsDataRetrieverServiceImplTest {
         Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true), onboardingRequest).block();
 
         // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isEmpty());
-        Assertions.assertNull(onboardingRequest.getIsee());
+        Assertions.assertNull(result);
     }
 
     @Test
-    void testExtractWhenResponseNull() throws JAXBException {
-        inpsResponse=null;
-        testExtractWhenNoIsee();
-
-        inpsResponse=new ConsultazioneIndicatoreResponseType();
+    void testInvokeOk_KoEsitoResult() {
+        inpsResponse.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
+        inpsResponse.setXmlEsitoIndicatore(null);
         testExtractWhenNoIsee();
 
         inpsResponse.setXmlEsitoIndicatore("".getBytes(StandardCharsets.UTF_8));

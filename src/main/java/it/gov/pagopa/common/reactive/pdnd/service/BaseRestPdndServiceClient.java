@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -91,7 +92,11 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
                             throw new PdndServiceTooManyRequestException(pdndServiceConfig, e);
                         })
                         .onErrorResume(e -> {
-                            log.error("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
+                            if(e instanceof WebClientResponseException.NotFound notFoundException){
+                                log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
+                            } else {
+                                log.error("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
+                            }
                             return Mono.just(pdndServiceConfig.getEmptyResponseBody());
                         }),
                 x -> "[" + getClass().getSimpleName() + "] "

@@ -1,7 +1,9 @@
-package it.gov.pagopa.admissibility.connector.soap.inps;
+package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
@@ -22,7 +24,7 @@ class IseeConsultationSoapClientImplSSLKOTest{
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectClass(IseeConsultationSoapClientImplTest.class))
+                .selectors(selectClass(IseeConsultationSoapClientImplIntegrationTest.class))
                 .build();
         Launcher launcher = LauncherFactory.create();
         launcher.discover(request);

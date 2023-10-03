@@ -11,9 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
+import java.util.Set;
+
 @Service
 @Slf4j
 public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClient {
+    private static final Set<EsitoEnum> RETRYABLE_OUTCOMES = Set.of(
+            EsitoEnum.DATABASE_OFFLINE, EsitoEnum.ERRORE_INTERNO
+    );
+
     private final ISvcConsultazione portSvcConsultazione;
     private final String requestProtocolEnte;
     private final String serviceToBeProvided;
@@ -36,10 +42,13 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
         return callService(fiscalCode, iseeType)
                 .flatMap(response -> {
                     ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
-                    if (result.getEsito() != EsitoEnum.OK) {
-                        log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a not OK result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
+                    if (RETRYABLE_OUTCOMES.contains(result.getEsito())) {
+                        log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
                         return Mono.empty(); // Returning empty in order to retry later
                     } else {
+                        if(result.getEsito().equals(EsitoEnum.RICHIESTA_INVALIDA)){
+                            log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned invalid request!  {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
+                        }
                         return Mono.just(result);
                     }
                 })
@@ -52,7 +61,6 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
     }
 
     private Mono<ConsultazioneIndicatoreResponse> callService(String fiscalCode, IseeTypologyEnum iseeType) {
-        //TODO confirm operation to call
         return SoapUtils.soapInvoke2Mono(asyncHandler ->
                 portSvcConsultazione.consultazioneIndicatoreAsync(getRequest(fiscalCode, iseeType), asyncHandler));
     }
@@ -74,13 +82,12 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
 
     private static TipoIndicatoreSinteticoEnum transcodeIseeType(IseeTypologyEnum iseeType) {
         return switch (iseeType) {
-            case ORDINARIO -> TipoIndicatoreSinteticoEnum.ORDINARIO;
+            case CORRENTE, ORDINARIO -> TipoIndicatoreSinteticoEnum.ORDINARIO; // TODO what's supposed to be CORRENTE?
             case MINORENNE -> TipoIndicatoreSinteticoEnum.MINORENNE;
             case UNIVERSITARIO -> TipoIndicatoreSinteticoEnum.UNIVERSITARIO;
             case SOCIOSANITARIO -> TipoIndicatoreSinteticoEnum.SOCIO_SANITARIO;
             case DOTTORATO -> TipoIndicatoreSinteticoEnum.DOTTORATO;
             case RESIDENZIALE -> TipoIndicatoreSinteticoEnum.RESIDENZIALE;
-            case CORRENTE -> null; // TODO what's supposed to be CORRENTE?
         };
     }
 

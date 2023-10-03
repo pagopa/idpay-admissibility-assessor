@@ -14,7 +14,6 @@ import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeBeneficiaryRuleDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
@@ -403,14 +402,42 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkOk(evaluation, true)
             ),
 
-            // useCase 8: retry due to ISEE Esito KO, then ONBOARDING_OK
+            // useCase 9: AUTOMATED_CRITERIA fail due to CF not found
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
+
+                        Mockito.doReturn(Mono.just("CF_NOT_FOUND"))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        return out;
+                    },
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+            ),
+
+            // useCase 10 AUTOMATED_CRITERIA fail due to invalid request
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
+
+                        Mockito.doReturn(Mono.just("CF_INVALID_REQUEST"))
+                                .when(userFiscalCodeServiceSpy)
+                                .getUserFiscalCode(out.getUserId());
+
+                        return out;
+                    },
+                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
+            ),
+
+            // useCase 11: retry due to ISEE Esito KO, then ONBOARDING_OK
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
                         AtomicBoolean isRetry = new AtomicBoolean(false);
                         Mockito.doAnswer(i -> isRetry.getAndSet(true)
-                                        ? Mono.just("CF_INVALID_REQUEST")
+                                        ? Mono.just("CF_INPS_RETRY")
                                         : Mono.just(FISCALCODE_AUTHORITIES_DATA_ALLOWED))
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
@@ -420,30 +447,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkOk(evaluation, true)
             ),
 
-            // useCase 9: AUTOMATED_CRITERIA fail due to no ISEE returned
-            OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
-
-                        Mockito.doReturn(Mono.just("CF_INPS_MOCKED"))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
-
-                        Mockito.doReturn(Mono.just(new ConsultazioneIndicatoreResponseType()))
-                                .when(iseeConsultationSoapClientSpy)
-                                .getIsee("CF_INPS_MOCKED", IseeTypologyEnum.ORDINARIO);
-                        return out;
-                    },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO), true)
-            ),
-
             // TODO ISEE test when multiple Isee typologies
 
             // TODO test daily limit reached when invoking INPS
-
-            // TODO test when no RESIDENCE returned
-
-            // TODO test when no BIRTHDATE returned
 
             // TODO test daily limit reached when invoking ANPR
 

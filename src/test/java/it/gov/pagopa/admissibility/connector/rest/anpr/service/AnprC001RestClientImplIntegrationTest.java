@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.cache.Cache;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
@@ -9,11 +10,15 @@ import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import it.gov.pagopa.common.utils.TestUtils;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.util.ReflectionUtils;
+
+import java.lang.reflect.Field;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImpl=WARN",
@@ -29,7 +34,10 @@ import org.springframework.test.context.TestPropertySource;
 })
 public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
-    public static final String FISCAL_CODE = "STTSGT90A01H501J";
+    public static final String FISCAL_CODE_OK = "STTSGT90A01H501J";
+    public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";
+    public static final String FISCAL_CODE_INVALIDREQUEST = "CF_INVALID_REQUEST";
+
     public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
             "CLIENTID",
             "KID",
@@ -44,38 +52,60 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
     @Autowired
     private AnprC001RestClient anprC001RestClient;
 
+    @BeforeEach
+    void clearCache() throws IllegalAccessException {
+        Field cacheField = ReflectionUtils.findField(anprC001RestClient.getClass(), "pdndAuthDataCache");
+        Assertions.assertNotNull(cacheField);
+        cacheField.setAccessible(true);
+        Cache<?,?> cache = (Cache<?,?>) cacheField.get(anprC001RestClient);
+        cache.invalidateAll();
+    }
+
     @Test
     void getResidenceAssessment(){
-        // Given
-        PdndInitiativeConfig pdndInitiativeConfig = new PdndInitiativeConfig(
-                "CLIENTID",
-                "KID",
-                "PURPOSEID"
-        );
-
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
+        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
 
         // Then
         RispostaE002OKDTO expectedResponse = buildExpectedResponse();
         Assertions.assertEquals(expectedResponse, result);
 
         // accessToken cached for each pdndInitiativeConfig
-        RispostaE002OKDTO result2ndInvoke = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
+        RispostaE002OKDTO result2ndInvoke = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
         Assertions.assertEquals(expectedResponse, result2ndInvoke);
 
-        Mockito.verify(pdndRestClient).createToken(Mockito.eq(pdndInitiativeConfig.getClientId()), Mockito.anyString());
+        Mockito.verify(pdndRestClient).createToken(Mockito.eq(PDND_INITIATIVE_CONFIG.getClientId()), Mockito.anyString());
 
         // new clientId
-        pdndInitiativeConfig = new PdndInitiativeConfig(
+        PdndInitiativeConfig pdndInitiativeConfig2 = new PdndInitiativeConfig(
                 "CLIENTID2",
                 "KID",
                 "PURPOSEID"
         );
-        RispostaE002OKDTO resultNewClientId = anprC001RestClient.invoke(FISCAL_CODE, pdndInitiativeConfig).block();
+        RispostaE002OKDTO resultNewClientId = anprC001RestClient.invoke(FISCAL_CODE_OK, pdndInitiativeConfig2).block();
         Assertions.assertEquals(expectedResponse, resultNewClientId);
 
         Mockito.verify(pdndRestClient, Mockito.times(2)).createToken(Mockito.anyString(), Mockito.anyString());
+    }
+
+    @Test
+    void testNotFound(){
+        //When
+        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_NOTFOUND, PDND_INITIATIVE_CONFIG).block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertNull(result.getListaSoggetti());
+    }
+
+    @Test
+    void testInvalidRequest(){
+        //When
+        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG).block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertNull(result.getListaSoggetti());
     }
 
     @Test
@@ -86,7 +116,7 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
         // When
         try {
-            anprC001RestClient.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG).block();
+            anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
         }catch (Exception e){
             // Then
             Assertions.assertTrue(e instanceof IllegalStateException);
