@@ -1,4 +1,4 @@
-package it.gov.pagopa.admissibility.connector.rest;
+package it.gov.pagopa.common.reactive.pdv.service;
 
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;

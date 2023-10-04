@@ -165,7 +165,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     @Test
     void testAdmissibilityOnboarding() throws IOException {
-        int validOnboardings = Math.max(10,useCases.size()); // use even number
+        int validOnboardings = Math.max(10, TestUtils.nextOrSameEvenNumber(useCases.size())); // use even number
         int notValidOnboarding = errorUseCases.size();
         long maxWaitingMs = 30000;
 

@@ -77,7 +77,6 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
                 .onErrorResume(InpsDailyRequestLimitException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] Daily limit occurred when calling ANPR service", e);
-                    // TODO Short circuit all calls on that date?
                     return MONO_EMPTY_RESPONSE;
                 });
     }

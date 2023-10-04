@@ -157,4 +157,13 @@ public final class TestUtils {
     public static LocalDateTime truncateTimestamp(LocalDateTime timestamp) {
         return timestamp.truncatedTo(ChronoUnit.MINUTES).withMinute(timestamp.getMinute() / 10 * 10);
     }
+
+    /** It will return the input value if even, otherwise value+1*/
+    public static int nextOrSameEvenNumber(int value){
+        if(value%2==1){
+            return value+1;
+        } else {
+            return value;
+        }
+    }
 }

@@ -56,7 +56,6 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
 
                 .onErrorResume(PdndServiceTooManyRequestException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] Daily limit occurred when calling ANPR service", e);
-                    // TODO Short circuit all calls on that date for the same clientId?
                     return MONO_EMPTY_RESPONSE;
                 });
     }
