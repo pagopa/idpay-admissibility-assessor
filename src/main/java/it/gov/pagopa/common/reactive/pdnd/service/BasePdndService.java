@@ -53,6 +53,7 @@ public abstract class BasePdndService<R> {
                 log.debug("[CACHE_HIT][PDND] Retrieved cached PDND auth data for {}", pdndInitiativeConfig);
                 return Mono.just(pdndAuthData);
             } else {
+                // Consider to use it.gov.pagopa.common.reactive.service.LockService if we want just one concurrent PDND invoke per pdndInitiativeConfig
                 log.info("[CACHE_MISS][PDND] Retrieving PDND auth data for {}", pdndInitiativeConfig);
                 return retrievePdndAuthDataInner(pdndInitiativeConfig)
                         .doOnNext(authData -> pdndAuthDataCache.put(pdndInitiativeConfig, authData));

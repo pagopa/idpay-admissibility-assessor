@@ -138,7 +138,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
         Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId()))
                 .thenReturn(Mono.empty());
-        Mockito.when(repositoryMock.findById("FAMILYID_id_0")).thenReturn(Mono.just(onboardingFamilies));
+        Mockito.when(repositoryMock.findById("FAMILYID_INITIATIVEID")).thenReturn(Mono.just(onboardingFamilies));
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamily(request, onboardingFamilies, initiativeConfig, message))
                         .thenReturn(Mono.just(expectedEvaluationResult));
 

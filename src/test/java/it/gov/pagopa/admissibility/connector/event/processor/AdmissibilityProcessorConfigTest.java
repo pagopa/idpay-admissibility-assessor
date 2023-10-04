@@ -33,6 +33,7 @@ import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -78,6 +79,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private static final String INITIATIVEID_FAILING_BUDGET_RESERVATION = "FAILING_BUDGET_RESERVATION";
     private static final String INITIATIVEID_COMPLETE = "COMPLETE_INITIATIVE_ID";
     private static final String INITIATIVEID_PDNDIVOKEERROR = "PDNDERRORUSECASE";
+    private static final String INITIATIVEID_MULTIPLE_ISEE_TYPES = "MULTIPLE_ISEE_TYPES";
 
     private static final String PDND_CLIENT_ID_RESIDENCE = "CLIENTID_RESIDENCEINITIATIVE";
     private static final String PDND_CLIENT_ID_ISEE = "CLIENTID_ISEEINITIATIVE";
@@ -155,6 +157,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private int maxRetry;
     private int expectedRescheduling = 0;
 
+    private final Map<String, String> userId2CFMocks = new HashMap<>();
+    private final Map<String, Answer<Mono<String>>> userId2CFAnswers = new HashMap<>();
+
     @TestConfiguration
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{}
 
@@ -169,6 +174,22 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
         List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
         onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
         onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
+
+        Mockito.doAnswer(i -> {
+                    String cf = i.getArgument(0);
+                    String mockedCF = userId2CFMocks.get(cf);
+                    if (mockedCF != null) {
+                        return Mono.just(mockedCF);
+                    } else {
+                        Answer<Mono<String>> mockedAnswer = userId2CFAnswers.get(cf);
+                        if (mockedAnswer != null) {
+                            return mockedAnswer.answer(i);
+                        } else {
+                            return i.callRealMethod();
+                        }
+                    }
+                }).when(userFiscalCodeServiceSpy)
+                .getUserFiscalCode(Mockito.any());
 
         MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
 
@@ -226,7 +247,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 Assertions.assertTrue(
                         // ideally it would be 1, but due to concurrency accesses, more than 1 requests could be performed
                         // if we want to strengthen this behavior, let's consider to introduce the use of it.gov.pagopa.common.reactive.service.LockService
-                        invocations >= 1 && invocations < 20,
+                        invocations >= 1 && invocations < 50,
                         "Unexpected number of ClientId %s invocations: %d".formatted(clientId, invocations)));
     }
 
@@ -305,6 +326,24 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                                         .operator(FilterOperator.EQ)
                                                         .value("Rome")
                                                         .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_PDND_ERROR, "KID", "PURPOSEID"))
+                                                        .build()
+                                        ))
+                                        .build())
+                                .build(),
+
+
+                        Initiative2BuildDTOFaker.mockInstanceBuilder(5, Initiative2BuildDTOFaker.BENEFICIARY_BUDGET.multiply(BigDecimal.valueOf(validOnboardings)))
+                                .initiativeId(INITIATIVEID_MULTIPLE_ISEE_TYPES)
+                                .initiativeName("MULTIPLE_ISEE_TYPES_INITIATIVE_NAME")
+                                .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                                        .automatedCriteria(List.of(
+                                                AutomatedCriteriaDTO.builder()
+                                                        .authority("AUTH1")
+                                                        .code(CriteriaCodeConfigFaker.CRITERIA_CODE_ISEE)
+                                                        .operator(FilterOperator.GT)
+                                                        .value("10000")
+                                                        .iseeTypes(List.of(IseeTypologyEnum.CORRENTE, IseeTypologyEnum.MINORENNE, IseeTypologyEnum.RESIDENZIALE, IseeTypologyEnum.ORDINARIO))
+                                                        .pdndConfig(new PdndInitiativeConfig(PDND_CLIENT_ID_ISEE, "KID", "PURPOSE_ID_ISEE"))
                                                         .build()
                                         ))
                                         .build())
@@ -417,9 +456,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                        userId2CFMocks.put(out.getUserId(), CF_AUTHORITIES_DATA_ALLOWED);
 
                         return out;
                     },
@@ -431,9 +468,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just(CF_NOT_FOUND))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                        userId2CFMocks.put(out.getUserId(), CF_NOT_FOUND);
 
                         return out;
                     },
@@ -445,9 +480,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just(CF_INVALID_REQUEST))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                        userId2CFMocks.put(out.getUserId(), CF_INVALID_REQUEST);
 
                         return out;
                     },
@@ -460,11 +493,11 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
                         AtomicBoolean isRetry = new AtomicBoolean(false);
-                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                        userId2CFAnswers.put(out.getUserId(),
+                                i -> !isRetry.getAndSet(true)
                                         ? Mono.just(CF_INPS_RETRY)
-                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED)
+                        );
 
                         expectedRescheduling++;
 
@@ -478,28 +511,36 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
-                        Mockito.doReturn(Mono.just(CF_INPS_UNEXPECTED_RESULTCODE))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                        userId2CFMocks.put(out.getUserId(), CF_INPS_UNEXPECTED_RESULTCODE);
 
                         return out;
                     },
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO), true)
             ),
 
-            // TODO ISEE test when multiple Isee typologies
+            // useCase 12: multiple Isee typologies
+            OnboardingUseCase.withJustPayload(
+                    bias -> {
+                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_MULTIPLE_ISEE_TYPES);
 
-            // useCase 12: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+                        userId2CFMocks.put(out.getUserId(), CF_AUTHORITIES_DATA_ALLOWED);
+
+                        return out;
+                    },
+                    evaluation -> checkOk(evaluation, true)
+            ),
+
+            // useCase 13: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
                         AtomicBoolean isRetry = new AtomicBoolean(false);
-                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                        userId2CFAnswers.put(out.getUserId(),
+                                i -> !isRetry.getAndSet(true)
                                         ? Mono.just(CF_INPS_TOO_MANY_REQUESTS)
-                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED)
+                        );
 
                         expectedRescheduling++;
 
@@ -508,17 +549,17 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 13: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 14: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
 
                         AtomicBoolean isRetry = new AtomicBoolean(false);
-                        Mockito.doAnswer(i -> !isRetry.getAndSet(true)
+                        userId2CFAnswers.put(out.getUserId(),
+                                i -> !isRetry.getAndSet(true)
                                         ? Mono.just(CF_ANPR_TOO_MANY_REQUESTS)
-                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED))
-                                .when(userFiscalCodeServiceSpy)
-                                .getUserFiscalCode(out.getUserId());
+                                        : Mono.just(CF_AUTHORITIES_DATA_ALLOWED)
+                        );
 
                         expectedRescheduling++;
 
@@ -527,7 +568,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE), true)
             ),
 
-            // useCase 14: exhausted initiative budget
+            // useCase 15: exhausted initiative budget
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
                             .initiativeId(INITIATIVEID_EXHAUSTED)
@@ -535,7 +576,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_BUDGET_EXHAUSTED), true)
             ),
 
-            // useCase 15: evaluation throws exception, but retry header expired
+            // useCase 16: evaluation throws exception, but retry header expired
             new OnboardingUseCase<>(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);

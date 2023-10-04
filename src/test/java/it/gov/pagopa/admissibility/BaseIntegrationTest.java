@@ -42,6 +42,7 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -222,15 +223,34 @@ public abstract class BaseIntegrationTest {
     }
 
     private static WireMockExtension initServerWiremock() {
+        int httpPort=0;
+        int httpsPort=0;
+        boolean start=false;
+
+        // re-using shutdown server port in order to let Spring loaded configuration still valid
+        if (serverWireMockExtension != null && JUnitExtensionContextHolder.extensionContext != null) {
+            try {
+                httpPort = serverWireMockExtension.getRuntimeInfo().getHttpPort();
+                httpsPort = serverWireMockExtension.getRuntimeInfo().getHttpsPort();
+
+                serverWireMockExtension.shutdownServer();
+                // waiting server stop, releasing ports
+                TestUtils.wait(200, TimeUnit.MILLISECONDS);
+                start=true;
+            } catch (IllegalStateException e){
+                // Do Nothing: the wiremock server was not started
+            }
+        }
+
         WireMockExtension newWireMockConfig = WireMockUtils.initServerWiremock(
+                httpPort,
+                httpsPort,
                 "src/test/resources/stub",
                 WIREMOCK_REQUEST_CLIENT_AUTH,
                 USE_TRUSTORE_OK ? TRUSTSTORE_PATH : TRUSTSTORE_KO_PATH,
                 "idpay");
 
-        if (serverWireMockExtension != null && JUnitExtensionContextHolder.extensionContext != null) {
-            serverWireMockExtension.shutdownServer();
-
+        if(start){
             try {
                 newWireMockConfig.beforeAll(JUnitExtensionContextHolder.extensionContext);
             } catch (Exception e) {

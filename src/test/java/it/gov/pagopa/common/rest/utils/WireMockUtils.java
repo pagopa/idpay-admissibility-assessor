@@ -9,16 +9,16 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 public class WireMockUtils {
     private WireMockUtils(){}
 
-    public static WireMockExtension initServerWiremock(String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword) {
+    public static WireMockExtension initServerWiremock(int httpPort, int httpsPort, String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword) {
         return WireMockExtension.newInstance()
-                .options(getWireMockConfiguration(stubsFolder, needClientAuth, trustorePath, trustorePassword))
+                .options(getWireMockConfiguration(httpPort, httpsPort, stubsFolder, needClientAuth, trustorePath, trustorePassword))
                 .build();
     }
 
-    private static WireMockConfiguration getWireMockConfiguration(String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword){
+    private static WireMockConfiguration getWireMockConfiguration(int httpPort, int httpsPort, String stubsFolder, boolean needClientAuth, String trustorePath, String trustorePassword){
         return wireMockConfig()
-                .dynamicPort()
-                .httpsPort(0)
+                .port(httpPort)
+                .httpsPort(httpsPort)
                 .needClientAuth(needClientAuth)
                 .keystorePath("src/test/resources/wiremockKeyStore.p12")
                 .keystorePassword("idpay")

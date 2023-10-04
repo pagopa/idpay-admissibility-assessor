@@ -66,7 +66,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         DroolsRule dr = new DroolsRule();
         dr.setId("NAME");
-        dr.setName("id_0");
+        dr.setName("INITIATIVEID");
         dr.setRule("""
                 package %s;
 

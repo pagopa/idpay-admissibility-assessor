@@ -1,5 +1,6 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
+import com.google.common.cache.Cache;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
@@ -39,7 +40,11 @@ class UserFiscalCodeServiceImplTest {
         userCacheField = ReflectionUtils.findField(UserFiscalCodeServiceImpl.class, "userCache");
         Assertions.assertNotNull(userCacheField);
         ReflectionUtils.makeAccessible(userCacheField);
-        ReflectionUtils.setField(userCacheField, userFiscalCodeService,userCacheTest);
+        @SuppressWarnings("unchecked") Cache<String, String> cache = (Cache<String, String>)ReflectionUtils.getField(userCacheField, userFiscalCodeService);
+        Assertions.assertNotNull(cache);
+        cache.invalidateAll();
+        cache.putAll(userCacheTest);
+
     }
 
     @Test
@@ -49,8 +54,8 @@ class UserFiscalCodeServiceImplTest {
         Mockito.when(userFiscalCodeRestClientMock.retrieveUserInfo(userIdTest)).thenReturn(Mono.just(UserInfoPDV.builder().pii("FISCALCODE_RETRIEVED").build()));
 
         // When
-        Map<String, String> inspectCache = retrieveCache();
-        Assertions.assertNull(inspectCache.get(userIdTest));
+        Cache<String, String> inspectCache = retrieveCache();
+        Assertions.assertNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
 
         String result = userFiscalCodeService.getUserFiscalCode(userIdTest).block();
@@ -60,7 +65,7 @@ class UserFiscalCodeServiceImplTest {
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_RETRIEVED", result);
-        Assertions.assertNotNull(inspectCache.get(userIdTest));
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache+1,inspectCache.size());
 
 
@@ -73,8 +78,8 @@ class UserFiscalCodeServiceImplTest {
         String userIdTest = "USERID_0";
 
         // When
-        Map<String, String> inspectCache = retrieveCache();
-        Assertions.assertNotNull(inspectCache.get(userIdTest));
+        Cache<String, String> inspectCache = retrieveCache();
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
 
         String result = userFiscalCodeService.getUserFiscalCode(userIdTest).block();
@@ -83,16 +88,16 @@ class UserFiscalCodeServiceImplTest {
         Assertions.assertNotNull(result);
         TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_0", result);
-        Assertions.assertNotNull(inspectCache.get(userIdTest));
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
 
         Mockito.verify(userFiscalCodeRestClientMock, Mockito.never()).retrieveUserInfo(userIdTest);
     }
 
-    private Map<String, String> retrieveCache() {
+    private Cache<String, String> retrieveCache() {
         Object cacheBefore = ReflectionUtils.getField(userCacheField, userFiscalCodeService);
         Assertions.assertNotNull(cacheBefore);
         //noinspection unchecked
-        return (Map<String, String>) cacheBefore;
+        return (Cache<String, String>) cacheBefore;
     }
 }

@@ -73,7 +73,7 @@ class ExistentFamilyHandlerServiceTest {
         Mockito.verify(onboardingRescheduleServiceMock).reschedule(
                 Mockito.same(request),
                 Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
-                Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative id_0"),
+                Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
                 Mockito.same(message));
     }
 

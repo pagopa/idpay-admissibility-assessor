@@ -10,7 +10,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
-import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
+import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
 class IseeConsultationSoapClientImplSSLKOTest{
 
@@ -24,13 +24,13 @@ class IseeConsultationSoapClientImplSSLKOTest{
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectClass(IseeConsultationSoapClientImplIntegrationTest.class))
+                .selectors(selectMethod(IseeConsultationSoapClientImplIntegrationTest.class, "callService"))
                 .build();
         Launcher launcher = LauncherFactory.create();
         launcher.discover(request);
         launcher.registerTestExecutionListeners(listener);
         launcher.execute(request);
 
-        Assertions.assertEquals(2,listener.getSummary().getTestsFailedCount());
+        Assertions.assertEquals(1,listener.getSummary().getTestsFailedCount());
     }
 }

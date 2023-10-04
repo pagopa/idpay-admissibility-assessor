@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
@@ -45,7 +46,8 @@ import reactor.core.publisher.Mono;
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
 
-    static {
+    @BeforeAll
+    static void configureWireMock() {
         //Disabling Client SSL auth: ANPR and INPS are configured to use HTTPS protocol
         BaseIntegrationTest.configureServerWiremockBeforeAll(false, true);
     }

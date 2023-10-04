@@ -10,6 +10,7 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +37,8 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
     private InitiativeConfig initiativeConfig;
     private Message<String> message;
 
-    static {
+    @BeforeAll
+    static void configureWiremock() {
         BaseIntegrationTest.configureServerWiremockBeforeAll(false, false);
     }
 
@@ -77,14 +79,14 @@ class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
 
         Residence expectedResidence = Residence.builder()
-                .postalCode("20143")
-                .province("MI")
-                .city("Milano")
-                .cityCouncil("Milano")
+                .postalCode("41026")
+                .province("MO")
+                .city("PAVULLO NEL FRIGNANO")
+                .cityCouncil("PAVULLO NEL FRIGNANO")
                 .build();
         BirthDate expectedBirthDate = BirthDate.builder()
-                .year("1970")
-                .age(Period.between(LocalDate.of(1970, 1, 1), LocalDate.now()).getYears())  // 2023-1970=53
+                .year("1990")
+                .age(Period.between(LocalDate.of(1990, 1, 1), LocalDate.now()).getYears())  // 2023-1970=53
                 .build();
 
         Assertions.assertNotNull(result);

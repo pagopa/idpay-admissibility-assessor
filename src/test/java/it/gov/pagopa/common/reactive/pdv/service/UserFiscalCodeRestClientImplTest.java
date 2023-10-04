@@ -1,10 +1,12 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
+import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -12,8 +14,15 @@ import reactor.core.Exceptions;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
+
+        "app.pdv.base-url=http://localhost:${wiremock.server.port}/pdv",
+        "app.pdv.retry.delay-millis=5000",
+        "app.pdv.retry.max-attempts=3",
+        "app.pdv.headers.x-api-key=x_api_key"
 })
-class UserFiscalCodeRestClientImplTest extends BaseIntegrationTest {
+@AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdv")
+@SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class})
+class UserFiscalCodeRestClientImplTest {
     @Autowired
     private UserFiscalCodeRestClient userFiscalCodeRestClient;
 

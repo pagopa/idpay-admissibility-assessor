@@ -64,7 +64,7 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                                 return Mono.just(new ConsultazioneIndicatoreResponseType());
                             }
                         })
-                , x -> "");
+                , x -> "[" + iseeType + "]");
 
     }
 

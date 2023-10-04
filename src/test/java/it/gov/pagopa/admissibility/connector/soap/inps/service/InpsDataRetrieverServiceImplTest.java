@@ -16,13 +16,17 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.stubbing.OngoingStubbing;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +40,8 @@ class InpsDataRetrieverServiceImplTest {
             "KID",
             "PURPOSEID"
     );
-    public static final IseeTypologyEnum ISEE_TYPOLOGY = IseeTypologyEnum.UNIVERSITARIO;
+    public static final IseeTypologyEnum ISEE_TYPOLOGY1 = IseeTypologyEnum.UNIVERSITARIO;
+    public static final IseeTypologyEnum ISEE_TYPOLOGY2 = IseeTypologyEnum.CORRENTE;
 
     @Mock
     private IseeConsultationSoapClient iseeConsultationSoapClientMock;
@@ -58,7 +63,7 @@ class InpsDataRetrieverServiceImplTest {
     }
 
     private PdndServicesInvocation buildPdndServicesInvocation(boolean getIsee) {
-        return new PdndServicesInvocation(getIsee, List.of(IseeTypologyEnum.UNIVERSITARIO), false, false);
+        return new PdndServicesInvocation(getIsee, List.of(ISEE_TYPOLOGY1, ISEE_TYPOLOGY2), false, false);
     }
 
     @Test
@@ -74,8 +79,8 @@ class InpsDataRetrieverServiceImplTest {
     private void testInvokeOk(boolean getIsee) {
         // Given
         OnboardingDTO onboardingRequest = new OnboardingDTO();
-        if(getIsee){
-            Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(inpsResponse));
+        if (getIsee) {
+            Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.just(inpsResponse));
         }
 
         // When
@@ -86,7 +91,7 @@ class InpsDataRetrieverServiceImplTest {
         Assertions.assertTrue(result.isPresent());
         Assertions.assertEquals(Collections.emptyList(), result.get());
 
-        if(getIsee){
+        if (getIsee) {
             TestUtils.assertBigDecimalEquals(expectedIsee, onboardingRequest.getIsee());
         } else {
             Assertions.assertNull(onboardingRequest.getIsee());
@@ -99,13 +104,49 @@ class InpsDataRetrieverServiceImplTest {
         inpsResponse.setEsito(EsitoEnum.DATABASE_OFFLINE);
         OnboardingDTO onboardingRequest = new OnboardingDTO();
 
-        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.empty());
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.empty());
 
         // When
         Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true), onboardingRequest).block();
 
         // Then
-        Assertions.assertNull(result);
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isEmpty());
+    }
+
+    @ParameterizedTest
+    @EnumSource(IseeTypologyEnum.class)
+    void testInvokeOk_MultipleIsee(IseeTypologyEnum iseeTypeOk) {
+        // Given
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        List<IseeTypologyEnum> iseeTypes = Arrays.asList(IseeTypologyEnum.values());
+
+        ConsultazioneIndicatoreResponseType koResult = new ConsultazioneIndicatoreResponseType();
+        koResult.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
+        koResult.setXmlEsitoIndicatore(null);
+
+        for (IseeTypologyEnum i : iseeTypes) {
+            OngoingStubbing<Mono<ConsultazioneIndicatoreResponseType>> stub = Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, i));
+            if (!i.equals(iseeTypeOk)) {
+                stub.thenReturn(Mono.just(koResult));
+            } else {
+                stub.thenReturn(Mono.just(inpsResponse));
+                break; // next typologies will not be invoked, thus we will not configure the stub
+            }
+        }
+
+        PdndServicesInvocation pdndServicesInvocation = new PdndServicesInvocation(true, iseeTypes, false, false);
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+
+        TestUtils.assertBigDecimalEquals(expectedIsee, onboardingRequest.getIsee());
     }
 
     @Test
@@ -123,7 +164,8 @@ class InpsDataRetrieverServiceImplTest {
 
     private void testExtractWhenNoIsee() {
         // Given
-        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY)).thenReturn(Mono.just(inpsResponse));
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.just(inpsResponse));
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY2)).thenReturn(Mono.just(inpsResponse));
         OnboardingDTO onboardingRequest = new OnboardingDTO();
 
         // When
