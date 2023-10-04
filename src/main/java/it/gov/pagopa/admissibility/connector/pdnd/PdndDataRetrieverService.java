@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PdndDataRetrieverService {
+    /** To return if it needs a reschedule */
+    Mono<Optional<List<OnboardingRejectionReason>>> MONO_EMPTY_RESPONSE = Mono.just(Optional.empty());
+    /** To return if there are not rejectionReason */
     Mono<Optional<List<OnboardingRejectionReason>>> MONO_OPTIONAL_EMPTY_LIST = Mono.just(Optional.of(Collections.emptyList()));
 
     /** It will invoke PDND services returning an Optional.empty if it needs a rescheduling  */

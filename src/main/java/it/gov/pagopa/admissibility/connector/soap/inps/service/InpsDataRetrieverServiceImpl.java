@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -32,13 +33,14 @@ import java.util.Optional;
 @Service
 public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
-    public static final Mono<Optional<List<OnboardingRejectionReason>>> MONO_EMPTY_RESPONSE = Mono.just(Optional.empty());
-
     private static final XMLInputFactory xmlFactory = XMLInputFactory.newFactory();
     private static final JAXBContext jaxbContext;
 
     private final CriteriaCodeService criteriaCodeService;
     private final IseeConsultationSoapClient iseeConsultationSoapClient;
+
+    private final List<OnboardingRejectionReason> iseeNotFoundRejectionReason;
+    private final Mono<List<OnboardingRejectionReason>> iseeNotFoundRejectionReasonMono;
 
     static {
         try {
@@ -51,6 +53,9 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
     public InpsDataRetrieverServiceImpl(CriteriaCodeService criteriaCodeService, IseeConsultationSoapClient iseeConsultationSoapClient) {
         this.criteriaCodeService = criteriaCodeService;
         this.iseeConsultationSoapClient = iseeConsultationSoapClient;
+
+        this.iseeNotFoundRejectionReason = buildMissingIseeRejectionReasons();
+        this.iseeNotFoundRejectionReasonMono = Mono.just(iseeNotFoundRejectionReason);
     }
 
     private boolean accept(PdndServicesInvocation pdndServicesInvocation) {
@@ -66,16 +71,29 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
         if (!accept(pdndServicesInvocation)) {
             return MONO_OPTIONAL_EMPTY_LIST;
         }
-        // TODO invoke all until obtained a result
-        return iseeConsultationSoapClient.getIsee(fiscalCode, pdndServicesInvocation.getIseeTypes().get(0))
-                .map(inpsResponse -> Optional.of(extractData(inpsResponse, onboardingRequest)))
+        return combineIseeTypologies(fiscalCode, pdndServicesInvocation, onboardingRequest)
+                .map(Optional::of)
                 .switchIfEmpty(MONO_EMPTY_RESPONSE)
 
                 .onErrorResume(InpsDailyRequestLimitException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] Daily limit occurred when calling ANPR service", e);
-                    // TODO Short circuit all calls on that date
+                    // TODO Short circuit all calls on that date?
                     return MONO_EMPTY_RESPONSE;
                 });
+    }
+
+    private Mono<List<OnboardingRejectionReason>> combineIseeTypologies(String fiscalCode, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
+        Mono<List<OnboardingRejectionReason>> inpsInvoke = iseeNotFoundRejectionReasonMono;
+        for (IseeTypologyEnum iseeType : pdndServicesInvocation.getIseeTypes()) {
+            inpsInvoke = inpsInvoke
+                    .flatMap(previousResult -> previousResult.isEmpty()
+                            ? Mono.just(previousResult)
+                            : iseeConsultationSoapClient.getIsee(fiscalCode, iseeType)
+                            .map(inpsResponse -> extractData(inpsResponse, onboardingRequest))
+                    );
+        }
+
+        return inpsInvoke;
     }
 
     private List<OnboardingRejectionReason> extractData(ConsultazioneIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
@@ -85,23 +103,27 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
         }
 
         if (onboardingRequest.getIsee() == null) {
-            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
             log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] User having id {} has not compatible ISEE type for initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-            return List.of(new OnboardingRejectionReason(
-                            OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                            OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
-                            criteriaCodeConfig.getAuthority(),
-                            criteriaCodeConfig.getAuthorityLabel(),
-                            "ISEE non disponibile"
-                    )
-            );
+            return iseeNotFoundRejectionReason;
         }
 
         return Collections.emptyList();
     }
 
+    private List<OnboardingRejectionReason> buildMissingIseeRejectionReasons() {
+        CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
+        return List.of(new OnboardingRejectionReason(
+                        OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
+                        OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
+                        criteriaCodeConfig.getAuthority(),
+                        criteriaCodeConfig.getAuthorityLabel(),
+                        "ISEE non disponibile"
+                )
+        );
+    }
+
     private BigDecimal getIseeFromResponse(ConsultazioneIndicatoreResponseType inpsResponse) {
-        if(inpsResponse.getXmlEsitoIndicatore() != null && inpsResponse.getXmlEsitoIndicatore().length>0) {
+        if (inpsResponse.getXmlEsitoIndicatore() != null && inpsResponse.getXmlEsitoIndicatore().length > 0) {
             try {
                 String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
 

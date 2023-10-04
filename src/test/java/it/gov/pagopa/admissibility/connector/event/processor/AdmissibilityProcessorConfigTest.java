@@ -226,7 +226,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 Assertions.assertTrue(
                         // ideally it would be 1, but due to concurrency accesses, more than 1 requests could be performed
                         // if we want to strengthen this behavior, let's consider to introduce the use of it.gov.pagopa.common.reactive.service.LockService
-                        invocations >= 1 && invocations < 10,
+                        invocations >= 1 && invocations < 20,
                         "Unexpected number of ClientId %s invocations: %d".formatted(clientId, invocations)));
     }
 
@@ -597,7 +597,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private void checkKO(EvaluationCompletedDTO evaluation, List<OnboardingRejectionReason> expectedRejectionReason, boolean expectedInitiativeFieldFilled) {
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, evaluation.getStatus());
         Assertions.assertNotNull(evaluation.getOnboardingRejectionReasons());
-        Assertions.assertEquals(evaluation.getOnboardingRejectionReasons(), expectedRejectionReason);
+        Assertions.assertEquals(expectedRejectionReason, evaluation.getOnboardingRejectionReasons());
 
 
         assertEvaluationFields(evaluation, expectedInitiativeFieldFilled);

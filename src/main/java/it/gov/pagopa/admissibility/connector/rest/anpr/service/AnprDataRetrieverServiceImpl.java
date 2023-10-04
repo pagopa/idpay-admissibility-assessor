@@ -28,8 +28,6 @@ import java.util.Optional;
 @Slf4j
 public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
 
-    public static final Mono<Optional<List<OnboardingRejectionReason>>> MONO_EMPTY_RESPONSE = Mono.just(Optional.empty());
-
     private final AnprC001RestClient anprC001RestClient;
     private final CriteriaCodeService criteriaCodeService;
     private final TipoResidenzaDTO2ResidenceMapper residenceMapper;
@@ -58,7 +56,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
 
                 .onErrorResume(PdndServiceTooManyRequestException.class, e -> {
                     log.debug("[ONBOARDING_REQUEST][RESIDENCE_ASSESSMENT] Daily limit occurred when calling ANPR service", e);
-                    // TODO Short circuit all calls on that date for the same clientId
+                    // TODO Short circuit all calls on that date for the same clientId?
                     return MONO_EMPTY_RESPONSE;
                 });
     }
