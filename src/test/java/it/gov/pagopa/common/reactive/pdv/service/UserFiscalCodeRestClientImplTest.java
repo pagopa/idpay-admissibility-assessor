@@ -1,4 +1,4 @@
-package it.gov.pagopa.common.reactive.pdv.service;
+package it.gov.pagopa.admissibility.connector.rest;
 
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
@@ -16,8 +16,8 @@ import reactor.core.Exceptions;
         "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
 
         "app.pdv.base-url=http://localhost:${wiremock.server.port}/pdv",
-        "app.pdv.retry.delay-millis=5000",
-        "app.pdv.retry.max-attempts=3",
+        "app.pdv.retry.delay-millis=100",
+        "app.pdv.retry.max-attempts=1",
         "app.pdv.headers.x-api-key=x_api_key"
 })
 @AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdv")

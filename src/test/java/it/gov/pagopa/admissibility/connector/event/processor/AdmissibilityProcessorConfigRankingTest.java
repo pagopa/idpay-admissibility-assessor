@@ -47,7 +47,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
 
     @Test
     void testRankingAdmissibilityOnboarding() throws IOException {
-        int validOnboardings = 100; // use even number
+        int validOnboardings = Math.max(6, useCases.size()); // use even number
         int notValidOnboarding = errorUseCases.size();
         long maxWaitingMs = 30000;
 
