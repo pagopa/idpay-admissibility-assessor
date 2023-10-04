@@ -81,7 +81,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
     private List<OnboardingRejectionReason> extractData(ConsultazioneIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
         if (inpsResponse != null) {
             onboardingRequest.setIsee(getIseeFromResponse(inpsResponse));
-            // TODO log userId and ISEE obtained from INPS
+            // TODO TBD auditlog userId and ISEE obtained from INPS
         }
 
         if (onboardingRequest.getIsee() == null) {

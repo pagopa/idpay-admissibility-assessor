@@ -32,7 +32,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.KafkaException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -154,7 +153,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
     @Value("${app.onboarding-request.max-retry}")
     private int maxRetry;
-    private int rescheduling=0;
+    private int expectedRescheduling = 0;
 
     @TestConfiguration
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration{}
@@ -191,7 +190,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             checkResponse(evaluation, useCases);
         }
 
-        //checkPdndAccessTokenInvocations(); TODO
+        checkPdndAccessTokenInvocations();
         checkErrorsPublished(notValidOnboarding, maxWaitingMs, errorUseCases);
 
         System.out.printf("""
@@ -210,7 +209,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 timeEnd - timePublishOnboardingStart
         );
 
-        checkOffsets(onboardings.size() + rescheduling, validOnboardings, topicAdmissibilityProcessorOutcome);
+        checkOffsets(onboardings.size() + expectedRescheduling, validOnboardings, topicAdmissibilityProcessorOutcome);
     }
 
     private void checkPdndAccessTokenInvocations() {
@@ -219,13 +218,15 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         Assertions.assertEquals(Set.of(
-                        pagoPaAnprPdndConfig.getClientId() // It should change based on initiative/authority
+                        pagoPaAnprPdndConfig.getClientId() // It should change based on initiative/authority, actually using once for the entire application
                 ),
                 pdndClientIdsInvocations.keySet());
 
         pdndClientIdsInvocations.forEach((clientId, invocations) ->
                 Assertions.assertTrue(
-                        invocations >= 1 && invocations < 10, //ideally it would be 1, but due to concurrency accesses, more than 1 requests could be performed
+                        // ideally it would be 1, but due to concurrency accesses, more than 1 requests could be performed
+                        // if we want to strengthen this behavior, let's consider to introduce the use of it.gov.pagopa.common.reactive.service.LockService
+                        invocations >= 1 && invocations < 10,
                         "Unexpected number of ClientId %s invocations: %d".formatted(clientId, invocations)));
     }
 
@@ -344,8 +345,8 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             // useCase 2: PDND consensuns fail
             OnboardingUseCase.withJustPayload(
                     bias -> OnboardingDTOFaker.mockInstanceBuilder(bias, INITIATIVEID_COMPLETE)
-                            .pdndAccept(false)
-                            .build(),
+                                .pdndAccept(false)
+                                .build(),
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_CONSENSUS_PDND), true)
             ),
 
@@ -385,20 +386,21 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_INVALID_REQUEST_CONSENSUS_OUT_OF_DATE), true)
             ),
 
-            // useCase 6: error when invoking PDND
-            OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_PDNDIVOKEERROR);
+            // useCase -: error when invoking PDND
+            // TODO actually not testable because the entire application will use the same PDNDInitiativeConfig not read from InitiativeConfig
+//            OnboardingUseCase.withJustPayload(
+//                    bias -> {
+//                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_PDNDIVOKEERROR);
+//
+//                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(pdndRestClientSpy)
+//                                .createToken(Mockito.eq(PDND_CLIENT_ID_PDND_ERROR), Mockito.anyString());
+//
+//                        return out;
+//                    },
+//                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE_KO), true)
+//            ),
 
-                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(pdndRestClientSpy)
-                                .createToken(Mockito.eq(PDND_CLIENT_ID_PDND_ERROR), Mockito.anyString());
-
-                        return out;
-                    },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE), true)
-            ),
-
-            // useCase 7: AUTOMATED_CRITERIA fails due to ISEE, RESIDENCE and BIRTHDATE:
+            // useCase 6: AUTOMATED_CRITERIA fails due to ISEE, RESIDENCE and BIRTHDATE:
             //    PDV will return CF_OK fiscalCode, for which:
             //       INPS stub will return a ISEE of 10.000, actual initiative allow > 10.000
             //       ANPR stub will return PAVULLO NEL FRIGNANO as RESIDENCE and 1990-01-01 as BIRTHDATE
@@ -407,7 +409,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE, ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 8: ONBOARDING_OK invoking PDND services:
+            // useCase 7: ONBOARDING_OK invoking PDND services:
             //    PDV will return CF_OK_2 fiscalCode, for which:
             //       INPS stub will return a ISEE of 15.000, actual initiative allow > 10.000
             //       ANPR stub will return ROMA as RESIDENCE and 1790-01-01 as BIRTHDATE
@@ -424,7 +426,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkOk(evaluation, true)
             ),
 
-            // useCase 9: AUTOMATED_CRITERIA fail due to CF not found
+            // useCase 8: AUTOMATED_CRITERIA fail due to CF not found
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -438,7 +440,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
             ),
 
-            // useCase 10 AUTOMATED_CRITERIA fail due to invalid request
+            // useCase 9 AUTOMATED_CRITERIA fail due to invalid request
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -452,7 +454,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
             ),
 
-            // useCase 11: retry due to ISEE Esito KO, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 10: retry due to ISEE Esito KO, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -464,14 +466,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
-                        rescheduling++;
+                        expectedRescheduling++;
 
                         return out;
                     },
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 12: INPS unexpected result code
+            // useCase 11: INPS unexpected result code
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -487,7 +489,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
             // TODO ISEE test when multiple Isee typologies
 
-            // useCase 13: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 12: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -499,14 +501,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
-                        rescheduling++;
+                        expectedRescheduling++;
 
                         return out;
                     },
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 14: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 13: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -518,14 +520,14 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                                 .when(userFiscalCodeServiceSpy)
                                 .getUserFiscalCode(out.getUserId());
 
-                        rescheduling++;
+                        expectedRescheduling++;
 
                         return out;
                     },
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE), true)
             ),
 
-            // useCase 15: exhausted initiative budget
+            // useCase 14: exhausted initiative budget
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
                             .initiativeId(INITIATIVEID_EXHAUSTED)
@@ -533,7 +535,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_BUDGET_EXHAUSTED), true)
             ),
 
-            // useCase 16: evaluation throws exception, but retry header expired
+            // useCase 15: evaluation throws exception, but retry header expired
             new OnboardingUseCase<>(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -547,10 +549,6 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
             )
 
     );
-
-    private static ArgumentMatcher<OnboardingDTO> buildOnboardingRequestOutcomeMatch(EvaluationCompletedDTO evaluation) {
-        return r -> r.getUserId().equals(evaluation.getUserId());
-    }
 
     private static OnboardingRejectionReason buildOnboardingRejectionReasonInvalidRequest(String code) {
         return OnboardingRejectionReason.builder()

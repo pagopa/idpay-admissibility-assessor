@@ -20,7 +20,6 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public abstract class BasePdndService<R> {
-//TODO one concurrent request towards PDND per clientId
 
     protected final ObjectMapper objectMapper;
     protected final PdndServiceConfig<R> pdndServiceConfig;
@@ -51,7 +50,7 @@ public abstract class BasePdndService<R> {
         if (pdndAuthDataCache != null) {
             PdndAuthData pdndAuthData = pdndAuthDataCache.getIfPresent(pdndInitiativeConfig);
             if (pdndAuthData != null) {
-                log.debug("[CACHE_HIT][PDND] Retrieving PDND auth data for {}", pdndInitiativeConfig);
+                log.debug("[CACHE_HIT][PDND] Retrieved cached PDND auth data for {}", pdndInitiativeConfig);
                 return Mono.just(pdndAuthData);
             } else {
                 log.info("[CACHE_MISS][PDND] Retrieving PDND auth data for {}", pdndInitiativeConfig);

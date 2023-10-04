@@ -29,8 +29,7 @@ public class PdndRestClientImpl implements PdndRestClient {
     }
 
     @Override
-    public Mono<ClientCredentialsResponseDTO>
-    createToken(String clientId, String clientAssertion) {
+    public Mono<ClientCredentialsResponseDTO> createToken(String clientId, String clientAssertion) {
         return PerformanceLogger.logTimingOnNext(
                 "PDND_AUTH",
                 authApi.createToken(

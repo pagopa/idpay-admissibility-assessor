@@ -105,7 +105,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
                     )
             );
         } else {
-            // TODO log userId and residence obtained from ANPR
+            // TODO TBD auditlog userId and residence obtained from ANPR
         }
     }
 
@@ -136,7 +136,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
                     )
             );
         } else {
-            // TODO log userId and birth date obtained from ANPR
+            // TODO TBD auditlog userId and birth date obtained from ANPR
         }
     }
 
