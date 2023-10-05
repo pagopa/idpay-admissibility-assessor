@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 
 @TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.admissibility.soap.inps.utils=DEBUG",
         "logging.level.it.gov.pagopa.common.soap.service.SoapLoggingHandler=DEBUG"
 })
 @DirtiesContext

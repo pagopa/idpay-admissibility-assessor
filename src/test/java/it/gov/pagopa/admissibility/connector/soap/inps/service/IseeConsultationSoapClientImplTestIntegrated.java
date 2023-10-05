@@ -14,8 +14,8 @@ import org.springframework.test.context.TestPropertySource;
  */
 @SuppressWarnings({"squid:S3577", "NewClassNamingConvention"}) // suppressing class name not match alert: we are not using the Test suffix in order to let not execute this test by default maven configuration because it depends on properties not pushable. See
 @TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.admissibility.soap.inps.utils=DEBUG",
-        "app.inps.iseeConsultation.base-url=https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps" //Temporary calling Mocked APIM
+        "logging.level.it.gov.pagopa.common.soap.service.SoapLoggingHandler=DEBUG",
+        "app.inps.iseeConsultation.base-url=https://dev01.idpay.internal.dev.cstar.pagopa.it/idpaymock/idpay/mock/inps/soap/ConsultazioneISEE" //Temporary calling Mocked APIM
 })
 @ContextConfiguration(inheritInitializers = false)
 class IseeConsultationSoapClientImplTestIntegrated extends BaseIntegrationTest {
