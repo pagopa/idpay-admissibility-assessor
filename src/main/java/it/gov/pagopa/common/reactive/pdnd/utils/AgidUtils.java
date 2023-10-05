@@ -3,12 +3,12 @@ package it.gov.pagopa.common.reactive.pdnd.utils;
 import com.auth0.jwt.RegisteredClaims;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.nimbusds.jwt.JWTClaimNames;
-import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
-import it.gov.pagopa.common.reactive.pdnd.dto.PdndAuthData;
-import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.crypto.utils.CryptoUtils;
 import it.gov.pagopa.common.crypto.utils.JwtUtils;
+import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
+import it.gov.pagopa.common.reactive.pdnd.dto.PdndAuthData;
+import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import jakarta.xml.bind.DatatypeConverter;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -16,6 +16,7 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,7 +29,7 @@ public class AgidUtils {
 
     // Algoritm logic could contain blocking code, using a Mono which allows blocking logic
     private static final Mono<String> BLOCK_ALLOWED_MONO = Mono.just("x").publishOn(Schedulers.boundedElastic());
-    private static final Random random = new Random();
+    private static final Random random = new SecureRandom();
 
     private AgidUtils() {
     }
