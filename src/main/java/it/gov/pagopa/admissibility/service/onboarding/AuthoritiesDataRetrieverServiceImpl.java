@@ -79,6 +79,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         }
 
         PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes);
+        log.debug("[ONBOARDING_REQUEST] Requesting pdnd data {} for userId {} and initiativeId {}", pdndServicesInvocation, onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         if (pdndServicesInvocation.requirePdndInvocation()) {
             //PdndInitiativeConfig pdndInitiativeConfig = initiativeConfig.getPdndInitiativeConfig(); TODO it should be read from initiative

@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.soap.inps.utils=DEBUG",
+        "logging.level.it.gov.pagopa.common.soap.service.SoapLoggingHandler=DEBUG"
 })
 @DirtiesContext
 public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrationTest {
@@ -27,6 +28,7 @@ public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrati
     public static final String FISCAL_CODE_INVALIDREQUEST = "CF_INVALID_REQUEST";
     public static final String FISCAL_CODE_RETRY = "CF_INPS_RETRY";
     public static final String FISCAL_CODE_UNEXPECTED_RESULT_CODE = "CF_INPS_UNEXPECTED_RESULT_CODE";
+    public static final String FISCAL_CODE_FAULT_MESSAGE = "CF_INPS_FAULT_MESSAGE";
     public static final String FISCAL_CODE_TOOMANYREQUESTS = "CF_INPS_TOO_MANY_REQUESTS";
 
     @SpyBean
@@ -75,5 +77,12 @@ public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrati
     void getIseeTooManyRequests(){
         Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_TOOMANYREQUESTS, IseeTypologyEnum.ORDINARIO);
         Assertions.assertThrows(InpsDailyRequestLimitException.class, mono::block);
+    }
+
+    @Test
+    void getIseeFaultMessage(){
+        ConsultazioneIndicatoreResponseType result = iseeConsultationSoapClient.getIsee(FISCAL_CODE_FAULT_MESSAGE, IseeTypologyEnum.ORDINARIO).block();
+        Assertions.assertNotNull(result);
+        Assertions.assertNull(result.getXmlEsitoIndicatore());
     }
 }

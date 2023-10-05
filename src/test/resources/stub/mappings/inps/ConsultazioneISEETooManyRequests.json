@@ -15,6 +15,9 @@
     ]
   },
   "response": {
-    "status": "429"
+    "status": "429",
+    "headers": {
+      "Content-Type": "text/xml"
+    }
   }
 }

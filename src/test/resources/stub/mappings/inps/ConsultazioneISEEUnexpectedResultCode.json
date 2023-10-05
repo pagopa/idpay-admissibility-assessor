@@ -15,6 +15,9 @@
     ]
   },
   "response": {
-    "status": "503"
+    "status": "503",
+    "headers": {
+      "Content-Type": "text/xml"
+    }
   }
 }

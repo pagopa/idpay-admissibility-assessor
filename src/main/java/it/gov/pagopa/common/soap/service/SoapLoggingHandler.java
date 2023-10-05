@@ -31,8 +31,7 @@ public class SoapLoggingHandler implements SOAPHandler<SOAPMessageContext> {
             String msgType = isOutboundMessage
                     ? "OUTBOUND MESSAGE"
                     : "INBOUND MESSAGE";
-            try {
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 message.writeTo(outputStream);
                 log.debug("Obtained a {} message: {}", msgType, outputStream);
             } catch (SOAPException | IOException e) {
@@ -45,8 +44,7 @@ public class SoapLoggingHandler implements SOAPHandler<SOAPMessageContext> {
     @Override
     public boolean handleFault(SOAPMessageContext context) {
         SOAPMessage message = context.getMessage();
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()){
             message.writeTo(outputStream);
             log.info("Obtained a fault message: {}", outputStream);
         } catch (SOAPException | IOException e) {
