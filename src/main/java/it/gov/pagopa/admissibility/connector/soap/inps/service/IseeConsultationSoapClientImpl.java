@@ -47,17 +47,19 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                         .flatMap(response -> {
                             ConsultazioneIndicatoreResponseType result = response.getConsultazioneIndicatoreResult();
                             if (RETRYABLE_OUTCOMES.contains(result.getEsito())) {
-                                log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}; {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore(), result);
+                                log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore());
                                 return Mono.empty(); // Returning empty in order to retry later
                             } else {
-                                log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned no data!  esito:{} id:{}: {}; {}", result.getEsito(), result.getIdRichiesta(), result.getDescrizioneErrore(), result);
+                                if(!EsitoEnum.OK.equals(result.getEsito())){
+                                    log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned no data!  esito:{} id:{}: {}", result.getEsito(), result.getIdRichiesta(), result.getDescrizioneErrore());
+                                }
                                 return Mono.just(result);
                             }
                         })
 
                         //TODO define error code for retry
                         .onErrorResume(ExecutionException.class, e -> {
-                            if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("HTTP 429")) {
+                            if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("Too Many Requests")) {
                                 return Mono.error(new InpsDailyRequestLimitException(e));
                             } else {
                                 log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e.getCause());
