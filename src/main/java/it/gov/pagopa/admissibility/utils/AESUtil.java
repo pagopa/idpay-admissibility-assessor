@@ -80,19 +80,13 @@ public class AESUtil {
     private byte[] doFinal(int encryptMode, SecretKey key, byte[] bytes) {
         try {
             GCMParameterSpec parameterSpec = new GCMParameterSpec(gcmTagLength * 8, iv.getBytes());
-            try {
-                Cipher cipher = Cipher.getInstance(this.cipherInstance);
-                cipher.init(encryptMode, key, parameterSpec);
-                return cipher.doFinal(bytes);
-            }
-            catch (NoSuchPaddingException | NoSuchAlgorithmException e) {
-                throw fail(e);
-            }
-        }
-        catch (InvalidKeyException
-               | InvalidAlgorithmParameterException
-               | IllegalBlockSizeException
-               | BadPaddingException e) {
+            Cipher cipher = Cipher.getInstance(this.cipherInstance);
+            cipher.init(encryptMode, key, parameterSpec);
+            return cipher.doFinal(bytes);
+        } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidKeyException
+                 | InvalidAlgorithmParameterException
+                 | IllegalBlockSizeException
+                 | BadPaddingException e) {
             throw fail(e);
         }
     }
