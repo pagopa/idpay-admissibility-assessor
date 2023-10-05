@@ -69,6 +69,7 @@ public class JdkSslUtils {
         }
     }
 
+    @SuppressWarnings("squid:java:S5852") // Suppressing "slow regular expressions" rule: applied possessive quantifiers to resolve
     private static String[] extractCertificates(String trustCertCollectionString) {
         return trustCertCollectionString.replaceAll("(-++\\s*+END\\s++CERTIFICATE\\s*+-++)\\s*+", "$1###").split("###");
     }
