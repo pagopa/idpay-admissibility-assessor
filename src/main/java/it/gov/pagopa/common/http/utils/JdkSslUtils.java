@@ -70,6 +70,6 @@ public class JdkSslUtils {
     }
 
     private static String[] extractCertificates(String trustCertCollectionString) {
-        return trustCertCollectionString.replaceAll("(-+END\\s*CERTIFICATE\\s*-+\\s*)", "$1###").split("###");
+        return trustCertCollectionString.replaceAll("(-++\\s*+END\\s++CERTIFICATE\\s*-+)\\s*+", "$1###").split("###");
     }
 }
