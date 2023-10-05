@@ -29,6 +29,8 @@ microservice-chart:
 
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
+    PAGOPA_PDND_CONFIGURATION_JWT_KEY: pagopa-pdnd-configuration-jwt-key
+    PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB: pagopa-pdnd-configuration-jwt-pub
 
   keyvault:
     name: "cstar-d-idpay-kv"
@@ -38,11 +40,18 @@ microservice-chart:
     JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar -agentlib:jdwp=transport=dt_socket,server=y,address=8001,suspend=n -Dcom.sun.management.jmxremote=true -Dcom.sun.management.jmxremote.port=3002 -Dcom.sun.management.jmxremote.rmi.port=3003 -Djava.rmi.server.hostname=127.0.0.1 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
+
     #TODO to mock?
     PDND_BASE_URL: https://auth.uat.interop.pagopa.it
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
+
+    #This should be removed once read from initiative
+    PAGOPA_PDND_CONFIGURATION_CLIENT_ID: 5df9f218-df34-4f05-a9c4-e4a74b2a8e3f
+    PAGOPA_PDND_CONFIGURATION_KID: r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY
+    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID: 8af4c795-8066-4407-a0b3-c95c2daefd6c
+
     ANPR_ENV: dev
     ANPR_AUTH_USERID: pagopa-idpay
-    #Now we are using MOCK on APIM for ANPR and INPS
     ANPR_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-anpr
+
     INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps

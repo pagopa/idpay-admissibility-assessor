@@ -102,6 +102,7 @@ microservice-chart:
     UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
     UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv
 
+
   # nodeSelector: {}
 
   # tolerations: []
