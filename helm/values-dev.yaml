@@ -42,7 +42,7 @@ microservice-chart:
     REDIS_CACHE_ENABLED: "true"
 
     #TODO set mock URL
-    #PDND_BASE_URL: http://idpaymock:8080/idpay/mock/pdnd
+    #PDND_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/pdnd
     PDND_BASE_URL: https://auth.uat.interop.pagopa.it
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
 
@@ -54,7 +54,7 @@ microservice-chart:
     ANPR_ENV: dev
     ANPR_AUTH_USERID: pagopa-idpay
     #TODO set mock URL
-    #ANPR_BASE_URL: http://idpaymock:8080/idpay/mock/anpr
+    #ANPR_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/anpr
     ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
 
-    INPS_ISEE_CONSULTATION_BASE_URL: http://idpaymock:8080/idpay/mock/inps/soap
+    INPS_ISEE_CONSULTATION_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/inps/soap
