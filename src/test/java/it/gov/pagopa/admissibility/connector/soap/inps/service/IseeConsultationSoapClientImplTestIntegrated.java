@@ -27,6 +27,6 @@ class IseeConsultationSoapClientImplTestIntegrated extends BaseIntegrationTest {
     void callService() {
         ConsultazioneIndicatoreResponseType result = iseeConsultationSoapClient.getIsee("CF_OK", IseeTypologyEnum.ORDINARIO).block();
         Assertions.assertNotNull(result);
-        System.out.println(result);
+        System.out.println(result.getEsito());
     }
 }
