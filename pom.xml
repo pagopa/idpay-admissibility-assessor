@@ -369,7 +369,7 @@
 				</executions>
 				<configuration>
 					<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/</wsdlDirectory>
-					<wsdlLocation>wsdocs/inps/</wsdlLocation>
+					<wsdlLocation>wsdocs/inps/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
 					<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client</packageName>
 					<sourceDestDir>${project.build.directory}/generated-sources/wsimport/</sourceDestDir>
 					<bindingFiles>
