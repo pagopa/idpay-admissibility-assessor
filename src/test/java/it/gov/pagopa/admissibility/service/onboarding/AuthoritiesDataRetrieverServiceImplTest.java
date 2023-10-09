@@ -1,31 +1,38 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
-import it.gov.pagopa.admissibility.connector.rest.mock.ResidenceMockRestClient;
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.utils.InpsInvokeTestUtils;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.dto.rest.UserInfoPDV;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.mock.isee.model.Isee;
-import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import it.gov.pagopa.common.utils.TestUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
@@ -33,54 +40,67 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
+
+import static it.gov.pagopa.admissibility.utils.OnboardingConstants.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
 
-    @Mock
-    private OnboardingContextHolderService onboardingContextHolderServiceMock;
-    @Mock
-    private CriteriaCodeService criteriaCodeServiceMock;
-    @Mock
-    private ReactiveMongoTemplate reactiveMongoTemplateMock;
-    @Mock
-    private UserFiscalCodeRestClient userRestClientMock;
+    private static final String FISCAL_CODE = "FISCAL_CODE";
+    public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
+            "CLIENTID",
+            "KID",
+            "PURPOSEID"
+    );
+    public static final List<IseeTypologyEnum> ISEE_TYPOLOGIES_REQUESTED = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
+
+    private final OffsetDateTime TEST_DATE_TIME = OffsetDateTime.now();
 
     @Mock
-    private ResidenceMockRestClient residenceMockRestClientMock;
+    private UserFiscalCodeService userFiscalCodeServiceMock;
+    @Mock
+    private AnprDataRetrieverService anprDataRetrieverServiceSpy;
+    @Mock
+    private InpsDataRetrieverService inpsDataRetrieverServiceSpy;
+    @Mock
+    private OnboardingRescheduleService onboardingRescheduleServiceMock;
 
     private AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
 
-    private OnboardingDTO onboardingDTO;
+    private OnboardingDTO onboardingRequest;
     private InitiativeConfig initiativeConfig;
     private Message<String> message;
 
+    private BigDecimal expectedIsee;
+    private Residence expectedResidence;
+    private BirthDate expectedBirthDate;
+
     @BeforeEach
     void setUp() {
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(
-                onboardingContextHolderServiceMock,
-                null,
-                60L,
-                false,
-                criteriaCodeServiceMock,
-                reactiveMongoTemplateMock,
-                userRestClientMock,
-                residenceMockRestClientMock);
+        PagoPaAnprPdndConfig pagoPaAnprPdndConfig = new PagoPaAnprPdndConfig();
+        pagoPaAnprPdndConfig.setClientId("CLIENTID");
+        pagoPaAnprPdndConfig.setKid("KID");
+        pagoPaAnprPdndConfig.setPurposeId("PURPOSEID");
 
-        onboardingDTO = OnboardingDTO.builder()
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(60L, false, onboardingRescheduleServiceMock, userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, anprDataRetrieverServiceSpy, pagoPaAnprPdndConfig);
+
+        onboardingRequest = OnboardingDTO.builder()
                 .userId("USERID")
                 .initiativeId("INITIATIVEID")
                 .tc(true)
                 .status("STATUS")
                 .pdndAccept(true)
-                .tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
-                .criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0))
+                .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
+                .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .build();
 
         LocalDate now = LocalDate.now();
-        List<IseeTypologyEnum> typology = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
         initiativeConfig = InitiativeConfig.builder()
                 .initiativeId("INITIATIVEID")
                 .initiativeName("INITITIATIVE_NAME")
@@ -88,153 +108,205 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .pdndToken("PDND_TOKEN")
                 .initiativeBudget(new BigDecimal("100"))
                 .beneficiaryInitiativeBudget(BigDecimal.TEN)
                 .rankingInitiative(Boolean.TRUE)
-                .automatedCriteria(List.of(new AutomatedCriteriaDTO("AUTH1", "ISEE", null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, typology)))
+                .automatedCriteria(List.of(
+                        new AutomatedCriteriaDTO("AUTH1", CRITERIA_CODE_ISEE, null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, ISEE_TYPOLOGIES_REQUESTED, PDND_INITIATIVE_CONFIG)))
                 .build();
 
-        message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingDTO)).build();
+        ConsultazioneIndicatoreResponseType inpsResponse = InpsInvokeTestUtils.buildInpsResponse(EsitoEnum.OK);
+        expectedIsee = InpsInvokeTestUtils.getIseeFromResponse(inpsResponse);
 
-        Mockito.lenient().when(criteriaCodeServiceMock.getCriteriaCodeConfig(Mockito.anyString())).thenReturn(new CriteriaCodeConfig(
-                "ISEE",
-                "INPS",
-                "Istituto Nazionale Previdenza Sociale",
-                "ISEE"
-        ));
+        expectedResidence = Residence.builder().city("Milano").province("MI").postalCode("20143").build();
+        expectedBirthDate = BirthDate.builder().year("2001").age(LocalDate.now().getYear() - 2001).build();
 
-        Mockito.lenient().when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.any(), Mockito.eq("mocked_isee")))
-                .thenReturn(Mono.empty());
+        message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboardingRequest)).build();
     }
 
-    @Test
-    void retrieveIseeAutomatedCriteriaAndRanking() {
-        // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE", "BIRTHDATE"));
-        initiativeConfig.setRankingFields(List.of(
-                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
-        Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("PTRGNL73S51X000Q").build()));
+    @AfterEach
+    void verifyMockNoMoreInvocation() {
+        Mockito.verifyNoMoreInteractions(userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, anprDataRetrieverServiceSpy, onboardingRescheduleServiceMock);
+    }
 
-        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
-                .thenReturn(Mono.just(getResidence()));
+    //region test utilities
+    private PdndServicesInvocation configureAuthoritiesDataRetrieverMocks(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+        PdndServicesInvocation expectedPdndServicesInvocation = buildExpectedPdndServiceInvocation(getIsee, getResidence, getBirthDate);
+        if (expectedPdndServicesInvocation.requirePdndInvocation()) {
+            Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingRequest.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
+        }
+        configureInpsDataRetriever(expectedPdndServicesInvocation);
+        configureAnprDataRetriever(expectedPdndServicesInvocation);
+        return expectedPdndServicesInvocation;
+    }
+
+    private PdndServicesInvocation buildExpectedPdndServiceInvocation(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+        return new PdndServicesInvocation(getIsee, ISEE_TYPOLOGIES_REQUESTED, getResidence, getBirthDate);
+    }
+
+    private void configureAnprDataRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
+        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
+            if (expectedPdndServicesInvocation.isGetResidence()) {
+                onboardingRequest.setResidence(expectedResidence);
+            }
+            if (expectedPdndServicesInvocation.isGetBirthDate()) {
+                onboardingRequest.setBirthDate(expectedBirthDate);
+            }
+            return Mono.just(Optional.of(Collections.emptyList()));
+        }));
+    }
+
+    private void configureInpsDataRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
+        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
+            if (expectedPdndServicesInvocation.isGetIsee()) {
+                onboardingRequest.setIsee(expectedIsee);
+            }
+            return Mono.just(Optional.of(Collections.emptyList()));
+        }));
+    }
+//endregion
+
+    @ParameterizedTest
+    @CsvSource({
+            "true, true, true",
+            "true, false, false",
+            "false, true, false",
+            "false, false, true",
+    })
+    void retrieveAllAuthorities_AutomatedCriteria(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(
+                Stream.of(getIsee ? CRITERIA_CODE_ISEE : null,
+                                getResidence ? CRITERIA_CODE_RESIDENCE : null,
+                                getBirthDate ? CRITERIA_CODE_BIRTHDATE : null)
+                        .filter(Objects::nonNull)
+                        .toList());
+        initiativeConfig.setRankingFields(Collections.emptyList());
+
+        retrieveAllAuthorities(getIsee, getResidence, getBirthDate);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "true, true, true",
+            "true, false, false",
+            "false, true, false",
+            "false, false, true",
+    })
+    void retrieveAllAuthorities_Ranking(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(Collections.emptyList());
+        initiativeConfig.setRankingFields(Stream.of(
+                getIsee? Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build(): null,
+                getResidence? Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(): null,
+                getBirthDate? Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_BIRTHDATE).direction(Sort.Direction.ASC).build(): null)
+                .filter(Objects::nonNull)
+                .toList());
+
+        retrieveAllAuthorities(getIsee, getResidence, getBirthDate);
+    }
+
+    void retrieveAllAuthorities(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+        configureAuthoritiesDataRetrieverMocks(getIsee, getResidence, getBirthDate);
 
         // When
-        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
+        Assertions.assertEquals(getIsee ? expectedIsee : null, result.getIsee());
+        Assertions.assertEquals(getResidence ? expectedResidence : null, result.getResidence());
+        Assertions.assertEquals(getBirthDate ? expectedBirthDate : null, result.getBirthDate());
     }
 
     @Test
-    void retrieveBirthdateNotValidCF() {
+    void dontRetrieveAuthorities_notRequired() {
         // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("BIRTHDATE"));
-        Mockito.when(userRestClientMock.retrieveUserInfo(Mockito.anyString())).thenReturn(Mono.just(UserInfoPDV.builder().pii("123456789AB").build()));
+        initiativeConfig.setAutomatedCriteriaCodes(Collections.emptyList());
+        initiativeConfig.setRankingFields(Collections.emptyList());
 
         // When
-        Executable executable = () -> authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
-
-        //Then
-        Assertions.assertThrows(OnboardingException.class, executable);
-    }
-
-    @Test
-    void retrieveIseeAutomatedCriteriaAndNotRanking() {
-        // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE", "RESIDENCE"));
-        initiativeConfig.setRankingFields(List.of(
-                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
-
-        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
-                .thenReturn(Mono.just(getResidence()));
-
-        // When
-        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
-
-        //Then
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("50666"), result.getIsee());
-    }
-
-    @Test
-    void retrieveIseeNotAutomatedCriteriaNotRanking() {
-        // Given
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
-        initiativeConfig.setRankingFields(List.of(
-                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build()));
-
-        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID"))
-                .thenReturn(Mono.just(
-                        Residence.builder()
-                                        .city("Roma")
-                                        .cityCouncil("Roma")
-                                        .province("Roma")
-                                        .region("Lazio")
-                                        .postalCode("00187")
-                                        .nation("Italia")
-                                        .build()
-                ));
-
-        // When
-        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
 
         //Then
         Assertions.assertNotNull(result);
         Assertions.assertNull(result.getIsee());
-        Assertions.assertEquals("Roma", result.getResidence().getCity());
+        Assertions.assertNull(result.getResidence());
+        Assertions.assertNull(result.getBirthDate());
     }
 
     @Test
-    void retrieveIseeRankingAndNotAutomatedCriteria() {
+    void dontRetrieveAuthorities_alreadyProvided() {
         // Given
-        onboardingDTO.setUserId("USERID2");
-
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("RESIDENCE"));
+        initiativeConfig.setAutomatedCriteriaCodes(List.of(CRITERIA_CODE_ISEE, CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_BIRTHDATE));
         initiativeConfig.setRankingFields(List.of(
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build(),
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.ASC).build(),
-                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()
+                Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_BIRTHDATE).direction(Sort.Direction.ASC).build()));
 
-        ));
-
-        Mockito.when(residenceMockRestClientMock.retrieveResidence("USERID2"))
-                .thenReturn(Mono.just(getResidence()));
+        onboardingRequest.setIsee(expectedIsee);
+        onboardingRequest.setResidence(expectedResidence);
+        onboardingRequest.setBirthDate(expectedBirthDate);
 
         // When
-        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
 
         //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(new BigDecimal("27589"), result.getIsee());
-        Assertions.assertEquals("Milano", result.getResidence().getCity());
+        Assertions.assertEquals(expectedIsee, result.getIsee());
+        Assertions.assertEquals(expectedResidence, result.getResidence());
+        Assertions.assertEquals(expectedBirthDate, result.getBirthDate());
     }
 
-    private Residence getResidence() {
-        return Residence.builder()
-                .city("Milano")
-                .cityCouncil("Milano")
-                .province("Milano")
-                .region("Lombardia")
-                .postalCode("20124")
-                .nation("Italia")
-                .build();
+
+    @Test
+    void testDailyLimitReached() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of(CRITERIA_CODE_ISEE, CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_BIRTHDATE));
+        initiativeConfig.setRankingFields(Collections.emptyList());
+
+        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
+        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
+        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
+
+        // When
+        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
+
+        // Then
+        Assertions.assertNull(result);
+
+        Mockito.verify(onboardingRescheduleServiceMock)
+                .reschedule(Mockito.eq(onboardingRequest), Mockito.argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), Mockito.eq("Daily limit reached"), Mockito.any());
     }
 
     @Test
-    void retrieveIseeTypeNotCompatible() {
-        initiativeConfig.setAutomatedCriteriaCodes(List.of("ISEE"));
+    void testRejectionReasons() {
+        // Given
+        initiativeConfig.setAutomatedCriteriaCodes(List.of(CRITERIA_CODE_ISEE, CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_BIRTHDATE));
 
-        Mockito.when(reactiveMongoTemplateMock.findById(Mockito.anyString(), Mockito.eq(Isee.class), Mockito.eq("mocked_isee")))
-                .thenReturn(Mono.just(
-                        Isee.builder()
-                        .userId(onboardingDTO.getUserId())
-                        .iseeTypeMap(Map.of("MINORENNE", BigDecimal.ONE))
-                        .build()
-                ));
+        OnboardingRejectionReason expectedRejectionReasonISEE = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO, CRITERIA_CODE_ISEE, null, null, null);
+        OnboardingRejectionReason expectedRejectionReasonResidence = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO, CRITERIA_CODE_RESIDENCE, null, null, null);
+        OnboardingRejectionReason expectedRejectionReasonBirthdate = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO, CRITERIA_CODE_BIRTHDATE, null, null, null);
 
-        Executable executable = () -> authoritiesDataRetrieverService.retrieve(onboardingDTO, initiativeConfig, message).block();
+        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
 
-        Assertions.assertThrows(OnboardingException.class, executable);
+        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
+                .thenReturn(Mono.just(Optional.of(List.of(expectedRejectionReasonISEE))));
+
+        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
+                .thenReturn(Mono.just(Optional.of(List.of(expectedRejectionReasonResidence, expectedRejectionReasonBirthdate))));
+
+        // When
+        Mono<OnboardingDTO> retrieveMono = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message);
+        try {
+            retrieveMono.block();
+            Assertions.fail("Expected exception");
+        } catch (OnboardingException e) {
+            Assertions.assertEquals(List.of(
+                    expectedRejectionReasonISEE,
+                    expectedRejectionReasonResidence,
+                    expectedRejectionReasonBirthdate
+            ), e.getRejectionReasons());
+        }
     }
 }

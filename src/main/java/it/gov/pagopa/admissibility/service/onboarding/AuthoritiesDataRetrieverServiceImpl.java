@@ -1,207 +1,139 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
-import it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClient;
-import it.gov.pagopa.admissibility.connector.rest.mock.ResidenceMockRestClient;
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
-import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.mock.isee.model.Isee;
-import it.gov.pagopa.admissibility.service.CriteriaCodeService;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
+import it.gov.pagopa.common.utils.CommonConstants;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.stream.function.StreamBridge;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
 public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetrieverService {
+
     private final Long delayMinutes;
     private final boolean nextDay;
-    private final OnboardingContextHolderService onboardingContextHolderService;
-    private final CriteriaCodeService criteriaCodeService;
-    private final ReactiveMongoTemplate mongoTemplate;
-    private final UserFiscalCodeRestClient userRestClient;
 
-    private final ResidenceMockRestClient residenceMockRestClient;
+    private final UserFiscalCodeService userFiscalCodeService;
+    private final InpsDataRetrieverService inpsDataRetrieverService;
+    private final AnprDataRetrieverService anprDataRetrieverService;
+    private final OnboardingRescheduleService onboardingRescheduleService;
+    private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
 
-    private final StreamBridge streamBridge;
+    public AuthoritiesDataRetrieverServiceImpl(
+            @Value("${app.onboarding-request.delay-message.delay-minutes}") Long delayMinutes,
+            @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
 
-    public AuthoritiesDataRetrieverServiceImpl(OnboardingContextHolderService onboardingContextHolderService,
-                                               StreamBridge streamBridge,
-                                               @Value("${app.onboarding-request.delay-message.delay-minutes}") Long delayMinutes,
-                                               @Value("${app.onboarding-request.delay-message.next-day}") boolean nextDay,
-                                               CriteriaCodeService criteriaCodeService,
-                                               ReactiveMongoTemplate mongoTemplate,
-                                               UserFiscalCodeRestClient userRestClient, ResidenceMockRestClient residenceMockRestClient) {
-        this.onboardingContextHolderService = onboardingContextHolderService;
-        this.streamBridge = streamBridge;
+            OnboardingRescheduleService onboardingRescheduleService,
+            UserFiscalCodeService userFiscalCodeService,
+            InpsDataRetrieverService inpsDataRetrieverService,
+            AnprDataRetrieverService anprDataRetrieverService,
+            PagoPaAnprPdndConfig pagoPaAnprPdndConfig) {
+        this.onboardingRescheduleService = onboardingRescheduleService;
         this.delayMinutes = delayMinutes;
         this.nextDay = nextDay;
-        this.criteriaCodeService = criteriaCodeService;
-        this.mongoTemplate = mongoTemplate;
-        this.userRestClient = userRestClient;
-        this.residenceMockRestClient = residenceMockRestClient;
+        this.userFiscalCodeService = userFiscalCodeService;
+        this.inpsDataRetrieverService = inpsDataRetrieverService;
+        this.anprDataRetrieverService = anprDataRetrieverService;
+        this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
     }
 
     @Override
     public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         log.trace("[ONBOARDING_REQUEST] [AUTOMATED_CRITERIA_FIELD_FILL] retrieving automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
-
-        return Mono.just(onboardingRequest)
-                // ISEE
-                .flatMap(o -> {
-                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_ISEE, onboardingRequest, initiativeConfig)) {
-                        return retrieveIsee(o, initiativeConfig);
-                    }
-
-                    return Mono.just(o);
-                })
-                // RESIDENCE
-                .flatMap(o -> {
-                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_RESIDENCE, onboardingRequest, initiativeConfig)) {
-                        return retrieveResidence(onboardingRequest);
-                    }
-                    return Mono.just(o);
-                })
-                // BIRTHDATE
-                .flatMap(o -> {
-                    if (requiresCritierium(OnboardingConstants.CRITERIA_CODE_BIRTHDATE, onboardingRequest, initiativeConfig)) {
-                        return userRestClient.retrieveUserInfo(o.getUserId())
-                                .map(u -> validateCFAndCalculateBirthDate(u.getPii()))
-                                .doOnNext(bd -> o.setBirthDate(
-                                        BirthDate.builder()
-                                                .age(Utils.getAge(bd))
-                                                .year(bd.getYear()+"")
-                                                .build()
-                                ))
-                                .then(Mono.just(o));
-                    }
-
-                    return Mono.just(o);
-                });
-    }
-
-    private Mono<OnboardingDTO> retrieveResidence(OnboardingDTO onboardingRequest) {
-        return residenceMockRestClient.retrieveResidence(onboardingRequest.getUserId())
-                .map(r -> {
-                    onboardingRequest.setResidence(r);
-                    return  onboardingRequest;
-                });
-
-    }
-
-    private boolean requiresCritierium(String criterium, OnboardingDTO o, InitiativeConfig initiativeConfig) {
-        return switch (criterium) {
-            case OnboardingConstants.CRITERIA_CODE_ISEE ->
-                    o.getIsee() == null && is2retrieve(initiativeConfig, criterium);
-            case OnboardingConstants.CRITERIA_CODE_RESIDENCE ->
-                    o.getResidence() == null && is2retrieve(initiativeConfig, criterium);
-            case OnboardingConstants.CRITERIA_CODE_BIRTHDATE ->
-                    o.getBirthDate() == null && is2retrieve(initiativeConfig, criterium);
-            default -> false;
-        };
-    }
-
-    private LocalDate validateCFAndCalculateBirthDate(String cf) {
-        // Check if input fiscal code matches the legal structure
-        try {
-            return Utils.calculateBirthDateFromFiscalCode(cf);
-        } catch (Exception e) {
-            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
-            throw new OnboardingException(
-                    List.of(new OnboardingRejectionReason(
-                            OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO,
-                            OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO,
-                            criteriaCodeConfig.getAuthority(),
-                            criteriaCodeConfig.getAuthorityLabel(),
-                            "Data di nascita non disponibile"
-                    )),
-                    "[ADMISSIBILITY] Fiscal code is not valid!",
-                    e
-            );
-        }
-    }
-
-    private Mono<OnboardingDTO> retrieveIsee(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        return this.retrieveUserIsee(onboardingRequest.getUserId())
-                .switchIfEmpty(Mono.defer(() -> mockIsee(onboardingRequest)))
-                .doOnNext(m -> setIseeIfCorrespondingType(onboardingRequest, initiativeConfig, m))
-                .map(m -> {
-                    CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
-
-                    if (onboardingRequest.getIsee() == null) {
-                        throw new OnboardingException(
-                                List.of(new OnboardingRejectionReason(
-                                        OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
-                                        OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
-                                        criteriaCodeConfig.getAuthority(),
-                                        criteriaCodeConfig.getAuthorityLabel(),
-                                        "ISEE non disponibile"
-                                )),
-                                "User having id %s has not compatible type for initiative %s".formatted(onboardingRequest.getUserId(), initiativeConfig.getInitiativeId()));
-                    }
-
-                    return onboardingRequest;
-                });
-    }
-
-    private Mono<Map<String, BigDecimal>> mockIsee(OnboardingDTO onboardingRequest) {
-        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] ISEE of user {} not found in collection mocked_isee",
-                onboardingRequest.getUserId());
-
-        Map<String, BigDecimal> iseeMockMap = new HashMap<>();
-        List<IseeTypologyEnum> iseeList = Arrays.asList(IseeTypologyEnum.values());
-
-        int randomTypology = new Random(onboardingRequest.getUserId().hashCode()).nextInt(1, iseeList.size()+1);
-        for (int i = 0; i < randomTypology; i++) {
-            Random value = new Random((onboardingRequest.getUserId() + iseeList.get(i)).hashCode());
-            iseeMockMap.put(iseeList.get(i).name(), new BigDecimal(value.nextInt(1_000, 100_000)));
+        List<IseeTypologyEnum> iseeTypes;
+        if(onboardingRequest.getIsee()!=null){
+            iseeTypes = Collections.emptyList();
+        } else {
+            iseeTypes = initiativeConfig.getAutomatedCriteria().stream()
+                    .filter(c -> OnboardingConstants.CRITERIA_CODE_ISEE.equals(c.getCode()))
+                    .map(AutomatedCriteriaDTO::getIseeTypes)
+                    .flatMap(Collection::stream)
+                    .toList();
         }
 
-        return Mono.just(iseeMockMap);
-    }
+        PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes);
+        log.debug("[ONBOARDING_REQUEST] Requesting pdnd data {} for userId {} and initiativeId {}", pdndServicesInvocation, onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
-    private Mono<Map<String,BigDecimal>> retrieveUserIsee(String userId) {
-        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] Fetching ISEE of user {}", userId);
-
-            return mongoTemplate.findById(
-                    userId,
-                    Isee.class,
-                    "mocked_isee"
-            ).map(Isee::getIseeTypeMap);
-    }
-
-    private void setIseeIfCorrespondingType(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, BigDecimal> iseeMap) {
-        log.info("[ONBOARDING_REQUEST][MOCK_ISEE] User having id {} ISEE: {}", onboardingRequest.getUserId(), iseeMap);
-
-        for (AutomatedCriteriaDTO automatedCriteriaDTO : initiativeConfig.getAutomatedCriteria()) {
-            if (automatedCriteriaDTO.getCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE)) {
-                for (IseeTypologyEnum iseeTypologyEnum : ObjectUtils.firstNonNull(automatedCriteriaDTO.getIseeTypes(), List.of(IseeTypologyEnum.ORDINARIO))) {
-                    if (iseeMap.containsKey(iseeTypologyEnum.name())) {
-                        onboardingRequest.setIsee(iseeMap.get(iseeTypologyEnum.name()));
-                        break;
-                    }
-                }
-            }
+        if (pdndServicesInvocation.requirePdndInvocation()) {
+            //PdndInitiativeConfig pdndInitiativeConfig = initiativeConfig.getPdndInitiativeConfig(); TODO it should be read from initiative
+            return  userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
+                    .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message, pagoPaAnprPdndConfig));
         }
+
+        return Mono.just(onboardingRequest);
     }
 
+    @NonNull
+    private PdndServicesInvocation configurePdndServicesInvocation(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, List<IseeTypologyEnum> iseeTypes) {
+        return new PdndServicesInvocation(
+                onboardingRequest.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE),
+                iseeTypes,
+                onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)
+        );
+    }
+
+    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, PdndInitiativeConfig pdndInitiativeConfig) {
+        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
+                inpsDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
+
+        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocation =
+                anprDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
+
+        return inpsInvocation
+                .zipWith(anprInvocation)
+                // Handle reschedule of failed invocation, storing the successful if any inside re-published message
+                .mapNotNull(t -> {
+
+                    List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
+                            t.getT1().stream().flatMap(Collection::stream),
+                            t.getT2().stream().flatMap(Collection::stream)
+                    ).toList();
+
+                    if(!rejectionReasons.isEmpty()){
+                        log.debug("[ONBOARDING_REQUEST][ONBOARDING_KO] Authorities data retrieve returned rejection reasons: {}", rejectionReasons);
+                        throw new OnboardingException(rejectionReasons, "Cannot retrieve all required authorities data");
+                    }
+
+                    // not require INPS or it returned data
+                    if (t.getT1().isPresent()
+                            &&
+                            // not require ANPR or it returned data
+                            t.getT2().isPresent()) {
+                        return onboardingRequest;
+                    } else {
+                        onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
+                        return null;
+                    }
+                });
+    }
 
     private boolean is2retrieve(InitiativeConfig initiativeConfig, String criteriaCode) {
         return (initiativeConfig.getAutomatedCriteriaCodes() != null && initiativeConfig.getAutomatedCriteriaCodes().contains(criteriaCode))
@@ -209,23 +141,14 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                 (initiativeConfig.getRankingFields() != null && initiativeConfig.getRankingFields().stream().anyMatch(rankingFieldCodes -> criteriaCode.equals(rankingFieldCodes.getFieldCode())));
     }
 
-    /* TODO send message with schedule delay for servicebus
-    private void rischeduleOnboardingRequest(OnboardingDTO onboardingRequest, Message<String> message) {
-        log.info("[ONBOARDING_REQUEST] [RETRIEVE_ERROR] PDND calls threshold reached");
-        MessageBuilder<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(onboardingRequest)
-                .setHeaders(new MessageHeaderAccessor(message))
-                .setHeader(ServiceBusMessageHeaders.SCHEDULED_ENQUEUE_TIME, calcDelay());
-        streamBridge.send("admissibilityDelayProducer-out-0", delayedMessage.build());
-    }
-
     private OffsetDateTime calcDelay() {
         LocalDate today = LocalDate.now();
-        if(this.nextDay) {
+        if (this.nextDay) {
             LocalTime midnight = LocalTime.MIDNIGHT;
-            return LocalDateTime.of(today, midnight).plusDays(1).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+            return LocalDateTime.of(today, midnight).plusDays(1).atZone(CommonConstants.ZONEID).toOffsetDateTime();
         } else {
-            return LocalDateTime.now().plusSeconds(this.delaySeconds).atZone(ZoneId.of("Europe/Rome")).toOffsetDateTime();
+            return LocalDateTime.now().plusMinutes(this.delayMinutes).atZone(CommonConstants.ZONEID).toOffsetDateTime();
         }
     }
-    */
+
 }

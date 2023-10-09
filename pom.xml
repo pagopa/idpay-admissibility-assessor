@@ -70,6 +70,33 @@
 			<version>5.4.0</version>
 		</dependency>
 
+		<!--JAX-WS-->
+		<dependency>
+			<groupId>jakarta.activation</groupId>
+			<artifactId>jakarta.activation-api</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.soap</groupId>
+			<artifactId>jakarta.xml.soap-api</artifactId>
+			<version>3.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.sun.xml.ws</groupId>
+			<artifactId>jaxws-rt</artifactId>
+			<version>4.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.ws</groupId>
+			<artifactId>jakarta.xml.ws-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.xml.bind</groupId>
+			<artifactId>jakarta.xml.bind-api</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
 		<!--3rd party library-->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -85,6 +112,21 @@
 			<groupId>org.codehaus.janino</groupId>
 			<artifactId>janino</artifactId>
 			<version>3.1.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>32.1.2-jre</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openapitools</groupId>
+			<artifactId>jackson-databind-nullable</artifactId>
+			<version>0.2.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.auth0</groupId>
+			<artifactId>java-jwt</artifactId>
+			<version>4.4.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springdoc</groupId>
@@ -116,6 +158,18 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>5.8.2</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<version>1.8.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -234,6 +288,96 @@
 						<always>false</always>
 						<dirty>-dirty</dirty>
 					</gitDescribe>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.openapitools</groupId>
+				<artifactId>openapi-generator-maven-plugin</artifactId>
+				<version>6.6.0</version>
+				<executions>
+					<execution>
+						<id>idpay-admissibility-assessor-pdnd-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-resources</phase>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/wsdocs/pdnd/pdnd-v1.yaml</inputSpec>
+							<generatorName>java</generatorName>
+							<library>webclient</library>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<configOptions>
+								<swaggerAnnotations>false</swaggerAnnotations>
+								<openApiNullable>false</openApiNullable>
+								<basePackage>it.gov.pagopa.common.pdnd.generated</basePackage>
+								<modelPackage>it.gov.pagopa.common.pdnd.generated.dto</modelPackage>
+								<apiPackage>it.gov.pagopa.common.pdnd.generated.api</apiPackage>
+								<configPackage>it.gov.pagopa.common.pdnd.generated.config</configPackage>
+								<dateLibrary>java17</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
+							</configOptions>
+							<modelNameSuffix>DTO</modelNameSuffix>
+						</configuration>
+					</execution>
+					<execution>
+						<id>idpay-admissibility-assessor-pdnd-residence-assessment-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-resources</phase>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/wsdocs/anpr/C001-consultazioneANPR.yml</inputSpec>
+							<generatorName>java</generatorName>
+							<library>webclient</library>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<configOptions>
+								<swaggerAnnotations>false</swaggerAnnotations>
+								<openApiNullable>false</openApiNullable>
+								<basePackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client</basePackage>
+								<modelPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto
+								</modelPackage>
+								<apiPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.api
+								</apiPackage>
+								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.config
+								</configPackage>
+								<dateLibrary>java17</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
+							</configOptions>
+							<modelNameSuffix>DTO</modelNameSuffix>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>com.sun.xml.ws</groupId>
+				<artifactId>jaxws-maven-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/</wsdlDirectory>
+					<wsdlLocation>/wsdocs/inps/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
+					<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client</packageName>
+					<sourceDestDir>${project.build.directory}/generated-sources/wsimport/</sourceDestDir>
+					<bindingFiles>
+						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_async_mapping.xml</bindingFile>
+						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
+						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
+					</bindingFiles>
 				</configuration>
 			</plugin>
 		</plugins>

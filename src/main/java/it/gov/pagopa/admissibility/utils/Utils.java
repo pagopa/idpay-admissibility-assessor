@@ -1,8 +1,13 @@
 package it.gov.pagopa.admissibility.utils;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+
 import java.time.LocalDate;
 import java.time.Period;
 
+@Slf4j
 public final class Utils {
     private Utils(){}
 
@@ -67,4 +72,15 @@ public final class Utils {
         return monthIndex + 1; // Adding 1 to match the 1-based month indexing in LocalDate
     }
     //endregion
+
+    public static <T> String convertToJson(T object, ObjectMapper objectMapper) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Error converting request in JSON",e);
+        }
+    }
+
+
+
 }

@@ -4,13 +4,6 @@ import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
-
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Consumer;
-import java.util.function.Function;
-
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +23,12 @@ import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -199,4 +198,5 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
                 ? ReadinessState.ACCEPTING_TRAFFIC
                 : ReadinessState.REFUSING_TRAFFIC;
     }
+
 }

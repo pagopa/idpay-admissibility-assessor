@@ -26,7 +26,6 @@ public class InitiativeConfig {
     private String status;
     private LocalDate startDate;
     private LocalDate endDate;
-    private String pdndToken;
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private BigDecimal initiativeBudget;

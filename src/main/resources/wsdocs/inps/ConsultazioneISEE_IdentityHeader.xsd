@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:inps="http://inps.it/" targetNamespace="http://inps.it/">
+ <xs:element name="Identity">
+  <xs:complexType>
+   <xs:sequence>
+    <xs:element name="UserId" minOccurs="1" maxOccurs="1" type="xsd:string" />
+    <xs:element name="CodiceUfficio" minOccurs="1" maxOccurs="1" type="xsd:string" />
+   </xs:sequence>
+  </xs:complexType>
+ </xs:element>
+</xs:schema>
