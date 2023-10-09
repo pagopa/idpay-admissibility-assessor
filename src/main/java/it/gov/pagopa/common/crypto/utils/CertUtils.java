@@ -53,7 +53,7 @@ public class CertUtils {
     public static String extractInlinePemBody(String target) {
         return target
                 .replaceAll("^-----BEGIN[A-Z|\\s]+-----", "")
-                .replaceAll("\\n+", "")
+                .replaceAll("\\s+", "")
                 .replaceAll("-----END[A-Z|\\s]+-----$", "");
     }
 }
