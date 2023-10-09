@@ -56,4 +56,4 @@ microservice-chart:
     ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
 
     #TODO Now we are using MOCK on APIM for ANPR and ISEE
-    INPS_ISEE_CONSULTATION_BASE_URL: https://api-io.dev.cstar.pagopa.it/mock-ex-serv-inps
+    INPS_ISEE_CONSULTATION_BASE_URL: http://idpaymock:8080/idpay/mock/inps/soap
