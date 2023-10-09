@@ -23,7 +23,7 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
-        log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Fetching initiative having id: {}", initiativeId);
+        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Fetching initiative having id: {}", initiativeId);
         return contextHolderService.getInitiativeConfig(initiativeId)
                 .flatMap(initiativeConfig ->
                         initiativeCountersRepository.findById(initiativeId)
