@@ -101,6 +101,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 .map(req2ev -> {
                     OnboardingDTO request = req2ev.getKey();
                     EvaluationDTO evaluationDTO = req2ev.getValue();
+
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
                         callOnboardingNotifier(evaluation);
                         if (evaluation.getRankingValue() != null) {
@@ -172,8 +173,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(e -> {
-                            log.error("[ONBOARDING_REQUEST] something gone wrong while handling onboarding request {} of userId {} into initiativeId {}",
-                                    onboardingRequest.isBudgetReserved() ? "(BUDGET_RESERVED)" : "",
+                            log.error("[ONBOARDING_REQUEST] Something gone wrong while handling onboarding request{} of userId {} into initiativeId {}",
+                                    onboardingRequest.isBudgetReserved() ? " (BUDGET_RESERVED)" : "",
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
                             String retryHeaderValue = readRetryHeader(message);
@@ -264,6 +265,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private void callRankingNotifier(RankingRequestDTO rankingRequestDTO) {
+        log.info("[ONBOARDING_REQUEST] notifying onboarding request to ranking topic: {}", rankingRequestDTO);
         try {
             if (!rankingNotifierService.notify(rankingRequestDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while ranking notify");

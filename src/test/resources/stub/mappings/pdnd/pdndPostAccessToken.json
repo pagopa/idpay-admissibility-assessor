@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/pdnd/token.oauth2",
+    "headers": {
+      "Content-Type": {
+        "contains": "application/x-www-form-urlencoded"
+      }
+    },
+    "bodyPatterns": [{
+      "matches": "client_id=[^&]+&client_assertion=[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}\\.[-A-Za-z0-9+/_]+={0,3}&client_assertion_type=urn%3Aietf%3Aparams%3Aoauth%3Aclient-assertion-type%3Ajwt-bearer&grant_type=client_credentials"
+    }]
+  },
+  "response": {
+    "status": "200",
+    "jsonBody": {
+      "access_token": "PDND_ACCESS_TOKEN",
+      "expires_in": 600,
+      "token_type": "Bearer"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

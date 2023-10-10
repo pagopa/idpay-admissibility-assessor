@@ -1,0 +1,24 @@
+{
+  "priority": "1",
+  "request": {
+    "method": "POST",
+    "urlPathPattern": "/inps/isee",
+    "headers": {
+      "SOAPAction": {
+        "equalTo": "\"http://inps.it/ConsultazioneISEE/ISvcConsultazione/ConsultazioneIndicatore\""
+      }
+    },
+    "bodyPatterns": [
+      {
+        "equalToXml": "<?xml version='1.0' encoding='UTF-8'?><S:Envelope xmlns:S=\"http://schemas.xmlsoap.org/soap/envelope/\"><S:Header><ns3:Identity xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><UserId>OperationBatchIDPay</UserId><CodiceUfficio>001</CodiceUfficio></ns3:Identity></S:Header><S:Body><ns2:ConsultazioneIndicatore xmlns:ns2=\"http://inps.it/ConsultazioneISEE\" xmlns:ns3=\"http://inps.it/\"><ns2:request><ns2:TipoIndicatore>Ordinario</ns2:TipoIndicatore><ns2:RicercaCF><ns2:CodiceFiscale>CF_INPS_RETRY</ns2:CodiceFiscale><ns2:PrestazioneDaErogare>A1.01</ns2:PrestazioneDaErogare><ns2:ProtocolloDomandaEnteErogatore>Protocol</ns2:ProtocolloDomandaEnteErogatore><ns2:StatodomandaPrestazione>Da Erogare</ns2:StatodomandaPrestazione></ns2:RicercaCF></ns2:request></ns2:ConsultazioneIndicatore></S:Body></S:Envelope>"
+      }
+    ]
+  },
+  "response": {
+    "status": "200",
+    "body": "<s11:Envelope xmlns:s11='http://schemas.xmlsoap.org/soap/envelope/'>\n<s11:Body>\n<ns1:ConsultazioneIndicatoreResponse xmlns:ns1='http://inps.it/ConsultazioneISEE'><!-- optional --><ns1:ConsultazioneIndicatoreResult><ns1:IdRichiesta>?999?</ns1:IdRichiesta><!-- possible value: OK, possible value: RICHIESTA_INVALIDA, possible value: DATI_NON_TROVATI, possible value: DATABASE_OFFLINE, possible value: ERRORE_INTERNO, possible value: RISCONTRO_NON_VALIDO --><ns1:Esito>DATABASE_OFFLINE</ns1:Esito><!-- optional --><ns1:DescrizioneErrore>?XXX?</ns1:DescrizioneErrore><!-- optional --><ns1:XmlEsitoIndicatore>???</ns1:XmlEsitoIndicatore></ns1:ConsultazioneIndicatoreResult></ns1:ConsultazioneIndicatoreResponse>\n</s11:Body>\n</s11:Envelope>",
+    "headers": {
+      "Content-Type": "text/xml"
+    }
+  }
+}

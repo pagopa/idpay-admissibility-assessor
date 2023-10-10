@@ -19,10 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.messaging.Message;
@@ -40,9 +42,15 @@ import reactor.core.publisher.Mono;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.AdmissibilityEvaluatorMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
-        "logging.level.it.gov.pagopa.admissibility.connector.rest.UserFiscalCodeRestClientImpl=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
 })
 abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest {
+
+    @BeforeAll
+    static void configureWireMock() {
+        //Disabling Client SSL auth: ANPR and INPS are configured to use HTTPS protocol
+        BaseIntegrationTest.configureServerWiremockBeforeAll(false, true);
+    }
 
     @SpyBean
     protected OnboardingContextHolderService onboardingContextHolderServiceSpy;
@@ -56,7 +64,6 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
     protected InitiativeCountersRepository initiativeCountersRepositorySpy;
 
     protected static List<Checkpointer> checkpointers;
-
 
     static class MediatorSpyConfiguration {
         @SpyBean
@@ -127,6 +134,11 @@ abstract class BaseAdmissibilityProcessorConfigTest extends BaseIntegrationTest 
                     evaluation.getInitiativeId());
             throw e;
         }
+    }
+
+    @Override
+    protected Pattern getErrorUseCaseIdPatternMatch() {
+        return Pattern.compile("\"userId\":\"userId_([0-9]+)_?[^\"]*\"");
     }
 
     protected void checkOffsets(long expectedReadMessages, long exptectedPublishedResults, String outputTopic) {

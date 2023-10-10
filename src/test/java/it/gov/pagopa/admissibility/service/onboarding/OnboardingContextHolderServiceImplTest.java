@@ -45,7 +45,7 @@ class OnboardingContextHolderServiceImplTest {
 
     private final KieBase expectedKieBase = new KieContainerBuilderServiceImpl(droolsRuleRepositoryMock).build(Flux.empty()).block();
 
-    private void init(boolean isRedisCacheEnabled){
+    void init(boolean isRedisCacheEnabled){
         configureMocks(isRedisCacheEnabled);
         buildService(isRedisCacheEnabled);
     }
@@ -139,7 +139,6 @@ class OnboardingContextHolderServiceImplTest {
                 .status("STATUS")
                 .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .pdndToken("PDND-TOKEN")
                 .organizationId("ORGANIZATION-ID")
                 .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)
@@ -195,4 +194,5 @@ class OnboardingContextHolderServiceImplTest {
                 ((OnboardingContextHolderServiceImpl)onboardingContextHolderService).getState(null)
         );
     }
+
 }

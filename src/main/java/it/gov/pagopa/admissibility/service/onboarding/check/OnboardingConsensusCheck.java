@@ -33,7 +33,7 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
             return OnboardingConstants.REJECTION_REASON_CONSENSUS_TC_FAIL;
         }
 
-        if (!Boolean.TRUE.equals(onboardingRequest.getPdndAccept())) { // TODO we should check from the initiative if there is a pdnd token before to invalidate if not provided?
+        if (!Boolean.TRUE.equals(onboardingRequest.getPdndAccept())) {
             return OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL;
         }
 
