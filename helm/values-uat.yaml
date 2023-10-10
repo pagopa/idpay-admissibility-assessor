@@ -42,7 +42,8 @@ microservice-chart:
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
 
-    PDND_BASE_URL: https://auth.uat.interop.pagopa.it
+    #PDND_BASE_URL: https://auth.uat.interop.pagopa.it
+    PDND_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/pdnd
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
 
     #This should be removed once read from initiative
@@ -52,7 +53,8 @@ microservice-chart:
 
     ANPR_ENV: uat
     ANPR_AUTH_USERID: pagopa-idpay
-    ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
+    #ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
+    ANPR_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/anpr
 
     #TODO Now we are using MOCK on APIM for ISEE
     INPS_ISEE_CONSULTATION_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/inps/soap
