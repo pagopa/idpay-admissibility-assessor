@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuild
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.Initiative2BuildDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -28,7 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.test.context.ContextConfiguration;
@@ -36,6 +36,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -47,7 +48,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     static class MediatorSpyConfiguration extends BaseAdmissibilityProcessorConfigTest.MediatorSpyConfiguration {}
 
     private List<Initiative2BuildDTO> publishedInitiatives;
-    private int onboardingFamilies;
+    private final int onboardingFamilies;
     private final int membersPerFamily=3;
 
     private int expectedOnboardingKoFamilies=0;
@@ -64,8 +65,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     private OnboardingFamiliesRepository onboardingFamiliesRepository;
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
-    @Autowired
-    private ReactiveMongoTemplate mongoTemplate;
 
     @Test
     void testFamilyAdmissibilityOnboarding() throws IOException {
@@ -75,7 +74,6 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(0, onboardingFamilies, useCases));
 
         storeInitiativeCountersInitialState();
-
 
         int expectedRequestsPerInitiative = onboardingFamilies * membersPerFamily;
         int expectedPublishedMessages = expectedRequestsPerInitiative * publishedInitiatives.size();
@@ -93,10 +91,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
         MongoTestUtilitiesService.startMongoCommandListener("ON-BOARDINGS");
 
         long timePublishOnboardingStart = System.currentTimeMillis();
-        onboardings.forEach(i -> {
-
-            System.out.println("Test" + i);
-                kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i);});
+        onboardings.forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicAdmissibilityProcessorRequest, null, i));
         long timePublishingOnboardingRequest = System.currentTimeMillis() - timePublishOnboardingStart;
 
         long timeConsumerResponse = System.currentTimeMillis();
@@ -183,7 +178,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
                                 IntStream.range(0, membersPerFamily)
                                         .mapToObj(i ->
                                                 MessageBuilder.withPayload(message.getPayload()
-                                                                .replace("id_0", initiative.getInitiativeId())
+                                                                .replace("INITIATIVEID_0", initiative.getInitiativeId())
                                                                 .replaceAll("(userId_[^\"]+)", "$1_FAMILYMEMBER" + i)
                                                         )
                                                         .copyHeaders(message.getHeaders())
@@ -337,16 +332,20 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     }
 
     //region useCases
+
+    private OnboardingDTO.OnboardingDTOBuilder buildOnboardingRequestBuilder(Integer bias) {
+        return OnboardingDTOFaker.mockInstanceBuilder(bias, "INITIATIVEID_0")
+                .isee(BigDecimal.valueOf(20))
+                .birthDate(new BirthDate("1990", LocalDate.now().getYear() - 1990));
+    }
+
     // each useCase's userId should contain "userId_[0-9]+", this string is matched in order to set particular member id
     Set<OnboardingEvaluationStatus> expectedOnboardingOkStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_OK, OnboardingEvaluationStatus.JOINED, OnboardingEvaluationStatus.DEMANDED);
     Set<OnboardingEvaluationStatus> expectedOnboardingKoStatuses = Set.of(OnboardingEvaluationStatus.ONBOARDING_KO, OnboardingEvaluationStatus.REJECTED);
     private final List<OnboardingUseCase<EvaluationDTO>> useCases = List.of(
             // useCase 0: onboardingOk
             OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO request = OnboardingDTOFaker.mockInstance(bias, 1);
-                        return request;
-                    },
+                    bias -> buildOnboardingRequestBuilder(bias).build(),
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
                             Assertions.assertFalse(rankingRequest.isOnboardingKo());
@@ -361,10 +360,9 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedOnboardingKoFamilies++;
-                        OnboardingDTO request = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        return buildOnboardingRequestBuilder(bias)
                                 .isee(BigDecimal.ZERO)
                                 .build();
-                        return request;
                     },
                     evaluation -> {
                         if(evaluation instanceof RankingRequestDTO rankingRequest){
@@ -393,7 +391,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         expectedFamilyRetrieveKo++;
-                        OnboardingDTO request = OnboardingDTOFaker.mockInstanceBuilder(bias, 1)
+                        OnboardingDTO request = buildOnboardingRequestBuilder(bias)
                                 .userId("NOFAMILYuserId_" + bias)
                                 .build();
                         Mockito.doReturn(Mono.just(Optional.empty()))
@@ -421,7 +419,7 @@ class AdmissibilityProcessorConfigFamilyTest extends BaseAdmissibilityProcessorC
     );
     //endregion
     {
-        onboardingFamilies= Math.max(10, useCases.size());
+        onboardingFamilies= Math.max(10, TestUtils.nextOrSameEvenNumber(useCases.size()));
     }
 
     protected void checkPayload(String errorMessage, String expectedPayload) {

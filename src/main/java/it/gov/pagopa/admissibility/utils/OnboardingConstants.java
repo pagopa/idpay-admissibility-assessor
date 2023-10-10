@@ -18,6 +18,7 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT = "AUTOMATED_CRITERIA_%s_FAIL";
     public static final String REJECTION_REASON_ISEE_TYPE_KO = "ISEE_TYPE_FAIL";
     public static final String REJECTION_REASON_FAMILY_KO = "FAMILY_FAIL";
+    public static final String REJECTION_REASON_RESIDENCE_KO = "RESIDENCE_FAIL";
     public static final String REJECTION_REASON_BIRTHDATE_KO = "BIRTHDATE_FAIL";
     public static final String REJECTION_REASON_GENERIC_ERROR = "GENERIC_ERROR";
 
@@ -30,5 +31,9 @@ public final class OnboardingConstants {
     public static final String CRITERIA_CODE_FAMILY = "FAMILY";
     public static final String CRITERIA_CODE_BIRTHDATE = "BIRTHDATE";
     public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
+    //endregion
+
+    //region global sequence id
+    public static final String ANPR_E002_INVOKE = "ANPR_E002_INVOKE";
     //endregion
 }
