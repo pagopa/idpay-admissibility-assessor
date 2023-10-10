@@ -62,7 +62,7 @@ microservice-chart:
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
     APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
     _JAVA_OPTIONS: "-Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -Dreactor.netty.ioWorkerCount=4 -Dreactor.netty.pool.maxConnections=16"
-    DELETE_PAGINATION_SIZE: "100"
+    DELETE_PAGINATION_SIZE: "60"
     DELETE_DELAY_TIME: "1000"
 
   envConfigMapExternals:
