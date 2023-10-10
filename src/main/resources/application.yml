@@ -294,7 +294,7 @@ app:
       delay-millis: ${IDPAY_MOCK_RETRY_DELAY_MILLIS:2000}
       max-attempts: ${IDPAY_MOCK_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
   delete:
-    paginationSize: ${DELETE_PAGINATION_SIZE:50}
+    paginationSize: ${DELETE_PAGINATION_SIZE:60}
     delayTime: ${DELETE_DELAY_TIME:1000}
   pdnd:
     base-url: ${PDND_BASE_URL:https://auth.uat.interop.pagopa.it}
