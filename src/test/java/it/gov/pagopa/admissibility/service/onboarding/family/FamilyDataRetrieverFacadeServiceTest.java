@@ -55,7 +55,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         Mockito.verifyNoMoreInteractions(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock);
     }
 
-    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, 1);
+    private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
     private final Family family = new Family("FAMILYID", Set.of(request.getUserId()));
     private final InitiativeConfig initiativeConfig = InitiativeConfig.builder()
             .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
@@ -138,7 +138,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
         Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId()))
                 .thenReturn(Mono.empty());
-        Mockito.when(repositoryMock.findById("FAMILYID_id_0")).thenReturn(Mono.just(onboardingFamilies));
+        Mockito.when(repositoryMock.findById("FAMILYID_INITIATIVEID")).thenReturn(Mono.just(onboardingFamilies));
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamily(request, onboardingFamilies, initiativeConfig, message))
                         .thenReturn(Mono.just(expectedEvaluationResult));
 

@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
-import it.gov.pagopa.common.redis.config.EmbeddedRedisTestConfiguration;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -9,6 +8,7 @@ import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.RuleEngineService;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.common.redis.config.EmbeddedRedisTestConfiguration;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -66,10 +66,10 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
 
         DroolsRule dr = new DroolsRule();
         dr.setId("NAME");
-        dr.setName("id_0");
+        dr.setName("INITIATIVEID");
         dr.setRule("""
                 package %s;
-                                                
+
                 rule "%s"
                 agenda-group "%s"
                 when $onb: %s()
@@ -101,7 +101,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
         refreshAndAssertKieContainerRuleSize(1);
 
         // Execute rule and assert onboarding has the expected rejection reason
-        OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, 1);
+        OnboardingDTO onboardingMock = OnboardingDTOFaker.mockInstance(1, "INITIATIVEID");
         EvaluationDTO result = executeRules(onboardingMock);
 
         Assertions.assertNotNull(result);
@@ -164,7 +164,6 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 .initiativeBudget(BigDecimal.valueOf(100))
                 .status("STATUS")
                 .automatedCriteriaCodes(List.of("CODE1"))
-                .pdndToken("PDND-TOKEN")
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
                 .build();

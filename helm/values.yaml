@@ -62,6 +62,8 @@ microservice-chart:
     APPLICATIONINSIGHTS_INSTRUMENTATION_MICROMETER_ENABLED: "false"
     APPLICATIONINSIGHTS_PREVIEW_PROFILER_ENABLED: "false"
     _JAVA_OPTIONS: "-Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -Dreactor.netty.ioWorkerCount=4 -Dreactor.netty.pool.maxConnections=16"
+    DELETE_PAGINATION_SIZE: "60"
+    DELETE_DELAY_TIME: "1000"
 
   envConfigMapExternals:
     idpay-common:
@@ -95,6 +97,10 @@ microservice-chart:
     REDIS_CONNECTION_URL: idpay-redis-00-primary-connection-url
     PDV_DECRYPT_API_KEY: pdv-api-key
     KAFKA_COMMANDS_SASL_JAAS_CONFIG: evh-idpay-commands-idpay-commands-consumer-jaas-config-idpay-01
+
+    UTIL_CRYPTO_AES_SECRET_TYPE_PBE_SALT: notification-token-salt
+    UTIL_CRYPTO_AES_SECRET_TYPE_PBE_PASSPHRASE: notification-token-passphrase
+    UTIL_CRYPTO_AES_MODE_GCM_IV: notification-token-iv
 
 
   # nodeSelector: {}

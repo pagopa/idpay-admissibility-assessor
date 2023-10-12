@@ -28,6 +28,8 @@ class DeleteInitiativeServiceImplTest {
     @Mock private OnboardingContextHolderService onboardingContextHolderService;
 
     private DeleteInitiativeService deleteInitiativeService;
+    private final static int PAGE_SIZE = 100;
+
 
     @BeforeEach
     void setUp() {
@@ -35,7 +37,7 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
-                auditUtilitiesMock, onboardingContextHolderService);
+                auditUtilitiesMock, onboardingContextHolderService, PAGE_SIZE, 1000L);
     }
 
     @Test
@@ -58,8 +60,12 @@ class DeleteInitiativeServiceImplTest {
 
         OnboardingFamilies onboardingFamilies = OnboardingFamilies.builder(family, initiativeId).build();
 
-        Mockito.when(onboardingFamiliesRepositoryMock.deleteByInitiativeId(initiativeId))
+        Mockito.when(onboardingFamiliesRepositoryMock.findByInitiativeIdWithBatch(initiativeId,PAGE_SIZE))
                 .thenReturn(Flux.just(onboardingFamilies));
+
+        Mockito.when(onboardingFamiliesRepositoryMock.deleteById(onboardingFamilies.getId()))
+                .thenReturn(Mono.empty());
+
 
         String result = deleteInitiativeService.execute(initiativeId).block();
 
@@ -67,7 +73,9 @@ class DeleteInitiativeServiceImplTest {
 
         Mockito.verify(droolsRuleRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
         Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
-        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteByInitiativeId(Mockito.anyString());
+        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).findByInitiativeIdWithBatch(Mockito.anyString(),Mockito.anyInt());
+        Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
+
     }
 
     @Test

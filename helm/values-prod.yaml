@@ -39,3 +39,21 @@ microservice-chart:
     JAVA_TOOL_OPTIONS: "-Xms128m -Xmx4g -javaagent:/app/applicationinsights-agent.jar"
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
+
+    #TODO PROD URL?
+    PDND_BASE_URL: https://auth.interop.pagopa.it
+    #TODO PROD AUDIENCE?
+    PDND_ACCESS_TOKEN_AUDIENCE: auth.interop.pagopa.it/client-assertion
+
+    #TODO PROD values?
+    #This should be removed once read from initiative
+    PAGOPA_PDND_CONFIGURATION_CLIENT_ID: 5df9f218-df34-4f05-a9c4-e4a74b2a8e3f
+    PAGOPA_PDND_CONFIGURATION_KID: r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY
+    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID: 8af4c795-8066-4407-a0b3-c95c2daefd6c
+
+    ANPR_ENV: prod
+    ANPR_AUTH_USERID: pagopa-idpay
+    ANPR_BASE_URL: https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND
+
+    #TODO Now we are using MOCK on APIM for ANPR and ISEE
+    INPS_ISEE_CONSULTATION_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/inps/soap

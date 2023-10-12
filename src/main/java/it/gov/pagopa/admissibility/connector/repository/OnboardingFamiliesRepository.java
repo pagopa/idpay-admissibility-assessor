@@ -17,7 +17,6 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
     Logger log = org.slf4j.LoggerFactory.getLogger(OnboardingFamiliesRepository.class);
 
     Flux<OnboardingFamilies> findByMemberIdsInAndInitiativeId(String memberId, String initiativeId);
-    Flux<OnboardingFamilies> deleteByInitiativeId(String initiativeId);
 
     /** it will create if not exists a new {@link it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus#IN_PROGRESS} if the provided id not exists. If it doesn't exist, it will return empty */
     default Mono<OnboardingFamilies> createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(Family family, String initiativeId) {

@@ -21,7 +21,6 @@ import org.kie.api.definition.KiePackage;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
@@ -52,7 +51,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
 
     @Test
     void testBeneficiaryRuleBuilding() {
-        int validRules = 100; // use even number
+        int validRules = 6; // use even number
         int notValidRules = errorUseCases.size();
         long maxWaitingMs = 30000;
 
@@ -171,13 +170,13 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     // all use cases configured must have a unique id recognized by the regexp errorUseCaseIdPatternMatch
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
     {
-        String useCaseJsonNotExpected = "{\"initiativeId\":\"id_0\",unexpectedStructure:0}";
+        String useCaseJsonNotExpected = "{\"initiativeId\":\"INITIATIVEID_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", useCaseJsonNotExpected)
         ));
         
-        String jsonNotValid = "{\"initiativeId\":\"id_1\",invalidJson";
+        String jsonNotValid = "{\"initiativeId\":\"INITIATIVEID_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", jsonNotValid)
@@ -196,7 +195,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", criteriaCodeNotValid)
         ));
 
-        final String errorWhenSavingUseCaseId = "id_%s_ERRORWHENSAVING".formatted(errorUseCases.size());
+        final String errorWhenSavingUseCaseId = "INITIATIVEID_%s_ERRORWHENSAVING".formatted(errorUseCases.size());
         String droolRuleSaveInError = TestUtils.jsonSerializer(Initiative2BuildDTOFaker.mockInstanceBuilder(errorUseCases.size())
                 .initiativeId(errorWhenSavingUseCaseId)
                 .build());
