@@ -104,12 +104,9 @@ public class AnprC001RestClientImplIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void testInvalidRequest(){
-        //When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG).block();
-
-        // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertNull(result.getListaSoggetti());
+        Mono<RispostaE002OKDTO> mono = anprC001RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG);
+        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
+        Assertions.assertTrue(exception.getMessage().startsWith("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1: 400 Bad Request"));
     }
 
     @Test
