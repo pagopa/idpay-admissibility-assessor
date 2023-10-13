@@ -145,6 +145,13 @@ public class KafkaTestUtilitiesService {
             List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
             while (payloadConsumed.size() < expectedNumber) {
                 if (System.currentTimeMillis() - startTime > maxWaitingMs) {
+                    System.out.println("Current read messages:");
+                    int[] i={0};
+                    System.out.println(payloadConsumed.stream()
+                            .map(ConsumerRecord::value)
+                            .sorted()
+                            .map(p -> "   " + i[0]++ + ". " + p)
+                            .collect(Collectors.joining("\n")));
                     Assertions.fail("timeout of %d ms expired. Read %d messages of %d".formatted(maxWaitingMs, payloadConsumed.size(), expectedNumber));
                 }
                 consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);

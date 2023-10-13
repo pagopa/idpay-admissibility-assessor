@@ -91,13 +91,13 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
                         .onErrorResume(e -> {
                             if(e instanceof WebClientResponseException.NotFound notFoundException){
                                 log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
+                                return Mono.just(pdndServiceConfig.getEmptyResponseBody());
                             } else if(pdndServiceConfig.getTooManyRequestPredicate().test(e)){
                                 return Mono.error(new PdndServiceTooManyRequestException(pdndServiceConfig, e));
                             }
                             else {
-                                log.error("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), e.getMessage(), e);
+                                return Mono.error(new IllegalStateException("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service %s: %s".formatted(pdndServiceConfig.getAudience(), e.getMessage()), e));
                             }
-                            return Mono.just(pdndServiceConfig.getEmptyResponseBody());
                         }),
                 x -> "[" + getClass().getSimpleName() + "] "
         );

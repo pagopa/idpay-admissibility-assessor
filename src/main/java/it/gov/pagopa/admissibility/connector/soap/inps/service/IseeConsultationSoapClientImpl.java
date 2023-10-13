@@ -62,8 +62,7 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                             if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("Too Many Requests")) {
                                 return Mono.error(new InpsDailyRequestLimitException(e));
                             } else {
-                                log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e.getCause());
-                                return Mono.just(new ConsultazioneIndicatoreResponseType());
+                                return Mono.error(new IllegalStateException("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e));
                             }
                         })
                 , x -> "[" + iseeType + "]");
