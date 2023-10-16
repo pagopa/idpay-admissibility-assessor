@@ -67,9 +67,9 @@ public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrati
 
     @Test
     void getIseeUnexpectedResultCode(){
-        ConsultazioneIndicatoreResponseType result = iseeConsultationSoapClient.getIsee(FISCAL_CODE_UNEXPECTED_RESULT_CODE, IseeTypologyEnum.ORDINARIO).block();
-        Assertions.assertNotNull(result);
-        Assertions.assertNull(result.getXmlEsitoIndicatore());
+        Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_UNEXPECTED_RESULT_CODE, IseeTypologyEnum.ORDINARIO);
+        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
+        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
     }
 
     @Test
@@ -80,8 +80,9 @@ public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrati
 
     @Test
     void getIseeFaultMessage(){
-        ConsultazioneIndicatoreResponseType result = iseeConsultationSoapClient.getIsee(FISCAL_CODE_FAULT_MESSAGE, IseeTypologyEnum.ORDINARIO).block();
-        Assertions.assertNotNull(result);
-        Assertions.assertNull(result.getXmlEsitoIndicatore());
+        Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_FAULT_MESSAGE, IseeTypologyEnum.ORDINARIO);
+        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
+        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
+
     }
 }

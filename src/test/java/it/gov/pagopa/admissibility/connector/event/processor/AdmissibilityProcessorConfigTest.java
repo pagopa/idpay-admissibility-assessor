@@ -171,9 +171,9 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
 
         publishOnboardingRules(validOnboardings);
 
-        List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(errorUseCases.size(), validOnboardings / 2, useCases));
+        List<Message<String>> onboardings = new ArrayList<>(buildValidPayloads(notValidOnboarding, validOnboardings / 2, useCases));
         onboardings.addAll(IntStream.range(0, notValidOnboarding).mapToObj(i -> errorUseCases.get(i).getFirst().get()).map(p-> MessageBuilder.withPayload(p).build()).toList());
-        onboardings.addAll(buildValidPayloads(errorUseCases.size() + (validOnboardings / 2) + notValidOnboarding, validOnboardings / 2, useCases));
+        onboardings.addAll(buildValidPayloads(notValidOnboarding + (validOnboardings / 2), validOnboardings / 2, useCases));
 
         Mockito.doAnswer(i -> {
                     String cf = i.getArgument(0);
@@ -475,19 +475,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
             ),
 
-            // useCase 9 AUTOMATED_CRITERIA fail due to invalid request
-            OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
-
-                        userId2CFMocks.put(out.getUserId(), CF_INVALID_REQUEST);
-
-                        return out;
-                    },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO, ONBOARDING_REJECTION_REASON_RESIDENCE_KO, ONBOARDING_REJECTION_REASON_BIRTHDATE_KO), true)
-            ),
-
-            // useCase 10: retry due to ISEE Esito KO, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 9: retry due to ISEE Esito KO, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -506,19 +494,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 11: INPS unexpected result code
-            OnboardingUseCase.withJustPayload(
-                    bias -> {
-                        OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
-
-                        userId2CFMocks.put(out.getUserId(), CF_INPS_UNEXPECTED_RESULTCODE);
-
-                        return out;
-                    },
-                    evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE_TYPE_KO), true)
-            ),
-
-            // useCase 12: multiple Isee typologies
+            // useCase 10: multiple Isee typologies
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_MULTIPLE_ISEE_TYPES);
@@ -530,7 +506,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkOk(evaluation, true)
             ),
 
-            // useCase 13: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 11: daily limit reached when invoking INPS, then ONBOARDING_KO due to ANPR (just INPS is invoked again, ANPR result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -549,7 +525,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_RESIDENCE, ONBOARDING_REJECTION_REASON_BIRTHDATE), true)
             ),
 
-            // useCase 14: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
+            // useCase 12: daily limit reached when invoking ANPR, then ONBOARDING_KO due to INPS (just ANPR is invoked again, INPS result will be cached and its first attempt will retrieve default values, not allowed by criteria)
             OnboardingUseCase.withJustPayload(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -568,7 +544,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_ISEE), true)
             ),
 
-            // useCase 15: exhausted initiative budget
+            // useCase 13: exhausted initiative budget
             OnboardingUseCase.withJustPayload(
                     bias -> buildOnboardingRequestCachedBuilder(bias)
                             .initiativeId(INITIATIVEID_EXHAUSTED)
@@ -576,7 +552,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                     evaluation -> checkKO(evaluation, List.of(ONBOARDING_REJECTION_REASON_BUDGET_EXHAUSTED), true)
             ),
 
-            // useCase 16: evaluation throws exception, but retry header expired
+            // useCase 14: evaluation throws exception, but retry header expired
             new OnboardingUseCase<>(
                     bias -> {
                         OnboardingDTO out = OnboardingDTOFaker.mockInstance(bias, INITIATIVEID_COMPLETE);
@@ -652,110 +628,163 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
     {
         //errorUseCase 0
-        String useCaseJsonNotExpected = "{\"userId\":\"userId_0\",unexpectedStructure:0}";
-        errorUseCases.add(Pair.of(
-                () -> useCaseJsonNotExpected,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", useCaseJsonNotExpected)
-        ));
+        {
+            String useCaseJsonNotExpected = "{\"userId\":\"userId_0\",unexpectedStructure:0}";
+            errorUseCases.add(Pair.of(
+                    () -> useCaseJsonNotExpected,
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", useCaseJsonNotExpected)
+            ));
+        }
 
         //errorUseCase 1
-        String jsonNotValid = "{\"userId\":\"userId_1\",invalidJson";
-        errorUseCases.add(Pair.of(
-                () -> jsonNotValid,
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", jsonNotValid)
-        ));
+        {
+            String jsonNotValid = "{\"userId\":\"userId_1\",invalidJson";
+            errorUseCases.add(Pair.of(
+                    () -> jsonNotValid,
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] Unexpected JSON", jsonNotValid)
+            ));
+        }
 
         //errorUseCase 2
-        final String failingOnboardingChecksUserId = "userId_2_FAILING_ONBOARDING_CHECKS";
-        String failingOnboardingChecks = TestUtils.jsonSerializer(
-                OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
-                        .userId(failingOnboardingChecksUserId)
-                        .build()
-        );
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i->failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any(), Mockito.any());
-                    return failingOnboardingChecks;
-                },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingOnboardingChecks)
-        ));
+        {
+            final String failingOnboardingChecksUserId = "userId_2_FAILING_ONBOARDING_CHECKS";
+            String failingOnboardingChecks = TestUtils.jsonSerializer(
+                    OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
+                            .userId(failingOnboardingChecksUserId)
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(onboardingCheckServiceSpy).check(Mockito.argThat(i -> failingOnboardingChecksUserId.equals(i.getUserId())), Mockito.any(), Mockito.any());
+                        return failingOnboardingChecks;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingOnboardingChecks)
+            ));
+        }
 
         //errorUseCase 3
-        final String failingAuthorityDataUserId = "userId_3_FAILING_AUTHORITY_DATA";
-        String failingAuthoritiesDataRetriever = TestUtils.jsonSerializer(
-                OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
-                        .userId(failingAuthorityDataUserId)
-                        .build()
-        );
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i->failingAuthorityDataUserId.equals(i.getUserId())), Mockito.any(), Mockito.any());
-                    return failingAuthoritiesDataRetriever;
-                },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
-        ));
+        {
+            final String failingAuthorityDataUserId = "userId_3_FAILING_AUTHORITY_DATA";
+            String failingAuthoritiesDataRetriever = TestUtils.jsonSerializer(
+                    OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
+                            .userId(failingAuthorityDataUserId)
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(authoritiesDataRetrieverServiceSpy).retrieve(Mockito.argThat(i -> failingAuthorityDataUserId.equals(i.getUserId())), Mockito.any(), Mockito.any());
+                        return failingAuthoritiesDataRetriever;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingAuthoritiesDataRetriever)
+            ));
+        }
 
         //errorUseCase 4
-        final String failingRuleEngineUserId = "userId_4_FAILING_RULE_ENGINE";
-        String failingRuleEngineUseCase = TestUtils.jsonSerializer(
-                buildOnboardingRequestCachedBuilder(errorUseCases.size())
-                        .userId(failingRuleEngineUserId)
-                        .build()
-        );
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(ruleEngineServiceSpy).applyRules(Mockito.argThat(i->failingRuleEngineUserId.equals(i.getUserId())), Mockito.any());
-                    return failingRuleEngineUseCase;
-                },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingRuleEngineUseCase)
-        ));
+        {
+            final String failingRuleEngineUserId = "userId_4_FAILING_RULE_ENGINE";
+            String failingRuleEngineUseCase = TestUtils.jsonSerializer(
+                    buildOnboardingRequestCachedBuilder(errorUseCases.size())
+                            .userId(failingRuleEngineUserId)
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doThrow(new RuntimeException("DUMMYEXCEPTION")).when(ruleEngineServiceSpy).applyRules(Mockito.argThat(i -> failingRuleEngineUserId.equals(i.getUserId())), Mockito.any());
+                        return failingRuleEngineUseCase;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingRuleEngineUseCase)
+            ));
+        }
 
         //errorUseCase 5
-        final String failingOnboardingPublishingUserId = "userId_5_FAILING_ONBOARDING_PUBLISHING";
-        OnboardingDTO onboardingFailingPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
-                .userId(failingOnboardingPublishingUserId)
-                .build();
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doReturn(false).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> failingOnboardingPublishingUserId.equals(i.getUserId())));
-                    return TestUtils.jsonSerializer(onboardingFailingPublishing);
-                },
-                errorMessage-> {
-                    EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailingPublishing);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
-                }
-        ));
+        {
+            final String failingOnboardingPublishingUserId = "userId_5_FAILING_ONBOARDING_PUBLISHING";
+            OnboardingDTO onboardingFailingPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
+                    .userId(failingOnboardingPublishingUserId)
+                    .build();
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doReturn(false).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> failingOnboardingPublishingUserId.equals(i.getUserId())));
+                        return TestUtils.jsonSerializer(onboardingFailingPublishing);
+                    },
+                    errorMessage -> {
+                        EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(onboardingFailingPublishing);
+                        checkErrorMessageHeaders(kafkaBootstrapServers, topicAdmissibilityProcessorOutcome, null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing), null, false, false);
+                    }
+            ));
+        }
 
         //errorUseCase 6
-        final String exceptionWhenOnboardingPublishingUserId = "userId_6_FAILING_REWARD_PUBLISHING_DUE_EXCEPTION";
-        OnboardingDTO exceptionWhenOnboardingPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
-                .userId(exceptionWhenOnboardingPublishingUserId)
-                .build();
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doThrow(new KafkaException()).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> exceptionWhenOnboardingPublishingUserId.equals(i.getUserId())));
-                    return TestUtils.jsonSerializer(exceptionWhenOnboardingPublishing);
-                },
-                errorMessage-> {
-                    EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing);
-                    checkErrorMessageHeaders(kafkaBootstrapServers,topicAdmissibilityProcessorOutcome,null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing),null, false, false);
-                }
-        ));
+        {
+            final String exceptionWhenOnboardingPublishingUserId = "userId_6_FAILING_REWARD_PUBLISHING_DUE_EXCEPTION";
+            OnboardingDTO exceptionWhenOnboardingPublishing = buildOnboardingRequestCachedBuilder(errorUseCases.size())
+                    .userId(exceptionWhenOnboardingPublishingUserId)
+                    .build();
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doThrow(new KafkaException()).when(onboardingNotifierServiceSpy).notify(Mockito.argThat(i -> exceptionWhenOnboardingPublishingUserId.equals(i.getUserId())));
+                        return TestUtils.jsonSerializer(exceptionWhenOnboardingPublishing);
+                    },
+                    errorMessage -> {
+                        EvaluationCompletedDTO expectedEvaluationFailingPublishing = retrieveEvaluationDTOErrorUseCase(exceptionWhenOnboardingPublishing);
+                        checkErrorMessageHeaders(kafkaBootstrapServers, topicAdmissibilityProcessorOutcome, null, errorMessage, "[ONBOARDING_REQUEST] An error occurred while publishing the onboarding evaluation result", TestUtils.jsonSerializer(expectedEvaluationFailingPublishing), null, false, false);
+                    }
+            ));
+        }
 
         //errorUseCase 7
-        String failingBudgetReservation = TestUtils.jsonSerializer(
-                buildOnboardingRequestCachedBuilder(errorUseCases.size())
-                        .initiativeId(INITIATIVEID_FAILING_BUDGET_RESERVATION)
-                        .userId("userId_7_FAILING_BUDGET_RESERVATION")
-                        .build()
-        );
-        errorUseCases.add(Pair.of(
-                () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(INITIATIVEID_FAILING_BUDGET_RESERVATION), Mockito.any());
-                    return failingBudgetReservation;
-                },
-                errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingBudgetReservation)
-        ));
+        {
+            String failingBudgetReservation = TestUtils.jsonSerializer(
+                    buildOnboardingRequestCachedBuilder(errorUseCases.size())
+                            .initiativeId(INITIATIVEID_FAILING_BUDGET_RESERVATION)
+                            .userId("userId_7_FAILING_BUDGET_RESERVATION")
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(initiativeCountersRepositorySpy).reserveBudget(Mockito.eq(INITIATIVEID_FAILING_BUDGET_RESERVATION), Mockito.any());
+                        return failingBudgetReservation;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingBudgetReservation)
+            ));
+        }
+
+        //errorUseCase 8 AUTOMATED_CRITERIA fail due to invalid request
+        {
+            String failingAnprInvalidRequestUserId = "userId_8_FAILING_ANPR_INVALID_REQUEST";
+            String failingAnprInvalidRequest = TestUtils.jsonSerializer(
+                    OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
+                            .userId(failingAnprInvalidRequestUserId)
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        userId2CFMocks.put(failingAnprInvalidRequestUserId, CF_INVALID_REQUEST);
+
+                        return failingAnprInvalidRequest;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingAnprInvalidRequest)
+            ));
+        }
+
+        //errorUseCase 9: INPS unexpected result code
+        {
+            String failingInpsUnexpectedResultUserId = "userId_9_FAILING_INPS_UNEXPECTED_RESULT";
+            String failingInpsUnexpectedResult = TestUtils.jsonSerializer(
+                    OnboardingDTOFaker.mockInstanceBuilder(errorUseCases.size(), INITIATIVEID_COMPLETE)
+                            .userId(failingInpsUnexpectedResultUserId)
+                            .build()
+            );
+            errorUseCases.add(Pair.of(
+                    () -> {
+                        userId2CFMocks.put(failingInpsUnexpectedResultUserId, CF_INPS_UNEXPECTED_RESULTCODE);
+
+                        return failingInpsUnexpectedResult;
+                    },
+                    errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_ONBOARDING_REQUEST] An error occurred handling onboarding request", failingInpsUnexpectedResult)
+            ));
+        }
+
     }
 
     private EvaluationCompletedDTO retrieveEvaluationDTOErrorUseCase(OnboardingDTO onboardingDTO) {
