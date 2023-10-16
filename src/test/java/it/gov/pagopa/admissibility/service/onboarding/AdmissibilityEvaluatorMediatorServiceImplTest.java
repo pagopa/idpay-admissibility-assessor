@@ -34,6 +34,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @ExtendWith(MockitoExtension.class)
@@ -120,7 +121,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
         Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock).evaluate(Mockito.any(), Mockito.any());
-        checkpointers.forEach(c -> Mockito.verify(c).success());
+        checkCommits(checkpointers);
     }
 
     @Test
@@ -160,7 +161,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         // Then
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock,onboardingFamilyEvaluationServiceMock);
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
-        checkpointers.forEach(c -> Mockito.verify(c).success());
+        checkCommits(checkpointers);
     }
 
     @Test
@@ -215,7 +216,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(authoritiesDataRetrieverServiceMock, Mockito.times(2)).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock, Mockito.times(2)).evaluate(Mockito.any(), Mockito.any());
         Assertions.assertEquals(2, checkpointers.size());
-        checkpointers.forEach(c -> Mockito.verify(c).success());
+        checkCommits(checkpointers);
     }
 
 
@@ -312,6 +313,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.eq(onboarding_first), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock).evaluate(Mockito.eq(onboarding_first), Mockito.any());
 
+        checkCommits(checkpointers);
+    }
+
+    private static void checkCommits(List<Checkpointer> checkpointers) {
+        TestUtils.wait(100, TimeUnit.MILLISECONDS);
         checkpointers.forEach(c -> Mockito.verify(c).success());
     }
 }
