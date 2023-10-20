@@ -49,7 +49,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     return "OK";
                 });
 
-        assertLogForMaxRetryTest(MongoRequestRateTooLargeRetryer.withRetry(testPublisher,
+        assertLogForMaxRetryTest(MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher,
                 REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0).block(), counter[0]);
     }
 
@@ -66,7 +66,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     return "OK";
                 });
 
-        assertLogForMaxMillisElapsedTest(MongoRequestRateTooLargeRetryer.withRetry(testPublisher,
+        assertLogForMaxMillisElapsedTest(MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher,
                 0, REQUEST_RATE_TOO_LARGE_MAX_MILLIS_ELAPSED).block());
 
     }
@@ -77,7 +77,7 @@ class MongoRequestRateTooLargeRetryerTest {
 
         Mono<Object> testPublisher = Mono.fromSupplier(() -> counter[0]++)
                 .map(x -> throwRequestRateTooLargeMongodbException());
-        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0);
 
         try {
@@ -96,7 +96,7 @@ class MongoRequestRateTooLargeRetryerTest {
 
         Mono<Object> testPublisher = Mono.fromSupplier(() -> counter[0]++)
                 .map(x -> throwRequestRateTooLargeMongodbException());
-        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , 0, REQUEST_RATE_TOO_LARGE_MAX_MILLIS_ELAPSED);
 
         try {
@@ -119,7 +119,7 @@ class MongoRequestRateTooLargeRetryerTest {
                 .map(x -> {
                     throw new UncategorizedMongoDbException("not Request Rate Too Large Exception", new Throwable());
                 });
-        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Mono<Object> mono = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0);
 
         try {
@@ -142,7 +142,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     }
                     return "OK";
                 });
-        MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0).block();
 
         assertLogForRequestRateTooLargeRetryAfterMsNull();
@@ -163,7 +163,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     return "OK";
                 });
 
-        assertLogForMaxRetryTest(MongoRequestRateTooLargeRetryer.withRetry(testPublisher,
+        assertLogForMaxRetryTest(MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher,
                 REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0).blockLast(), counter[0]);
     }
 
@@ -181,7 +181,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     return "OK";
                 });
 
-        assertLogForMaxMillisElapsedTest(MongoRequestRateTooLargeRetryer.withRetry(testPublisher,
+        assertLogForMaxMillisElapsedTest(MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher,
                 0, REQUEST_RATE_TOO_LARGE_MAX_MILLIS_ELAPSED).blockLast());
 
     }
@@ -192,7 +192,7 @@ class MongoRequestRateTooLargeRetryerTest {
 
         Flux<Object> testPublisher = Flux.defer(() -> Flux.just(counter[0]++))
                 .map(x -> throwRequestRateTooLargeMongodbException());
-        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0);
 
         try {
@@ -211,7 +211,7 @@ class MongoRequestRateTooLargeRetryerTest {
 
         Flux<Object> testPublisher = Flux.defer(() -> Flux.just(counter[0]++))
                 .map(x -> throwRequestRateTooLargeMongodbException());
-        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , 0, REQUEST_RATE_TOO_LARGE_MAX_MILLIS_ELAPSED);
 
         try {
@@ -234,7 +234,7 @@ class MongoRequestRateTooLargeRetryerTest {
                 .map(x -> {
                     throw new UncategorizedMongoDbException("not Request Rate Too Large Exception", new Throwable());
                 });
-        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        Flux<Object> flux = MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0);
 
         try {
@@ -257,7 +257,7 @@ class MongoRequestRateTooLargeRetryerTest {
                     }
                     return "OK";
                 });
-        MongoRequestRateTooLargeRetryer.withRetry(testPublisher
+        MongoRequestRateTooLargeRetryer.withRetry("FLOWNAME", testPublisher
                 , REQUEST_RATE_TOO_LARGE_MAX_RETRY, 0).blockLast();
 
         assertLogForRequestRateTooLargeRetryAfterMsNull();
@@ -297,7 +297,7 @@ class MongoRequestRateTooLargeRetryerTest {
     }
 
     private void assertLogForRequestRateTooLargeRetryAfterMsNull() {
-        String expectedMessage = "\\[REQUEST_RATE_TOO_LARGE_RETRY] Retrying for RequestRateTooLargeException: attempt %d of %d after .*";
+        String expectedMessage = "\\[REQUEST_RATE_TOO_LARGE_RETRY]\\[FLOWNAME] Retrying for RequestRateTooLargeException: attempt %d of %d after .*";
         assertEquals(REQUEST_RATE_TOO_LARGE_MAX_RETRY, memoryAppender.getLoggedEvents().size());
         assertLogMessage(expectedMessage, REQUEST_RATE_TOO_LARGE_MAX_RETRY);
     }
@@ -306,7 +306,7 @@ class MongoRequestRateTooLargeRetryerTest {
         if(testPublisher!=null) {
             assertEquals("OK", testPublisher);
         }
-        String message = "\\[REQUEST_RATE_TOO_LARGE_RETRY] Retrying after 34 ms due to RequestRateTooLargeException: attempt %d of \\d+ after \\d+ ms of max %d ms";
+        String message = "\\[REQUEST_RATE_TOO_LARGE_RETRY]\\[FLOWNAME] Retrying after 34 ms due to RequestRateTooLargeException: attempt %d of \\d+ after \\d+ ms of max %d ms";
         assertLogMessage(message, REQUEST_RATE_TOO_LARGE_MAX_MILLIS_ELAPSED);
     }
 
@@ -315,7 +315,7 @@ class MongoRequestRateTooLargeRetryerTest {
             assertEquals("OK", testPublisher);
         }
         assertEquals(REQUEST_RATE_TOO_LARGE_MAX_RETRY + 1, counter);
-        String expectedMessage = "\\[REQUEST_RATE_TOO_LARGE_RETRY] Retrying after 34 ms due to RequestRateTooLargeException: attempt %d of %d after .*";
+        String expectedMessage = "\\[REQUEST_RATE_TOO_LARGE_RETRY]\\[FLOWNAME] Retrying after 34 ms due to RequestRateTooLargeException: attempt %d of %d after .*";
         assertLogMessage(expectedMessage, REQUEST_RATE_TOO_LARGE_MAX_RETRY);
     }
 
