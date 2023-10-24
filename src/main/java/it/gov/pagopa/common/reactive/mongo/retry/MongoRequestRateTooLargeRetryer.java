@@ -86,7 +86,7 @@ public class MongoRequestRateTooLargeRetryer {
     }
 
     public static boolean isRequestRateTooLargeException(Throwable ex) {
-        return ex instanceof DataAccessException && ex.getMessage().contains("TooManyRequests");
+        return ex instanceof DataAccessException && (ex.getMessage().contains("TooManyRequests") || ex.getMessage().contains("Error=16500,"));
     }
 
 }
