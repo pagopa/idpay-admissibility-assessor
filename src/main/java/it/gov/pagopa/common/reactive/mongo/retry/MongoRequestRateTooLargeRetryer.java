@@ -1,17 +1,17 @@
 package it.gov.pagopa.common.reactive.mongo.retry;
 
 import it.gov.pagopa.common.reactive.mongo.retry.exception.MongoRequestRateTooLargeRetryExpiredException;
-import java.time.Duration;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.dao.DataAccessException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 import reactor.util.retry.Retry.RetrySignal;
 import reactor.util.retry.RetrySpec;
+
+import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class MongoRequestRateTooLargeRetryer {
@@ -64,8 +64,6 @@ public class MongoRequestRateTooLargeRetryer {
                         System.currentTimeMillis() - startTime, retryAfterMs[0]));
     }
 
-
-    @NotNull
     private static MongoRequestRateTooLargeRetryExpiredException buildMongoRequestRateTooLargeRetryExpiredException(
             String flowName, long maxRetry, RetrySignal e, long maxMillisElapsed, long startTime, Long retryAfterMs) {
         return new MongoRequestRateTooLargeRetryExpiredException(flowName, maxRetry, e.totalRetries() + 1,
