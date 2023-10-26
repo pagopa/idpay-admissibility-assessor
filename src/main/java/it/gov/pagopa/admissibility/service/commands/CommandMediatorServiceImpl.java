@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.commands.QueueCommandOperationDTO;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.commands.operations.DeleteInitiativeService;
+import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.CommandConstants;
 import it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer;
 import lombok.extern.slf4j.Slf4j;
@@ -23,20 +24,29 @@ import java.util.function.Consumer;
 public class CommandMediatorServiceImpl extends BaseKafkaConsumer<QueueCommandOperationDTO, String> implements CommandMediatorService{
 
     private final Duration commitDelay;
+    private final Duration beneficiaryRulesBuildDelayMinusCommit;
     private final DeleteInitiativeService deleteInitiativeService;
+    private final OnboardingContextHolderService onboardingContextHolderService;
     private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
     private final ObjectReader objectReader;
 
     public CommandMediatorServiceImpl(@Value("${spring.application.name}") String applicationName,
                                       @Value("${spring.cloud.stream.kafka.bindings.consumerCommands-in-0.consumer.ackTime}")  long commitMillis,
+                                      @Value("${app.beneficiary-rule.build-delay-duration}") String beneficiaryRulesBuildDelay,
+
                                       DeleteInitiativeService deleteInitiativeService,
-                                      AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
+                                      OnboardingContextHolderService onboardingContextHolderService, AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
                                       ObjectMapper objectMapper) {
         super(applicationName);
         this.commitDelay = Duration.ofMillis(commitMillis);
         this.deleteInitiativeService = deleteInitiativeService;
+        this.onboardingContextHolderService = onboardingContextHolderService;
         this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
         this.objectReader = objectMapper.readerFor(QueueCommandOperationDTO.class);
+
+        Duration beneficiaryRulesBuildDelayDuration = Duration.parse(beneficiaryRulesBuildDelay).minusMillis(commitMillis);
+        Duration defaultDurationDelay = Duration.ofMillis(2L);
+        this.beneficiaryRulesBuildDelayMinusCommit = defaultDurationDelay.compareTo(beneficiaryRulesBuildDelayDuration) >= 0 ? defaultDurationDelay : beneficiaryRulesBuildDelayDuration;
     }
 
     @Override
@@ -47,6 +57,8 @@ public class CommandMediatorServiceImpl extends BaseKafkaConsumer<QueueCommandOp
     @Override
     protected void subscribeAfterCommits(Flux<List<String>> afterCommits2subscribe) {
         afterCommits2subscribe
+                .buffer(beneficiaryRulesBuildDelayMinusCommit)
+                .then(onboardingContextHolderService.refreshKieContainerCacheMiss())
                 .subscribe(r -> log.info("[ADMISSIBILITY_COMMANDS] Processed offsets committed successfully"));
     }
 

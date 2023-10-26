@@ -3,8 +3,8 @@ package it.gov.pagopa.admissibility.service.commands.operations;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
+import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,6 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private final InitiativeCountersRepository initiativeCountersRepository;
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final AuditUtilities auditUtilities;
-    private final OnboardingContextHolderService onboardingContextHolderService;
     private final int pageSize;
     private final long delay;
 
@@ -28,14 +27,12 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
                                        InitiativeCountersRepository initiativeCountersRepository,
                                        OnboardingFamiliesRepository onboardingFamiliesRepository,
                                        AuditUtilities auditUtilities,
-                                       OnboardingContextHolderService onboardingContextHolderService,
                                        @Value("${app.delete.paginationSize}") int pageSize,
                                        @Value("${app.delete.delayTime}") long delay) {
         this.droolsRuleRepository = droolsRuleRepository;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.auditUtilities = auditUtilities;
-        this.onboardingContextHolderService = onboardingContextHolderService;
         this.pageSize = pageSize;
         this.delay = delay;
     }
@@ -43,10 +40,14 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     @Override
     public Mono<String> execute(String initiativeId) {
         log.info("[DELETE_INITIATIVE] Starting handle delete initiative {}", initiativeId);
-        return  deleteDroolsRule(initiativeId)
-                .then(deleteInitiativeCounters(initiativeId))
-                .then(deleteOnboardingFamilies(initiativeId))
+        return  execAndLogTiming("DELETE_DROOLS_RULE", initiativeId, deleteDroolsRule(initiativeId))
+                .then(execAndLogTiming("DELETE_INITIATIVE_COUNTERS", initiativeId, deleteInitiativeCounters(initiativeId)))
+                .then(execAndLogTiming("DELETE_ONBOARDING_FAMILIES", initiativeId, deleteOnboardingFamilies(initiativeId)))
                 .then(Mono.just(initiativeId));
+    }
+
+    private Mono<?> execAndLogTiming(String deleteFlowName, String initiativeId, Mono<?> deleteMono) {
+        return PerformanceLogger.logTimingFinally(deleteFlowName, deleteMono, initiativeId);
     }
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
@@ -55,7 +56,6 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
                     log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: beneficiary_rule", initiativeId);
                     auditUtilities.logDeletedDroolsRule(initiativeId);
                 })
-                .then(onboardingContextHolderService.refreshKieContainerCacheMiss())
                 .then();
     }
 
