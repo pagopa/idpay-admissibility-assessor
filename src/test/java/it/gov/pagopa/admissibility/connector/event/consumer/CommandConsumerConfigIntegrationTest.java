@@ -32,18 +32,20 @@ import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 
 @TestPropertySource(properties = {
+        "app.beneficiary-rule.build-delay-duration=PT1S",
         "logging.level.it.gov.pagopa.admissibility.service.commands.CommandMediatorServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.commands.operations.DeleteInitiativeServiceImpl=WARN",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=WARN",
+        "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN"
 })
 class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
     private final String INITIATIVEID = "INITIATIVEID_%d";
     private final Set<String> INITIATIVES_DELETED = new HashSet<>();
     @SpyBean
-    private DroolsRuleRepository droolsRuleRepository;
+    private DroolsRuleRepository droolsRuleRepositorySpy;
+
     @Autowired
     private InitiativeCountersRepository initiativeCountersRepository;
-
     @Autowired
     private OnboardingFamiliesRepository onboardingFamiliesRepository;
 
@@ -67,6 +69,8 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
 
         checkRepositories();
         checkErrorsPublished(notValidMessages, maxWaitingMs, errorUseCases);
+
+        Mockito.verify(droolsRuleRepositorySpy).findAll();
 
         System.out.printf("""
                         ************************
@@ -140,7 +144,7 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
                 .initiativeConfig(initiativeConfig)
                 .rule("")
                 .build();
-        droolsRuleRepository.save(droolsRule).block();
+        droolsRuleRepositorySpy.save(droolsRule).block();
 
         InitiativeCounters initiativeCounters = InitiativeCounters.builder()
                 .id(INITIATIVEID.formatted(bias))
@@ -184,7 +188,7 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
         errorUseCases.add(Pair.of(
                 () -> {
                     Mockito.doThrow(new MongoException("Command error dummy"))
-                            .when(droolsRuleRepository).deleteById(errorInitiativeId);
+                            .when(droolsRuleRepositorySpy).deleteById(errorInitiativeId);
                     return commandOperationErrorString;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_COMMANDS] An error occurred evaluating commands", commandOperationErrorString)
@@ -192,7 +196,7 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
     }
 
     private void checkRepositories() {
-        Assertions.assertTrue(droolsRuleRepository.findAll().toStream().noneMatch(ri -> INITIATIVES_DELETED.contains(ri.getId())));
+        Assertions.assertTrue(droolsRuleRepositorySpy.findAll().toStream().noneMatch(ri -> INITIATIVES_DELETED.contains(ri.getId())));
         Assertions.assertTrue(initiativeCountersRepository.findAll().toStream().noneMatch(ri -> INITIATIVES_DELETED.contains(ri.getId())));
         Assertions.assertTrue(onboardingFamiliesRepository.findAll().toStream().noneMatch(ri -> INITIATIVES_DELETED.contains(ri.getInitiativeId())));
     }

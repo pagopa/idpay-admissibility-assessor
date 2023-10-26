@@ -6,13 +6,11 @@ import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersReposi
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.kie.api.KieBase;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,7 +23,6 @@ class DeleteInitiativeServiceImplTest {
     @Mock private InitiativeCountersRepository initiativeCountersRepositoryMock;
     @Mock private OnboardingFamiliesRepository onboardingFamiliesRepositoryMock;
     @Mock private AuditUtilities auditUtilitiesMock;
-    @Mock private OnboardingContextHolderService onboardingContextHolderService;
 
     private DeleteInitiativeService deleteInitiativeService;
     private final static int PAGE_SIZE = 100;
@@ -37,7 +34,8 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
-                auditUtilitiesMock, onboardingContextHolderService, PAGE_SIZE, 1000L);
+                auditUtilitiesMock,
+                PAGE_SIZE, 1000L);
     }
 
     @Test
@@ -47,9 +45,6 @@ class DeleteInitiativeServiceImplTest {
 
         Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
-
-        Mockito.when(onboardingContextHolderService.refreshKieContainerCacheMiss())
-                .thenReturn(Mono.just(Mockito.mock(KieBase.class)));
 
         Mockito.when(initiativeCountersRepositoryMock.deleteById(initiativeId))
                 .thenReturn(Mono.just(Mockito.mock(Void.class)));
