@@ -5,6 +5,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.mongo.singleinstance.AutoConfigureSingleInstanceMongodb;
 import it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer;
 import it.gov.pagopa.common.utils.MemoryAppender;
 import it.gov.pagopa.common.utils.TestUtils;
@@ -69,6 +70,7 @@ public class KafkaTestUtilitiesService {
     private ObjectMapper objectMapper;
 
     @TestConfiguration
+    @AutoConfigureSingleInstanceMongodb
     static class TestKafkaConfiguration {
         @Bean
         public KafkaTemplate<byte[], byte[]> testPublisher(ProducerFactory<byte[], byte[]> producerFactory) {
