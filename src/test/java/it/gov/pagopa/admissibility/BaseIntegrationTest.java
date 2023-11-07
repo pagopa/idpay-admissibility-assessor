@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationS
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
+import it.gov.pagopa.common.mongo.singleinstance.AutoConfigureSingleInstanceMongodb;
 import it.gov.pagopa.common.rest.utils.WireMockUtils;
 import it.gov.pagopa.common.stream.StreamsHealthIndicator;
 import it.gov.pagopa.common.utils.JUnitExtensionContextHolder;
@@ -27,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.data.mongo.AutoConfigureDataMongo;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
@@ -95,7 +95,7 @@ import java.util.stream.Stream;
                 //region mongodb
                 "logging.level.org.mongodb.driver=WARN",
                 "logging.level.de.flapdoodle.embed.mongo.spring.autoconfigure=WARN",
-                "de.flapdoodle.mongodb.embedded.version=4.0.21",
+                "de.flapdoodle.mongodb.embedded.version=4.2.24",
                 //endregion
 
                 //region pdv
@@ -103,7 +103,7 @@ import java.util.stream.Stream;
                 "app.pdv.retry.max-attempts=3",
                 //endregion
         })
-@AutoConfigureDataMongo
+@AutoConfigureSingleInstanceMongodb
 @AutoConfigureWebTestClient
 @ContextConfiguration(initializers = {BaseIntegrationTest.WireMockInitializer.class})
 public abstract class BaseIntegrationTest {
