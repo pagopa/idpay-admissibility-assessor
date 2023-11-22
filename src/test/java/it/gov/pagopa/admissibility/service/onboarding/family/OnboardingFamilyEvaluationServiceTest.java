@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -66,15 +67,16 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(familyDataRetrieverFacadeServiceMock.retrieveFamily(Mockito.same(request), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))).thenReturn(Mono.just(expectedResult));
 
         // When
-        EvaluationDTO result = service.checkOnboardingFamily(request, initiativeConfig, expectedMessage).block();
+        EvaluationDTO result = service.checkOnboardingFamily(request, initiativeConfig, expectedMessage, true).block();
 
         // Then
 
         Assertions.assertEquals(expectedResult, result);
     }
 
-    @Test
-    void testExistentFamily(){
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void testExistentFamily(boolean retrieveFamily){
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
@@ -93,7 +95,7 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamily(Mockito.same(request), Mockito.same(f2), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))).thenReturn(Mono.just(expectedResult));
 
         // When
-        EvaluationDTO result = service.checkOnboardingFamily(request, initiativeConfig, expectedMessage).block();
+        EvaluationDTO result = service.checkOnboardingFamily(request, initiativeConfig, expectedMessage, retrieveFamily).block();
 
         // Then
         Assertions.assertEquals(expectedResult, result);
@@ -142,5 +144,23 @@ class OnboardingFamilyEvaluationServiceTest {
 
         // Then
         Assertions.assertSame(result, evaluation);
+    }
+
+    @Test
+    void testNewFamilyNotRetrieve(){
+        // Given
+        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+
+        @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
+
+        Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId()))
+                .thenReturn(Flux.empty());
+
+        // When
+        EvaluationDTO result = service.checkOnboardingFamily(request, initiativeConfig, expectedMessage, false).block();
+
+        // Then
+        Assertions.assertNull(result);
     }
 }

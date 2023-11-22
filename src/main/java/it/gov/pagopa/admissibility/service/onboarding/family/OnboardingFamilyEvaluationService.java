@@ -12,6 +12,6 @@ import reactor.core.publisher.Mono;
  * If already exists an onboarding it will demand to {@link ExistentFamilyHandlerService} to handle the request, otherwise to {@link FamilyDataRetrieverFacadeService}
  * */
 public interface OnboardingFamilyEvaluationService {
-    Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message);
+    Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily);
     Mono<EvaluationDTO> updateOnboardingFamilyOutcome(Family family, InitiativeConfig initiativeConfig, EvaluationDTO result);
 }
