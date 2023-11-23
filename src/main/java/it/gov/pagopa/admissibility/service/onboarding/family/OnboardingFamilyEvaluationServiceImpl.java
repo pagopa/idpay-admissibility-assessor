@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -8,7 +9,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -35,14 +35,16 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     }
 
     @Override
-    public Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
+    public Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         return onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
                 .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
                 .flatMap(f -> {
                     if (f.isEmpty()) {
-                        return familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message);
+                        return retrieveFamily ?
+                                familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
+                                : Mono.empty();
                     } else {
                         return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.get(0), initiativeConfig, message);
                     }

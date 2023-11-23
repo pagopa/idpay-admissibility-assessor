@@ -5,14 +5,13 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
-import it.gov.pagopa.common.mongo.singleinstance.AutoConfigureSingleInstanceMongodb;
 import it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer;
 import it.gov.pagopa.common.utils.MemoryAppender;
 import it.gov.pagopa.common.utils.TestUtils;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.OffsetAndMetadata;
+import org.apache.kafka.clients.admin.OffsetSpec;
+import org.apache.kafka.clients.admin.RecordsToDelete;
+import org.apache.kafka.clients.admin.TopicListing;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.header.Header;
@@ -35,16 +34,19 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import org.springframework.test.context.event.annotation.AfterTestClass;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -70,7 +72,6 @@ public class KafkaTestUtilitiesService {
     private ObjectMapper objectMapper;
 
     @TestConfiguration
-    @AutoConfigureSingleInstanceMongodb
     static class TestKafkaConfiguration {
         @Bean
         public KafkaTemplate<byte[], byte[]> testPublisher(ProducerFactory<byte[], byte[]> producerFactory) {
@@ -80,6 +81,32 @@ public class KafkaTestUtilitiesService {
                             "value.serializer", ByteArraySerializer.class
                     ));
         }
+    }
+
+    @AfterTestClass
+    void clearTopics() {
+        kafkaBroker.doWithAdmin(admin -> {
+            try {
+                Collection<TopicListing> topics = admin.listTopics().listings().get();
+                admin.deleteRecords(
+                                admin.listOffsets(
+                                                topics.stream()
+                                                        .filter(topicListing -> !topicListing.isInternal())
+                                                        .flatMap(t -> IntStream.range(0, kafkaBroker.getPartitionsPerTopic())
+                                                                .boxed()
+                                                                .map(p -> new TopicPartition(t.name(), p)))
+                                                        .collect(Collectors.toMap(tp -> tp,
+                                                                tp -> OffsetSpec.latest()))
+                                        ).all().get().entrySet().stream()
+                                        .filter(e -> e.getValue().offset() > 0)
+                                        .collect(Collectors.toMap(Map.Entry::getKey,
+                                                e -> RecordsToDelete.beforeOffset(e.getValue().offset()))))
+                        .all().get();
+
+            } catch (InterruptedException | ExecutionException e) {
+                throw new IllegalStateException("Something gone wrong while emptying topics", e);
+            }
+        });
     }
 
     /** It will return usefull URLs related to embedded kafka */
@@ -100,7 +127,7 @@ public class KafkaTestUtilitiesService {
         }
 
         Map<String, Object> consumerProps = KafkaTestUtils.consumerProps(groupId, "true", kafkaBroker);
-        consumerProps.put("key.deserializer", StringDeserializer.class);
+        consumerProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         DefaultKafkaConsumerFactory<String, String> cf = new DefaultKafkaConsumerFactory<>(consumerProps);
         Consumer<String, String> consumer = cf.createConsumer();
         if(attachToBroker){
@@ -147,13 +174,6 @@ public class KafkaTestUtilitiesService {
             List<ConsumerRecord<String, String>> payloadConsumed = new ArrayList<>(expectedNumber);
             while (payloadConsumed.size() < expectedNumber) {
                 if (System.currentTimeMillis() - startTime > maxWaitingMs) {
-                    System.out.println("Current read messages:");
-                    int[] i={0};
-                    System.out.println(payloadConsumed.stream()
-                            .map(ConsumerRecord::value)
-                            .sorted()
-                            .map(p -> "   " + i[0]++ + ". " + p)
-                            .collect(Collectors.joining("\n")));
                     Assertions.fail("timeout of %d ms expired. Read %d messages of %d".formatted(maxWaitingMs, payloadConsumed.size(), expectedNumber));
                 }
                 consumer.poll(Duration.ofMillis(7000)).iterator().forEachRemaining(payloadConsumed::add);
@@ -261,7 +281,7 @@ public class KafkaTestUtilitiesService {
     }
 //endregion
 
-    //region check commit by logs
+//region check commit by logs
     protected MemoryAppender commitLogMemoryAppender;
     /** To be called before each test in order to perform the asserts on {@link #assertCommitOrder(String, int)} */
     public void setupCommitLogMemoryAppender() {
@@ -300,7 +320,7 @@ public class KafkaTestUtilitiesService {
     }
 //endregion
 
-    //region error topic
+//region error topic
     public void checkErrorsPublished(String topicErrors, Pattern errorUseCaseIdPatternMatch, int expectedErrorMessagesNumber, long maxWaitingMs, List<Pair<Supplier<String>, java.util.function.Consumer<ConsumerRecord<String, String>>>> errorUseCases) {
         final List<ConsumerRecord<String, String>> errors = consumeMessages(topicErrors, expectedErrorMessagesNumber, maxWaitingMs);
         for (final ConsumerRecord<String, String> record : errors) {
