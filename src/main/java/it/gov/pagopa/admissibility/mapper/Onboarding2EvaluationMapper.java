@@ -45,7 +45,9 @@ public class Onboarding2EvaluationMapper {
             out.setBeneficiaryBudget(initiative.getBeneficiaryInitiativeBudget());
             out.setInitiativeRewardType(initiative.getInitiativeRewardType());
             out.setIsLogoPresent(initiative.getIsLogoPresent());
-            setRankingValue(onboardingDTO, initiative, out);
+            if(onboardingDTO.getIsee()!=null) {
+                setRankingValue(onboardingDTO, initiative, out);
+            }
         }
 
         return out;
