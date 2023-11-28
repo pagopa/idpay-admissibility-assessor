@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -32,10 +33,15 @@ public class Onboarding2EvaluationMapper {
         out.setFamilyId(getFamilyId(onboardingDTO));
         out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
-        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
-        out.getOnboardingRejectionReasons().addAll(rejectionReasons);
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
+
+        if(CollectionUtils.isEmpty(rejectionReasons)){
+            out.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
+        } else {
+            out.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
+            out.getOnboardingRejectionReasons().addAll(rejectionReasons);
+        }
 
         if(initiative != null){
             out.setInitiativeName(initiative.getInitiativeName());
