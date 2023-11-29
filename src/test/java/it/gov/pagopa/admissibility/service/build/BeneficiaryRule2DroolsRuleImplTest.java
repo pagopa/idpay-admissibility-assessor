@@ -192,7 +192,6 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
         expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
         expectedEvaluationResult.setIsLogoPresent(Boolean.TRUE);
-        expectedEvaluationResult.setOnboardingRejectionReasons(new ArrayList<>());
         if (expectedIseeFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
                     .type(OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL)

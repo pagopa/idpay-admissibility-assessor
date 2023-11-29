@@ -115,7 +115,6 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         EvaluationCompletedDTO evaluation = new EvaluationCompletedDTO();
         evaluation.setStatus(evaluationStatus);
-        evaluation.setOnboardingRejectionReasons(Collections.emptyList());
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         Family family = new Family("FAMILYID", Set.of("USERID"));
 

@@ -359,6 +359,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                         .thenReturn(Mono.empty());
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+        Mockito.when(rankingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
         // When
         admissibilityEvaluatorMediatorService.execute(onboardingFlux);
