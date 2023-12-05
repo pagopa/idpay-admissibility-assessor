@@ -72,48 +72,49 @@ public class ExtraFilter2DroolsUtils {
         final List<ExtraFilterField> out = new ArrayList<>();
         final Set<String> fieldsAdded = new HashSet<>();
 
-        ReflectionUtils.doWithMethods(clazz, m -> checkIfGetter2AnalyzeAndRetrieveFieldInfo(m, path, castPath, class2subclass, path2ignore, maxDepth, out, fieldsAdded),
+        ReflectionUtils.doWithMethods(clazz, m -> checkIfGetter2AnalyzeAndRetrieveFieldInfo(m, class2subclass, path2ignore, maxDepth, out, fieldsAdded,
+                        generateExtraFilterField(path, castPath)),
                 m -> m.getParameterTypes().length == 0 && (m.getName().startsWith("get") || m.getName().startsWith("is")));
         return out;
     }
 
-    private static void checkIfGetter2AnalyzeAndRetrieveFieldInfo(Method m, String path, Class<?> castPath, Map<Class<?>, List<Class<?>>> class2subclass, Set<String> path2ignore, int maxDepth, List<ExtraFilterField> out, Set<String> fieldsAdded) {
-        Class<?> fieldType = m.getReturnType();
-        if (class2notAnalyze.stream().anyMatch(c -> c.isAssignableFrom(fieldType))) {
+    private static ExtraFilterField generateExtraFilterField(String path, Class<?> castPath){
+        ExtraFilterField eff = new ExtraFilterField();
+        eff.setPath(path);
+        eff.setCastPath(castPath);
+        return eff;
+    }
+
+    private static void checkIfGetter2AnalyzeAndRetrieveFieldInfo(Method m, Map<Class<?>, List<Class<?>>> class2subclass, Set<String> path2ignore, int maxDepth, List<ExtraFilterField> out, Set<String> fieldsAdded, ExtraFilterField eff) {
+        eff.setType(m.getReturnType());
+        if (class2notAnalyze.stream().anyMatch(c -> c.isAssignableFrom(eff.getType()))) {
             return;
         }
 
-        String fieldName = StringUtils.uncapitalize(m.getName().replaceFirst("^(?:get|is)", ""));
-        String fullFieldName = path != null ? String.format("%s.%s", path, fieldName) : fieldName;
-        if (!Modifier.isStatic(m.getModifiers()) && !fieldsAdded.contains(fullFieldName) && (path2ignore == null || !path2ignore.contains(fullFieldName))) {
-            extractFieldInfo(path, castPath, class2subclass, path2ignore, maxDepth, out, fieldsAdded, fieldType, fieldName, fullFieldName);
+        eff.setName(StringUtils.uncapitalize(m.getName().replaceFirst("^(?:get|is)", "")));
+        eff.setField(eff.getPath() != null ? String.format("%s.%s", eff.getPath(), eff.getName()) : eff.getName());
+        if (!Modifier.isStatic(m.getModifiers()) && !fieldsAdded.contains(eff.getField()) && (path2ignore == null || !path2ignore.contains(eff.getField()))) {
+            extractFieldInfo(class2subclass, path2ignore, maxDepth, out, fieldsAdded, eff);
         }
     }
 
-    private static void extractFieldInfo(String path, Class<?> castPath, Map<Class<?>, List<Class<?>>> class2subclass, Set<String> path2ignore, int maxDepth, List<ExtraFilterField> out, Set<String> fieldsAdded, Class<?> fieldType, String fieldName, String fullFieldName) {
-        ExtraFilterField eff = new ExtraFilterField();
-        eff.setPath(path);
-        eff.setName(fieldName);
-        eff.setField(fullFieldName);
-        eff.setType(fieldType);
-        eff.setCastPath(castPath);
-
+    private static void extractFieldInfo(Map<Class<?>, List<Class<?>>> class2subclass, Set<String> path2ignore, int maxDepth, List<ExtraFilterField> out, Set<String> fieldsAdded, ExtraFilterField eff) {
         out.add(eff);
-        fieldsAdded.add(fullFieldName);
+        fieldsAdded.add(eff.getField());
 
-        List<Class<?>> subclasses = class2subclass == null ? null : class2subclass.get(fieldType);
+        List<Class<?>> subclasses = class2subclass == null ? null : class2subclass.get(eff.getType());
         if (!CollectionUtils.isEmpty(subclasses)) {
             eff.setToCast(true);
             eff.setSubclasses(subclasses);
             for (Class<?> s : subclasses) {
-                if (fieldType.isAssignableFrom(s)) {
-                    out.addAll(buildExtraFilterFields(s, String.format("%s(%s)%s", path == null ? "" : String.format("%s.", path), s.getName(), fieldName), s, class2subclass, path2ignore, maxDepth));
+                if (eff.getType().isAssignableFrom(s)) {
+                    out.addAll(buildExtraFilterFields(s, String.format("%s(%s)%s", eff.getPath() == null ? "" : String.format("%s.", eff.getPath()), s.getName(), eff.getName()), s, class2subclass, path2ignore, maxDepth));
                 } else {
-                    throw new IllegalArgumentException(String.format("The configured class '%s' is not a subclass of '%s'", s.getName(), fieldType));
+                    throw new IllegalArgumentException(String.format("The configured class '%s' is not a subclass of '%s'", s.getName(), eff.getType()));
                 }
             }
-        } else if (!fieldType.isPrimitive() && class2notExplore.stream().noneMatch(c -> c.isAssignableFrom(fieldType))) {
-            out.addAll(buildExtraFilterFields(fieldType, fullFieldName, null, class2subclass, path2ignore, maxDepth));
+        } else if (!eff.getType().isPrimitive() && class2notExplore.stream().noneMatch(c -> c.isAssignableFrom(eff.getType()))) {
+            out.addAll(buildExtraFilterFields(eff.getType(), eff.getField(), null, class2subclass, path2ignore, maxDepth));
         }
     }
 }
