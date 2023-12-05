@@ -15,7 +15,6 @@ public class HealthIndicatorLogger implements HealthIndicator {
 
     private final List<HealthIndicator> healthIndicatorList;
 
-    @Autowired
     public HealthIndicatorLogger(List<HealthIndicator> healthIndicatorList) {
         this.healthIndicatorList = healthIndicatorList;
     }
