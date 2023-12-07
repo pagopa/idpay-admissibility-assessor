@@ -37,24 +37,7 @@ public class OnboardingConsensusCheck implements OnboardingCheck {
             return OnboardingConstants.REJECTION_REASON_CONSENSUS_PDND_FAIL;
         }
 
-        /*
-        if (!CollectionUtils.isEmpty(onboardingRequest.getSelfDeclarationList())) {
-            return selfDeclarationListCheck(onboardingRequest.getSelfDeclarationList());
-        }
-        */
         return null;
     }
-
-    //Handle multi and boolean criteria
-    /*
-    private String selfDeclarationListCheck(Map<String, Boolean> selfDeclarationList) {
-        for (Map.Entry<String, Boolean> selfDeclaration : selfDeclarationList.entrySet()) {
-            if (Boolean.FALSE.equals(selfDeclaration.getValue())) {
-                return String.format(OnboardingConstants.REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT, selfDeclaration.getKey());
-            }
-        }
-        return null;
-    }
-    */
 
 }

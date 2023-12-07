@@ -12,6 +12,7 @@ import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
@@ -24,9 +25,11 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.GenericMessage;
 import org.springframework.messaging.support.MessageBuilder;
@@ -264,22 +267,22 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
 
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_first, initiativeConfig, msgs.get(0))).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_first, initiativeConfig, msgs.get(0), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family1);
             onboarding_first.setFamily(family1);
             return Mono.empty();
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_waitingFirst, initiativeConfig, msgs.get(1))).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_waitingFirst, initiativeConfig, msgs.get(1), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family2);
             onboarding_waitingFirst.setFamily(family2);
             return Mono.error(new WaitingFamilyOnBoardingException());
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyOk, initiativeConfig, msgs.get(2))).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyOk, initiativeConfig, msgs.get(2), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family3);
             onboarding_familyOk.setFamily(family3);
             return Mono.just(expectedEvaluationOnboardingFamilyOk);
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyKo, initiativeConfig, msgs.get(3))).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyKo, initiativeConfig, msgs.get(3), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family4);
             onboarding_familyKo.setFamily(family4);
             return Mono.just(expectedEvaluationOnboardingFamilyKo);
@@ -312,6 +315,67 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.eq(onboarding_first), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock).evaluate(Mockito.eq(onboarding_first), Mockito.any());
+
+        checkCommits(checkpointers);
+    }
+
+    @Test
+    void mediatorTestWhenFamilyOuterInitiative() {
+        // Given
+        String initiativeId = "INITIATIVEID";
+        String userId = "USERID";
+        OnboardingDTO onboarding = OnboardingDTO.builder().userId(userId).initiativeId(initiativeId).build();
+
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder()
+                .initiativeId(initiativeId)
+                .rankingInitiative(true)
+                .rankingFields(List.of(Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()))
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
+                .build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+
+        List<Checkpointer> checkpointers= new ArrayList<>(1);
+        List<Message<String>> msgs = Stream.of(onboarding)
+                .map(TestUtils::jsonSerializer)
+                .map(s -> {
+                            Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+                            Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+                            checkpointers.add(checkpointer);
+                            return MessageBuilder.withPayload(s)
+                                    .setHeader(AzureHeaders.CHECKPOINTER, checkpointer);
+                        }
+                )
+                .map(MessageBuilder::build).toList();
+
+        Flux<Message<String>> onboardingFlux = Flux.fromIterable(msgs);
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any()))
+                .thenReturn(OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL).build());
+
+        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding, initiativeConfig, msgs.get(0), false))
+                        .thenReturn(Mono.empty());
+
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+        Mockito.when(rankingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        // When
+        admissibilityEvaluatorMediatorService.execute(onboardingFlux);
+
+        // Then
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
+
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding), Mockito.same(initiativeConfig), Mockito.any());
+
+        Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
+
+        ArgumentCaptor<EvaluationCompletedDTO> argument = ArgumentCaptor.forClass(EvaluationCompletedDTO.class);
+        Mockito.verify(onboardingNotifierServiceMock).notify(argument.capture());
+        Assertions.assertEquals(argument.getValue().getOnboardingRejectionReasons(), List.of(OnboardingRejectionReason.builder()
+                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                .code(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL).build()));
 
         checkCommits(checkpointers);
     }

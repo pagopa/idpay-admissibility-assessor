@@ -32,10 +32,15 @@ public class Onboarding2EvaluationMapper {
         out.setFamilyId(getFamilyId(onboardingDTO));
         out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
-        out.setStatus(CollectionUtils.isEmpty(rejectionReasons) ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
         out.setAdmissibilityCheckDate(LocalDateTime.now());
-        out.setOnboardingRejectionReasons(rejectionReasons);
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
+
+        if(CollectionUtils.isEmpty(rejectionReasons)){
+            out.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
+        } else {
+            out.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
+            out.getOnboardingRejectionReasons().addAll(rejectionReasons);
+        }
 
         if(initiative != null){
             out.setInitiativeName(initiative.getInitiativeName());
@@ -78,7 +83,11 @@ public class Onboarding2EvaluationMapper {
 
     private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
         if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
-            out.setRankingValue(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) ? CommonUtilities.euroToCents(onboardingDTO.getIsee()) : -1);
+            long rankingValue = -1L;
+            if(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) && onboardingDTO.getIsee() != null){
+                rankingValue = CommonUtilities.euroToCents(onboardingDTO.getIsee());
+            }
+            out.setRankingValue(rankingValue);
         }
     }
 

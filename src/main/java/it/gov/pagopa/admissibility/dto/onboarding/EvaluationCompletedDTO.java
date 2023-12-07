@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -27,7 +28,7 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     @NotEmpty
     private OnboardingEvaluationStatus status;
     @NotNull
-    private List<OnboardingRejectionReason> onboardingRejectionReasons;
+    private List<OnboardingRejectionReason> onboardingRejectionReasons = new ArrayList<>();
     private BigDecimal beneficiaryBudget;
     @JsonIgnore
     private Long rankingValue;

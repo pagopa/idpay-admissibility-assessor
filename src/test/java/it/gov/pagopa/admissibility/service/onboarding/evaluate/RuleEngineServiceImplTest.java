@@ -72,9 +72,9 @@ class RuleEngineServiceImplTest {
         expected.setOrganizationId(initiativeConfig.getOrganizationId());
         expected.setAdmissibilityCheckDate(result.getAdmissibilityCheckDate());
         expected.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
-        expected.setOnboardingRejectionReasons(Collections.singletonList(OnboardingRejectionReason.builder()
+        expected.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
                 .code("REASON1")
-                .build()));
+                .build());
 
         Assertions.assertEquals(expected, result);
     }
