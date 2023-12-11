@@ -36,6 +36,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /*
  ******************
@@ -144,6 +145,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
     @Test
     void testExecutions() {
         testExecution(Collections.emptyList());
+        testExecution(List.of("NOTREADY"));
         testExecution(List.of("ISEE"));
         testExecution(List.of("BIRTHDATE"));
         testExecution(List.of("ISEE", "BIRTHDATE"));
@@ -153,6 +155,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         //given
         boolean expectedIseeFail = failingCode.contains("ISEE");
         boolean expectedBirthDateFail = failingCode.contains("BIRTHDATE");
+        boolean expectedNotReady = failingCode.equals(List.of("NOTREADY"));
 
         Initiative2BuildDTO initiative = buildInitiative();
 
@@ -175,6 +178,10 @@ class BeneficiaryRule2DroolsRuleImplTest {
 
         OnboardingContextHolderService onboardingContextHolderService = Mockito.mock(OnboardingContextHolderService.class);
         Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieBase()).thenReturn(buildKieBase(rule));
+        Mockito.when(onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds())
+                .thenReturn(expectedNotReady
+                        ? Collections.emptySet()
+                        : Set.of(initiative.getInitiativeId()));
 
         RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), criteriaCodeServiceMock, new Onboarding2OnboardingDroolsMapper());
 
@@ -208,7 +215,13 @@ class BeneficiaryRule2DroolsRuleImplTest {
                     .authorityLabel("Agenzia per l'Italia Digitale")
                     .build());
         }
-        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().size() == 0 ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
+        if (expectedNotReady) {
+            expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
+                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR)
+                    .code("RULE_ENGINE_NOT_READY")
+                    .build());
+        }
+        expectedEvaluationResult.setStatus(expectedEvaluationResult.getOnboardingRejectionReasons().isEmpty() ? OnboardingEvaluationStatus.ONBOARDING_OK : OnboardingEvaluationStatus.ONBOARDING_KO);
 
         Assertions.assertEquals(expectedEvaluationResult, evaluationResult);
     }

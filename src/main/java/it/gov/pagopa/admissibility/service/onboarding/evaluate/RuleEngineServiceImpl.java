@@ -3,11 +3,13 @@ package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
 import org.drools.core.command.runtime.rule.AgendaGroupSetFocusCommand;
@@ -15,6 +17,7 @@ import org.kie.api.command.Command;
 import org.kie.api.runtime.StatelessKieSession;
 import org.kie.internal.command.CommandFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,10 +55,26 @@ public class RuleEngineServiceImpl implements RuleEngineService {
         long before = System.currentTimeMillis();
         statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
 
+        checkIfContainerWasReady(req, initiative);
+
         PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
 
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] Send message prepared: {}", req);
 
         return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
+    }
+
+    private void checkIfContainerWasReady(OnboardingDroolsDTO req, InitiativeConfig initiative) {
+        if (req.getOnboardingRejectionReasons().isEmpty() &&                          // there is not rejection reason
+                !CollectionUtils.isEmpty(initiative.getAutomatedCriteria()) &&        // the drools container is supposed to be involved
+                !onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative was not inside the container drools
+                        .contains(initiative.getInitiativeId())
+        ) {
+            req.getOnboardingRejectionReasons().add(new OnboardingRejectionReason(
+                    OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                    OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
+                    null, null, null
+            ));
+        }
     }
 }

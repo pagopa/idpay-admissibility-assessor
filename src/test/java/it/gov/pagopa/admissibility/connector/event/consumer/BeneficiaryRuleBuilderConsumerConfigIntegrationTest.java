@@ -75,6 +75,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         long timeEnd = System.currentTimeMillis();
 
         Assertions.assertEquals(validRules, countSaved[0]);
+        Assertions.assertEquals(validRules, onboardingContextHolderServiceSpy.getBeneficiaryRulesKieInitiativeIds().size());
         Assertions.assertEquals(expectedRules[0], ruleBuiltSize);
 
         checkInitiativeCounters(validRules);
