@@ -20,6 +20,7 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_FAMILY_KO = "FAMILY_FAIL";
     public static final String REJECTION_REASON_RESIDENCE_KO = "RESIDENCE_FAIL";
     public static final String REJECTION_REASON_BIRTHDATE_KO = "BIRTHDATE_FAIL";
+    public static final String REJECTION_REASON_RULE_ENGINE_NOT_READY = "RULE_ENGINE_NOT_READY";
     public static final String REJECTION_REASON_GENERIC_ERROR = "GENERIC_ERROR";
 
     /** Rejection reason for the second family member due to the family not meeting the requirements of the initiative */

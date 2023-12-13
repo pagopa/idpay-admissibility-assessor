@@ -1,59 +1,76 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
+import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2DroolsTransformerFacadeImplTest;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImpl;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderServiceImplTest;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
-import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl;
+import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kie.api.KieBase;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
 class RuleEngineServiceImplTest {
+
+    public static final String INITIATIVEID = "INITIATIVEID";
+    @Mock private OnboardingContextHolderService onboardingContextHolderServiceMock;
+    @Mock private CriteriaCodeService criteriaCodeServiceMock;
+
+    private final Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
+
+    private RuleEngineService ruleEngineService;
 
     @BeforeAll
     public static void configDroolsLogLevel() {
         KieContainerBuilderServiceImplTest.configDroolsLogs();
     }
 
+    @BeforeEach
+    void init(){
+        ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderServiceMock, onboarding2EvaluationMapper, criteriaCodeServiceMock, onboarding2OnboardingDroolsMapper);
+    }
+
+    @AfterEach
+    void verifyNotMoreInvocations(){
+        Mockito.verifyNoMoreInteractions(
+                onboardingContextHolderServiceMock,
+                criteriaCodeServiceMock);
+    }
+
     @Test
     void applyRules() {
         // Given
-        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderServiceImpl.class);
-        CriteriaCodeService criteriaCodeServiceMock = Mockito.mock(CriteriaCodeService.class);
-        Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
-        Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
-
-        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderServiceMock, onboarding2EvaluationMapper, criteriaCodeServiceMock, onboarding2OnboardingDroolsMapper);
-
+        String initiativeId = INITIATIVEID;
         OnboardingDTO onboardingDTO = new OnboardingDTO();
-        onboardingDTO.setInitiativeId("INITIATIVEID");
+        onboardingDTO.setInitiativeId(initiativeId);
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setInitiativeId("INITIATIVEID");
+        initiativeConfig.setInitiativeId(initiativeId);
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
 
-        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase()).thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
+                .thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
@@ -61,7 +78,7 @@ class RuleEngineServiceImplTest {
         // Then
         Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieBase();
 
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
         Assertions.assertTrue(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now().minusMinutes(2)));
@@ -77,6 +94,58 @@ class RuleEngineServiceImplTest {
                 .build());
 
         Assertions.assertEquals(expected, result);
+    }
+
+    @Test
+    void testNotRules_notKieBasedInitiatives(){
+        // Given
+        String initiativeId = "NOTKIEINITITATIVEID";
+        OnboardingDTO onboardingDTO = new OnboardingDTO();
+        onboardingDTO.setInitiativeId(initiativeId);
+
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setInitiativeId(initiativeId);
+
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
+                .thenReturn(buildContainer(INITIATIVEID));
+
+        // When
+        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
+
+        // Then
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, ((EvaluationCompletedDTO)result).getStatus());
+        Assertions.assertEquals(Collections.emptyList(), ((EvaluationCompletedDTO)result).getOnboardingRejectionReasons());
+    }
+
+    @Test
+    void testNotRules_kieBasedInitiatives(){
+        // Given
+        String initiativeId = "KIEINITITATIVEID_NOT_IN_CONTAINER";
+        OnboardingDTO onboardingDTO = new OnboardingDTO();
+        onboardingDTO.setInitiativeId(initiativeId);
+
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setInitiativeId(initiativeId);
+        initiativeConfig.setAutomatedCriteria(List.of(AutomatedCriteriaDTO.builder().build()));
+
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
+                .thenReturn(buildContainer(INITIATIVEID));
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieInitiativeIds())
+                .thenReturn(Collections.emptySet());
+
+        // When
+        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
+
+        // Then
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, ((EvaluationCompletedDTO)result).getStatus());
+        Assertions.assertEquals(List.of(new OnboardingRejectionReason(
+                        OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                        OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
+                        null, null, null
+                )),
+                ((EvaluationCompletedDTO)result).getOnboardingRejectionReasons());
     }
 
     private KieBase buildContainer(String initiativeId) {
