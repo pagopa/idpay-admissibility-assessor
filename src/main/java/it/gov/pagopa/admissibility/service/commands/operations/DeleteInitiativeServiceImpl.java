@@ -51,20 +51,21 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     }
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
-        return droolsRuleRepository.deleteById(initiativeId)
-                .doOnSuccess(d -> {
-                    log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: beneficiary_rule", initiativeId);
+        return droolsRuleRepository.removeById(initiativeId)
+                .doOnNext(d -> {
+                    log.info("[DELETE_INITIATIVE] Deleted {} initiative {} from collection: beneficiary_rule", d.getDeletedCount(), initiativeId);
                     auditUtilities.logDeletedDroolsRule(initiativeId);
                 })
                 .then();
     }
 
     private Mono<Void> deleteInitiativeCounters(String initiativeId) {
-        return initiativeCountersRepository.deleteById(initiativeId)
-                .doOnSuccess(i -> {
-                    log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: initiative_counters", initiativeId);
+        return initiativeCountersRepository.removeById(initiativeId)
+                .doOnNext(i -> {
+                    log.info("[DELETE_INITIATIVE] Deleted {} initiative {} from collection: initiative_counters", i.getDeletedCount(), initiativeId);
                     auditUtilities.logDeletedInitiativeCounters(initiativeId);
-                });
+                })
+                .then();
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId) {

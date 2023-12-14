@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Data
 @AllArgsConstructor
@@ -23,4 +25,5 @@ public class DroolsRule {
     private String rule;
     private String ruleVersion;
     private InitiativeConfig initiativeConfig;
+    private LocalDateTime updateDate;
 }

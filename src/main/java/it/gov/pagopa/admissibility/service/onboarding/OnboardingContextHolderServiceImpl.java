@@ -110,6 +110,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
         preLoadKieBase(newKieBase);
         this.kieBase = newKieBase;
         this.kieInitiatives = readKieInitiatives(newKieBase);
+        log.info("[BENEFICIARY_RULE_CONTAINER_LOAD] Rule engine rules loaded: {}", kieInitiatives);
     }
 
     private Set<String> readKieInitiatives(KieBase kieBase) {

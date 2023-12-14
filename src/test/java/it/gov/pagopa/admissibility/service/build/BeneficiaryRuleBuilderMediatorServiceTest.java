@@ -22,6 +22,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -61,7 +62,8 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                             .automatedCriteriaCodes(List.of("CODE"))
                             .initiativeBudget(i.getGeneral().getBudget())
                             .beneficiaryInitiativeBudget(i.getGeneral().getBeneficiaryBudget())
-                            .build());
+                            .build(),
+                    LocalDateTime.now());
         });
         Mockito.when(droolsRuleRepositoryMock.save(Mockito.any())).thenAnswer(invocation -> Mono.just(invocation.getArgument(0)));
         Mockito.when(kieContainerBuilderServiceMock.buildAll()).thenReturn(Mono.just(newKieBaseBuiltMock));
