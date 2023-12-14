@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +50,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         out.setId(initiative.getInitiativeId());
         out.setName(initiative.getInitiativeName());
         out.setRuleVersion("20230404");
+        out.setUpdateDate(LocalDateTime.now());
 
         out.setRule("""
                 package %s;

@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.commands.operations;
 
 import com.mongodb.MongoException;
+import com.mongodb.client.result.DeleteResult;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
@@ -43,11 +44,11 @@ class DeleteInitiativeServiceImplTest {
         String initiativeId = "INITIATIVEID";
         String familyid = "FAMILYID";
 
-        Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
-                .thenReturn(Mono.just(Mockito.mock(Void.class)));
+        Mockito.when(droolsRuleRepositoryMock.removeById(initiativeId))
+                .thenReturn(Mono.just(Mockito.mock(DeleteResult.class)));
 
-        Mockito.when(initiativeCountersRepositoryMock.deleteById(initiativeId))
-                .thenReturn(Mono.just(Mockito.mock(Void.class)));
+        Mockito.when(initiativeCountersRepositoryMock.removeById(initiativeId))
+                .thenReturn(Mono.just(Mockito.mock(DeleteResult.class)));
 
         Family family = Family.builder()
                 .familyId(familyid)
@@ -66,8 +67,8 @@ class DeleteInitiativeServiceImplTest {
 
         Assertions.assertNotNull(result);
 
-        Mockito.verify(droolsRuleRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
-        Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
+        Mockito.verify(droolsRuleRepositoryMock, Mockito.times(1)).removeById(Mockito.anyString());
+        Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).removeById(Mockito.anyString());
         Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).findByInitiativeIdWithBatch(Mockito.anyString(),Mockito.anyInt());
         Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
 
@@ -76,14 +77,14 @@ class DeleteInitiativeServiceImplTest {
     @Test
     void executeError() {
         String initiativeId = "INITIATIVEID";
-        Mockito.when(droolsRuleRepositoryMock.deleteById(initiativeId))
+        Mockito.when(droolsRuleRepositoryMock.removeById(initiativeId))
                 .thenThrow(new MongoException("DUMMY_EXCEPTION"));
 
         try{
             deleteInitiativeService.execute(initiativeId).block();
             Assertions.fail();
-        }catch (Throwable t){
-            Assertions.assertTrue(t instanceof  MongoException);
+        }catch (MongoException t){
+            // Do Nothing
         }
     }
 }
