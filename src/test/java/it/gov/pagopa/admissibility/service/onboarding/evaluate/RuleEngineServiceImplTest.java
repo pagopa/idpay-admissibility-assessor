@@ -70,14 +70,12 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
 
         Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
-                .thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+                .thenReturn(buildContainer(initiativeId));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
         // Then
-        Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieBase();
-
         Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
@@ -129,8 +127,6 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setInitiativeId(initiativeId);
         initiativeConfig.setAutomatedCriteria(List.of(AutomatedCriteriaDTO.builder().build()));
 
-        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
-                .thenReturn(buildContainer(INITIATIVEID));
         Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieInitiativeIds())
                 .thenReturn(Collections.emptySet());
 

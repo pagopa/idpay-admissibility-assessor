@@ -71,7 +71,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     }
 
     private boolean checkIfKieBaseContainerIsReady(InitiativeConfig initiative) {
-        return !CollectionUtils.isEmpty(initiative.getAutomatedCriteria()) &&        // the drools container is supposed to be involved
+        return CollectionUtils.isEmpty(initiative.getAutomatedCriteria()) ||        // the drools container is supposed to not be involved
                 onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative is inside the container drools
                         .contains(initiative.getInitiativeId());
     }
