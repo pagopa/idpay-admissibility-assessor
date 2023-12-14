@@ -136,7 +136,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .isLogoPresent(Boolean.TRUE)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
-
+        expected.setUpdateDate(result.getUpdateDate());
         expected.setRuleVersion("20230404");
 
         Assertions.assertEquals(expected, result);
