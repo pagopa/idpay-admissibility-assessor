@@ -43,26 +43,30 @@ public class RuleEngineServiceImpl implements RuleEngineService {
 
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
 
-        if(checkIfKieBaseContainerIsReady(initiative)) {
-            StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
+        if(checkIfKieBaseShouldBeInvolved(initiative)) {
+            if (checkIfKieBaseContainerIsReady(initiative)) {
+                StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
 
-            @SuppressWarnings("unchecked")
-            List<Command<?>> cmds = Arrays.asList(
-                    CommandFactory.newInsert(req),
-                    CommandFactory.newInsert(criteriaCodeService),
-                    new AgendaGroupSetFocusCommand(req.getInitiativeId())
-            );
+                @SuppressWarnings("unchecked")
+                List<Command<?>> cmds = Arrays.asList(
+                        CommandFactory.newInsert(req),
+                        CommandFactory.newInsert(criteriaCodeService),
+                        new AgendaGroupSetFocusCommand(req.getInitiativeId())
+                );
 
-            long before = System.currentTimeMillis();
-            statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
+                long before = System.currentTimeMillis();
+                statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
 
-            PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
+                PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
+            } else {
+                req.getOnboardingRejectionReasons().add(new OnboardingRejectionReason(
+                        OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                        OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
+                        null, null, null
+                ));
+            }
         } else {
-            req.getOnboardingRejectionReasons().add(new OnboardingRejectionReason(
-                    OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                    OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
-                    null, null, null
-            ));
+            log.info("[ONBOARDING_REQUEST][RULE_ENGINE] Selected not drools involved initiative: {}", initiative.getInitiativeId());
         }
 
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] Send message prepared: {}", req);
@@ -70,9 +74,12 @@ public class RuleEngineServiceImpl implements RuleEngineService {
         return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
     }
 
+    private boolean checkIfKieBaseShouldBeInvolved(InitiativeConfig initiative) {
+        return !CollectionUtils.isEmpty(initiative.getAutomatedCriteria()); // the drools container is supposed to not be involved
+    }
+
     private boolean checkIfKieBaseContainerIsReady(InitiativeConfig initiative) {
-        return CollectionUtils.isEmpty(initiative.getAutomatedCriteria()) ||        // the drools container is supposed to not be involved
-                onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative is inside the container drools
+        return onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative is inside the container drools
                         .contains(initiative.getInitiativeId());
     }
 }

@@ -12,7 +12,7 @@ public class AdmissibilityErrorManagerConfig {
   ErrorDTO defaultErrorDTO() {
     return new ErrorDTO(
         OnboardingConstants.ExceptionCode.GENERIC_ERROR,
-        "A generic error occurred for payment"
+        "A generic error occurred"
     );
   }
 
