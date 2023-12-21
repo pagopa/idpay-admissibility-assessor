@@ -41,40 +41,45 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     public EvaluationDTO applyRules(OnboardingDTO onboardingRequest, InitiativeConfig initiative) {
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] evaluating rules of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
-        StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
-
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
 
-        @SuppressWarnings("unchecked")
-        List<Command<?>> cmds = Arrays.asList(
-                CommandFactory.newInsert(req),
-                CommandFactory.newInsert(criteriaCodeService),
-                new AgendaGroupSetFocusCommand(req.getInitiativeId())
-        );
+        if(checkIfKieBaseShouldBeInvolved(initiative)) {
+            if (checkIfKieBaseContainerIsReady(initiative)) {
+                StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
 
-        long before = System.currentTimeMillis();
-        statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
+                @SuppressWarnings("unchecked")
+                List<Command<?>> cmds = Arrays.asList(
+                        CommandFactory.newInsert(req),
+                        CommandFactory.newInsert(criteriaCodeService),
+                        new AgendaGroupSetFocusCommand(req.getInitiativeId())
+                );
 
-        checkIfContainerWasReady(req, initiative);
+                long before = System.currentTimeMillis();
+                statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));
 
-        PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
+                PerformanceLogger.logTiming("ONBOARDING_RULE_ENGINE", before, "resulted into rejections %s".formatted(req.getOnboardingRejectionReasons()));
+            } else {
+                req.getOnboardingRejectionReasons().add(new OnboardingRejectionReason(
+                        OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                        OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
+                        null, null, null
+                ));
+            }
+        } else {
+            log.info("[ONBOARDING_REQUEST][RULE_ENGINE] Selected not drools involved initiative: {}", initiative.getInitiativeId());
+        }
 
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] Send message prepared: {}", req);
 
         return onboarding2EvaluationMapper.apply(req, initiative, req.getOnboardingRejectionReasons());
     }
 
-    private void checkIfContainerWasReady(OnboardingDroolsDTO req, InitiativeConfig initiative) {
-        if (req.getOnboardingRejectionReasons().isEmpty() &&                          // there is not rejection reason
-                !CollectionUtils.isEmpty(initiative.getAutomatedCriteria()) &&        // the drools container is supposed to be involved
-                !onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative was not inside the container drools
-                        .contains(initiative.getInitiativeId())
-        ) {
-            req.getOnboardingRejectionReasons().add(new OnboardingRejectionReason(
-                    OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                    OnboardingConstants.REJECTION_REASON_RULE_ENGINE_NOT_READY,
-                    null, null, null
-            ));
-        }
+    private boolean checkIfKieBaseShouldBeInvolved(InitiativeConfig initiative) {
+        return !CollectionUtils.isEmpty(initiative.getAutomatedCriteria()); // the drools container is supposed to not be involved
+    }
+
+    private boolean checkIfKieBaseContainerIsReady(InitiativeConfig initiative) {
+        return onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds() // the initiative is inside the container drools
+                        .contains(initiative.getInitiativeId());
     }
 }

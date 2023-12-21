@@ -26,6 +26,7 @@ import reactor.core.publisher.Flux;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
@@ -69,15 +70,18 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
 
+        initiativeConfig.setAutomatedCriteria(List.of(new AutomatedCriteriaDTO()));
+
         Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
-                .thenReturn(buildContainer(onboardingDTO.getInitiativeId()));
+                .thenReturn(buildContainer(initiativeId));
+
+        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieInitiativeIds())
+                .thenReturn(Set.of(initiativeId));
 
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
         // Then
-        Mockito.verify(onboardingContextHolderServiceMock).getBeneficiaryRulesKieBase();
-
         Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
         Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
@@ -106,9 +110,6 @@ class RuleEngineServiceImplTest {
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(initiativeId);
 
-        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
-                .thenReturn(buildContainer(INITIATIVEID));
-
         // When
         EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
 
@@ -129,8 +130,6 @@ class RuleEngineServiceImplTest {
         initiativeConfig.setInitiativeId(initiativeId);
         initiativeConfig.setAutomatedCriteria(List.of(AutomatedCriteriaDTO.builder().build()));
 
-        Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
-                .thenReturn(buildContainer(INITIATIVEID));
         Mockito.when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieInitiativeIds())
                 .thenReturn(Collections.emptySet());
 
@@ -162,5 +161,51 @@ class RuleEngineServiceImplTest {
                 "$onboarding.getOnboardingRejectionReasons().add(%s.builder().code(\"REASON1\").build());".formatted(OnboardingRejectionReason.class.getName())));
 
         return new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)).build(Flux.just(rule, ignoredRule)).block();
+    }
+
+    @Test
+    void testEmptyDroolsContainer_noRules_nullCriteria() {
+        testEmptyDroolsContainer("package dummy;", null);
+    }
+
+    @Test
+    void testEmptyDroolsContainer_noAgendaRules_emptyCriteria() {
+        testEmptyDroolsContainer("""
+                package dummy;
+                rule "RULENAME"
+                when eval(true)
+                then return;
+                end
+                """, Collections.emptyList());
+    }
+
+    void testEmptyDroolsContainer(String rule, List<AutomatedCriteriaDTO> automatedCriteriaDTOS) {
+        // Given
+        String initiativeId = "NOTKIEINITITATIVEID";
+
+        KieBase emptyContainer = new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class))
+                .build(Flux.just(DroolsRule.builder().
+                        id(initiativeId)
+                        .name("RULENAME")
+                        .rule(rule)
+                        .build())).block();
+        Mockito.lenient() //not more invoked after fix
+                .when(onboardingContextHolderServiceMock.getBeneficiaryRulesKieBase())
+                .thenReturn(emptyContainer);
+
+        OnboardingDTO onboardingDTO = new OnboardingDTO();
+        onboardingDTO.setInitiativeId(initiativeId);
+
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setInitiativeId(initiativeId);
+        initiativeConfig.setAutomatedCriteria(automatedCriteriaDTOS);
+
+        // When
+        EvaluationDTO result = ruleEngineService.applyRules(onboardingDTO, initiativeConfig);
+
+        // Then
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, ((EvaluationCompletedDTO) result).getStatus());
+        Assertions.assertEquals(Collections.emptyList(), ((EvaluationCompletedDTO) result).getOnboardingRejectionReasons());
     }
 }
