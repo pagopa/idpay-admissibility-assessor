@@ -20,6 +20,7 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_FAMILY_KO = "FAMILY_FAIL";
     public static final String REJECTION_REASON_RESIDENCE_KO = "RESIDENCE_FAIL";
     public static final String REJECTION_REASON_BIRTHDATE_KO = "BIRTHDATE_FAIL";
+    public static final String REJECTION_REASON_RULE_ENGINE_NOT_READY = "RULE_ENGINE_NOT_READY";
     public static final String REJECTION_REASON_GENERIC_ERROR = "GENERIC_ERROR";
 
     /** Rejection reason for the second family member due to the family not meeting the requirements of the initiative */
@@ -36,4 +37,13 @@ public final class OnboardingConstants {
     //region global sequence id
     public static final String ANPR_E002_INVOKE = "ANPR_E002_INVOKE";
     //endregion
+
+    public static final class ExceptionCode {
+        private ExceptionCode(){}
+
+        public static final String TOO_MANY_REQUESTS = "ADMISSIBILITY_TOO_MANY_REQUESTS";
+        public static final String GENERIC_ERROR = "ADMISSIBILITY_GENERIC_ERROR";
+
+        public static final String INITIATIVE_NOT_FOUND = "ADMISSIBILITY_INITIATIVE_NOT_FOUND";
+    }
 }

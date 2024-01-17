@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
 import lombok.extern.slf4j.Slf4j;
+import org.drools.core.definitions.rule.impl.RuleImpl;
 import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,10 +26,13 @@ import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -45,6 +49,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     private final boolean preLoadContainer;
 
     private KieBase kieBase;
+    private Set<String> kieInitiatives = Collections.emptySet();
     private byte[] kieBaseSerialized;
 
     private boolean contextReady=false;
@@ -89,8 +94,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     //region kieContainer holder
     @Override
     public void setBeneficiaryRulesKieBase(KieBase newKieBase) {
-        preLoadKieBase(newKieBase);
-        this.kieBase = newKieBase;
+        acceptNewKieBase(newKieBase);
 
         if (isRedisCacheEnabled) {
             kieBaseSerialized = SerializationUtils.serialize(newKieBase);
@@ -99,6 +103,24 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
             } else {
                 reactiveRedisTemplate.delete(ONBOARDING_CONTEXT_HOLDER_CACHE_NAME).subscribe(x -> log.info("[BENEFICIARY_RULE_BUILDER] KieContainer removed from the cache"));
             }
+        }
+    }
+
+    private void acceptNewKieBase(KieBase newKieBase) {
+        preLoadKieBase(newKieBase);
+        this.kieBase = newKieBase;
+        this.kieInitiatives = readKieInitiatives(newKieBase);
+        log.info("[BENEFICIARY_RULE_CONTAINER_LOAD] Rule engine rules loaded: {}", kieInitiatives);
+    }
+
+    private Set<String> readKieInitiatives(KieBase kieBase) {
+        if (kieBase == null) {
+            return Collections.emptySet();
+        } else {
+            return kieBase.getKiePackages().stream()
+                    .flatMap(p -> p.getRules().stream())
+                    .map(r -> ((RuleImpl) r).getAgendaGroup())
+                    .collect(Collectors.toSet());
         }
     }
 
@@ -111,6 +133,11 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
     @Override
     public KieBase getBeneficiaryRulesKieBase() {
         return kieBase;
+    }
+
+    @Override
+    public Set<String> getBeneficiaryRulesKieInitiativeIds() {
+        return kieInitiatives;
     }
 
     @Scheduled(initialDelayString = "${app.beneficiary-rule.cache.refresh-ms-rate}", fixedRateString = "${app.beneficiary-rule.cache.refresh-ms-rate}")
@@ -129,9 +156,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
                             this.kieBaseSerialized = c;
                             try {
                                 KieBase newKieBase = org.apache.commons.lang3.SerializationUtils.deserialize(c);
-                                preLoadKieBase(newKieBase);
-
-                                this.kieBase = newKieBase;
+                                acceptNewKieBase(newKieBase);
                             } catch (Exception e) {
                                 log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
                                 return null;

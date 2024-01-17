@@ -70,8 +70,6 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
         checkRepositories();
         checkErrorsPublished(notValidMessages, maxWaitingMs, errorUseCases);
 
-        Mockito.verify(droolsRuleRepositorySpy).findAll();
-
         System.out.printf("""
                         ************************
                         Time spent to send %d (%d + %d) messages (from start): %d millis
@@ -188,7 +186,7 @@ class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
         errorUseCases.add(Pair.of(
                 () -> {
                     Mockito.doThrow(new MongoException("Command error dummy"))
-                            .when(droolsRuleRepositorySpy).deleteById(errorInitiativeId);
+                            .when(droolsRuleRepositorySpy).removeById(errorInitiativeId);
                     return commandOperationErrorString;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_COMMANDS] An error occurred evaluating commands", commandOperationErrorString)

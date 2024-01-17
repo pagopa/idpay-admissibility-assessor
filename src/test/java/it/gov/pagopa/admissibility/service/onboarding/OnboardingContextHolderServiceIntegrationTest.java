@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
+import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.DroolsRule;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.build.KieContainerBuilderService;
@@ -105,7 +106,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
         EvaluationDTO result = executeRules(onboardingMock);
 
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(expectedRejectionReason, resultCompleted.getOnboardingRejectionReasons());
@@ -166,6 +167,7 @@ class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest 
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .organizationId("ORGANIZATION-ID")
                 .startDate(LocalDate.MIN)
+                .automatedCriteria(List.of(new AutomatedCriteriaDTO()))
                 .build();
 
         return ruleEngineService.applyRules(onb, config);

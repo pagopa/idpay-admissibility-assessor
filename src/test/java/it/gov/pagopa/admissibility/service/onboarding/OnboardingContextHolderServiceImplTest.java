@@ -30,6 +30,7 @@ import reactor.core.publisher.Mono;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
@@ -78,6 +79,7 @@ class OnboardingContextHolderServiceImplTest {
 
         //Then
         Assertions.assertNotNull(result);
+        Assertions.assertEquals(Collections.emptySet(), onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds());
         if (!isRedisCacheEnabled) {
             Assertions.assertSame(expectedKieBase, result);
         }
