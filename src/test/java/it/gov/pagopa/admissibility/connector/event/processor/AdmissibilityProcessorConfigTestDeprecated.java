@@ -2,9 +2,9 @@ package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
-import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTestDeprecated;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest;
-import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImplIntegrationTest;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImplIntegrationTestDeprecated;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-@ContextConfiguration(classes = {AdmissibilityProcessorConfigTest.MediatorSpyConfiguration.class})
+@ContextConfiguration(classes = {AdmissibilityProcessorConfigTestDeprecated.MediatorSpyConfiguration.class})
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.check.OnboardingInitiativeCheck=OFF",
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=OFF",
@@ -66,14 +66,15 @@ import java.util.stream.Stream;
         "logging.level.it.gov.pagopa.admissibility.connector.soap.inps.service.IseeConsultationSoapClientImpl=OFF",
         "logging.level.it.gov.pagopa.common.reactive.pdnd.service.BaseRestPdndServiceClient=OFF",
 })
-class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class AdmissibilityProcessorConfigTestDeprecated extends BaseAdmissibilityProcessorConfigTest {
     public static final String CF_AUTHORITIES_DATA_ALLOWED = "CF_OK_2";
     public static final String CF_INVALID_REQUEST = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_INVALIDREQUEST;
-    public static final String CF_INPS_RETRY = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_RETRY;
-    public static final String CF_INPS_UNEXPECTED_RESULTCODE = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_UNEXPECTED_RESULT_CODE;
+    public static final String CF_INPS_RETRY = IseeConsultationSoapClientImplIntegrationTestDeprecated.FISCAL_CODE_RETRY;
+    public static final String CF_INPS_UNEXPECTED_RESULTCODE = IseeConsultationSoapClientImplIntegrationTestDeprecated.FISCAL_CODE_UNEXPECTED_RESULT_CODE;
     public static final String CF_NOT_FOUND = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_NOTFOUND;
     public static final String CF_ANPR_TOO_MANY_REQUESTS = AnprC001RestClientImplIntegrationTest.FISCAL_CODE_TOOMANYREQUESTS;
-    public static final String CF_INPS_TOO_MANY_REQUESTS = IseeConsultationSoapClientImplIntegrationTest.FISCAL_CODE_TOOMANYREQUESTS;
+    public static final String CF_INPS_TOO_MANY_REQUESTS = IseeConsultationSoapClientImplIntegrationTestDeprecated.FISCAL_CODE_TOOMANYREQUESTS;
 
     private static final String INITIATIVEID_EXHAUSTED = "EXHAUSTED_INITIATIVE_ID";
     private static final String INITIATIVEID_FAILING_BUDGET_RESERVATION = "FAILING_BUDGET_RESERVATION";
@@ -352,7 +353,7 @@ class AdmissibilityProcessorConfigTest extends BaseAdmissibilityProcessorConfigT
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
                 .forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
-        BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
+        BeneficiaryRuleBuilderConsumerConfigIntegrationTestDeprecated.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
 
         MongoTestUtilitiesService.stopAndPrintMongoCommands();
     }

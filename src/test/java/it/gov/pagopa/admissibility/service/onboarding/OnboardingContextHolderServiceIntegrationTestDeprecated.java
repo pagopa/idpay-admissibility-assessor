@@ -34,7 +34,8 @@ import java.util.List;
         }
 )
 @ContextConfiguration(classes = EmbeddedRedisTestConfiguration.class)
-class OnboardingContextHolderServiceIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class OnboardingContextHolderServiceIntegrationTestDeprecated extends BaseIntegrationTest {
     @Autowired
     private KieContainerBuilderService kieContainerBuilderService;
     @Autowired

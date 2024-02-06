@@ -12,7 +12,8 @@ import reactor.core.Exceptions;
         "app.idpay-mock.retry.max-attempts=1",
         "app.idpay-mock.retry.delay-millis=100"
 })
-class FamilyMockRestClientImplTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class FamilyMockRestClientImplTestDeprecated extends BaseIntegrationTest {
 
 
     @Autowired

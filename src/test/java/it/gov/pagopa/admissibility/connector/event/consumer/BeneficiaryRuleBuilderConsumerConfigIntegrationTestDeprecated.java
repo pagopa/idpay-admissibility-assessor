@@ -40,7 +40,8 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.common.reactive.kafka.consumer.BaseKafkaConsumer=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN",
 })
-public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+public class BeneficiaryRuleBuilderConsumerConfigIntegrationTestDeprecated extends BaseIntegrationTest {
 
     @SpyBean
     private KieContainerBuilderService kieContainerBuilderServiceSpy;
@@ -108,7 +109,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
         );
 
         long timeCommitCheckStart = System.currentTimeMillis();
-        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = kafkaTestUtilitiesService.checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer,initiativePayloads.size()+1); // +1 due to other applicationName useCase
+        final Map<TopicPartition, OffsetAndMetadata> srcCommitOffsets = kafkaTestUtilitiesService.checkCommittedOffsets(topicBeneficiaryRuleConsumer, groupIdBeneficiaryRuleConsumer, initiativePayloads.size() + 1); // +1 due to other applicationName useCase
         long timeCommitCheckEnd = System.currentTimeMillis();
         System.out.printf("""
                         ************************
@@ -170,19 +171,20 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
     //region not valid useCases
     // all use cases configured must have a unique id recognized by the regexp errorUseCaseIdPatternMatch
     private final List<Pair<Supplier<String>, Consumer<ConsumerRecord<String, String>>>> errorUseCases = new ArrayList<>();
+
     {
         String useCaseJsonNotExpected = "{\"initiativeId\":\"INITIATIVEID_0\",unexpectedStructure:0}";
         errorUseCases.add(Pair.of(
                 () -> useCaseJsonNotExpected,
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", useCaseJsonNotExpected)
         ));
-        
+
         String jsonNotValid = "{\"initiativeId\":\"INITIATIVEID_1\",invalidJson";
         errorUseCases.add(Pair.of(
                 () -> jsonNotValid,
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] Unexpected JSON", jsonNotValid)
         ));
-        
+
         String criteriaCodeNotValid = TestUtils.jsonSerializer(Initiative2BuildDTOFaker.mockInstanceBuilder(errorUseCases.size())
                 .beneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                         .automatedCriteria(List.of(
@@ -202,7 +204,7 @@ public class BeneficiaryRuleBuilderConsumerConfigIntegrationTest extends BaseInt
                 .build());
         errorUseCases.add(Pair.of(
                 () -> {
-                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(droolsRuleRepositorySpy).save(Mockito.argThat(i->errorWhenSavingUseCaseId.equals(i.getId())));
+                    Mockito.doReturn(Mono.error(new RuntimeException("DUMMYEXCEPTION"))).when(droolsRuleRepositorySpy).save(Mockito.argThat(i -> errorWhenSavingUseCaseId.equals(i.getId())));
                     return droolRuleSaveInError;
                 },
                 errorMessage -> checkErrorMessageHeaders(errorMessage, "[ADMISSIBILITY_RULE_BUILD] An error occurred handling initiative", droolRuleSaveInError)

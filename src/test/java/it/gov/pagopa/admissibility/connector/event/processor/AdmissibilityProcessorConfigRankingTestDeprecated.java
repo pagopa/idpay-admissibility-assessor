@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.connector.event.processor;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTest;
+import it.gov.pagopa.admissibility.connector.event.consumer.BeneficiaryRuleBuilderConsumerConfigIntegrationTestDeprecated;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.RankingRequestDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
@@ -35,7 +35,8 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 @ContextConfiguration
-class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessorConfigTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class AdmissibilityProcessorConfigRankingTestDeprecated extends BaseAdmissibilityProcessorConfigTest {
 
     private static final String INITIATIVEID = "INITIATIVEID_0";
 
@@ -120,7 +121,7 @@ class AdmissibilityProcessorConfigRankingTest extends BaseAdmissibilityProcessor
                 .peek(i -> expectedRules[0] += i.getBeneficiaryRule().getAutomatedCriteria().size())
                 .forEach(i -> kafkaTestUtilitiesService.publishIntoEmbeddedKafka(topicBeneficiaryRuleConsumer, null, null, i));
 
-        BeneficiaryRuleBuilderConsumerConfigIntegrationTest.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
+        BeneficiaryRuleBuilderConsumerConfigIntegrationTestDeprecated.waitForKieContainerBuild(expectedRules[0], onboardingContextHolderServiceSpy);
 
         MongoTestUtilitiesService.stopAndPrintMongoCommands();
     }
