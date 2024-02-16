@@ -13,7 +13,8 @@ import java.util.Map;
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.CriteriaCodeServiceImpl=WARN",
 })
-class CriteriaCodeServiceIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class CriteriaCodeServiceIntegrationTestDeprecated extends BaseIntegrationTest {
     @Autowired
     private CriteriaCodesConfiguration criteriaCodesConfiguration;
 

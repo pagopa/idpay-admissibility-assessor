@@ -38,7 +38,8 @@ import java.util.stream.IntStream;
         "logging.level.it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderServiceImpl=WARN",
         "logging.level.it.gov.pagopa.common.reactive.utils.PerformanceLogger=WARN"
 })
-class CommandConsumerConfigIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class CommandConsumerConfigIntegrationTestDeprecated extends BaseIntegrationTest {
     private final String INITIATIVEID = "INITIATIVEID_%d";
     private final Set<String> INITIATIVES_DELETED = new HashSet<>();
     @SpyBean

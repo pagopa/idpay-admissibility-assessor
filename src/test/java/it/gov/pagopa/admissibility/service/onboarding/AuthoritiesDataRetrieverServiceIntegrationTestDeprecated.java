@@ -27,7 +27,8 @@ import java.util.List;
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.service.AuthoritiesDataRetrieverServiceImpl=WARN",
 })
-class AuthoritiesDataRetrieverServiceIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+class AuthoritiesDataRetrieverServiceIntegrationTestDeprecated extends BaseIntegrationTest {
     private static final IseeTypologyEnum ISEE_TYPE = IseeTypologyEnum.ORDINARIO;
 
     @Autowired

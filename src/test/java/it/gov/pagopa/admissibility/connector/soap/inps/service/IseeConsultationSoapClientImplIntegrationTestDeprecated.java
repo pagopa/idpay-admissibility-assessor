@@ -20,7 +20,8 @@ import java.nio.charset.StandardCharsets;
         "logging.level.it.gov.pagopa.common.soap.service.SoapLoggingHandler=DEBUG"
 })
 @DirtiesContext
-public class IseeConsultationSoapClientImplIntegrationTest extends BaseIntegrationTest {
+@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
+public class IseeConsultationSoapClientImplIntegrationTestDeprecated extends BaseIntegrationTest {
 
     public static final String FISCAL_CODE_OK = "CF_OK";
     public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";

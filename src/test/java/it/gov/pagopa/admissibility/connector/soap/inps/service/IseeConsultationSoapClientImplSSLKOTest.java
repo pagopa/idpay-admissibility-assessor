@@ -24,7 +24,7 @@ class IseeConsultationSoapClientImplSSLKOTest{
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectMethod(IseeConsultationSoapClientImplIntegrationTest.class, "callService"))
+                .selectors(selectMethod(IseeConsultationSoapClientImplIntegrationTestDeprecated.class, "callService"))
                 .build();
         Launcher launcher = LauncherFactory.create();
         launcher.discover(request);
