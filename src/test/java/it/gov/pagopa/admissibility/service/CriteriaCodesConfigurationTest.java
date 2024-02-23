@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service;
 import it.gov.pagopa.admissibility.config.CriteriaCodesConfiguration;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -12,8 +13,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 @ExtendWith(MockitoExtension.class)
 class CriteriaCodesConfigurationTest {
-    @Mock
-    private CriteriaCodesConfiguration criteriaCodesConfiguration;
+    @Mock private CriteriaCodesConfiguration criteriaCodesConfigurationMock;
+    private CriteriaCodeServiceImpl criteriaCodesService;
+
+    @BeforeEach
+    void setUp() {
+        criteriaCodesService = new CriteriaCodeServiceImpl(criteriaCodesConfigurationMock);
+    }
 
     @Test
     void givenGetCriteriaCongigsThenReturnMapOfCriteriaCodeConfig(){
@@ -25,13 +31,13 @@ class CriteriaCodesConfigurationTest {
                 "FAMILY", new CriteriaCodeConfig("FAMILY", "INPS","Istituto Nazionale Previdenza Sociale",  "family")
         );
 
-        Mockito.when(criteriaCodesConfiguration.getCriteriaCodeConfigs()).thenReturn(expected);
+        Mockito.when(criteriaCodesConfigurationMock.getCriteriaCodeConfigs()).thenReturn(expected);
+
         //When
-        Map<String, CriteriaCodeConfig> result = criteriaCodesConfiguration.getCriteriaCodeConfigs();
+        CriteriaCodeConfig criteriaCodeConfig = criteriaCodesService.getCriteriaCodeConfig("BIRTHDATE");
 
         //then
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(expected, result);
-        Assertions.assertEquals(4,result.size());
+        Assertions.assertNotNull(criteriaCodeConfig);
+        Assertions.assertEquals(expected.get("BIRTHDATE"),criteriaCodeConfig);
     }
 }
