@@ -1,13 +1,25 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
+import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
+import it.gov.pagopa.common.reactive.mongo.BaseMongoEmbeddedTest;
+import it.gov.pagopa.common.reactive.mongo.config.ReactiveMongoConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 
-class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseIntegrationTest {
+
+@ContextConfiguration(classes = {
+        CustomSequenceGeneratorRepository.class,
+        ReactiveMongoConfig.class,
+        MongoTestUtilitiesService.TestMongoConfiguration.class,
+        SimpleMeterRegistry.class})
+@Slf4j
+class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseMongoEmbeddedTest {
     @Autowired
     protected CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
 
