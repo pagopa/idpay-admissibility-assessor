@@ -7,7 +7,10 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import reactor.core.Exceptions;
+
+import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX;
 
 
 @ContextConfiguration(
@@ -15,6 +18,11 @@ import reactor.core.Exceptions;
                 FamilyMockRestClientImpl.class,
                 WebClientConfig.class
         })
+@TestPropertySource(
+        properties = {
+                WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX + "app.idpay-mock.base-url=pdndMock"
+        }
+)
 class FamilyMockRestClientImplTest extends BaseWireMockTest {
 
     @Autowired

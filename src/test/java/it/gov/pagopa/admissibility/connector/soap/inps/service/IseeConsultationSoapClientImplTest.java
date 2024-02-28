@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
@@ -8,15 +7,19 @@ import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
 import it.gov.pagopa.common.soap.service.SoapLoggingHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+
+import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX;
 
 @ContextConfiguration(
         classes = {
@@ -25,7 +28,12 @@ import java.nio.charset.StandardCharsets;
                 SoapLoggingHandler.class,
                 WebClientConfig.class
         })
-public class IseeConsultationSoapClientImplIntegrationTest extends BaseWireMockTest {
+@TestPropertySource(
+        properties = {
+                WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX + "app.inps.iseeConsultation.base-url=inps/isee"
+        }
+)
+public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
 
     public static final String FISCAL_CODE_OK = "CF_OK";
     public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";

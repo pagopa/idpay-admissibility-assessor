@@ -1,19 +1,15 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import com.mongodb.client.result.UpdateResult;
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
-import it.gov.pagopa.common.reactive.mongo.BaseMongoEmbeddedTest;
-import it.gov.pagopa.common.reactive.mongo.config.ReactiveMongoConfig;
+import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -22,12 +18,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-@ContextConfiguration(classes = {
-        OnboardingFamiliesRepositoryTest.class,
-        ReactiveMongoConfig.class,
-        MongoTestUtilitiesService.TestMongoConfiguration.class,
-        SimpleMeterRegistry.class})
-class OnboardingFamiliesRepositoryTest extends BaseMongoEmbeddedTest {
+@MongoTest
+class OnboardingFamiliesRepositoryTest{
 
     @Autowired
     private OnboardingFamiliesRepository repository;

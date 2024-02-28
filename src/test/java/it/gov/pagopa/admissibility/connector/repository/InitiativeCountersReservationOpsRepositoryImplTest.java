@@ -1,14 +1,10 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
-import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
-import it.gov.pagopa.common.reactive.mongo.BaseMongoEmbeddedTest;
-import it.gov.pagopa.common.reactive.mongo.config.ReactiveMongoConfig;
+import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,13 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
-@ContextConfiguration(classes = {
-        InitiativeCountersReservationOpsRepositoryImpl.class,
-        InitiativeCountersRepository.class,
-        ReactiveMongoConfig.class,
-        MongoTestUtilitiesService.TestMongoConfiguration.class,
-        SimpleMeterRegistry.class})
-class InitiativeCountersReservationOpsRepositoryImplTest extends BaseMongoEmbeddedTest {
+@MongoTest
+class InitiativeCountersReservationOpsRepositoryImplTest {
 
     @Autowired
     protected InitiativeCountersRepository initiativeCountersRepository;

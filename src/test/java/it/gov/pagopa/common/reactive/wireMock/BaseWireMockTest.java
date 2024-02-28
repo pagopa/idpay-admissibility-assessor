@@ -11,17 +11,25 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.data.util.Pair;
+import org.springframework.core.env.EnumerablePropertySource;
+import org.springframework.core.env.PropertySource;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 @ExtendWith(JUnitExtensionContextHolder.class)
 @SpringBootTest
-@ContextConfiguration(initializers = {BaseWireMockTest.WireMockInitializer.class})
+@ContextConfiguration(
+        initializers = {BaseWireMockTest.WireMockInitializer.class})
 @SuppressWarnings("squid:S2187")
 public class BaseWireMockTest {
+    public static final String WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX =  "wireMock-test.prop2basePath.";
+    public static final String WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX =  "wireMock-test.prop2basePath.secure.";
+
+    private static final Map<String,String> propertiesMap = new HashMap<>();
+    private static final Map<String,String> propertiesSecureMap = new HashMap<>();
 
     @PostConstruct
     public void logEmbeddedServerConfig() {
@@ -108,18 +116,26 @@ public class BaseWireMockTest {
     public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
         @Override
         public void initialize(@NonNull ConfigurableApplicationContext applicationContext) {
-            // setting wiremock HTTP baseUrl
-            Stream.of(
-                    Pair.of("app.pdv.base-url", "pdv"),
-                    Pair.of("app.pdnd.base-url", "pdnd"),
-                    Pair.of("app.idpay-mock.base-url", "pdndMock")
-            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl()));
 
-            // setting wiremock HTTPS baseUrl
-            Stream.of(
-                    Pair.of("app.anpr.config.base-url", "anpr/"),
-                    Pair.of("app.inps.iseeConsultation.base-url", "inps/isee")
-            ).forEach(setWireMockBaseMockedServicePath(applicationContext, serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl()));
+                for (PropertySource<?> propertySource : applicationContext.getEnvironment().getPropertySources()) {
+                    if (propertySource instanceof EnumerablePropertySource) {
+                        for (String key : ((EnumerablePropertySource<?>) propertySource).getPropertyNames()) {
+                            if (key.startsWith(WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX)) {
+                                propertiesMap.put(key.substring(WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX.length()), (String) propertySource.getProperty(key));
+                            }
+                            if (key.startsWith(WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX)) {
+                                propertiesSecureMap.put(key.substring(WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX.length()), (String) propertySource.getProperty(key));
+                            }
+                        }
+                    }
+                }
+
+            for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
+                setWireMockBaseMockedServicePath(applicationContext,serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl(),entry);
+            }
+            for (Map.Entry<String, String> entry : propertiesSecureMap.entrySet()) {
+                setWireMockBaseMockedServicePath(applicationContext,serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl(),entry);
+            }
 
             System.out.printf("""
                             ************************
@@ -132,11 +148,8 @@ public class BaseWireMockTest {
                     serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl());
         }
 
-        private static java.util.function.Consumer<Pair<String, String>> setWireMockBaseMockedServicePath(ConfigurableApplicationContext applicationContext, String serverWireMock) {
-            return key2basePath -> TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,
-                    String.format("%s=%s/%s", key2basePath.getFirst(), serverWireMock, key2basePath.getSecond())
-            );
-
+        private static void setWireMockBaseMockedServicePath(ConfigurableApplicationContext applicationContext, String serverWireMock,Map.Entry<String, String> entry){
+           TestPropertySourceUtils.addInlinedPropertiesToEnvironment(applicationContext,String.format("%s=%s/%s",entry.getKey(),serverWireMock,entry.getValue()));
         }
     }
 //endregion
