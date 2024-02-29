@@ -41,6 +41,8 @@ class CommandMediatorServiceImplTest {
     private OnboardingContextHolderService onboardingContextHolderServiceMock;
     @Mock
     private DeleteInitiativeService deleteInitiativeServiceMock;
+    @Mock
+    private Message<String> messageMock;
     private CommandMediatorServiceImpl commandMediatorService;
     private MemoryAppender memoryAppender;
 
@@ -90,7 +92,28 @@ class CommandMediatorServiceImplTest {
                 memoryAppender.getLoggedEvents().get(0).getFormattedMessage()
         );
     }
-
+    @Test
+    void givenErrorWhenNotifyErrorThenCallNotifierService() {
+        Throwable error = new RuntimeException("Test error");
+        commandMediatorService.notifyError(messageMock, error);
+        Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibilityCommands(
+                messageMock,
+                "[ADMISSIBILITY_COMMANDS] An error occurred evaluating commands",
+                true,
+                error
+        );
+    }
+    @Test
+    void givenDeserializationErrorWhenOnDeserializationErrorThenCallNotifierService() {
+        Throwable error = new RuntimeException("Test error");
+        commandMediatorService.onDeserializationError(messageMock).accept(error);
+        Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibilityCommands(
+                messageMock,
+                "[ADMISSIBILITY_COMMANDS] Unexpected JSON",
+                false,
+                error
+        );
+    }
     @Test
     void getObjectReader() {
         ObjectReader objectReader = commandMediatorService.getObjectReader();
