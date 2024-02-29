@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ class IseeConsultationSoapClientImplSSLKOTest {
 
     @BeforeAll
     static void setUp() {
-        BaseIntegrationTest.configureServerWiremockBeforeAll(true, false);
+        BaseWireMockTest.configureServerWiremockBeforeAll(true, false);
     }
 
     @Test
