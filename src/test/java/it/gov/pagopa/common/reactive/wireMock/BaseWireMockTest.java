@@ -134,7 +134,7 @@ public class BaseWireMockTest {
                 setWireMockBaseMockedServicePath(applicationContext,serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl(),entry);
             }
             for (Map.Entry<String, String> entry : propertiesSecureMap.entrySet()) {
-                setWireMockBaseMockedServicePath(applicationContext,serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl(),entry);
+                setWireMockBaseMockedServicePath(applicationContext,serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl(),entry);
             }
 
             System.out.printf("""
