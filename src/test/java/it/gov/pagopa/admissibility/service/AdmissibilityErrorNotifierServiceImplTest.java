@@ -88,6 +88,15 @@ class AdmissibilityErrorNotifierServiceImplTest {
         Mockito.verifyNoMoreInteractions(errorNotifierServiceMock);
     }
 
+    @Test
+    void testAdmissibility() {
+        Mockito.when(errorNotifierServiceMock.notify(eq(BINDER_KAFKA_TYPE), eq("ServiceBus"),
+                        eq("admissibility-topic"), eq("admissibility-group"), eq(dummyMessage), eq(DUMMY_MESSAGE), eq(true), eq(true), any()))
+                .thenReturn(true);
+        admissibilityErrorNotifierService.notifyAdmissibility(dummyMessage,DUMMY_MESSAGE,true,new Throwable(DUMMY_MESSAGE));
+        Mockito.verifyNoMoreInteractions(errorNotifierServiceMock);
+    }
+
     private void errorNotifyMock(String topic, String group, boolean retryable, boolean resendApplication ) {
         Mockito.when(errorNotifierServiceMock.notify(eq(BINDER_KAFKA_TYPE), eq(BINDER_BROKER),
                         eq(topic), eq(group), eq(dummyMessage), eq(DUMMY_MESSAGE), eq(retryable), eq(resendApplication), any()))
