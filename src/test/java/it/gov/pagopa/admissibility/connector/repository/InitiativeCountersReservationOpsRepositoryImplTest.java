@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
+import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
-class InitiativeCountersReservationOpsRepositoryImplTest extends BaseIntegrationTest {
+@MongoTest
+class InitiativeCountersReservationOpsRepositoryImplTest {
 
     @Autowired
     protected InitiativeCountersRepository initiativeCountersRepository;
