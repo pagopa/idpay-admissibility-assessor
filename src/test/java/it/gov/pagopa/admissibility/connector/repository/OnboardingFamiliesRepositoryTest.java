@@ -1,11 +1,11 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import com.mongodb.client.result.UpdateResult;
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
+import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-class OnboardingFamiliesRepositoryTest extends BaseIntegrationTest {
+@MongoTest
+class OnboardingFamiliesRepositoryTest{
 
     @Autowired
     private OnboardingFamiliesRepository repository;

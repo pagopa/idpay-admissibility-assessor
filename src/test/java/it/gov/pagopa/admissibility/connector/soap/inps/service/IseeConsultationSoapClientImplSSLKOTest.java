@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -12,11 +12,11 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectMethod;
 
-class IseeConsultationSoapClientImplSSLKOTest{
+class IseeConsultationSoapClientImplSSLKOTest {
 
     @BeforeAll
     static void setUp() {
-        BaseIntegrationTest.configureServerWiremockBeforeAll(true, false);
+        BaseWireMockTest.configureServerWiremockBeforeAll(true, false);
     }
 
     @Test
@@ -24,7 +24,7 @@ class IseeConsultationSoapClientImplSSLKOTest{
         SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
         LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
-                .selectors(selectMethod(IseeConsultationSoapClientImplIntegrationTest.class, "callService"))
+                .selectors(selectMethod(IseeConsultationSoapClientImplTest.class, "callService"))
                 .build();
         Launcher launcher = LauncherFactory.create();
         launcher.discover(request);

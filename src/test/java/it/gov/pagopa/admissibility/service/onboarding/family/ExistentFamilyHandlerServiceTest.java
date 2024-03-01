@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
+import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -115,5 +116,18 @@ class ExistentFamilyHandlerServiceTest {
         Assertions.assertEquals(expectedResult, result);
 
         Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
+    }
+
+    @Test
+    void givenInitiativeConfigRankingWhenHandlerThenSkipAlreadyRankingFamilyOnBoardingException(){
+        //Given
+        initiativeConfig.setRankingInitiative(true);
+        family.setStatus(OnboardingFamilyEvaluationStatus.ONBOARDING_OK);
+
+        //When
+        Mono<EvaluationDTO> mono = service.handleExistentFamily(request, family, initiativeConfig, message);
+
+        //Then
+        Assertions.assertThrows(SkipAlreadyRankingFamilyOnBoardingException.class,mono::block);
     }
 }

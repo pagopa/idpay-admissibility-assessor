@@ -1,13 +1,17 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
+import it.gov.pagopa.common.mongo.MongoTest;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class CustomSequenceGeneratorOpsRepositoryImplTest extends BaseIntegrationTest {
+
+@Slf4j
+@MongoTest
+class CustomSequenceGeneratorOpsRepositoryImplTest {
     @Autowired
     protected CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
 

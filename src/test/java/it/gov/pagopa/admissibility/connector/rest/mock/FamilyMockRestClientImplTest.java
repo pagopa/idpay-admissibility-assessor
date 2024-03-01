@@ -1,30 +1,44 @@
 package it.gov.pagopa.admissibility.connector.rest.mock;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.Exceptions;
 
-@TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.admissibility.rest.mock.FamilyMockRestClientImpl=WARN",
-        "app.idpay-mock.retry.max-attempts=1",
-        "app.idpay-mock.retry.delay-millis=100"
-})
-class FamilyMockRestClientImplTest extends BaseIntegrationTest {
+import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX;
 
+
+@ContextConfiguration(
+        classes = {
+                FamilyMockRestClientImpl.class,
+                WebClientConfig.class
+        })
+@TestPropertySource(
+        properties = {
+                WIREMOCK_TEST_PROP2BASEPATH_MAP_PREFIX + "app.idpay-mock.base-url=pdndMock"
+        }
+)
+class FamilyMockRestClientImplTest extends BaseWireMockTest {
 
     @Autowired
-    private FamilyMockRestClient familyMockRestClient;
-
+    private FamilyMockRestClientImpl familyMockRestClient;
 
     @Test
-    void retrieveFamilyTooManyRequest() {
-        String userId = "USERID_TOOMANYREQUEST_1";
+    void givenUserIdWhenCallFamilyMockRestClientThenFamily() {
 
+        Family family = familyMockRestClient.retrieveFamily("userId_1").block();
+        Assertions.assertEquals(3,family.getMemberIds().size());
+    }
+
+    @Test
+    void givenUserIdWhenCallFamilyMockRestClientThenTooManyRequestException(){
         try{
-            familyMockRestClient.retrieveFamily(userId).block();
+            familyMockRestClient.retrieveFamily("USERID_TOOMANYREQUEST_1").block();
             Assertions.fail();
         }catch (Throwable e){
             Assertions.assertTrue(Exceptions.isRetryExhausted(e));
