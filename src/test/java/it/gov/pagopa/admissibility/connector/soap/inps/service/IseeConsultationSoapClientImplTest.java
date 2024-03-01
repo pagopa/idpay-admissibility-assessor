@@ -1,27 +1,39 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
+import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
+import it.gov.pagopa.common.soap.service.SoapLoggingHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.SpyBean;
-import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 
-@TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.common.soap.service.SoapLoggingHandler=DEBUG"
-})
-@DirtiesContext
-@SuppressWarnings({"squid:S3577", "NewClassNamingConvention"})
-public class IseeConsultationSoapClientImplIntegrationTestDeprecated extends BaseIntegrationTest {
+import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX;
+
+@ContextConfiguration(
+        classes = {
+                IseeConsultationSoapClientImpl.class,
+                InpsClientConfig.class,
+                SoapLoggingHandler.class,
+                WebClientConfig.class
+        })
+@TestPropertySource(
+        properties = {
+                WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX + "app.inps.iseeConsultation.base-url=inps/isee"
+        }
+)
+public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
 
     public static final String FISCAL_CODE_OK = "CF_OK";
     public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";
@@ -31,8 +43,8 @@ public class IseeConsultationSoapClientImplIntegrationTestDeprecated extends Bas
     public static final String FISCAL_CODE_FAULT_MESSAGE = "CF_INPS_FAULT_MESSAGE";
     public static final String FISCAL_CODE_TOOMANYREQUESTS = "CF_INPS_TOO_MANY_REQUESTS";
 
-    @SpyBean
-    private IseeConsultationSoapClient iseeConsultationSoapClient;
+    @Autowired
+    private IseeConsultationSoapClientImpl iseeConsultationSoapClient;
 
     @Test
     void callService() {

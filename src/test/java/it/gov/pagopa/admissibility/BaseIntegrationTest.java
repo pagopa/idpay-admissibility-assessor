@@ -207,7 +207,7 @@ public abstract class BaseIntegrationTest {
     //region desc=Setting WireMock
     private static boolean WIREMOCK_REQUEST_CLIENT_AUTH = true;
     private static boolean USE_TRUSTORE_OK = true;
-    private static final String TRUSTSTORE_PATH = "src/test/resources/wiremockKeyStore.p12";
+    public static final String TRUSTSTORE_PATH = "src/test/resources/wiremockKeyStore.p12";
     private static final String TRUSTSTORE_KO_PATH = "src/test/resources/wiremockTrustStoreKO.p12";
     @RegisterExtension
     static WireMockExtension serverWireMockExtension = initServerWiremock();
