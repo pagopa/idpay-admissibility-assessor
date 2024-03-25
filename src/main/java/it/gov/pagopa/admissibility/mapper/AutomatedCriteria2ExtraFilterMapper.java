@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.function.BiFunction;
-@SuppressWarnings("squid:S2637")
+
 @Service
 public class AutomatedCriteria2ExtraFilterMapper implements BiFunction<AutomatedCriteriaDTO, CriteriaCodeConfig, ExtraFilter> {
     @Override

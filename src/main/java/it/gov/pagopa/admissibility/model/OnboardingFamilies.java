@@ -57,7 +57,6 @@ public class OnboardingFamilies {
                 .memberIds(family.getMemberIds());
     }
 
-    @SuppressWarnings("squid:S1610") // suppressing conversion of abstract class into interface: this class is handled by lombok SuperBuilder
     public abstract static class OnboardingFamiliesBuilder<C extends OnboardingFamilies, B extends OnboardingFamiliesBuilder<C, B>>  {
 
         public B family(Family family){
