@@ -33,7 +33,6 @@ public class KafkaConfiguration {
     @Data
     @SuperBuilder
     @EqualsAndHashCode(callSuper = true)
-    @AllArgsConstructor
     @NoArgsConstructor
     public static class KafkaInfoDTO extends BaseKafkaInfoDTO{
         private String binder;
@@ -102,8 +101,8 @@ public class KafkaConfiguration {
     public String getBrokersForBinder(String binderName) {
         if (stream != null && stream.getBinders() != null) {
             Binders binders = stream.getBinders().get(binderName);
-            if (binders.getEnvironment() != null) {
-                return binders.getEnvironment().getSpring().getCloud().getStream().getKafka().getBinder().getBrokers();
+            if(binders != null && (binders.getEnvironment() != null)) {
+                    return binders.getEnvironment().getSpring().getCloud().getStream().getKafka().getBinder().getBrokers();
             }
         }
         return null;
