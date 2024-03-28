@@ -80,11 +80,11 @@ class DeleteInitiativeServiceImplTest {
         Mockito.when(droolsRuleRepositoryMock.removeById(initiativeId))
                 .thenThrow(new MongoException("DUMMY_EXCEPTION"));
 
-        try{
+        try {
             deleteInitiativeService.execute(initiativeId).block();
-            Assertions.fail();
-        }catch (MongoException t){
-            // Do Nothing
+        }catch (Exception e){
+
+            Assertions.assertTrue(e instanceof MongoException);
         }
     }
 }

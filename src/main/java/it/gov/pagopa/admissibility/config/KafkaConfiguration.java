@@ -20,8 +20,7 @@ public class KafkaConfiguration {
         private Map<String,Binders> binders;
     }
 
-    @Getter
-    @Setter
+    @Data
     @SuperBuilder
     @AllArgsConstructor
     @NoArgsConstructor
@@ -32,10 +31,9 @@ public class KafkaConfiguration {
         private String brokers;
     }
 
-    @Getter
-    @Setter
-    @SuperBuilder
+    @Data
     @EqualsAndHashCode(callSuper = true)
+    @SuperBuilder
     @NoArgsConstructor
     public static class KafkaInfoDTO extends BaseKafkaInfoDTO{
         private String binder;
