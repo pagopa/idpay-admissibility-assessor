@@ -1,40 +1,47 @@
 package it.gov.pagopa.admissibility.config;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Getter
+@Setter
 @Configuration
 @ConfigurationProperties(prefix = "app")
-@Data
 public class InpsConfiguration {
     private Inps inps;
 
-    @Data
+    @Getter
+    @Setter
     public static class Inps{
         private IseeConsultation iseeConsultation;
         private Header header;
         private Secure secure;
     }
-    @Data
+    @Getter
+    @Setter
     public static class IseeConsultation {
         private String baseUrl;
         private Config config;
     }
 
-    @Data
+    @Getter
+    @Setter
     public static class Config {
         private Integer connectionTimeout;
         private Integer requestTimeout;
     }
 
-    @Data
+    @Getter
+    @Setter
     public static class Header {
         private String officeCode;
         private String userId;
     }
 
-    @Data
+    @Getter
+    @Setter
     public static class Secure {
         private String cert;
         private String key;
