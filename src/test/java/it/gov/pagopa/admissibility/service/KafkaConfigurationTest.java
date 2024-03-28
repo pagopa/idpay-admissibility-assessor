@@ -12,6 +12,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 @TestPropertySource( properties = {
         "spring.cloud.stream.binders.binder-test.type=kafka",
         "spring.cloud.stream.binders.binder-test.environment.spring.cloud.stream.kafka.binder.brokers=BROKERTEST",
@@ -59,38 +62,38 @@ class KafkaConfigurationTest {
     @Test
     void getStream() {
         Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
-        Assertions.assertEquals(3, bindings.size());
+        assertEquals(3, bindings.size());
 
         KafkaConfiguration.KafkaInfoDTO kafkaInfoDTO = bindings.get("binding-test-in-0");
         Assertions.assertNotNull(kafkaInfoDTO);
-        Assertions.assertEquals(binderTestType, kafkaInfoDTO.getType());
-        Assertions.assertEquals(binderTestTopic, kafkaInfoDTO.getDestination());
-        Assertions.assertEquals(binderTestGroup, kafkaInfoDTO.getGroup());
-        Assertions.assertEquals(binderTestBroker, kafkaInfoDTO.getBrokers());
-        Assertions.assertEquals(binderTestName, kafkaInfoDTO.getBinder());
+        assertEquals(binderTestType, kafkaInfoDTO.getType());
+        assertEquals(binderTestTopic, kafkaInfoDTO.getDestination());
+        assertEquals(binderTestGroup, kafkaInfoDTO.getGroup());
+        assertEquals(binderTestBroker, kafkaInfoDTO.getBrokers());
+        assertEquals(binderTestName, kafkaInfoDTO.getBinder());
 
         Map<String, KafkaConfiguration.Binders> binders = config.getStream().getBinders();
-        Assertions.assertEquals(2, binders.size());
+        assertEquals(2, binders.size());
         KafkaConfiguration.Binders binderDTO = binders.get(binderTestName);
-        Assertions.assertEquals(binderTestType, binderDTO.getType());
-        Assertions.assertEquals(binderTestBroker, binderDTO.getEnvironment().getSpring().getCloud().getStream().getKafka().getBinder().getBrokers());
+        assertEquals(binderTestType, binderDTO.getType());
+        assertEquals(binderTestBroker, binderDTO.getEnvironment().getSpring().getCloud().getStream().getKafka().getBinder().getBrokers());
     }
 
     @Test
     void getStreamWithoutBinders() {
         Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
-        Assertions.assertEquals(3, bindings.size());
+        assertEquals(3, bindings.size());
 
         KafkaConfiguration.KafkaInfoDTO kafkaInfoDTO = bindings.get("binding-test-without-binder-in-0");
         Assertions.assertNotNull(kafkaInfoDTO);
-        Assertions.assertEquals(withoutBinderTopic, kafkaInfoDTO.getDestination());
+        assertEquals(withoutBinderTopic, kafkaInfoDTO.getDestination());
         Assertions.assertNull(kafkaInfoDTO.getGroup());
-        Assertions.assertEquals(withoutBinderName,kafkaInfoDTO.getBinder());
+        assertEquals(withoutBinderName,kafkaInfoDTO.getBinder());
         Assertions.assertNull(kafkaInfoDTO.getType());
         Assertions.assertNull(kafkaInfoDTO.getBrokers());
 
         Map<String, KafkaConfiguration.Binders> binders = config.getStream().getBinders();
-        Assertions.assertEquals(2, binders.size());
+        assertEquals(2, binders.size());
         KafkaConfiguration.Binders binderDTO = binders.get(withoutBinderName);
         Assertions.assertNull(binderDTO);
     }
@@ -98,37 +101,85 @@ class KafkaConfigurationTest {
     @Test
     void getStreamWithoutEnvironment() {
         Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
-        Assertions.assertEquals(3, bindings.size());
+        assertEquals(3, bindings.size());
         KafkaConfiguration.KafkaInfoDTO kafkaInfoDTO = bindings.get("binding-test-without-environment-in-0");
         Assertions.assertNotNull(kafkaInfoDTO);
-        Assertions.assertEquals(withoutEnvironmentTopic, kafkaInfoDTO.getDestination());
+        assertEquals(withoutEnvironmentTopic, kafkaInfoDTO.getDestination());
         Assertions.assertNull(kafkaInfoDTO.getGroup());
-        Assertions.assertEquals(withoutEnvironmentName, kafkaInfoDTO.getBinder());
-        Assertions.assertEquals(withoutEnvironmentType, kafkaInfoDTO.getType());
+        assertEquals(withoutEnvironmentName, kafkaInfoDTO.getBinder());
+        assertEquals(withoutEnvironmentType, kafkaInfoDTO.getType());
         Assertions.assertNull(kafkaInfoDTO.getBrokers());
         Map<String, KafkaConfiguration.Binders> binders = config.getStream().getBinders();
-        Assertions.assertEquals(2, binders.size());
+        assertEquals(2, binders.size());
         KafkaConfiguration.Binders binderDTO = binders.get(withoutEnvironmentName);
-        Assertions.assertEquals(withoutEnvironmentType, binderDTO.getType());
+        assertEquals(withoutEnvironmentType, binderDTO.getType());
         Assertions.assertNull(binderDTO.getEnvironment());
     }
 
     @Test
     void getTopicForBindings(){
         Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
-        Assertions.assertEquals(3, bindings.size());
+        assertEquals(3, bindings.size());
 
         String topicForBindings = config.getTopicForBindings("binding-test-in-0");
-        Assertions.assertEquals(binderTestTopic, topicForBindings);
+        assertEquals(binderTestTopic, topicForBindings);
 
     }
     @Test
     void getTopicForBindingsWithoutKafkaInfoDTO(){
         Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
-        Assertions.assertEquals(3, bindings.size());
+        assertEquals(3, bindings.size());
 
         String topicForBindings = config.getTopicForBindings("unexpected-bindings");
         Assertions.assertNull(topicForBindings);
+
+    }
+    @Test
+    void testEqualsAndHashCode() {
+        KafkaConfiguration.BaseKafkaInfoDTO base1 = KafkaConfiguration.BaseKafkaInfoDTO.builder()
+                .destination("destination1")
+                .group("group1")
+                .type("type1")
+                .brokers("brokers1")
+                .build();
+
+        KafkaConfiguration.BaseKafkaInfoDTO base2 = KafkaConfiguration.BaseKafkaInfoDTO.builder()
+                .destination("destination1")
+                .group("group1")
+                .type("type1")
+                .brokers("brokers1")
+                .build();
+
+        KafkaConfiguration.KafkaInfoDTO kafka1 = KafkaConfiguration.KafkaInfoDTO.builder()
+                .destination("destination1")
+                .group("group1")
+                .type("type1")
+                .brokers("brokers1")
+                .binder("binder1")
+                .build();
+
+        KafkaConfiguration.KafkaInfoDTO kafka2 = KafkaConfiguration.KafkaInfoDTO.builder()
+                .destination("destination1")
+                .group("group1")
+                .type("type1")
+                .brokers("brokers1")
+                .binder("binder1")
+                .build();
+
+
+        assertEquals(base1, base2);
+        assertEquals(kafka1, kafka2);
+
+
+        assertNotEquals(base1, kafka1);
+
+
+        assertEquals(base1.hashCode(), base2.hashCode());
+        assertEquals(kafka1.hashCode(), kafka2.hashCode());
+
+
+        assertNotEquals(base1.hashCode(), kafka1.hashCode());
+
 
     }
 
