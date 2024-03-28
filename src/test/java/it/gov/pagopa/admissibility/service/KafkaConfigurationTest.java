@@ -113,4 +113,23 @@ class KafkaConfigurationTest {
         Assertions.assertNull(binderDTO.getEnvironment());
     }
 
+    @Test
+    void getTopicForBindings(){
+        Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
+        Assertions.assertEquals(3, bindings.size());
+
+        String topicForBindings = config.getTopicForBindings("binding-test-in-0");
+        Assertions.assertEquals(binderTestTopic, topicForBindings);
+
+    }
+    @Test
+    void getTopicForBindingsWithoutKafkaInfoDTO(){
+        Map<String, KafkaConfiguration.KafkaInfoDTO> bindings = config.getStream().getBindings();
+        Assertions.assertEquals(3, bindings.size());
+
+        String topicForBindings = config.getTopicForBindings("unexpected-bindings");
+        Assertions.assertNull(topicForBindings);
+
+    }
+
 }

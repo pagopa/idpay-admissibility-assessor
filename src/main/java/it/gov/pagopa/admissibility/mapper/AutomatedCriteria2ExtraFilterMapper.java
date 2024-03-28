@@ -18,7 +18,8 @@ public class AutomatedCriteria2ExtraFilterMapper implements BiFunction<Automated
     public ExtraFilter apply(AutomatedCriteriaDTO automatedCriteriaDTO, CriteriaCodeConfig criteriaCodeConfig) {
         String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
         FilterOperator operator = automatedCriteriaDTO.getOperator();
-        return new NotOperation(new Filter(field, operator, toUpperCase(automatedCriteriaDTO.getValue()), toUpperCase(automatedCriteriaDTO.getValue2())));
+
+        return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue().toUpperCase(), toUpperCase(automatedCriteriaDTO.getValue2())));
     }
 
     @Nullable

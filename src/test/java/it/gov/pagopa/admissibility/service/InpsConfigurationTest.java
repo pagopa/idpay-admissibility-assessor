@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -22,6 +23,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         "app.inps.header.officeCode=testOfficeCode",
 
 })
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
  class InpsConfigurationTest {
     @Value("${app.inps.iseeConsultation.base-url}")
     private String baseUrl;
@@ -44,7 +46,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
     @Test
     void givenPropertiesWhenGetInpsThenReturnInfo() {
-        System.out.println(inpsConfiguration.getInps());
         InpsConfiguration.Inps inps = inpsConfiguration.getInps();
 
         Assertions.assertNotNull(inps);
@@ -56,6 +57,40 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         Assertions.assertEquals(cert, inps.getSecure().getCert());
         Assertions.assertEquals(key, inps.getSecure().getKey());
 
+    }
+
+    @Test
+    void givenNullInpsIseeConsultationWhenGetBaseUrlThenReturnNull(){
+        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
+        inps.setIseeConsultation(null);
+
+        String baseUrlForInps = inpsConfiguration.getBaseUrlForInps();
+
+        Assertions.assertNull(baseUrlForInps);
+    }
+
+    @Test
+    void givenNullInpsConfigWhenGetConnectionTimeoutAndRequestTimeoutThenReturnNull(){
+        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
+        inps.getIseeConsultation().setConfig(null);
+
+        Integer connectionTimeoutForInps = inpsConfiguration.getConnectionTimeoutForInps();
+        Integer requestTimeoutForInps = inpsConfiguration.getRequestTimeoutForInps();
+
+        Assertions.assertNull(connectionTimeoutForInps);
+        Assertions.assertNull(requestTimeoutForInps);
+    }
+
+    @Test
+    void givenNullHeaderWhenGetOfficeCodeAndUserIdThenReturnNull(){
+        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
+        inps.setHeader(null);
+
+        String officeCodeForInps = inpsConfiguration.getOfficeCodeForInps();
+        String userIdForInps = inpsConfiguration.getUserIdForInps();
+
+        Assertions.assertNull(officeCodeForInps);
+        Assertions.assertNull(userIdForInps);
     }
 
 }
