@@ -93,5 +93,18 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         Assertions.assertNull(userIdForInps);
     }
 
+    @Test
+    void givenNullSecureWhenGetCertAndKeyThenReturnNull(){
+        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
+        inps.setSecure(null);
+
+        String certForInps = inpsConfiguration.getCertForInps();
+        String keyForInps = inpsConfiguration.getKeyForInps();
+
+
+        Assertions.assertNull(certForInps);
+        Assertions.assertNull(keyForInps);
+    }
+
 }
 

@@ -20,7 +20,9 @@ public class KafkaConfiguration {
         private Map<String,Binders> binders;
     }
 
-    @Data
+    @Getter
+    @Setter
+    @EqualsAndHashCode
     @SuperBuilder
     @AllArgsConstructor
     @NoArgsConstructor
