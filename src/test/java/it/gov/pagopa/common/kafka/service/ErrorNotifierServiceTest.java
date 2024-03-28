@@ -2,6 +2,7 @@ package it.gov.pagopa.common.kafka.service;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import it.gov.pagopa.admissibility.config.KafkaConfiguration;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
@@ -81,11 +82,17 @@ class ErrorNotifierServiceTest {
 
     private void test(Message<?> message, boolean expectedResult, boolean expectedRetryable, boolean expectedResend, String expectedKeyValue, Throwable expectedException) {
         // Given
+        KafkaConfiguration.KafkaInfoDTO kafkaInfoDTO = KafkaConfiguration.KafkaInfoDTO.builder()
+                .type(SRC_TYPE)
+                .group(GROUP)
+                .destination(SRC_TOPIC)
+                .brokers(SRC_SERVER)
+                .build();
         Mockito.when(errorPublisherMock.send(Mockito.argThat(m -> assertErrorMessage(m, expectedRetryable, expectedResend, expectedKeyValue, expectedException)
         ))).thenReturn(expectedResult);
 
         // When
-        boolean result = service.notify(SRC_TYPE, SRC_SERVER, SRC_TOPIC, GROUP, message, DESCRIPTION, expectedRetryable, expectedResend, expectedException);
+        boolean result = service.notify(kafkaInfoDTO, message, DESCRIPTION, expectedRetryable, expectedResend, expectedException);
 
         // Then
         Assertions.assertEquals(expectedResult, result);

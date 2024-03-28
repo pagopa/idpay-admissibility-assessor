@@ -19,7 +19,7 @@ import org.kie.internal.command.CommandFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -47,12 +47,10 @@ public class RuleEngineServiceImpl implements RuleEngineService {
             if (checkIfKieBaseContainerIsReady(initiative)) {
                 StatelessKieSession statelessKieSession = onboardingContextHolderService.getBeneficiaryRulesKieBase().newStatelessKieSession();
 
-                @SuppressWarnings("unchecked")
-                List<Command<?>> cmds = Arrays.asList(
-                        CommandFactory.newInsert(req),
-                        CommandFactory.newInsert(criteriaCodeService),
-                        new AgendaGroupSetFocusCommand(req.getInitiativeId())
-                );
+                List<Command<?>> cmds = new ArrayList<>();
+                        cmds.add(CommandFactory.newInsert(req));
+                        cmds.add(CommandFactory.newInsert(criteriaCodeService));
+                        cmds.add(new AgendaGroupSetFocusCommand(req.getInitiativeId()));
 
                 long before = System.currentTimeMillis();
                 statelessKieSession.execute(CommandFactory.newBatchExecution(cmds));

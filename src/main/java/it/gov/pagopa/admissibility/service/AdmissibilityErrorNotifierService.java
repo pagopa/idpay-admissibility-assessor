@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service;
 
+import it.gov.pagopa.admissibility.config.KafkaConfiguration;
 import org.springframework.messaging.Message;
 
 public interface AdmissibilityErrorNotifierService {
@@ -8,7 +9,5 @@ public interface AdmissibilityErrorNotifierService {
     void notifyAdmissibilityOutcome(Message<?> message, String description, boolean retryable, Throwable exception);
     void notifyRankingRequest(Message<?> message, String description, boolean retryable, Throwable exception);
     void notifyAdmissibilityCommands(Message<String> message, String description, boolean retryable, Throwable exception);
-
-    @SuppressWarnings("squid:S00107") // suppressing too many parameters alert
-    void notify(String srcType, String srcServer, String srcTopic, String group, Message<?> message, String description, boolean retryable, boolean resendApplication, Throwable exception);
+    void notify(KafkaConfiguration.BaseKafkaInfoDTO baseKafkaInfoDTO, Message<?> message, String description, boolean retryable, boolean resendApplication, Throwable exception);
 }
