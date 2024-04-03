@@ -106,5 +106,32 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
         Assertions.assertNull(keyForInps);
     }
 
+    @Test
+    void givenNullInpsWhenGetAllThenReturnNull(){
+        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
+        inps.setIseeConsultation(null);
+        inps.setHeader(null);
+        inps.setSecure(null);
+
+        String certForInps = inpsConfiguration.getCertForInps();
+        String keyForInps = inpsConfiguration.getKeyForInps();
+        String officeCodeForInps = inpsConfiguration.getOfficeCodeForInps();
+        String userIdForInps = inpsConfiguration.getUserIdForInps();
+        Integer connectionTimeoutForInps = inpsConfiguration.getConnectionTimeoutForInps();
+        Integer requestTimeoutForInps = inpsConfiguration.getRequestTimeoutForInps();
+        String baseUrlForInps = inpsConfiguration.getBaseUrlForInps();
+
+        Assertions.assertNull(baseUrlForInps);
+        Assertions.assertNull(connectionTimeoutForInps);
+        Assertions.assertNull(requestTimeoutForInps);
+        Assertions.assertNull(officeCodeForInps);
+        Assertions.assertNull(userIdForInps);
+        Assertions.assertNull(certForInps);
+        Assertions.assertNull(keyForInps);
+
+    }
+
+
+
 }
 
