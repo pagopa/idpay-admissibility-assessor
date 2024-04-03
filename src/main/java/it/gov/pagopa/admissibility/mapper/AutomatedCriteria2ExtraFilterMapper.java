@@ -11,14 +11,15 @@ import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.function.BiFunction;
-@SuppressWarnings("squid:S2637")
+
 @Service
 public class AutomatedCriteria2ExtraFilterMapper implements BiFunction<AutomatedCriteriaDTO, CriteriaCodeConfig, ExtraFilter> {
     @Override
     public ExtraFilter apply(AutomatedCriteriaDTO automatedCriteriaDTO, CriteriaCodeConfig criteriaCodeConfig) {
         String field = String.format("%s%s", criteriaCodeConfig.getOnboardingField(), StringUtils.isEmpty(automatedCriteriaDTO.getField()) ? "" : ".%s".formatted(automatedCriteriaDTO.getField()));
         FilterOperator operator = automatedCriteriaDTO.getOperator();
-        return new NotOperation(new Filter(field, operator, toUpperCase(automatedCriteriaDTO.getValue()), toUpperCase(automatedCriteriaDTO.getValue2())));
+
+        return new NotOperation(new Filter(field, operator, automatedCriteriaDTO.getValue().toUpperCase(), toUpperCase(automatedCriteriaDTO.getValue2())));
     }
 
     @Nullable

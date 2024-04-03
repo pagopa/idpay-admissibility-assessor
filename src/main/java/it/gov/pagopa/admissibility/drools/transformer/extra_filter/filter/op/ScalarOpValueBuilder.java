@@ -55,7 +55,6 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
     /**
      * it will deserialize the input String
      */
-    @SuppressWarnings("squid:S3776")
     private Object deserializeValue(String value, Class<?> fieldType) throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         if(value == null){
             return null;
@@ -77,7 +76,18 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
             return LocalDate.parse(value, dateFormatter);
         } else if (LocalTime.class.isAssignableFrom(fieldType)){
             return LocalTime.parse(value, timeFormatter);
-        } else if (ZonedDateTime.class.isAssignableFrom(fieldType)){
+        }  else if (Enum.class.isAssignableFrom(fieldType)){
+            //noinspection unchecked,rawtypes
+            return Enum.valueOf((Class<? extends Enum>)fieldType, value);
+        } else if (Collection.class.isAssignableFrom(fieldType)){
+            return handleCollection(value, fieldType);
+        } else {
+            return deserializeValueZone(value, fieldType);
+        }
+    }
+
+    private Object deserializeValueZone(String value, Class<?> fieldType) {
+        if (ZonedDateTime.class.isAssignableFrom(fieldType)){
             return ZonedDateTime.parse(value, DateTimeFormatter.ISO_ZONED_DATE_TIME);
         } else if (OffsetDateTime.class.isAssignableFrom(fieldType)){
             return OffsetDateTime.parse(value, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
@@ -85,12 +95,7 @@ public class ScalarOpValueBuilder implements OperationValueBuilder{
             return ZoneOffset.of(value);
         } else if (ZoneId.class.isAssignableFrom(fieldType)){
             return ZoneId.of(value);
-        } else if (Enum.class.isAssignableFrom(fieldType)){
-            //noinspection unchecked,rawtypes
-            return Enum.valueOf((Class<? extends Enum>)fieldType, value);
-        } else if (Collection.class.isAssignableFrom(fieldType)){
-            return handleCollection(value, fieldType);
-        } else {
+        }else {
             throw new IllegalArgumentException(String.format("Unsupported scalar value: %s", value.getClass()));
         }
     }
