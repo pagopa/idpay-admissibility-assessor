@@ -9,7 +9,7 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.kafka.KafkaTestUtilitiesService;
 import it.gov.pagopa.common.mongo.MongoTestUtilitiesService;
 import it.gov.pagopa.common.mongo.singleinstance.AutoConfigureSingleInstanceMongodb;
-import it.gov.pagopa.common.rest.utils.WireMockUtils;
+import it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest;
 import it.gov.pagopa.common.stream.StreamsHealthIndicator;
 import it.gov.pagopa.common.utils.JUnitExtensionContextHolder;
 import it.gov.pagopa.common.utils.TestIntegrationUtils;
@@ -42,7 +42,6 @@ import javax.management.InstanceNotFoundException;
 import javax.management.MBeanRegistrationException;
 import javax.management.MalformedObjectNameException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -101,7 +100,7 @@ import java.util.stream.Stream;
         })
 @AutoConfigureSingleInstanceMongodb
 @AutoConfigureWebTestClient
-@ContextConfiguration(initializers = {BaseIntegrationTest.WireMockInitializer.class})
+@ContextConfiguration(initializers = {BaseWireMockTest.WireMockInitializer.class})
 public abstract class BaseIntegrationTest {
 
     @Autowired
@@ -210,60 +209,16 @@ public abstract class BaseIntegrationTest {
     public static final String TRUSTSTORE_PATH = "src/test/resources/wiremockKeyStore.p12";
     private static final String TRUSTSTORE_KO_PATH = "src/test/resources/wiremockTrustStoreKO.p12";
     @RegisterExtension
-    static WireMockExtension serverWireMockExtension = initServerWiremock();
+    static WireMockExtension serverWireMockExtension = BaseWireMockTest.initServerWiremock();
 
     public static void configureServerWiremockBeforeAll(boolean needClientAuth, boolean useTrustoreOk) {
-        WIREMOCK_REQUEST_CLIENT_AUTH = needClientAuth;
-        USE_TRUSTORE_OK = useTrustoreOk;
-        initServerWiremock();
+        BaseWireMockTest.configureServerWiremockBeforeAll(needClientAuth, useTrustoreOk);
     }
 
-    private static WireMockExtension initServerWiremock() {
-        int httpPort=0;
-        int httpsPort=0;
-        boolean start=false;
-
-        // re-using shutdown server port in order to let Spring loaded configuration still valid
-        if (serverWireMockExtension != null && JUnitExtensionContextHolder.extensionContext != null) {
-            try {
-                httpPort = serverWireMockExtension.getRuntimeInfo().getHttpPort();
-                httpsPort = serverWireMockExtension.getRuntimeInfo().getHttpsPort();
-
-                serverWireMockExtension.shutdownServer();
-                // waiting server stop, releasing ports
-                TestUtils.wait(200, TimeUnit.MILLISECONDS);
-                start=true;
-            } catch (IllegalStateException e){
-                // Do Nothing: the wiremock server was not started
-            }
-        }
-
-        WireMockExtension newWireMockConfig = WireMockUtils.initServerWiremock(
-                httpPort,
-                httpsPort,
-                "src/test/resources/stub",
-                WIREMOCK_REQUEST_CLIENT_AUTH,
-                USE_TRUSTORE_OK ? TRUSTSTORE_PATH : TRUSTSTORE_KO_PATH,
-                "idpay");
-
-        if(start){
-            try {
-                newWireMockConfig.beforeAll(JUnitExtensionContextHolder.extensionContext);
-            } catch (Exception e) {
-                throw new IllegalStateException("Cannot start WireMock JUnit Extension", e);
-            }
-        }
-
-        return serverWireMockExtension = newWireMockConfig;
-    }
 
     @AfterAll
     static void restoreWireMockConfig() {
-        if(!USE_TRUSTORE_OK || !WIREMOCK_REQUEST_CLIENT_AUTH) {
-            USE_TRUSTORE_OK = true;
-            WIREMOCK_REQUEST_CLIENT_AUTH = true;
-            initServerWiremock();
-        }
+        BaseWireMockTest.restoreWireMockConfig();
     }
 
     public static class WireMockInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
