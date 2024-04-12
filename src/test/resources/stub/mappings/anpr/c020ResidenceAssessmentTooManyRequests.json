@@ -28,7 +28,14 @@
         "equalToJson": {
           "idOperazioneClient": "${json-unit.regex}[0-9]+",
           "criteriRicerca": {
-            "codiceFiscale": "CF_ANPR_TOO_MANY_REQUESTS"
+            "codiceFiscale": "CF_ANPR_TOO_MANY_REQUESTS",
+            "idANPR" : null,
+            "cognome" : null,
+            "senzaCognome" : null,
+            "nome" : null,
+            "senzaNome" : null,
+            "sesso" : null,
+            "datiNascita" : null
           },
           "datiRichiesta": {
             "dataRiferimentoRichiesta": "${json-unit.regex}[0-9]{4}-[0-9]{2}-[0-9]{2}",
