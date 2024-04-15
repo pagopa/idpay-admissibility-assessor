@@ -32,7 +32,7 @@ public class BaseWireMockTest {
     private static final Map<String,String> propertiesSecureMap = new HashMap<>();
 
     @PostConstruct
-    public void logEmbeddedServerConfig() {
+    static public void logEmbeddedServerConfig() {
         String wiremockHttpBaseUrl = "UNKNOWN";
         String wiremockHttpsBaseUrl = "UNKNOWN";
         try {
@@ -57,7 +57,7 @@ public class BaseWireMockTest {
     public static final String TRUSTSTORE_PATH = "src/test/resources/wiremockKeyStore.p12";
     private static final String TRUSTSTORE_KO_PATH = "src/test/resources/wiremockTrustStoreKO.p12";
     @RegisterExtension
-    static com.github.tomakehurst.wiremock.junit5.WireMockExtension serverWireMockExtension = initServerWiremock();
+    public static com.github.tomakehurst.wiremock.junit5.WireMockExtension serverWireMockExtension = initServerWiremock();
 
     public static void configureServerWiremockBeforeAll(boolean needClientAuth, boolean useTrustoreOk) {
         WIREMOCK_REQUEST_CLIENT_AUTH = needClientAuth;
@@ -65,7 +65,7 @@ public class BaseWireMockTest {
         initServerWiremock();
     }
 
-    private static com.github.tomakehurst.wiremock.junit5.WireMockExtension initServerWiremock() {
+    public static com.github.tomakehurst.wiremock.junit5.WireMockExtension initServerWiremock() {
         int httpPort=0;
         int httpsPort=0;
         boolean start=false;
@@ -105,7 +105,7 @@ public class BaseWireMockTest {
     }
 
     @AfterAll
-    static void restoreWireMockConfig() {
+    public static void restoreWireMockConfig() {
         if(!USE_TRUSTORE_OK || !WIREMOCK_REQUEST_CLIENT_AUTH) {
             USE_TRUSTORE_OK = true;
             WIREMOCK_REQUEST_CLIENT_AUTH = true;
