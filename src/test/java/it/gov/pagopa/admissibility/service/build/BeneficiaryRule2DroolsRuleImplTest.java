@@ -131,8 +131,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .endDate(LocalDate.of(2025, 12, 1))
                 .automatedCriteria(dto.getBeneficiaryRule().getAutomatedCriteria())
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
-                .initiativeBudget(new BigDecimal("100000.00"))
-                .beneficiaryInitiativeBudget(new BigDecimal("1000.00"))
+                .initiativeBudgetCents(100000_00L)
+                .beneficiaryInitiativeBudgetCents(1000_00L)
                 .isLogoPresent(Boolean.TRUE)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
@@ -197,7 +197,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
         expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
-        expectedEvaluationResult.setBeneficiaryBudget(new BigDecimal("1000.00"));
+        expectedEvaluationResult.setBeneficiaryBudgetCents(1000_00L);
         expectedEvaluationResult.setIsLogoPresent(Boolean.TRUE);
         if (expectedIseeFail) {
             expectedEvaluationResult.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
@@ -242,10 +242,10 @@ class BeneficiaryRule2DroolsRuleImplTest {
         dto.setGeneral(
                 InitiativeGeneralDTO.builder()
                         .name("NAME")
-                        .budget(new BigDecimal("100000.00"))
+                        .budgetCents(100_000_00L)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
-                        .beneficiaryBudget(new BigDecimal("1000.00"))
+                        .beneficiaryBudgetCents(1_000_00L)
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
                         .build()

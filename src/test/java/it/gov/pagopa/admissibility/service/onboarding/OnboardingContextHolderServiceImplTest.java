@@ -27,7 +27,6 @@ import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -134,10 +133,10 @@ class OnboardingContextHolderServiceImplTest {
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
-                .beneficiaryInitiativeBudget(BigDecimal.valueOf(100))
+                .beneficiaryInitiativeBudgetCents(100_00L)
                 .endDate(LocalDate.MAX)
                 .initiativeName("NAME")
-                .initiativeBudget(BigDecimal.valueOf(100))
+                .initiativeBudgetCents(100_00L)
                 .status("STATUS")
                 .automatedCriteria(new ArrayList<>())
                 .automatedCriteriaCodes(List.of("CODE1"))

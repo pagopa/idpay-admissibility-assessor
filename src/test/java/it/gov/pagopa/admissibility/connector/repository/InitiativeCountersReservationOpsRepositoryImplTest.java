@@ -27,7 +27,7 @@ class InitiativeCountersReservationOpsRepositoryImplTest {
         int N = 1000;
 
         final BigDecimal budget = BigDecimal.valueOf(10099);
-        final BigDecimal budgetReservedPerRequest = BigDecimal.valueOf(100);
+        final Long budgetReservedPerRequest = 100_00L;
         final BigDecimal expectedBudgetReserved = BigDecimal.valueOf(10000);
         final BigDecimal expectedBudgetResidual = BigDecimal.valueOf(99);
         final int expectedReservations = 100;

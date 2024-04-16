@@ -12,8 +12,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
-
 @ExtendWith(MockitoExtension.class)
 class InitiativeStatusServiceImplTest {
 
@@ -25,8 +23,8 @@ class InitiativeStatusServiceImplTest {
 
         InitiativeConfig initiativeConfigMock = InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
-                .initiativeBudget(BigDecimal.ONE)
-                .beneficiaryInitiativeBudget(BigDecimal.TEN)
+                .initiativeBudgetCents(1_00L)
+                .beneficiaryInitiativeBudgetCents(10_00L)
                 .status("STATUS1")
                 .build();
         Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString())).thenReturn(Mono.just(initiativeConfigMock));
@@ -59,8 +57,8 @@ class InitiativeStatusServiceImplTest {
 
         InitiativeConfig initiativeConfigMock = InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
-                .initiativeBudget(BigDecimal.ONE)
-                .beneficiaryInitiativeBudget(BigDecimal.TEN)
+                .initiativeBudgetCents(1_00L)
+                .beneficiaryInitiativeBudgetCents(10_00L)
                 .status("STATUS1")
                 .build();
         Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString())).thenReturn(Mono.just(initiativeConfigMock));

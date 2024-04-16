@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -7,7 +8,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,8 +39,8 @@ class OnboardingRequestEvaluatorServiceTest {
     public OnboardingRequestEvaluatorServiceTest(){
         onboardingRequest.setInitiativeId("ID");
 
-        initiativeConfig.setInitiativeBudget(BigDecimal.TEN);
-        initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.ONE);
+        initiativeConfig.setInitiativeBudgetCents(10_00L);
+        initiativeConfig.setBeneficiaryInitiativeBudgetCents(1_00L);
     }
 
     @Test
@@ -87,7 +86,7 @@ class OnboardingRequestEvaluatorServiceTest {
     void testRejectedNoBudget(){
         //given
         configureSuccesfulRuleEngine();
-        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudget())))
+        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents())))
                 .thenReturn(Mono.empty());
 
         //when
@@ -108,7 +107,7 @@ class OnboardingRequestEvaluatorServiceTest {
                 , resultCompleted.getOnboardingRejectionReasons());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
-        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudget()));
+        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents()));
 
         Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
     }
@@ -117,7 +116,7 @@ class OnboardingRequestEvaluatorServiceTest {
     void testSuccessful(){
         //give
         configureSuccesfulRuleEngine();
-        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudget())))
+        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents())))
                 .thenReturn(Mono.just(new InitiativeCounters()));
 
         //when
@@ -132,7 +131,7 @@ class OnboardingRequestEvaluatorServiceTest {
         Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
-        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudget()));
+        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents()));
 
         Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
     }

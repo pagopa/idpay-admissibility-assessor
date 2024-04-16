@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -129,8 +128,8 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                 .startDate(LocalDate.MIN)
                 .endDate(LocalDate.MAX)
-                .budget(BigDecimal.TEN)
-                .beneficiaryBudget(BigDecimal.ONE)
+                .budgetCents(10_00L)
+                .beneficiaryBudgetCents(1_00L)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
@@ -153,8 +152,8 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertSame(initiative2BuildDTO.getOrganizationName(), result.getOrganizationName());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getStartDate(), result.getStartDate());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudget(), result.getInitiativeBudget());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudget(), result.getBeneficiaryInitiativeBudget());
+        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudgetCents(), result.getInitiativeBudgetCents());
+        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudgetCents(), result.getBeneficiaryInitiativeBudgetCents());
         Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryType(), result.getBeneficiaryType());
         Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
         Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());

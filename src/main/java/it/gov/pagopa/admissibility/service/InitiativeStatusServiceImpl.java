@@ -1,13 +1,11 @@
 package it.gov.pagopa.admissibility.service;
 
-import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
+import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-
-import java.math.BigDecimal;
 
 @Service
 @Slf4j
@@ -33,7 +31,7 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                 initiativeStatus.setBudgetAvailable(
                                         isInitiativeBudgetAvailable(
                                                 initiativeCounters.getResidualInitiativeBudgetCents(),
-                                                initiativeConfig.getBeneficiaryInitiativeBudget()
+                                                initiativeConfig.getBeneficiaryInitiativeBudgetCents()
                                         )
                                 );
 
@@ -44,8 +42,7 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                 );
     }
 
-    private boolean isInitiativeBudgetAvailable(Long residualBudget, BigDecimal beneficiaryBudget) {
-        BigDecimal residualBudgetBigDecimal = BigDecimal.valueOf(residualBudget);
-        return residualBudgetBigDecimal.compareTo(beneficiaryBudget.multiply(BigDecimal.valueOf(100))) > -1;
+    private boolean isInitiativeBudgetAvailable(Long residualBudget, Long beneficiaryBudget) {
+        return residualBudget.compareTo(beneficiaryBudget) > -1;
     }
 }
