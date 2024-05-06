@@ -108,8 +108,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .status("STATUS")
                 .startDate(now)
                 .endDate(now)
-                .initiativeBudget(new BigDecimal("100"))
-                .beneficiaryInitiativeBudget(BigDecimal.TEN)
+                .initiativeBudgetCents(100_00L)
+                .beneficiaryInitiativeBudgetCents(10_00L)
                 .rankingInitiative(Boolean.TRUE)
                 .automatedCriteria(List.of(
                         new AutomatedCriteriaDTO("AUTH1", CRITERIA_CODE_ISEE, null, FilterOperator.EQ, "1", null, Sort.Direction.ASC, ISEE_TYPOLOGIES_REQUESTED, PDND_INITIATIVE_CONFIG)))

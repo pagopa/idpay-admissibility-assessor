@@ -13,8 +13,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
-import java.math.BigDecimal;
-
 @ExtendWith(MockitoExtension.class)
 class InitInitiativeCounterServiceImplTest {
 
@@ -28,8 +26,8 @@ class InitInitiativeCounterServiceImplTest {
     public InitInitiativeCounterServiceImplTest(){
         this.initiative = InitiativeConfig.builder()
                 .initiativeId("ID")
-                .initiativeBudget(BigDecimal.ONE)
-                .beneficiaryInitiativeBudget(BigDecimal.TEN)
+                .initiativeBudgetCents(1_00L)
+                .beneficiaryInitiativeBudgetCents(10_00L)
                 .build();
     }
 
@@ -63,21 +61,17 @@ class InitInitiativeCounterServiceImplTest {
 
         Assertions.assertNotNull(result);
         Assertions.assertSame(initiative.getInitiativeId(), result.getId());
-        Assertions.assertEquals(euro2cents(initiative.getInitiativeBudget()), result.getInitiativeBudgetCents());
+        Assertions.assertEquals(initiative.getInitiativeBudgetCents(), result.getInitiativeBudgetCents());
 
         checkCounters(result, expectedOnboarded, expectedReservationCents);
 
         Mockito.verify(initiativeCountersRepositoryMock).save(Mockito.same(result));
     }
 
-    private long euro2cents(BigDecimal beneficiaryInitiativeBudget) {
-        return beneficiaryInitiativeBudget.longValue() * 100;
-    }
-
     private void checkCounters(InitiativeCounters result, Long expectedOnboarded, Long expectedReservationCents) {
         Assertions.assertEquals(expectedOnboarded, result.getOnboarded());
         Assertions.assertEquals(expectedReservationCents, result.getReservedInitiativeBudgetCents());
-        Assertions.assertEquals(euro2cents(initiative.getInitiativeBudget()), result.getResidualInitiativeBudgetCents());
+        Assertions.assertEquals(initiative.getInitiativeBudgetCents(), result.getResidualInitiativeBudgetCents());
     }
 
 }
