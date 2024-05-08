@@ -1,12 +1,12 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
             if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudget())
+                return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudgetCents())
                         .map(c -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
                             onboardingRequest.setBudgetReserved(true);

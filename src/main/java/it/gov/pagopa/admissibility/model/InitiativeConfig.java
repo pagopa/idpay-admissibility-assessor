@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -28,8 +27,8 @@ public class InitiativeConfig {
     private LocalDate endDate;
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
-    private BigDecimal initiativeBudget;
-    private BigDecimal beneficiaryInitiativeBudget;
+    private Long initiativeBudgetCents;
+    private Long beneficiaryInitiativeBudgetCents;
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;
