@@ -1,0 +1,865 @@
+asyncapi: 2.0.0
+info:
+  title: Admissibility Assessor Service
+  version: 1.0.0
+  description: >-
+    Its purpose is
+tags:
+  - name: "sendOnboardingNotiy"
+    description: "Send "
+
+  - name: "sendRankingNotiy"
+    description: "Send "
+
+  - name: "sendReschedulingOnboardingRequest"
+    description: "Send "
+
+  - name: "processInitiative"
+    description: "Process "
+
+  - name: "notifyBeneficiaryRuleError"
+    description: "Send "
+  - name: "beneficiaryRuleDeserializationError"
+    description: "Send "
+
+  - name: "notifyCommandMediatorError"
+    description: "Send "
+  - name: "commandMediatorDeserializationError"
+    description: "Send "
+
+  - name: "rescheduleError"
+    description: "Send "
+  - name: "onboardingRequestError"
+    description: "Send "
+  - name: "onboardingRequestDeserializationError"
+    description: "Send "
+
+  - name: "onboardingNotifierError"
+    description: "Send "
+
+  - name: "rankingNotifierError"
+    description: "Send "
+
+  - name: "deleteInitiative"
+    description: "Process "
+channels:
+  admissibiliy-send-onboarding-notiy:
+    subscribe:
+      message:
+        $ref: '#/components/messages/SendOnboardingNotiy'
+      bindings:
+        kafka:
+          topic: idpay-onboarding-outcome
+      tags:
+        - name: "sendOnboardingNotiy"
+  admissibiliy-send-ranking-notiy:
+    subscribe:
+      message:
+        $ref: '#/components/messages/SendRankingNotiy'
+      bindings:
+        kafka:
+          topic: idpay-onboarding-ranking-request
+      tags:
+        - name: "sendRankingNotiy"
+  admissibiliy-send-rescheduling-onboarding-request:
+    subscribe:
+      message:
+        $ref: '#/components/messages/SendReschedulingOnboardingRequest'
+      bindings:
+        kafka:
+          topic: idpay-onboarding-request
+      tags:
+        - name: "sendReschedulingOnboardingRequest"
+  admissibiliy-process-initiative:
+    subscribe:
+      message:
+        $ref: '#/components/messages/ProcessInitiative'
+      bindings:
+        kafka:
+          topic: idpay-consumer-group
+      tags:
+        - name: "processInitiative"
+  admissibiliy-notify-beneficiary-rule-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/NotifyBeneficiaryRuleError'
+      bindings:
+        kafka:
+          topic: idpay-beneficiary-rule-update
+      tags:
+        - name: "notifyBeneficiaryRuleError"
+  admissibiliy-beneficiary-rule-deserialization-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/BeneficiaryRuleDeserializationError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "beneficiaryRuleDeserializationError"
+  admissibiliy-notify-command-mediator-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/NotifyCommandMediatorError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "notifyCommandMediatorError"
+  admissibiliy-command-mediator-deserialization-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/CommandMediatorDeserializationError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "commandMediatorDeserializationError"
+  admissibiliy-reschedule-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/RescheduleError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "rescheduleError"
+  admissibiliy-onboarding-request-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/OnboardingRequestError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "onboardingRequestError"
+  admissibiliy-onboarding-request-deserialization-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/OnboardingRequestDeserializationError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "onboardingRequestDeserializationError"
+  admissibiliy-onboarding-notifier-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/OnboardingNotifierError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "onboardingNotifierError"
+  admissibiliy-ranking-notifier-error:
+    subscribe:
+      message:
+        $ref: '#/components/messages/RankingNotifierError'
+      bindings:
+        kafka:
+          topic: idpay-errors
+      tags:
+        - name: "rankingNotifierError"
+  admissibiliy-delete-initiative:
+    subscribe:
+      message:
+        $ref: '#/components/messages/DeleteInitiative'
+      bindings:
+        kafka:
+          topic: idpay-commands
+      tags:
+        - name: "deleteInitiative"
+components:
+  messages:
+    SendOnboardingNotiy:
+      contentType: application/json
+      description: >-
+        This event is triggered to notify the outcome topic about an onboarding request.
+      summary: Notifies the outcome topic about an onboarding request.
+      payload:
+        $ref: "#/components/schemas/EvaluationCompletedDTO"
+    SendRankingNotiy:
+      contentType: application/json
+      description: >-
+        This event is triggered to notify the ranking topic about an onboarding request.
+      summary: Notifies the ranking topic about an onboarding request.
+      payload:
+        $ref: "#/components/schemas/RankingRequestDTO"
+    SendReschedulingOnboardingRequest:
+      contentType: application/json
+      description: >-
+        This event is triggered to reschedule an onboarding request for a user.
+      summary: Notifies the rescheduling of an onboarding request for a user.
+      payload:
+        $ref: "#/components/schemas/OnboardingDTO"
+    ProcessInitiative:
+      contentType: application/json
+      description: >-
+        This event is triggered to build and save Drools rules based on received initiative information.
+      summary: Notifies the initiation of building and saving Drools rules.
+      payload:
+        $ref: "#/components/schemas/Initiative2BuildDTO"
+    NotifyBeneficiaryRuleError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the processInitiative flow.
+        It provides details about the error encountered.
+      summary: Notification of an error during the processInitiative flow.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/Initiative2BuildDTO"
+    BeneficiaryRuleDeserializationError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the deserialization of the payload in the processInitiative flow.
+        It provides details about the deserialization failure.
+      summary: Notification of an error during payload deserialization in the processInitiative flow.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/Initiative2BuildDTO"
+    NotifyCommandMediatorError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the deleteInitiative flow.
+        It provides details about the error encountered.
+      summary: Notification of an error during the deleteInitiative flow.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/QueueCommandOperationDTO"
+    CommandMediatorDeserializationError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the deserialization of the payload in the deleteInitiative flow.
+        It provides details about the deserialization failure.
+      summary: Notification of an error during payload deserialization in the deleteInitiative flow.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/QueueCommandOperationDTO"
+    RescheduleError:
+      contentType: application/json
+      description: >-
+        This event is triggered when it's not possible to reschedule an onboarding request.
+        It provides details about the error encountered.
+      summary: Notification of a rescheduling error.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/OnboardingDTO"
+    OnboardingRequestError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the onboarding request process.
+        It provides details about the error encountered.
+      summary: Notification of an onboarding request error.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/OnboardingDTO"
+    OnboardingRequestDeserializationError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an error occurs during the deserialization of the payload in the onboarding request process.
+        It provides details about the deserialization failure.
+      summary: Notification of an error during payload deserialization in the onboarding request process.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/OnboardingDTO"
+    OnboardingNotifierError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an unexpected error occurs while publishing the onboarding result.
+        It provides details about the error encountered.
+      summary: Notification of an unexpected error during onboarding result publishing.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/EvaluationCompletedDTO"
+    RankingNotifierError:
+      contentType: application/json
+      description: >-
+        This event is triggered when an unexpected error occurs while publishing the ranking result.
+        It provides details about the error encountered.
+      summary: Notification of an unexpected error during ranking result publishing.
+      headers:
+        $ref: "#/components/schemas/ErrorQueueHeader"
+      payload:
+        $ref: "#/components/schemas/RankingRequestDTO"
+    DeleteInitiative:
+      contentType: application/json
+      description: >-
+        This event is sent to the application when a command to delete an initiative is published.
+        It triggers the deletion of all documents related to the specified initiative.
+      summary: Notifies the application to delete all documents associated with the initiative.
+      payload:
+        $ref: "#/components/schemas/EvaluationDTO"
+  schemas:
+    TransactionDTO:
+      type: object
+      properties:
+        idTrxAcquirer:
+          type: string
+          description: ID of the acquiring transaction
+          example: "198937549309371755007410777179935955803"
+    EvaluationDTO:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: ID of the user
+          notEmpty: true
+          example: bcf3651c-d2d3-4998-81a9-5f24302ab674
+        familyId:
+          type: string
+          description: ID of the family
+        initiativeId:
+          type: string
+          description: ID of the initiative
+          notEmpty: true
+          example: 661626073785876cb5aa7601
+        organizationId:
+          type: string
+          description: ID of the organization
+        admissibilityCheckDate:
+          type: string
+          format: date-time
+          description: Date of admissibility check
+          notNull: true
+        criteriaConsensusTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp of criteria consensus
+    RankingRequestDTO:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/EvaluationDTO"
+      properties:
+        rankingValue:
+          type: integer
+          format: int64
+          description: Ranking Value
+          example: 999
+        onboardingKo:
+          type: boolean
+          description: Onboarding Status KO
+          example: true
+    ErrorQueueHeader:
+      type: object
+      properties:
+        group:
+          type: string
+          description: The Kafka group to which the error message belongs.
+          example: "group"
+        srcType:
+          type: string
+          description: The type of the source of the error message.
+          example: "kafka"
+        srcServer:
+          type: string
+          description: The source server of the error message.
+          example: cstar-u-idpay-evh-ns-00.servicebus.windows.net:9093
+        srcTopic:
+          type: string
+          description: The Kafka topic of the source of the error message.
+          example: idpay-transaction
+        description:
+          type: string
+          description: Description of the error.
+          example: "[CONFIRM_PAYMENT] An error occurred while publishing the   confirmation Payment result"
+        retryable:
+          type: boolean
+          description: Indicates whether the error is retryable or not.
+        stacktrace:
+          type: string
+          description: The stack trace of the error.
+          example: "InternalServerErrorException -> Something gone wrong while Confirm Payment notify"
+        rootCauseClass:
+          type: string
+          description: Cause class of the error.
+          example: "java.lang.InternalServerErrorException"
+        rootCauseMessage:
+          type: string
+          description: Message of the error.
+          example: "Something gone wrong while Confirm Payment notify"
+    OnboardingDTO:
+      type: object
+      properties:
+        userId:
+          type: string
+          description: User ID
+          example: "bcf3651c-d2d3-4998-81a9-5f24302ab674"
+        initiativeId:
+          type: string
+          description: Initiative ID
+          example: "661626073785876cb5aa7601"
+        tc:
+          type: boolean
+          description: Terms and conditions acceptance flag
+          example: true
+        status:
+          type: string
+          description: Status of the onboarding process
+          example: "COMPLETED"
+        pdndAccept:
+          type: boolean
+          description: PDND acceptance flag
+          example: true
+        tcAcceptTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp when terms and conditions were accepted
+          example: "2024-05-28T12:34:56"
+        criteriaConsensusTimestamp:
+          type: string
+          format: date-time
+          description: Timestamp when criteria consensus was given
+          example: "2024-05-28T12:45:00"
+        isee:
+          type: number
+          format: decimal
+          description: ISEE value
+          example: 12345.67
+        residence:
+          type: object
+          description: Residence information
+          $ref: "#/components/schemas/Residence"
+        birthDate:
+          type: object
+          description: Birth date information
+          $ref: "#/components/schemas/BirthDate"
+        family:
+          type: object
+          description: Family information
+          $ref: "#/components/schemas/Family"
+        budgetReserved:
+          type: boolean
+          description: Flag indicating if the budget has been reserved
+          example: true
+    Residence:
+      type: object
+      properties:
+        postalCode:
+          type: string
+          description: Postal code of residence
+          example: "00100"
+        cityCouncil:
+          type: string
+          description: City council of residence
+          example: "Rome"
+        province:
+          type: string
+          description: Province of residence
+          example: "RM"
+        city:
+          type: string
+          description: City of residence
+          example: "Rome"
+        region:
+          type: string
+          description: Region of residence
+          example: "Lazio"
+        nation:
+          type: string
+          description: Nation of residence
+          example: "Italy"
+    BirthDate:
+      type: object
+      properties:
+        year:
+          type: string
+          description: Year of birth
+          example: "1990"
+        age:
+          type: integer
+          description: Age
+          example: 34
+    Family:
+      type: object
+      properties:
+        familyId:
+          type: string
+          description: Family ID
+          example: "f1234567-89ab-cdef-0123-456789abcdef"
+        memberIds:
+          type: array
+          items:
+            type: string
+          description: Set of family member IDs
+          example: [ "m123", "m124", "m125" ]
+    EvaluationCompletedDTO:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/EvaluationDTO"
+      properties:
+        initiativeName:
+          type: string
+          description: Name of the initiative
+          example: "Green Initiative"
+        organizationName:
+          type: string
+          description: Name of the organization
+          example: "Green Organization"
+        initiativeEndDate:
+          type: string
+          format: date
+          description: End date of the initiative
+          example: "2024-12-31"
+        status:
+          type: string
+          description: Status of the onboarding evaluation
+          example: "COMPLETED"
+          notEmpty: true
+        onboardingRejectionReasons:
+          type: array
+          description: List of rejection reasons during onboarding
+          items:
+            $ref: "#/components/schemas/OnboardingRejectionReason"
+        beneficiaryBudgetCents:
+          type: integer
+          format: int64
+          description: Beneficiary's budget in cents
+          example: 100000
+        rankingValue:
+          type: integer
+          format: int64
+          description: Ranking value (ignored in JSON)
+          example: 50
+          readOnly: true
+        initiativeRewardType:
+          type: string
+          description: Type of initiative reward
+          example: "CASHBACK"
+        isLogoPresent:
+          type: boolean
+          description: Flag indicating if the logo is present
+          example: true
+    OnboardingRejectionReason:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of rejection reason
+          enum:
+            - TECHNICAL_ERROR
+            - CONSENSUS_MISSED
+            - INVALID_REQUEST
+            - BUDGET_EXHAUSTED
+            - AUTOMATED_CRITERIA_FAIL
+            - ISEE_TYPE_KO
+            - FAMILY_KO
+            - RESIDENCE_KO
+            - BIRTHDATE_KO
+            - OUT_OF_RANKING
+            - FAMILY_CRITERIA_KO
+          example: TECHNICAL_ERROR
+          notNull: true
+        code:
+          type: string
+          description: Code of the rejection reason
+          example: ELIG001
+          notNull: true
+        authority:
+          type: string
+          description: Authority responsible for the rejection
+          example: Local Government
+        authorityLabel:
+          type: string
+          description: Label for the authority responsible
+          example: Local Gov
+        detail:
+          type: string
+          description: Additional detail about the rejection reason
+          example: Not eligible due to income
+    Initiative2BuildDTO:
+      type: object
+      properties:
+        initiativeId:
+          type: string
+          description: ID of the initiative
+          example: "661626073785876cb5aa7601"
+        initiativeName:
+          type: string
+          description: Name of the initiative
+          example: "Green Energy Initiative"
+        organizationId:
+          type: string
+          description: ID of the organization
+          example: "org123456"
+        organizationName:
+          type: string
+          description: Name of the organization
+          example: "Green Energy Org"
+        status:
+          type: string
+          description: Status of the initiative
+          example: "ACTIVE"
+        beneficiaryRule:
+          $ref: "#/components/schemas/InitiativeBeneficiaryRuleDTO"
+        general:
+          $ref: "#/components/schemas/InitiativeGeneralDTO"
+        additionalInfo:
+          $ref: "#/components/schemas/InitiativeAdditionalInfoDTO"
+        initiativeRewardType:
+          type: string
+          description: Type of reward for the initiative
+          example: "CASHBACK"
+    InitiativeGeneralDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the initiative
+          example: "Energy Conservation Plan"
+        budgetCents:
+          type: integer
+          format: int64
+          description: Total budget of the initiative in cents
+          example: 50000000
+        beneficiaryType:
+          type: string
+          description: Type of beneficiary
+          enum:
+            - PF
+            - PG
+            - NF
+          example: PF
+        beneficiaryKnown:
+          type: boolean
+          description: Indicates if the beneficiary is known
+          example: true
+        beneficiaryBudgetCents:
+          type: integer
+          format: int64
+          description: Budget allocated per beneficiary in cents
+          example: 1000000
+        startDate:
+          type: string
+          format: date
+          description: Start date of the initiative
+          example: "2024-01-01"
+        endDate:
+          type: string
+          format: date
+          description: End date of the initiative
+          example: "2024-12-31"
+        rankingStartDate:
+          type: string
+          format: date
+          description: Start date of the ranking period
+          example: "2024-02-01"
+        rankingEndDate:
+          type: string
+          format: date
+          description: End date of the ranking period
+          example: "2024-11-30"
+        rankingEnabled:
+          type: boolean
+          description: Indicates if ranking is enabled
+          example: true
+    InitiativeAdditionalInfoDTO:
+      type: object
+      properties:
+        serviceName:
+          type: string
+          description: Name of the service
+          example: "Energy Saving Program"
+        argument:
+          type: string
+          description: Argument or main topic of the initiative
+          example: "Promoting energy efficiency"
+        description:
+          type: string
+          description: Description of the initiative
+          example: "This initiative aims to reduce energy consumption through various incentives."
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChannelsDTO"
+        logoFileName:
+          type: string
+          description: Name of the logo file
+          example: "energy_saving_logo.png"
+    ChannelsDTO:
+      type: object
+      properties:
+        type:
+          type: string
+          description: Type of communication channel
+          example: "EMAIL"
+        contact:
+          type: string
+          description: Contact information for the channel
+          example: "support@energysaving.org"
+    InitiativeBeneficiaryRuleDTO:
+      type: object
+      properties:
+        selfDeclarationCriteria:
+          type: array
+          description: List of self-declaration criteria
+          items:
+            $ref: "#/components/schemas/AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems"
+        automatedCriteria:
+          type: array
+          description: List of automated criteria
+          items:
+            $ref: "#/components/schemas/AutomatedCriteriaDTO"
+    AutomatedCriteriaDTO:
+      type: object
+      properties:
+        authority:
+          type: string
+          description: Authority responsible for the criteria
+          example: "Tax Authority"
+        code:
+          type: string
+          description: Code of the criteria
+          example: "CRIT001"
+        field:
+          type: string
+          description: Field name to be evaluated
+          example: "income"
+        operator:
+          type: string
+          description: Operator used for comparison
+          enum:
+            - EQ
+            - NOT_EQ
+            - LT
+            - LE
+            - GT
+            - GE
+            - INSTANCE_OF
+            - IN
+            - BTW_CLOSED
+            - BTW_OPEN
+          example: "EQ"
+        value:
+          type: string
+          description: Value for the comparison
+          example: "50000"
+        value2:
+          type: string
+          description: Second value for comparison, if needed
+          example: "100000"
+        orderDirection:
+          type: string
+          description: Direction of sorting
+          enum:
+            - ASC
+            - DESC
+          example: "ASC"
+        iseeTypes:
+          type: array
+          description: List of ISEE typologies
+          items:
+            type: string
+            enum:
+              - ORDINARIO
+              - MINORENNE
+              - UNIVERSITARIO
+              - SOCIOSANITARIO
+              - DOTTORATO
+              - RESIDENZIALE
+              - CORRENTE
+            example: "ORDINARIO"
+        pdndConfig:
+          $ref: "#/components/schemas/PdndInitiativeConfig"
+    FilterOperator:
+      type: string
+      enum:
+        - EQ
+        - NOT_EQ
+        - LT
+        - LE
+        - GT
+        - GE
+        - INSTANCE_OF
+        - IN
+        - BTW_CLOSED
+        - BTW_OPEN
+    IseeTypologyEnum:
+      type: string
+      enum:
+        - ORDINARIO
+        - MINORENNE
+        - UNIVERSITARIO
+        - SOCIOSANITARIO
+        - DOTTORATO
+        - RESIDENZIALE
+        - CORRENTE
+    PdndInitiativeConfig:
+      type: object
+      properties:
+        clientId:
+          type: string
+          description: Client ID for PDND initiative
+          example: "client123"
+        kid:
+          type: string
+          description: Key ID for PDND initiative
+          example: "kid456"
+        purposeId:
+          type: string
+          description: Purpose ID for PDND initiative
+          example: "purpose789"
+    Direction:
+      type: string
+      enum:
+        - ASC
+        - DESC
+    AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems:
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/SelfCriteriaMultiDTO'
+        - $ref: '#/components/schemas/SelfCriteriaBoolDTO'
+    SelfCriteriaBoolDTO:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Description of the criteria
+          example: "Agrees to terms and conditions"
+        value:
+          type: boolean
+          description: Value of the boolean criteria
+          example: true
+        code:
+          type: string
+          description: Code of the criteria
+          example: "TC_AGREEMENT"
+    SelfCriteriaMultiDTO:
+      type: object
+      properties:
+        description:
+          type: string
+          description: Description of the criteria
+          example: "Select preferred interests"
+        value:
+          type: array
+          description: List of selected values for the multi-selection criteria
+          items:
+            type: string
+          example: [ "Sports", "Music", "Art" ]
+        code:
+          type: string
+          description: Code of the criteria
+          example: "INTEREST_SELECTION"
+    QueueCommandOperationDTO:
+      type: object
+      properties:
+        entityId:
+          type: string
+          description: Entity ID
+          example: "entityId"
+        operationType:
+          type: string
+          description: Operation type
+          example: "operationType"
+        operationTime:
+          type: string
+          format: date-time
+          description: Operation Time
