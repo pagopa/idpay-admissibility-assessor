@@ -42,9 +42,12 @@ tags:
 
   - name: "deleteInitiative"
     description: "Process "
+
+  - name: "onboardingRequest"
+    description: "Process "
 channels:
   admissibiliy-send-onboarding-notiy:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/SendOnboardingNotiy'
       bindings:
@@ -53,7 +56,7 @@ channels:
       tags:
         - name: "sendOnboardingNotiy"
   admissibiliy-send-ranking-notiy:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/SendRankingNotiy'
       bindings:
@@ -62,11 +65,11 @@ channels:
       tags:
         - name: "sendRankingNotiy"
   admissibiliy-send-rescheduling-onboarding-request:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/SendReschedulingOnboardingRequest'
       bindings:
-        kafka:
+        servicebus:
           topic: idpay-onboarding-request
       tags:
         - name: "sendReschedulingOnboardingRequest"
@@ -80,7 +83,7 @@ channels:
       tags:
         - name: "processInitiative"
   admissibiliy-notify-beneficiary-rule-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/NotifyBeneficiaryRuleError'
       bindings:
@@ -89,7 +92,7 @@ channels:
       tags:
         - name: "notifyBeneficiaryRuleError"
   admissibiliy-beneficiary-rule-deserialization-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/BeneficiaryRuleDeserializationError'
       bindings:
@@ -98,7 +101,7 @@ channels:
       tags:
         - name: "beneficiaryRuleDeserializationError"
   admissibiliy-notify-command-mediator-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/NotifyCommandMediatorError'
       bindings:
@@ -107,7 +110,7 @@ channels:
       tags:
         - name: "notifyCommandMediatorError"
   admissibiliy-command-mediator-deserialization-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/CommandMediatorDeserializationError'
       bindings:
@@ -116,7 +119,7 @@ channels:
       tags:
         - name: "commandMediatorDeserializationError"
   admissibiliy-reschedule-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/RescheduleError'
       bindings:
@@ -125,7 +128,7 @@ channels:
       tags:
         - name: "rescheduleError"
   admissibiliy-onboarding-request-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/OnboardingRequestError'
       bindings:
@@ -134,7 +137,7 @@ channels:
       tags:
         - name: "onboardingRequestError"
   admissibiliy-onboarding-request-deserialization-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/OnboardingRequestDeserializationError'
       bindings:
@@ -143,7 +146,7 @@ channels:
       tags:
         - name: "onboardingRequestDeserializationError"
   admissibiliy-onboarding-notifier-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/OnboardingNotifierError'
       bindings:
@@ -152,7 +155,7 @@ channels:
       tags:
         - name: "onboardingNotifierError"
   admissibiliy-ranking-notifier-error:
-    subscribe:
+    publish:
       message:
         $ref: '#/components/messages/RankingNotifierError'
       bindings:
@@ -169,6 +172,15 @@ channels:
           topic: idpay-commands
       tags:
         - name: "deleteInitiative"
+  admissibiliy-onboarding-request:
+    subscribe:
+      message:
+        $ref: '#/components/messages/OnboardingRequest'
+      bindings:
+        servicebus:
+          topic: idpay-onboarding-request
+      tags:
+        - name: "onboardingRequest"
 components:
   messages:
     SendOnboardingNotiy:
@@ -295,6 +307,12 @@ components:
         This event is sent to the application when a command to delete an initiative is published.
         It triggers the deletion of all documents related to the specified initiative.
       summary: Notifies the application to delete all documents associated with the initiative.
+      payload:
+        $ref: "#/components/schemas/EvaluationDTO"
+    OnboardingRequest:
+      contentType: application/json
+      description: Receive information about onboarding request.
+      summary: Onboarding requet information
       payload:
         $ref: "#/components/schemas/EvaluationDTO"
   schemas:
