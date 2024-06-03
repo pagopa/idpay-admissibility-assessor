@@ -79,7 +79,7 @@ channels:
         $ref: '#/components/messages/ProcessInitiative'
       bindings:
         kafka:
-          topic: idpay-consumer-group
+          topic: idpay_rule_update
       tags:
         - name: "processInitiative"
   admissibiliy-notify-beneficiary-rule-error:
@@ -88,7 +88,7 @@ channels:
         $ref: '#/components/messages/NotifyBeneficiaryRuleError'
       bindings:
         kafka:
-          topic: idpay-beneficiary-rule-update
+          topic: idpay-errors
       tags:
         - name: "notifyBeneficiaryRuleError"
   admissibiliy-beneficiary-rule-deserialization-error:
@@ -210,7 +210,8 @@ components:
         This event is triggered to build and save Drools rules based on received initiative information.
       summary: Notifies the initiation of building and saving Drools rules.
       payload:
-        $ref: "#/components/schemas/Initiative2BuildDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/RuleUpdate"
+
     NotifyBeneficiaryRuleError:
       contentType: application/json
       description: >-
@@ -220,7 +221,7 @@ components:
       headers:
         $ref: "#/components/schemas/ErrorQueueHeader"
       payload:
-        $ref: "#/components/schemas/Initiative2BuildDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/RuleUpdate"
     BeneficiaryRuleDeserializationError:
       contentType: application/json
       description: >-
@@ -230,7 +231,7 @@ components:
       headers:
         $ref: "#/components/schemas/ErrorQueueHeader"
       payload:
-        $ref: "#/components/schemas/Initiative2BuildDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/RuleUpdate"
     NotifyCommandMediatorError:
       contentType: application/json
       description: >-
@@ -240,7 +241,7 @@ components:
       headers:
         $ref: "#/components/schemas/ErrorQueueHeader"
       payload:
-        $ref: "#/components/schemas/QueueCommandOperationDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/QueueCommandOperationDTO"
     CommandMediatorDeserializationError:
       contentType: application/json
       description: >-
@@ -250,7 +251,7 @@ components:
       headers:
         $ref: "#/components/schemas/ErrorQueueHeader"
       payload:
-        $ref: "#/components/schemas/QueueCommandOperationDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/QueueCommandOperationDTO"
     RescheduleError:
       contentType: application/json
       description: >-
@@ -308,13 +309,16 @@ components:
         It triggers the deletion of all documents related to the specified initiative.
       summary: Notifies the application to delete all documents associated with the initiative.
       payload:
-        $ref: "#/components/schemas/EvaluationDTO"
+        $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/QueueCommandOperationDTO"
     OnboardingRequest:
       contentType: application/json
       description: Receive information about onboarding request.
       summary: Onboarding requet information
       payload:
-        $ref: "#/components/schemas/EvaluationDTO"
+        oneOf:
+          - $ref: "#/components/schemas/OnboardingDTO"
+          - $ref: "https://raw.githubusercontent.com/pagopa/idpay-onboarding-workflow/main/specs/asyncapi.yaml#/components/schemas/OnboardingDTO"
+
   schemas:
     TransactionDTO:
       type: object
@@ -866,18 +870,3 @@ components:
           type: string
           description: Code of the criteria
           example: "INTEREST_SELECTION"
-    QueueCommandOperationDTO:
-      type: object
-      properties:
-        entityId:
-          type: string
-          description: Entity ID
-          example: "entityId"
-        operationType:
-          type: string
-          description: Operation type
-          example: "operationType"
-        operationTime:
-          type: string
-          format: date-time
-          description: Operation Time
