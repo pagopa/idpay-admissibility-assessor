@@ -5,65 +5,65 @@ info:
   description: >-
     Its purpose is
 tags:
-  - name: "sendOnboardingNotiy"
-    description: "Send "
+  - name: "sendOnboardingNotify"
+    description: "Send onboarding request"
 
-  - name: "sendRankingNotiy"
-    description: "Send "
+  - name: "sendRankingNotify"
+    description: "Send onboarding request "
 
   - name: "sendReschedulingOnboardingRequest"
-    description: "Send "
+    description: "Send rescheduling of an onboarding request"
 
   - name: "processInitiative"
-    description: "Process "
+    description: "Trigger building and saving drools rules "
 
   - name: "notifyBeneficiaryRuleError"
-    description: "Send "
+    description: "Send an error occurred during the processInitiative flow"
   - name: "beneficiaryRuleDeserializationError"
-    description: "Send "
+    description: "Send an error occurred during payload deserialization "
 
   - name: "notifyCommandMediatorError"
-    description: "Send "
+    description: "Send an error occurred during the deleteInitiative flow"
   - name: "commandMediatorDeserializationError"
-    description: "Send "
+    description: "Send an error occurred during payload deserialization "
 
   - name: "rescheduleError"
-    description: "Send "
+    description: "Send a rescheduling error"
   - name: "onboardingRequestError"
-    description: "Send "
+    description: "Send an onboarding request error"
   - name: "onboardingRequestDeserializationError"
-    description: "Send "
+    description: "Send error occurred during payload deserialization"
 
   - name: "onboardingNotifierError"
-    description: "Send "
+    description: "Send an unexpected error during onboarding result publishing"
 
   - name: "rankingNotifierError"
-    description: "Send "
+    description: "Send an unexpected error during ranking result publishing"
 
   - name: "deleteInitiative"
-    description: "Process "
+    description: "Initiative documents deletion "
 
   - name: "onboardingRequest"
-    description: "Process "
+    description: "Process onboarding request"
 channels:
   admissibiliy-send-onboarding-notiy:
     publish:
       message:
-        $ref: '#/components/messages/SendOnboardingNotiy'
+        $ref: '#/components/messages/sendOnboardingNotify'
       bindings:
         kafka:
           topic: idpay-onboarding-outcome
       tags:
-        - name: "sendOnboardingNotiy"
+        - name: "sendOnboardingNotify"
   admissibiliy-send-ranking-notiy:
     publish:
       message:
-        $ref: '#/components/messages/SendRankingNotiy'
+        $ref: '#/components/messages/sendRankingNotify'
       bindings:
         kafka:
           topic: idpay-onboarding-ranking-request
       tags:
-        - name: "sendRankingNotiy"
+        - name: "sendRankingNotify"
   admissibiliy-send-rescheduling-onboarding-request:
     publish:
       message:
@@ -183,14 +183,14 @@ channels:
         - name: "onboardingRequest"
 components:
   messages:
-    SendOnboardingNotiy:
+    sendOnboardingNotify:
       contentType: application/json
       description: >-
         This event is triggered to notify the outcome topic about an onboarding request.
       summary: Notifies the outcome topic about an onboarding request.
       payload:
         $ref: "#/components/schemas/EvaluationCompletedDTO"
-    SendRankingNotiy:
+    sendRankingNotify:
       contentType: application/json
       description: >-
         This event is triggered to notify the ranking topic about an onboarding request.
@@ -207,8 +207,8 @@ components:
     ProcessInitiative:
       contentType: application/json
       description: >-
-        This event is triggered to build and save Drools rules based on received initiative information.
-      summary: Notifies the initiation of building and saving Drools rules.
+        This event is triggered to build and save drools rules based on received initiative information.
+      summary: Trigger the initiation of building and saving Drools rules.
       payload:
         $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/RuleUpdate"
 
@@ -307,13 +307,13 @@ components:
       description: >-
         This event is sent to the application when a command to delete an initiative is published.
         It triggers the deletion of all documents related to the specified initiative.
-      summary: Notifies the application to delete all documents associated with the initiative.
+      summary: Trigger the application to delete all documents associated with the initiative.
       payload:
         $ref: "https://raw.githubusercontent.com/pagopa/idpay-portal-welfare-backend-initiative/main/specs/asyncapi.yml#/components/schemas/QueueCommandOperationDTO"
     OnboardingRequest:
       contentType: application/json
       description: Receive information about onboarding request.
-      summary: Onboarding requet information
+      summary: Onboarding request information
       payload:
         oneOf:
           - $ref: "#/components/schemas/OnboardingDTO"
