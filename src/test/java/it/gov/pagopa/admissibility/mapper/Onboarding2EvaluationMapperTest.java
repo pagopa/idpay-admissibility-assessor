@@ -61,7 +61,7 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setInitiativeName("INITIATIVENAME");
         initiativeConfig.setOrganizationId("ORGANIZATIONID");
         initiativeConfig.setOrganizationName("ORGANIZATIONNAME");
-        initiativeConfig.setBeneficiaryInitiativeBudget(BigDecimal.TEN);
+        initiativeConfig.setBeneficiaryInitiativeBudgetCents(10_00L);
         initiativeConfig.setInitiativeRewardType("REFUND");
         initiativeConfig.setIsLogoPresent(Boolean.FALSE);
         initiativeConfig.setEndDate(LocalDate.now());
@@ -87,7 +87,7 @@ class Onboarding2EvaluationMapperTest {
 
 
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
-        Assertions.assertEquals(0, BigDecimal.TEN.compareTo(resultCompleted.getBeneficiaryBudget()));
+        Assertions.assertEquals(0, Long.valueOf(10_00L).compareTo(resultCompleted.getBeneficiaryBudgetCents()));
         Assertions.assertTrue(CollectionUtils.isEmpty(resultCompleted.getOnboardingRejectionReasons()));
 
         TestUtils.checkNotNullFields(resultCompleted,"rankingValue");
@@ -118,7 +118,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertNull(resultCompleted.getInitiativeName());
         Assertions.assertNull(resultCompleted.getOrganizationId());
         Assertions.assertNull(resultCompleted.getOrganizationName());
-        Assertions.assertNull(resultCompleted.getBeneficiaryBudget());
+        Assertions.assertNull(resultCompleted.getBeneficiaryBudgetCents());
         Assertions.assertNull(resultCompleted.getInitiativeEndDate());
         Assertions.assertNull(resultCompleted.getInitiativeRewardType());
         Assertions.assertNull(resultCompleted.getRankingValue());
@@ -126,7 +126,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "familyId", "memberIds", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudget", "rankingValue", "initiativeRewardType", "isLogoPresent");
+        TestUtils.checkNotNullFields(resultCompleted, "familyId", "memberIds", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudgetCents", "rankingValue", "initiativeRewardType", "isLogoPresent");
     }
 
     @Test
@@ -198,7 +198,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
 
         commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, CommonUtilities.euroToCents(onboardingRequest.getIsee()));
-        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudget(), resultCompleted.getBeneficiaryBudget());
+        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetCents(), resultCompleted.getBeneficiaryBudgetCents());
         Assertions.assertNotNull(resultCompleted.getInitiativeEndDate());
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());

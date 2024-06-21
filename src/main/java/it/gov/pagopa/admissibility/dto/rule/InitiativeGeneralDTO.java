@@ -3,15 +3,10 @@ package it.gov.pagopa.admissibility.dto.rule;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.springframework.validation.annotation.Validated;
+
+import java.time.LocalDate;
 
 /**
  * InitiativeGeneralDTO
@@ -30,8 +25,8 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("name")
   private String name;
 
-  @JsonProperty("budget")
-  private BigDecimal budget;
+  @JsonProperty("budgetCents")
+  private Long budgetCents;
 
   @JsonProperty("beneficiaryType")
   private BeneficiaryTypeEnum beneficiaryType;
@@ -39,8 +34,8 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("beneficiaryKnown")
   private Boolean beneficiaryKnown;
 
-  @JsonProperty("beneficiaryBudget")
-  private BigDecimal beneficiaryBudget;
+  @JsonProperty("beneficiaryBudgetCents")
+  private Long beneficiaryBudgetCents;
 
   @JsonProperty("startDate")
   private LocalDate startDate;

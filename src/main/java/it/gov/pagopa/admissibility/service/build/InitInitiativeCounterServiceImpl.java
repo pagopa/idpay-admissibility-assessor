@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.service.build;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.common.utils.CommonUtilities;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -20,7 +19,7 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
     public Mono<InitiativeCounters> initCounters(InitiativeConfig initiative) {
         return initiativeCountersRepository.findById(initiative.getInitiativeId())
                 .map(counter2update -> {
-                    final long initiativeBudgetCents = CommonUtilities.euroToCents(initiative.getInitiativeBudget());
+                    final long initiativeBudgetCents = initiative.getInitiativeBudgetCents();
                     final long deltaBudget = initiativeBudgetCents - counter2update.getInitiativeBudgetCents();
 
                     counter2update.setInitiativeBudgetCents(initiativeBudgetCents);
@@ -33,11 +32,10 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
     }
 
     private InitiativeCounters initiativeConfig2InitiativeCounter(InitiativeConfig initiative) {
-        final long initiativeBudgetCents = CommonUtilities.euroToCents(initiative.getInitiativeBudget());
         return InitiativeCounters.builder()
                 .id(initiative.getInitiativeId())
-                .initiativeBudgetCents(initiativeBudgetCents)
-                .residualInitiativeBudgetCents(initiativeBudgetCents)
+                .initiativeBudgetCents(initiative.getInitiativeBudgetCents())
+                .residualInitiativeBudgetCents(initiative.getInitiativeBudgetCents())
                 .build();
     }
 }

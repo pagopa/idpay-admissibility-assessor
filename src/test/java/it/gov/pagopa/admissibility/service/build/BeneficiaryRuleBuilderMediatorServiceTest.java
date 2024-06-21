@@ -60,8 +60,8 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                             .startDate(i.getGeneral().getStartDate())
                             .endDate(i.getGeneral().getEndDate())
                             .automatedCriteriaCodes(List.of("CODE"))
-                            .initiativeBudget(i.getGeneral().getBudget())
-                            .beneficiaryInitiativeBudget(i.getGeneral().getBeneficiaryBudget())
+                            .initiativeBudgetCents(i.getGeneral().getBudgetCents())
+                            .beneficiaryInitiativeBudgetCents(i.getGeneral().getBeneficiaryBudgetCents())
                             .build(),
                     LocalDateTime.now());
         });

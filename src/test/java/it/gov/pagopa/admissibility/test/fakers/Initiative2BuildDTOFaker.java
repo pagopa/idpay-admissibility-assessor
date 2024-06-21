@@ -8,7 +8,6 @@ import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.utils.TestUtils;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.Random;
 
 public final class Initiative2BuildDTOFaker {
 
-    public static final BigDecimal BENEFICIARY_BUDGET = new BigDecimal("1000.00");
+    public static final Long BENEFICIARY_BUDGET = 1000_00L;
 
     private Initiative2BuildDTOFaker(){}
 
@@ -28,9 +27,9 @@ public final class Initiative2BuildDTOFaker {
         return mockInstanceBuilder(bias).build();
     }
     public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias){
-        return mockInstanceBuilder(bias, new BigDecimal("100000.00"));
+        return mockInstanceBuilder(bias, 100_000_00L);
     }
-    public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias, BigDecimal budget){
+    public static Initiative2BuildDTO.Initiative2BuildDTOBuilder mockInstanceBuilder(Integer bias, Long budget){
         Initiative2BuildDTO.Initiative2BuildDTOBuilder out = Initiative2BuildDTO.builder();
 
         FakeValuesService fakeValuesService = getFakeValuesService(bias);
@@ -53,10 +52,10 @@ public final class Initiative2BuildDTOFaker {
         out.general(
                 InitiativeGeneralDTO.builder()
                         .name("NAME")
-                        .budget(budget)
+                        .budgetCents(budget)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
-                        .beneficiaryBudget(BENEFICIARY_BUDGET)
+                        .beneficiaryBudgetCents(BENEFICIARY_BUDGET)
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
                         .rankingEnabled(false)
