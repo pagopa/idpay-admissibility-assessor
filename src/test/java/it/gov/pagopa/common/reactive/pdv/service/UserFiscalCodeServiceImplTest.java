@@ -62,7 +62,6 @@ class UserFiscalCodeServiceImplTest {
 
         // Then
         Assertions.assertNotNull(result);
-        //TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_RETRIEVED", result);
         Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache+1,inspectCache.size());
@@ -84,7 +83,6 @@ class UserFiscalCodeServiceImplTest {
         String result = userFiscalCodeService.getUserFiscalCode(userIdTest).block();
         // Then
         Assertions.assertNotNull(result);
-        //TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_0", result);
         Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
