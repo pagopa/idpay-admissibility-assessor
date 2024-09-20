@@ -2,7 +2,6 @@ package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.google.common.cache.Cache;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
-import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,7 +62,6 @@ class UserFiscalCodeServiceImplTest {
 
         // Then
         Assertions.assertNotNull(result);
-        TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_RETRIEVED", result);
         Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache+1,inspectCache.size());
@@ -83,10 +81,8 @@ class UserFiscalCodeServiceImplTest {
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
 
         String result = userFiscalCodeService.getUserFiscalCode(userIdTest).block();
-
         // Then
         Assertions.assertNotNull(result);
-        TestUtils.checkNotNullFields(result);
         Assertions.assertEquals("FISCALCODE_0", result);
         Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
