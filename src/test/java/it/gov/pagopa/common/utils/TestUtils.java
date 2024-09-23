@@ -62,6 +62,9 @@ public final class TestUtils {
         Set<String> excludedFieldsSet = new HashSet<>(Arrays.asList(excludedFields));
         org.springframework.util.ReflectionUtils.doWithFields(o.getClass(),
                 f -> {
+                    if (f.getType().isPrimitive()) {
+                        return;
+                    }
                     f.setAccessible(true);
                     Object value = f.get(o);
                     Assertions.assertNull(value, "The field %s of the input object of type %s is not null: %s".formatted(f.getName(), o.getClass(), value));
