@@ -64,6 +64,7 @@ microservice-chart:
     _JAVA_OPTIONS: "-Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -Dreactor.netty.ioWorkerCount=4 -Dreactor.netty.pool.maxConnections=16"
     DELETE_PAGINATION_SIZE: "60"
     DELETE_DELAY_TIME: "1000"
+    HEALTH_MONGO_ENABLED: "false"
 
   externalConfigMapValues:
     idpay-common:
