@@ -3,7 +3,6 @@ package it.gov.pagopa.common.config;
 import com.mongodb.MongoException;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.actuate.data.mongo.MongoReactiveHealthIndicator;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
@@ -23,8 +22,8 @@ class CustomMongoHealthIndicatorTest {
         Document buildInfo = mock(Document.class);
         given(buildInfo.getInteger("maxWireVersion")).willReturn(10);
         ReactiveMongoTemplate reactiveMongoTemplate = mock(ReactiveMongoTemplate.class);
-        given(reactiveMongoTemplate.executeCommand("{ hello: 1 }")).willReturn(Mono.just(buildInfo));
-        MongoReactiveHealthIndicator mongoReactiveHealthIndicator = new MongoReactiveHealthIndicator(
+        given(reactiveMongoTemplate.executeCommand("{ isMaster: 1 }")).willReturn(Mono.just(buildInfo));
+        CustomMongoHealthIndicator mongoReactiveHealthIndicator = new CustomMongoHealthIndicator(
                 reactiveMongoTemplate);
         Mono<Health> health = mongoReactiveHealthIndicator.health();
         StepVerifier.create(health).consumeNextWith((h) -> {
@@ -37,8 +36,8 @@ class CustomMongoHealthIndicatorTest {
     @Test
     void testMongoIsDown() {
         ReactiveMongoTemplate reactiveMongoTemplate = mock(ReactiveMongoTemplate.class);
-        given(reactiveMongoTemplate.executeCommand("{ hello: 1 }")).willThrow(new MongoException("Connection failed"));
-        MongoReactiveHealthIndicator mongoReactiveHealthIndicator = new MongoReactiveHealthIndicator(
+        given(reactiveMongoTemplate.executeCommand("{ isMaster: 1 }")).willThrow(new MongoException("Connection failed"));
+        CustomMongoHealthIndicator mongoReactiveHealthIndicator = new CustomMongoHealthIndicator(
                 reactiveMongoTemplate);
         Mono<Health> health = mongoReactiveHealthIndicator.health();
         StepVerifier.create(health).consumeNextWith((h) -> {
