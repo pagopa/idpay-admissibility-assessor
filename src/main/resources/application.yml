@@ -361,7 +361,7 @@ app:
         trustCertificatesCollection: ${ANPR_HTTPS_TRUSTED_CERTS:}
     c001-consultazione-anpr:
       config:
-        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1}
+        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND}
         httpMethod: POST
         path: /C001-servizioNotifica/v1/anpr-service-e002
   inps:
