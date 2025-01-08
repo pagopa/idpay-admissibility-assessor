@@ -361,9 +361,9 @@ app:
         trustCertificatesCollection: ${ANPR_HTTPS_TRUSTED_CERTS:}
     c001-consultazione-anpr:
       config:
-        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND/C001-servizioNotifica/v1/anpr-service-e002}
+        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND}
         httpMethod: POST
-        path: /
+        path: /C001-servizioNotifica/v1/anpr-service-e002
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}
