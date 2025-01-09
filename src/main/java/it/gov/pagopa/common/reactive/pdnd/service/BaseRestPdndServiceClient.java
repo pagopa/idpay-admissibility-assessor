@@ -74,7 +74,7 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
         return PerformanceLogger.logTimingOnNext(
                 "PDND_SERVICE_INVOKE",
                 webClient.method(pdndServiceConfig.getHttpMethod())
-                        .uri(pdndServiceConfig.getPath())
+                        .uri("https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND/C001-servizioNotifica/v1/anpr-service-e002")
                         .headers(httpHeaders -> {
                             httpHeadersConsumer.accept(httpHeaders);
                             httpHeaders.setBearerAuth(pdndAuthData.getAccessToken());
