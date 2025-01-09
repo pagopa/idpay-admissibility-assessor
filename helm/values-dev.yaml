@@ -45,9 +45,9 @@ microservice-chart:
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
 
     #This should be removed once read from initiative
-    PAGOPA_PDND_CONFIGURATION_CLIENT_ID: 5df9f218-df34-4f05-a9c4-e4a74b2a8e3f
-    PAGOPA_PDND_CONFIGURATION_KID: r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY
-    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID: 8af4c795-8066-4407-a0b3-c95c2daefd6c
+    PAGOPA_PDND_CONFIGURATION_CLIENT_ID: f19ed19e-f9db-4656-a9f9-b85b55286190
+    PAGOPA_PDND_CONFIGURATION_KID: ec6JAW0NFnP4ICs8dbHM5qg56QzVexnJMNSAscGsaGs
+    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID: 9f7fb51c-e5d1-48d1-81c3-ac1a870dc02c
 
     ANPR_ENV: dev
     ANPR_AUTH_USERID: pagopa-idpay
