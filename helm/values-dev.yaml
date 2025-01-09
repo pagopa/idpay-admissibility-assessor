@@ -41,7 +41,7 @@ microservice-chart:
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
 
-    PDND_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/pdnd
+    #PDND_BASE_URL: http://idpay-mock-microservice-chart:8080/idpay/mock/pdnd
     PDND_ACCESS_TOKEN_AUDIENCE: auth.uat.interop.pagopa.it/client-assertion
 
     #This should be removed once read from initiative
