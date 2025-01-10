@@ -338,13 +338,13 @@ app:
         }
       pub: |-
         ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
-        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
-        bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
-        res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
-        YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
-        kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
-        dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
-        5wIDAQAB
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuJik3soHhD1XHTd2Mh9e
+        Kvisse2J2dASHbxmwRFVDWzOrS5qmyVC7x0x8vEMvS4m/CvSabOe/0jncaTz1Kke
+        zE2TBpcBwRHVEKU1pmriI1ocpoGBB9IOroi5ELNoomhzkkidXbJqhhv5p/Q6Fbsz
+        NX1oKihBB8XZ7gaR+jXBOQ13xBF1gz9i+szzI8OLIHaoligKcdCzwiuCjeMzMyYt
+        8mV34ZmpsV9NtazlbvYMtd3Vc17yfc4WEMKVSsanBeaL4WHZ55TrubpFENIm2dCD
+        ZatQ7KTnRbinO+eoDSup+i+IGDXi641Monj3hhJ6kuvTpCHyjBtpvU1stZpwDXmS
+        LQIDAQAB
         -----END PUBLIC KEY-----
         }
     config:
@@ -361,9 +361,9 @@ app:
         trustCertificatesCollection: ${ANPR_HTTPS_TRUSTED_CERTS:}
     c001-consultazione-anpr:
       config:
-        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR-PDND/C021-servizioAccertamentoStatoFamiglia/v1}
+        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioAccertamentoStatoFamiglia/v1}
         httpMethod: POST
-        path: /anpr-service-e002
+        path: /C021-servizioAccertamentoStatoFamiglia/v1/anpr-service-e002
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}
