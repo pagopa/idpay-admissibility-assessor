@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
-import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClient;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
@@ -15,13 +15,13 @@ import java.util.stream.Collectors;
 
 @Service
 public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverService {
-    private final AnprC001RestClient anprC001RestClient;
+    private final AnprC021RestClient anprC021RestClient;
     private final PdndInitiativeConfig pdndInitiativeConfig;
 
     private final UserFiscalCodeService userFiscalCodeService;
 
-    public FamilyDataRetrieverServiceImpl(AnprC001RestClient anprC001RestClient, PdndInitiativeConfig pdndInitiativeConfig, UserFiscalCodeService userFiscalCodeService) {
-        this.anprC001RestClient = anprC001RestClient;
+    public FamilyDataRetrieverServiceImpl(AnprC021RestClient anprC021RestClient, PdndInitiativeConfig pdndInitiativeConfig, UserFiscalCodeService userFiscalCodeService) {
+        this.anprC021RestClient = anprC021RestClient;
         this.pdndInitiativeConfig = pdndInitiativeConfig;
         this.userFiscalCodeService = userFiscalCodeService;
     }
@@ -32,7 +32,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
-                .flatMap(fiscalCode -> anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig))
+                .flatMap(fiscalCode -> anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig))
                 .map(response -> {
                     Family family = new Family();
                     family.setFamilyId(response.getIdOperazioneANPR());

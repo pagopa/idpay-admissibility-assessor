@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC021ServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
