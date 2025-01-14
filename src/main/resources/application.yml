@@ -306,7 +306,7 @@ app:
       client-id: ${PAGOPA_PDND_CONFIGURATION_CLIENT_ID:5df9f218-df34-4f05-a9c4-e4a74b2a8e3f}
       kid: ${PAGOPA_PDND_CONFIGURATION_KID:r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY}
       purpose-id: ${PAGOPA_PDND_CONFIGURATION_PURPOSE_ID:8af4c795-8066-4407-a0b3-c95c2daefd6c}
-      key: |-
+      key-c021: |-
         ${PAGOPA_PDND_CONFIGURATION_JWT_KEY:-----BEGIN PRIVATE KEY-----
         MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4mKTeygeEPVcd
         N3YyH14q+Kyx7YnZ0BIdvGbBEVUNbM6tLmqbJULvHTHy8Qy9Lib8K9Jps57/SOdx
@@ -336,7 +336,7 @@ app:
         qnPJJlnulIZw1QtgvD+cSGo=
         -----END PRIVATE KEY-----
         }
-      pub: |-
+      pub-c021: |-
         ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
         MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuJik3soHhD1XHTd2Mh9e
         Kvisse2J2dASHbxmwRFVDWzOrS5qmyVC7x0x8vEMvS4m/CvSabOe/0jncaTz1Kke
@@ -345,6 +345,47 @@ app:
         8mV34ZmpsV9NtazlbvYMtd3Vc17yfc4WEMKVSsanBeaL4WHZ55TrubpFENIm2dCD
         ZatQ7KTnRbinO+eoDSup+i+IGDXi641Monj3hhJ6kuvTpCHyjBtpvU1stZpwDXmS
         LQIDAQAB
+        -----END PUBLIC KEY-----
+        }
+      key-c001: |-
+        ${PAGOPA_PDND_CONFIGURATION_JWT_KEY:-----BEGIN PRIVATE KEY-----
+        MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCfDYTy1lBif+tT
+        6lrWvPA2QtB/Y3dC7DkNVL1YV0O2/2gX1RMZmyXzYK5qCRPdrh1hFshke/NcOZF/
+        Zpuw/BAZEKsqE0Sd3la/HnGealUASO7Lmn8xQ4xezYi2rBdkxhAI1UbBhWoNhslW
+        6zRNQcmJczZf4AK9gripQUuAAkKVXwJvP/mHX+iNkC9Mv0tiudx3dAMgSBlBuJwc
+        iB2hyp9kswBTambriWHl/5j1IelHXVQMWi6iFndxwFgPbsNbnM6qzo6t16b89R7u
+        OIVB0ny6ZAhmIjZbDVdL1doZ7Phly18o9nO0nhzx8B8lBb54PexNSz/LamMnCJVv
+        vy83H9jnAgMBAAECggEAanlCZs3RQh8gCiz4YohYxfo0WRLc44//IU1484p3ainQ
+        JSQehSW3YhV2rMUm51+Hi1cVDy9q2nIvVHn7/569qAngi2oapRQSPh7DMKk9/dLV
+        CLeELhZqAYzV2HObtXphgYhEtYf6VtPENMt/V7iSkdDutX/gVb0MoUF0qVzZ9eN2
+        F47lM4MarT7F8SCoSDRh4BnSeIZboZ+ZMlOpN7lCt+ojdfoV3dQNbObnh5w+vtsd
+        Y2REBAOy8JCEeJ31v3bXpLdnsiEIk2jk1lCkJid1zsHBOFZS2iYJpixHb7OuGuo8
+        QNu+STw2XsHJjcUmaUFF5uNfWcfkEBp+Yc6py62PAQKBgQDPnzLiD8I9IF/k95TP
+        X5IUe3jRxzCs4s6GbYDILr0nyLuJWK0lna01EBwNxaQIAjPtSiCPN0JwIbyDJWFD
+        kvl5gtr25sH14jbMdOnVyCXkbWHRh9wKdzc0Jg6puEeaPZe2RqIDQUin/2RisVMF
+        4y4gkFL8Tx9zlHtP5raBt9nyhQKBgQDEHSO0TV4Zr4Ok/P5E4HGqXLrZ2oil1eLV
+        KLLF+mnttLnfW6n0DBMxf4DVatkmwq1ATVNY+UEg9l3lqo1SbLIixCcOeqnLr9W1
+        QYm5DU5ShdKBl73MAQHPDNDRvDxw7lyaoNYICszGwynX/xiOHJRIPHLn0fUODiwX
+        D/XAM+L3ewKBgAPS48YEEki76ug1oxj6op8b8wqyB3R3rOQO6jtFmRg9ey65Yl75
+        +3GpvUqHpFC9caViIx1gICoehPFJY/QxpcSWI2A+ub3Ej8vOL2xPhlshpJaOUQAk
+        V/Du7oAzs6XkkoG55Uv4DNWDP58NswC9wWC6J70b2/Ft/6NmFWBoOWxdAoGAHHzf
+        IuHaOYD1bpIRnY+88zJlMiA8mVpoiO5QidHGcXE/TuLR3VGjuBz9agMLaEX/RMf2
+        w4XxoAgpu6L6xG5lsgcsZT4MTDpOoPXUO71jEzm9SnXwbCH5UUpbSxw862q0qQGU
+        Fbb76CORgH7d4kbkg1nEl0g4gMIuRWtcF39yCOECgYB/88ghWw+atMuOqJ2O+RG5
+        lF002xfiwU3dfwZlc95l84Cm2mHhMVFHJthlrZVLizEB5Uepo2JEMjJHl0UbMgaY
+        PI0noeMih+sDEHK6jrxsu0fpn+e63/ooA/ju47LmjXBNg1h35WKM9cBaBkPMgqlC
+        9gF4Ao0dORiT5g5cROTqZA==
+        -----END PRIVATE KEY-----
+        }
+      pub-c001: |-
+        ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnw2E8tZQYn/rU+pa1rzw
+        NkLQf2N3Quw5DVS9WFdDtv9oF9UTGZsl82CuagkT3a4dYRbIZHvzXDmRf2absPwQ
+        GRCrKhNEnd5Wvx5xnmpVAEjuy5p/MUOMXs2ItqwXZMYQCNVGwYVqDYbJVus0TUHJ
+        iXM2X+ACvYK4qUFLgAJClV8Cbz/5h1/ojZAvTL9LYrncd3QDIEgZQbicHIgdocqf
+        ZLMAU2pm64lh5f+Y9SHpR11UDFouohZ3ccBYD27DW5zOqs6Ordem/PUe7jiFQdJ8
+        umQIZiI2Ww1XS9XaGez4ZctfKPZztJ4c8fAfJQW+eD3sTUs/y2pjJwiVb78vNx/Y
+        5wIDAQAB
         -----END PUBLIC KEY-----
         }
     config:

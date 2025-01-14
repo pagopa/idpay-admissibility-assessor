@@ -6,11 +6,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
-public class AnprSignAlgorithmRetriever extends BaseLocalRsaKeysJwtSignAlghoritmRetrieverService implements JwtSignAlgorithmRetrieverService {
+public class AnprSignAlgorithmC021Retriever extends BaseLocalRsaKeysJwtSignAlghoritmRetrieverService implements JwtSignAlgorithmRetrieverService {
 
-    public AnprSignAlgorithmRetriever(
-            @Value("${app.anpr.pagopa-pdnd-configuration.pub}") String jwtSignPublicKey,
-            @Value("${app.anpr.pagopa-pdnd-configuration.key}") String jwtSignPrivateKey
+    public AnprSignAlgorithmC021Retriever(
+            @Value("${app.anpr.pagopa-pdnd-configuration.pub-c021}") String jwtSignPublicKey,
+            @Value("${app.anpr.pagopa-pdnd-configuration.key-c021}") String jwtSignPrivateKey
     ) {
         super(jwtSignPublicKey, jwtSignPrivateKey);
     }

@@ -34,4 +34,21 @@ public class UserFiscalCodeServiceImpl implements UserFiscalCodeService{
                     });
         }
     }
+
+    @Override
+    public Mono<String> getUserId(String fiscalCode) {
+        String userFromCache = userCache.getIfPresent(fiscalCode);
+        if(userFromCache != null){
+            return Mono.just(userFromCache);
+        }else {
+            return userFiscalCodeRestClient.retrieveUserId(fiscalCode)
+                    .map(UserInfoPDV::getPii)
+                    .doOnNext(u -> {
+                        userCache.put(fiscalCode,u);
+                        log.debug("[CACHE_MISS] Added into map userId with fiscalCode: {}", fiscalCode);
+                    });
+        }
+    }
+
+
 }

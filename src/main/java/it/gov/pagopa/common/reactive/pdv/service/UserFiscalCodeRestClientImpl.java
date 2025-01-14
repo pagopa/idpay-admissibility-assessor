@@ -68,4 +68,40 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
                     return Mono.empty();
                 });
     }
+
+    @Override
+    public Mono<UserInfoPDV> retrieveUserId(String fiscalCode) {
+        UserInfoPDV requestBody = new UserInfoPDV(fiscalCode);
+        return PerformanceLogger.logTimingOnNext(
+                        "PDV_INTEGRATION",
+                        webClient
+                                .method(HttpMethod.PUT)
+                                //.uri(URI, Map.of("token", fiscalCode))
+                                .bodyValue(requestBody)
+                                .retrieve()
+                                .toEntity(UserInfoPDV.class),
+                        x -> "httpStatus %s".formatted(x.getStatusCode().value())
+                )
+                .map(HttpEntity::getBody)
+                .retryWhen(Retry.fixedDelay(pdvMaxAttempts, Duration.ofMillis(pdvRetryDelay))
+                        .filter(ex -> {
+                            boolean retry = (ex instanceof WebClientResponseException.TooManyRequests) || ex.getMessage().startsWith("Connection refused");
+                            if (retry) {
+                                log.info("[PDV_INTEGRATION] Retrying invocation due to exception: {}: {}", ex.getClass().getSimpleName(), ex.getMessage());
+                            }
+                            return retry;
+                        })
+                )
+
+                .onErrorResume(WebClientResponseException.NotFound.class, x -> {
+                    log.warn("fiscalCode not found into pdv: {}", fiscalCode);
+                    return Mono.empty();
+                })
+                .onErrorResume(WebClientResponseException.BadRequest.class, x -> {
+                    log.warn("fiscalCode not valid: {}", fiscalCode);
+                    return Mono.empty();
+                });
+    }
+
+
 }

@@ -34,7 +34,7 @@ public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE
             PdndConfig pdndConfig,
             AnprConfig anprConfig,
             AnprC001ServiceConfig anprC001ServiceConfig,
-            AnprSignAlgorithmRetriever jwtSignAlgorithmRetrieverService,
+            AnprSignAlgorithmC001Retriever jwtSignAlgorithmRetrieverService,
             PdndRestClient pdndRestClient,
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,

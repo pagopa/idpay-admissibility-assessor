@@ -7,8 +7,11 @@ import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -33,16 +36,26 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(fiscalCode -> anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig))
+                .publishOn(Schedulers.boundedElastic())
                 .map(response -> {
                     Family family = new Family();
                     family.setFamilyId(response.getIdOperazioneANPR());
-                    Set<String> memberIds = response.getListaSoggetti().getDatiSoggetto()
+                    Set<Mono<String>> memberIds = response.getListaSoggetti().getDatiSoggetto()
                             .stream()
-                            .map(datiSoggetto -> datiSoggetto.getIdentificativi().getIdANPR())
+                            .map(datiSoggetto -> userFiscalCodeService.getUserId(datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale()))
                             .collect(Collectors.toSet());
 
-                    family.setMemberIds(memberIds);
+                    //
+                    Flux<Mono<String>> fluxOfMonos = Flux.fromIterable(memberIds);
+                    Flux<String> fluxOfStrings = fluxOfMonos.flatMap(mono -> mono);
+                    Mono<Set<String>> resultMono = fluxOfStrings.collect(Collectors.toSet());
 
+                    Set<String> membersIdSet = new HashSet<>();
+
+                    // Esegui azioni con l'insieme di String
+                    resultMono.subscribe(membersIdSet::addAll);
+
+                    family.setMemberIds(membersIdSet);
                     return Optional.of(family);
                 });
 
