@@ -29,8 +29,8 @@ microservice-chart:
 
   envSecret:
     aks-api-url: cstar-d-weu-dev01-aks-apiserver-url
-    PAGOPA_PDND_CONFIGURATION_JWT_KEY: pagopa-pdnd-configuration-jwt-key
-    PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB: pagopa-pdnd-configuration-jwt-pub
+    #PAGOPA_PDND_CONFIGURATION_JWT_KEY: pagopa-pdnd-configuration-jwt-key
+    #PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB: pagopa-pdnd-configuration-jwt-pub
 
   keyvault:
     name: "cstar-d-idpay-kv"
