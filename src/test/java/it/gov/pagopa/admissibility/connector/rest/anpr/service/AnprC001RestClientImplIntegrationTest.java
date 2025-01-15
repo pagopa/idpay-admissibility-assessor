@@ -39,7 +39,7 @@ import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_T
                 PdndConfig.class,
                 AnprConfig.class,
                 AnprC001ServiceConfig.class,
-                AnprSignAlgorithmC021Retriever.class,
+                AnprSignAlgorithmC001Retriever.class,
                 PdndRestClientImpl.class,
                 WebClientConfig.class,
                 CustomSequenceGeneratorRepository.class
