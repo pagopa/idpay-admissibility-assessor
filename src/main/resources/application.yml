@@ -308,43 +308,43 @@ app:
       purpose-id: ${PAGOPA_PDND_CONFIGURATION_PURPOSE_ID:8af4c795-8066-4407-a0b3-c95c2daefd6c}
       key: |-
         ${PAGOPA_PDND_CONFIGURATION_JWT_KEY:-----BEGIN PRIVATE KEY-----
-        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4mKTeygeEPVcd
-        N3YyH14q+Kyx7YnZ0BIdvGbBEVUNbM6tLmqbJULvHTHy8Qy9Lib8K9Jps57/SOdx
-        pPPUqR7MTZMGlwHBEdUQpTWmauIjWhymgYEH0g6uiLkQs2iiaHOSSJ1dsmqGG/mn
-        9DoVuzM1fWgqKEEHxdnuBpH6NcE5DXfEEXWDP2L6zPMjw4sgdqiWKApx0LPCK4KN
-        4zMzJi3yZXfhmamxX021rOVu9gy13dVzXvJ9zhYQwpVKxqcF5ovhYdnnlOu5ukUQ
-        0ibZ0INlq1DspOdFuKc756gNK6n6L4gYNeLrjUyiePeGEnqS69OkIfKMG2m9TWy1
-        mnANeZItAgMBAAECggEAchBgUAomeuAsZDFRJ8eaOJNQouFUvPKFPzqbg9Fh7Nm/
-        G+QCm7t6kKZJpwSsCnnqPQgXDJmhNb2mxeJXiKC4FyYYI4pL2zFZpt9vN1X0RkP4
-        UCrVwC9cQxzYvikeDrzcLRgRpUQJ7rR6n/2ZprP2AKdtJh+Zj2QCNcJ5kVKGAuny
-        1CfNR9HtnGshucGJcAfAgOKFV5E14r2KZNk3mu1jy7oLq0ToC5jgy15kCzrRgYdo
-        8XxQdBxsP53OZsa+s/KS/3iaOf6/607Ksm0Qa4C+V0v+yOz/VsIA6g4Z/8gBgozg
-        /fWoLh/2Y3vs5URvl2mEgL0czpUaGL4qLhve5bSsAQKBgQDddzJtU0CnzJ37R5SX
-        Rr64VgmbfjTwZobNXQ4YR/SUQZF/MFh9a+T4G+pQsjaXQqW0vJLF1zZCaSvLslHm
-        CZ+K3fcrJ4X7B7jGZfxxHWwpttUD+4rE6gwvvt3bbVzm/o4gOGaivsJde9QSY8OZ
-        +RRzpGrDEVYrBX5BC5KyfhfEcQKBgQDVYaPaRQnSqBwqtJ1iMMwqDR9N6g8vwuQ+
-        1cdFRcnvGe6gj5HD4sD0+sOYnwSpw/p2u56Ln7wixpPEAOg6SvXxOL+VcoYg4Ngw
-        eVNQoxkjA25Iw4MSQI7iON9K3hnNvSHwjgqvgziMNWWTTK4GWsUX6xJVVdcXyl4s
-        F6JPZwCXfQKBgDOSFycIFO0+I6eo8nwLmEvalSAlUnSMm2Vk/uw+jUCcyCHDA0gp
-        gMcZ0QV7imTMu0OMCe2SAOuUDAPCAXo80W8H4w+kg3mCQc/JXfCFNnO8RHxJ7fWO
-        vsm7e3QmUlTj//qWx6esHhygwjCKFLldHBsVtVq5RcR84fqJlF6GKEixAoGAAxwA
-        Ij8dTIeMmYa2QGcLopU8XotJm12Qq+W7mKPStHxBQO+2pQ8Z1rgMv52ZmMu1S6Oi
-        RNCYEj2oi5Ojzq2m9dPo3smjcLk2DUbHUwZ9aEg1hDPtJgfwzRUdE982qwvVgcbg
-        Gvyjh0+D4micpJUQCDAxvTKaBsu5IZValSOgG5UCgYEAw/BLbqK0yYbrZFz8CtEE
-        bcEhrqyycb+Mp95tqSFCvetaTrQWr/C9cBjKrCqPambUylRLV91mZOn/SiKaMOQK
-        ldtKRd1tFfSGiGlZ0n9spv4b5s0ygozGgodXytvPHfKmhKy3F5PQdoMB3c/xBUac
-        qnPJJlnulIZw1QtgvD+cSGo=
+        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
+        ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
+        xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
+        VX7gPYBhbxA91GbjTockbts0ouZ0z0AVRCnrOhO816DJZDIB8fjSLvZSimW0O5tw
+        DKQPpiCRFy0K0p3yH8FGkhG0yfQAYsz+jmrBi754IDLz/s+mPcfMLAeQM4lp3+Da
+        lGPiygl2+fms/pMzg5W1ntV6HGKieRpxwE9zIMZKsijnzftdhoa/evtGfSsKmV/G
+        dTga2Z3nAgMBAAECggEAEC6FmMJ4Tyd7T3zNgVPjQnCRbKTihz858qjislibqZKO
+        mE6d0oJ5P+o5R/bWHUQSCevMPvNGQ55QBkxO/1ocZxP/0FfYZf5UrPsCEmwfFejf
+        r8DrLhNr7GS/IcOGM4zNK/hwlP2i+88sVfexRQQygLVtmsnPY1PZSjiqm68lJdu+
+        aP8TYM10y1aeiYnfuUYvnvXJFXeTEockhaUJTmeIQNbbUy+pyJ0mAPASPtXRLr8h
+        UflutICnWcx4v/qkCn1jmHw+NMA4q7hOH7UuOAqj53FqGMN+IWfjMmmYoQ7MVURx
+        8CrnEtlCOua+C8EEIFL2ylvV7X0cv/DqCJLVQoegsQKBgQDLzMaAjNgD8xSXp+Gj
+        beeUsSGptEaGMuA89AzyTnCyvU9a1HGwDAghoQPae+pVk7R5uokojWkBVzP/kKxv
+        ZldGwPOegUUdBLS4yJML+OkqtoCgf3Mbcozm5dVYtx7bYdhh3PswzRmn/h/YjEAz
+        +/mxi6dJir0k0Nd4YNtQbzBctwKBgQDYTtSmJvVQdOHnzqA/LRmMF1l+HaqLuDfu
+        B4rDlxCdDfOAvHqz+3YapP3B4MQuz29TSDqwAnzoN2XZX5B6g/jKauWpAwZkFXuO
+        fqcfNG/+MewTcHIYNm+EtgXtIsnCXDfAeXdQapzNsOX+XSF/aWcgGHg18xOBPt0R
+        7Aoa/h34UQKBgQCsCzGjwcJ2CxXeNPYxfg1ao/HUDoDet0I/kpL/VqKi8Vd1SRS0
+        VmPi58eWALfBCJD5ljRFjKMRY6lc3KgE3vNconTG4UAUEC30NDaWi8liqnCJjS4C
+        BMDYBzwEyYn+D2qYqvFOsEYxYEFIEJX+jH+sl0VguwOTec38LF/YVhUQnwKBgG5u
+        2Kw3SZkZA1ioqjF24gsexKbZmH+avps8qICw+F9mhwIbt/15jVOPFqrMCPzpFKoN
+        P0ErFAAugEYZPxb9l6AoMTY3gCTKvvkB+mq5B9BcRm2qQ+XOrOKxV5c44o7jK+eN
+        W/fnZkSxYsqZW4fEFU1SkNTiU/vxT0ZeHs6nHD/xAoGAOIqaqQnJfGj/wLo3Z9o5
+        /Oxu1zTPGZC6SqpdygCjlQ0kQ8Bp0LV7nL06/VCHAHI2lF12xApRnFk7GY3xyqK8
+        nYxeRASCj3GGmLupGshtfCtDBeysE2h7kj3Bo0d6g1Ye+j8BUZuZaZm6WNlo7cgE
+        NLHn1k0IpmXFOiFa1Y1D6Bc=
         -----END PRIVATE KEY-----
         }
       pub: |-
         ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
-        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuJik3soHhD1XHTd2Mh9e
-        Kvisse2J2dASHbxmwRFVDWzOrS5qmyVC7x0x8vEMvS4m/CvSabOe/0jncaTz1Kke
-        zE2TBpcBwRHVEKU1pmriI1ocpoGBB9IOroi5ELNoomhzkkidXbJqhhv5p/Q6Fbsz
-        NX1oKihBB8XZ7gaR+jXBOQ13xBF1gz9i+szzI8OLIHaoligKcdCzwiuCjeMzMyYt
-        8mV34ZmpsV9NtazlbvYMtd3Vc17yfc4WEMKVSsanBeaL4WHZ55TrubpFENIm2dCD
-        ZatQ7KTnRbinO+eoDSup+i+IGDXi641Monj3hhJ6kuvTpCHyjBtpvU1stZpwDXmS
-        LQIDAQAB
+        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
+        bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
+        res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
+        YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
+        kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
+        dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
+        5wIDAQAB
         -----END PUBLIC KEY-----
         }
     config:
@@ -361,9 +361,9 @@ app:
         trustCertificatesCollection: ${ANPR_HTTPS_TRUSTED_CERTS:}
     c001-consultazione-anpr:
       config:
-        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioAccertamentoStatoFamiglia/v1}
+        audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1}
         httpMethod: POST
-        path: /C021-servizioAccertamentoStatoFamiglia/v1/anpr-service-e002
+        path: /C001-servizioNotifica/v1/anpr-service-e002
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}

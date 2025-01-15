@@ -68,7 +68,7 @@ public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE
         TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
                 .dataRiferimentoRichiesta(dateNow)
                 .motivoRichiesta("1")
-                .casoUso("C021");
+                .casoUso("C001");
 
         return new RichiestaE002DTO()
                 .idOperazioneClient(String.valueOf(sequenceValue))
