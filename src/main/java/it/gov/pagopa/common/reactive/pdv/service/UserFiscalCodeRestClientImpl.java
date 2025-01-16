@@ -1,5 +1,7 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.admissibility.utils.Utils;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +25,16 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
     private final int pdvRetryDelay;
     private final long pdvMaxAttempts;
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
 
     public UserFiscalCodeRestClientImpl(@Value("${app.pdv.base-url}") String pdvBaseUrl,
                                         @Value("${app.pdv.headers.x-api-key}") String apiKeyValue,
                                         @Value("${app.pdv.retry.delay-millis}") int pdvRetryDelay,
                                         @Value("${app.pdv.retry.max-attempts}") long pdvMaxAttempts,
-                                        WebClient.Builder webClientBuilder) {
+                                        WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.pdvRetryDelay = pdvRetryDelay;
         this.pdvMaxAttempts = pdvMaxAttempts;
+        this.objectMapper = objectMapper;
         this.webClient = webClientBuilder.clone()
                 .baseUrl(pdvBaseUrl)
                 .defaultHeader(API_KEY_HEADER, apiKeyValue)
@@ -71,13 +75,12 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
 
     @Override
     public Mono<UserInfoPDV> retrieveUserId(String fiscalCode) {
-        UserInfoPDV requestBody = new UserInfoPDV(fiscalCode);
+        String bodyString = Utils.convertToJson(new UserInfoPDV(fiscalCode), objectMapper);
         return PerformanceLogger.logTimingOnNext(
                         "PDV_INTEGRATION",
                         webClient
                                 .method(HttpMethod.PUT)
-                                //.uri(URI, Map.of("token", fiscalCode))
-                                .bodyValue(requestBody)
+                                .bodyValue(bodyString)
                                 .retrieve()
                                 .toEntity(UserInfoPDV.class),
                         x -> "httpStatus %s".formatted(x.getStatusCode().value())

@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -40,9 +41,11 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 .map(response -> {
                     Family family = new Family();
                     family.setFamilyId(response.getIdOperazioneANPR());
+                    @NotNull
                     Set<Mono<String>> memberIds = response.getListaSoggetti().getDatiSoggetto()
                             .stream()
-                            .map(datiSoggetto -> userFiscalCodeService.getUserId(datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale()))
+                            .map(datiSoggetto -> userFiscalCodeService.getUserId(datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale())
+                                )
                             .collect(Collectors.toSet());
 
                     //
