@@ -46,7 +46,8 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
     public Mono<Optional<List<OnboardingRejectionReason>>> invoke(
             String fiscalCode,
             PdndInitiativeConfig pdndInitiativeConfig,
-            PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
+            PdndServicesInvocation pdndServicesInvocation,
+            OnboardingDTO onboardingRequest) {
         if (!accept(pdndServicesInvocation)) {
             return MONO_OPTIONAL_EMPTY_LIST;
         }

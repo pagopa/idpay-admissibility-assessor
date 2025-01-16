@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 public class AnprSignAlgorithmC001Retriever extends BaseLocalRsaKeysJwtSignAlghoritmRetrieverService implements JwtSignAlgorithmRetrieverService {
 
     public AnprSignAlgorithmC001Retriever(
-            @Value("${app.anpr.pagopa-pdnd-configuration.pub-c001}") String jwtSignPublicKey,
-            @Value("${app.anpr.pagopa-pdnd-configuration.key-c001}") String jwtSignPrivateKey
+            @Value("${app.anpr.pagopa-pdnd-configuration.c001.pub}") String jwtSignPublicKey,
+            @Value("${app.anpr.pagopa-pdnd-configuration.c001.key}") String jwtSignPrivateKey
     ) {
         super(jwtSignPublicKey, jwtSignPrivateKey);
     }

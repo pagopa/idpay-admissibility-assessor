@@ -1,18 +1,18 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
-import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
-import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
-import it.gov.pagopa.common.reactive.pdnd.service.BaseRestPdndServiceClient;
-import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
+import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
+import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RichiestaE002DTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoCriteriRicercaE002DTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiRichiestaE002DTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
+import it.gov.pagopa.common.reactive.pdnd.service.BaseRestPdndServiceClient;
+import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -53,6 +53,8 @@ public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE
                         pdndInitiativeConfig
                 ));
     }
+
+
 
     private Mono<RichiestaE002DTO> generateRequest(String fiscalCode) {
         return customSequenceGeneratorRepository.nextValue(OnboardingConstants.ANPR_E002_INVOKE)

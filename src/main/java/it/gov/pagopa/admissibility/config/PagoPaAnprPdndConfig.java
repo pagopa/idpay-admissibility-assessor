@@ -1,10 +1,15 @@
 package it.gov.pagopa.admissibility.config;
 
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import lombok.Getter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
 
-@Configuration
-@ConfigurationProperties(prefix = "app.anpr.pagopa-pdnd-configuration.c001")
-public class PagoPaAnprPdndConfig extends PdndInitiativeConfig {
+import java.util.Map;
+@Getter
+@Component
+@ConfigurationProperties(prefix = "app.anpr.pagopa-pdnd-configuration")
+public class PagoPaAnprPdndConfig {
+    private Map<String, PdndInitiativeConfig> details;
+
 }

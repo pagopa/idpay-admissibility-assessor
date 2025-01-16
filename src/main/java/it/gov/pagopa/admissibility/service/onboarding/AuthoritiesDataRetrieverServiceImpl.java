@@ -7,10 +7,10 @@ import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetriever
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
+import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
@@ -81,10 +81,11 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
         PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes);
         log.debug("[ONBOARDING_REQUEST] Requesting pdnd data {} for userId {} and initiativeId {}", pdndServicesInvocation, onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
+        Boolean isForFamily = initiativeConfig.getBeneficiaryType().equals(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF);
+
         if (pdndServicesInvocation.requirePdndInvocation()) {
-            //PdndInitiativeConfig pdndInitiativeConfig = initiativeConfig.getPdndInitiativeConfig(); TODO it should be read from initiative
             return  userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
-                    .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message, pagoPaAnprPdndConfig));
+                    .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message, isForFamily));
         }
 
         return Mono.just(onboardingRequest);
@@ -100,22 +101,35 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
         );
     }
 
-    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, PdndInitiativeConfig pdndInitiativeConfig) {
+    private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message, Boolean isForFamily) {
+
+
         Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
-                inpsDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
+                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c001") , pdndServicesInvocation, onboardingRequest);
 
-        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocation =
-                anprDataRetrieverService.invoke(fiscalCode, pdndInitiativeConfig, pdndServicesInvocation, onboardingRequest);
+        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationSingle =
+                anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c001")  , pdndServicesInvocation, onboardingRequest);
 
-        return inpsInvocation
-                .zipWith(anprInvocation)
-                // Handle reschedule of failed invocation, storing the successful if any inside re-published message
+        Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationFamily = Boolean.TRUE.equals(isForFamily)
+                ? anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c021") , pdndServicesInvocation, onboardingRequest)
+                : Mono.just(Optional.of(List.of()));
+
+
+        return Mono.zip(
+                        inpsInvocation,
+                        anprInvocationSingle,
+                        anprInvocationFamily
+                )
                 .mapNotNull(t -> {
 
-                    List<OnboardingRejectionReason> rejectionReasons = Stream.concat(
-                            t.getT1().stream().flatMap(Collection::stream),
-                            t.getT2().stream().flatMap(Collection::stream)
-                    ).toList();
+                    Optional<List<OnboardingRejectionReason>> inpsResult = t.getT1();
+                    Optional<List<OnboardingRejectionReason>> anprSingleResult = t.getT2();
+                    Optional<List<OnboardingRejectionReason>> anprFamilyResult = t.getT3();
+
+                    List<OnboardingRejectionReason> rejectionReasons = Stream.of(inpsResult, anprSingleResult, anprFamilyResult)
+                            .filter(Optional::isPresent)
+                            .flatMap(optional -> optional.get().stream())
+                            .toList();
 
                     if(!rejectionReasons.isEmpty()){
                         log.debug("[ONBOARDING_REQUEST][ONBOARDING_KO] Authorities data retrieve returned rejection reasons: {}", rejectionReasons);
@@ -126,7 +140,7 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
                     if (t.getT1().isPresent()
                             &&
                             // not require ANPR or it returned data
-                            t.getT2().isPresent()) {
+                            t.getT2().isPresent() || t.getT3().isPresent()) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
