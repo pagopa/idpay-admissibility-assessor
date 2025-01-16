@@ -5,16 +5,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,33 +31,20 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
-
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(fiscalCode -> anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig))
                 .publishOn(Schedulers.boundedElastic())
-                .map(response -> {
-                    Family family = new Family();
-                    family.setFamilyId(response.getIdOperazioneANPR());
-                    @NotNull
-                    Set<Mono<String>> memberIds = response.getListaSoggetti().getDatiSoggetto()
-                            .stream()
-                            .map(datiSoggetto -> userFiscalCodeService.getUserId(datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale())
-                                )
-                            .collect(Collectors.toSet());
-
-                    //
-                    Flux<Mono<String>> fluxOfMonos = Flux.fromIterable(memberIds);
-                    Flux<String> fluxOfStrings = fluxOfMonos.flatMap(mono -> mono);
-                    Mono<Set<String>> resultMono = fluxOfStrings.collect(Collectors.toSet());
-
-                    Set<String> membersIdSet = new HashSet<>();
-
-                    // Esegui azioni con l'insieme di String
-                    resultMono.subscribe(membersIdSet::addAll);
-
-                    family.setMemberIds(membersIdSet);
-                    return Optional.of(family);
-                });
+                .flatMap(response ->
+                    Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
+                        .flatMap(datiSoggetto -> userFiscalCodeService.getUserId(datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale()))
+                        .collect(Collectors.toSet())
+                        .map(memberIds -> {
+                            Family family = new Family();
+                            family.setFamilyId(response.getIdOperazioneANPR());
+                            family.setMemberIds(memberIds);
+                            return Optional.of(family);
+                        })
+                );
 
     }
 }
