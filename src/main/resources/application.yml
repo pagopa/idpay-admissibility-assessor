@@ -302,7 +302,7 @@ app:
     config:
       audience: ${PDND_ACCESS_TOKEN_AUDIENCE:auth.uat.interop.pagopa.it/client-assertion}
   anpr:
-    pagopa-pdnd-configuration:
+    pagopaPdndConfiguration:
       c021:
         client-id: ${PAGOPA_PDND_CONFIGURATION_CLIENT_ID:f19ed19e-f9db-4656-a9f9-b85b55286190}
         kid: ${PAGOPA_PDND_CONFIGURATION_KID:ec6JAW0NFnP4ICs8dbHM5qg56QzVexnJMNSAscGsaGs}

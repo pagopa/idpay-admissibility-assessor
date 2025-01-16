@@ -105,13 +105,13 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
 
 
         Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
-                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c001") , pdndServicesInvocation, onboardingRequest);
+                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest);
 
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationSingle =
-                anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c001")  , pdndServicesInvocation, onboardingRequest);
+                anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001")  , pdndServicesInvocation, onboardingRequest);
 
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationFamily = Boolean.TRUE.equals(isForFamily)
-                ? anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getDetails().get("c021") , pdndServicesInvocation, onboardingRequest)
+                ? anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c021") , pdndServicesInvocation, onboardingRequest)
                 : Mono.just(Optional.of(List.of()));
 
 

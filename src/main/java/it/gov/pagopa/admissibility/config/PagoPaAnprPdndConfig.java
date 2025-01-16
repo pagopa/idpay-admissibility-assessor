@@ -8,8 +8,8 @@ import org.springframework.stereotype.Component;
 import java.util.Map;
 @Getter
 @Component
-@ConfigurationProperties(prefix = "app.anpr.pagopa-pdnd-configuration")
+@ConfigurationProperties(prefix = "app.anpr")
 public class PagoPaAnprPdndConfig {
-    private Map<String, PdndInitiativeConfig> details;
+    private Map<String, PdndInitiativeConfig> pagopaPdndConfiguration;
 
 }

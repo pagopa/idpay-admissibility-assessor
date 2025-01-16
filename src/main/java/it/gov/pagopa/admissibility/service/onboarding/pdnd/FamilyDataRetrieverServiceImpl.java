@@ -31,7 +31,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         // TODO call PDND and re-scheduling if dailyLimit occurred
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
-                .flatMap(fiscalCode -> anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig.getDetails().get("c021")))
+                .flatMap(fiscalCode -> anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig.getPagopaPdndConfiguration().get("c021")))
                 .publishOn(Schedulers.boundedElastic())
                 .flatMap(response ->
                     Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
