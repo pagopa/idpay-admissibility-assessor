@@ -110,23 +110,24 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationSingle =
                 anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001")  , pdndServicesInvocation, onboardingRequest);
 
+        /*
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationFamily = Boolean.TRUE.equals(isForFamily)
                 ? anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c021") , pdndServicesInvocation, onboardingRequest)
                 : Mono.just(Optional.of(List.of()));
-
+            */
 
         return Mono.zip(
                         inpsInvocation,
-                        anprInvocationSingle,
-                        anprInvocationFamily
+                        anprInvocationSingle
+                        //anprInvocationFamily
                 )
                 .mapNotNull(t -> {
 
                     Optional<List<OnboardingRejectionReason>> inpsResult = t.getT1();
                     Optional<List<OnboardingRejectionReason>> anprSingleResult = t.getT2();
-                    Optional<List<OnboardingRejectionReason>> anprFamilyResult = t.getT3();
+                    //Optional<List<OnboardingRejectionReason>> anprFamilyResult = t.getT3();
 
-                    List<OnboardingRejectionReason> rejectionReasons = Stream.of(inpsResult, anprSingleResult, anprFamilyResult)
+                    List<OnboardingRejectionReason> rejectionReasons = Stream.of(inpsResult, anprSingleResult /*, anprFamilyResult*/)
                             .filter(Optional::isPresent)
                             .flatMap(optional -> optional.get().stream())
                             .toList();
@@ -140,7 +141,7 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
                     if (t.getT1().isPresent()
                             &&
                             // not require ANPR or it returned data
-                            t.getT2().isPresent() || t.getT3().isPresent()) {
+                            t.getT2().isPresent()  /*|| t.getT3().isPresent()*/) {
                         return onboardingRequest;
                     } else {
                         onboardingRescheduleService.reschedule(onboardingRequest, calcDelay(), "Daily limit reached", message);
