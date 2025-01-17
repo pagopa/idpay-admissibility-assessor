@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -82,6 +83,9 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
                         webClient
                                 .method(HttpMethod.PUT)
                                 .uri(URI_PUT)
+                                .headers(httpHeaders ->
+                                    httpHeaders.setContentType(MediaType.APPLICATION_JSON)
+                                )
                                 .bodyValue(bodyString)
                                 .retrieve()
                                 .toEntity(UserInfoPDV.class),
