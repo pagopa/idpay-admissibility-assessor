@@ -21,7 +21,8 @@ import java.util.Map;
 @Slf4j
 public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
     private static final String API_KEY_HEADER = "x-api-key";
-    private static final String URI = "/tokens/{token}/pii";
+    private static final String URI_GET = "/tokens/{token}/pii";
+    private static final String URI_PUT = "/tokens";
     private final int pdvRetryDelay;
     private final long pdvMaxAttempts;
     private final WebClient webClient;
@@ -47,7 +48,7 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
                         "PDV_INTEGRATION",
                         webClient
                                 .method(HttpMethod.GET)
-                                .uri(URI, Map.of("token", userId))
+                                .uri(URI_GET, Map.of("token", userId))
                                 .retrieve()
                                 .toEntity(UserInfoPDV.class),
                         x -> "httpStatus %s".formatted(x.getStatusCode().value())
@@ -80,6 +81,7 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
                         "PDV_INTEGRATION",
                         webClient
                                 .method(HttpMethod.PUT)
+                                .uri(URI_PUT)
                                 .bodyValue(bodyString)
                                 .retrieve()
                                 .toEntity(UserInfoPDV.class),
