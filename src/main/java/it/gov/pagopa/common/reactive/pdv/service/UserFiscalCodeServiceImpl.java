@@ -2,6 +2,7 @@ package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,7 +43,7 @@ public class UserFiscalCodeServiceImpl implements UserFiscalCodeService{
             return Mono.just(userFromCache);
         }else {
             return userFiscalCodeRestClient.retrieveUserId(fiscalCode)
-                    .map(UserInfoPDV::getPii)
+                    .map(UserIdPDV::getToken)
                     .doOnNext(u -> {
                         userCache.put(fiscalCode,u);
                         log.debug("[CACHE_MISS] Added into map userId with fiscalCode: {}", fiscalCode);

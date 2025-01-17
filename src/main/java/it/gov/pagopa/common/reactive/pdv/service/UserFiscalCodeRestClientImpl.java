@@ -2,6 +2,7 @@ package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.utils.Utils;
+import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +77,7 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
     }
 
     @Override
-    public Mono<UserInfoPDV> retrieveUserId(String fiscalCode) {
+    public Mono<UserIdPDV> retrieveUserId(String fiscalCode) {
         String bodyString = Utils.convertToJson(new UserInfoPDV(fiscalCode), objectMapper);
         return PerformanceLogger.logTimingOnNext(
                         "PDV_INTEGRATION",
@@ -88,7 +89,7 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
                                 )
                                 .bodyValue(bodyString)
                                 .retrieve()
-                                .toEntity(UserInfoPDV.class),
+                                .toEntity(UserIdPDV.class),
                         x -> "httpStatus %s".formatted(x.getStatusCode().value())
                 )
                 .map(HttpEntity::getBody)
