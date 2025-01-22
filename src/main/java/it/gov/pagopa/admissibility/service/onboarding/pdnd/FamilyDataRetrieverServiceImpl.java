@@ -41,7 +41,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 .publishOn(Schedulers.boundedElastic())
                 .flatMap(response ->
                         {
-                            assert response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() != null;
+                            assert response.getListaSoggetti() != null && response.getListaSoggetti().getDatiSoggetto() != null;
                             assert response.getListaSoggetti().getDatiSoggetto() != null;
                             Set<String> childIds = new HashSet<>();
                             return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
