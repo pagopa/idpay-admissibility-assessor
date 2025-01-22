@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.rest.anpr.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -10,11 +11,13 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoIndirizzoDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoListaSoggettiDTO;
+import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
+import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,11 +33,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest.FISCAL_CODE_OK;
-import static it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImplIntegrationTest.PDND_INITIATIVE_CONFIG;
-
 @ExtendWith(MockitoExtension.class)
 class AnprDataRetrieverServiceImplTest {
+
+    public static final String FISCAL_CODE_OK = "CF_OK";
+    public static final String FISCAL_CODE_NOTFOUND = "CF_NOT_FOUND";
+    public static final String FISCAL_CODE_INVALIDREQUEST = "CF_INVALID_REQUEST";
+    public static final String FISCAL_CODE_TOOMANYREQUESTS = "CF_ANPR_TOO_MANY_REQUESTS";
+
+    public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
+            "CLIENTID",
+            "KID",
+            "PURPOSEID"
+    );
 
     @Mock
     private AnprC001RestClient anprC001RestClientMock;
@@ -54,7 +65,7 @@ class AnprDataRetrieverServiceImplTest {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
         service = new AnprDataRetrieverServiceImpl(anprC001RestClientMock, criteriaCodeServiceMock, residenceMapper);
 
-        anprAnswer = AnprC001RestClientImplIntegrationTest.buildExpectedResponse();
+        anprAnswer = buildExpectedResponse();
         TipoDatiSoggettiEnteDTO returnedSubject = anprAnswer.getListaSoggetti().getDatiSoggetto().get(0);
 
         TipoIndirizzoDTO returnedAddress = returnedSubject.getResidenza().get(0).getIndirizzo();
@@ -201,5 +212,75 @@ class AnprDataRetrieverServiceImplTest {
                 CriteriaCodeConfigFaker.CRITERIA_CODE_BIRTHDATE_AUTH_LABEL,
                 "Data di nascita non disponibile"
         );
+    }
+    public static RispostaE002OKDTO buildExpectedResponse() {
+        try {
+            return TestUtils.objectMapper.readValue("""
+                    {
+                    	"listaSoggetti": {
+                    		"datiSoggetto": [
+                    			{
+                    				"generalita": {
+                    					"codiceFiscale": {
+                    						"codFiscale": "STTSGT90A01H501J",
+                    						"validitaCF": "9"
+                    					},
+                    					"cognome": "SETTIMO",
+                    					"dataNascita": "1990-01-01",
+                    					"idSchedaSoggettoANPR": "2775118",
+                    					"luogoNascita": {
+                    						"comune": {
+                    							"codiceIstat": "058091",
+                    							"nomeComune": "ROMA",
+                    							"siglaProvinciaIstat": "RM"
+                    						}
+                    					},
+                    					"nome": "SOGGETTO",
+                    					"sesso": "M"
+                    				},
+                    				"identificativi": {
+                    					"idANPR": "AF41450AS"
+                    				},
+                    				"infoSoggettoEnte": [
+                    					{
+                    						"chiave": "Verifica esistenza in vita",
+                    						"id": "1003",
+                    						"valore": "S"
+                    					}
+                    				],
+                    				"residenza": [
+                    					{
+                    						"indirizzo": {
+                    							"cap": "41026",
+                    							"comune": {
+                    								"codiceIstat": "036030",
+                    								"nomeComune": "PAVULLO NEL FRIGNANO",
+                    								"siglaProvinciaIstat": "MO"
+                    							},
+                    							"numeroCivico": {
+                    								"civicoInterno": {
+                    									"interno1": "3",
+                    									"scala": "B4"
+                    								},
+                    								"numero": "55"
+                    							},
+                    							"toponimo": {
+                    								"denominazioneToponimo": "AMERIGO VESPUCCI",
+                    								"specie": "VIA",
+                    								"specieFonte": "1"
+                    							}
+                    						},
+                    						"tipoIndirizzo": "1"
+                    					}
+                    				]
+                    			}
+                    		]
+                    	},
+                    	"idOperazioneANPR": "58370927"
+                    }
+                    """, RispostaE002OKDTO.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot read expected response", e);
+        }
     }
 }
