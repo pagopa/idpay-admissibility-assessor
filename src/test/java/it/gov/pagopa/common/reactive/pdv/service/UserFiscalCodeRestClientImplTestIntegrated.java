@@ -1,5 +1,6 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.junit.jupiter.api.Assertions;
@@ -24,7 +25,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
                 "classpath:/secrets/appPdv.properties"
         })
 @AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdv")
-@SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class})
+@SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class, ObjectMapper.class})
 class UserFiscalCodeRestClientImplTestIntegrated {
     @Autowired
     private UserFiscalCodeRestClient userFiscalCodeRestClient;

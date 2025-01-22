@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
@@ -9,6 +11,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.model.AnprInfo;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
@@ -29,10 +32,12 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
@@ -53,10 +58,15 @@ class FamilyDataRetrieverFacadeServiceTest {
     private FamilyDataRetrieverFacadeService service;
 
     private FamilyDataRetrieverService familyDataRetrieverService;
+
+    @Mock private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
+
+    @Mock private AnprInfoRepository anprInfoRepositoryMock;
+
     @BeforeEach
     void init(){
         service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper);
-        familyDataRetrieverService = new FamilyDataRetrieverServiceImpl(anprC021RestClientMock,null, userFiscalCodeServiceMock);
+        familyDataRetrieverService = new FamilyDataRetrieverServiceImpl(anprC021RestClientMock, pdndInitiativeConfigMock, userFiscalCodeServiceMock, anprInfoRepositoryMock);
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
     }
 
@@ -92,13 +102,13 @@ class FamilyDataRetrieverFacadeServiceTest {
         EvaluationDTO result = service.retrieveFamily(request, initiativeConfig, message).block();
 
         // Then
-        Assertions.assertNotNull(result);
+        assertNotNull(result);
 
         // the mapper use now()
         Assertions.assertFalse(expectedResult.getAdmissibilityCheckDate().isAfter(result.getAdmissibilityCheckDate()));
         expectedResult.setAdmissibilityCheckDate(null);
         result.setAdmissibilityCheckDate(null);
-        Assertions.assertEquals(expectedResult, result);
+        assertEquals(expectedResult, result);
 
         Mockito.verify(criteriaCodeServiceMock).getCriteriaCodeConfig(CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY);
     }
@@ -124,7 +134,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         EvaluationDTO result = service.retrieveFamily(request, initiativeConfig, message).block();
 
         // Then
-        Assertions.assertNull(result);
+        assertNull(result);
         Assertions.assertSame(request.getFamily(), family);
     }
 
@@ -180,16 +190,54 @@ class FamilyDataRetrieverFacadeServiceTest {
         eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
         eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
 
-        Family family = new Family();
-        family.setFamilyId(idOperazioneANPR);
-        family.setMemberIds(Set.of(fiscalCodeHashed));
+        Family familyTest = new Family();
+        familyTest.setFamilyId(idOperazioneANPR);
+        familyTest.setMemberIds(Set.of(fiscalCodeHashed));
 
         Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
         Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
         Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
 
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null))
-                .expectNext(Optional.of(family))
+                .expectNext(Optional.of(familyTest))
                 .verifyComplete();
     }
+
+
+
+
+
+    @Test
+    void testGetterSetter() {
+        AnprInfo info = new AnprInfo();
+        info.setFamilyId("testFamilyId");
+        info.setInitiativeId("testInitiativeId");
+        info.setUserId("testUserId");
+        Set<String> childListIds = new HashSet<>();
+        childListIds.add("childListId1");
+        childListIds.add("childListId2");
+        info.setChildListIds(childListIds);
+
+        assertEquals("testFamilyId", info.getFamilyId());
+        assertEquals("testInitiativeId", info.getInitiativeId());
+        assertEquals("testUserId", info.getUserId());
+        assertEquals(childListIds, info.getChildListIds());
+    }
+
+    @Test
+    void testBuilder() {
+        AnprInfo info = AnprInfo.hiddenBuilder()
+                .familyId("testFamilyId")
+                .initiativeId("testInitiativeId")
+                .userId("testUserId")
+                .childListIds(new HashSet<>())
+                .hiddenBuild();
+
+        assertEquals("testFamilyId", info.getFamilyId());
+        assertEquals("testInitiativeId", info.getInitiativeId());
+        assertEquals("testUserId", info.getUserId());
+        assertEquals(new HashSet<>(), info.getChildListIds());
+    }
 }
+
