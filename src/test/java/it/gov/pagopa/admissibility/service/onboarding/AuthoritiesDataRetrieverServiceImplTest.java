@@ -31,7 +31,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Sort;
 import org.springframework.messaging.Message;
@@ -46,6 +45,7 @@ import java.util.*;
 import java.util.stream.Stream;
 
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthoritiesDataRetrieverServiceImplTest {
@@ -75,7 +75,10 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private BigDecimal expectedIsee;
     private Residence expectedResidence;
     private BirthDate expectedBirthDate;
-    private PdndInitiativeConfig pdndInitiativeConfig;
+
+    //test class
+    @Mock
+    private  HashMap<String, PdndInitiativeConfig> mapPdndInitiativeConfig;
 
     @BeforeEach
     void setUp() {
@@ -120,14 +123,14 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
     @AfterEach
     void verifyMockNoMoreInvocation() {
-        Mockito.verifyNoMoreInteractions(userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, anprDataRetrieverServiceSpy, onboardingRescheduleServiceMock);
+        verifyNoMoreInteractions(userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, anprDataRetrieverServiceSpy, onboardingRescheduleServiceMock);
     }
 
     //region test utilities
     private PdndServicesInvocation configureAuthoritiesDataRetrieverMocks(boolean getIsee, boolean getResidence, boolean getBirthDate) {
         PdndServicesInvocation expectedPdndServicesInvocation = buildExpectedPdndServiceInvocation(getIsee, getResidence, getBirthDate);
         if (expectedPdndServicesInvocation.requirePdndInvocation()) {
-            Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingRequest.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
+            when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingRequest.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
         }
         configureInpsDataRetriever(expectedPdndServicesInvocation);
         configureAnprDataRetriever(expectedPdndServicesInvocation);
@@ -139,7 +142,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     }
 
     private void configureAnprDataRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
-        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
+        when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
             if (expectedPdndServicesInvocation.isGetResidence()) {
                 onboardingRequest.setResidence(expectedResidence);
             }
@@ -151,7 +154,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     }
 
     private void configureInpsDataRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
-        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
+        when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
             if (expectedPdndServicesInvocation.isGetIsee()) {
                 onboardingRequest.setIsee(expectedIsee);
             }
@@ -169,9 +172,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     })
     void retrieveAllAuthorities_AutomatedCriteria(boolean getIsee, boolean getResidence, boolean getBirthDate) {
 
-        Map<String, PdndInitiativeConfig> mockConfigMap = Mockito.mock(Map.class);
-        Mockito.when(mockConfigMap.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
-        Mockito.when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mockConfigMap);
+        when(mapPdndInitiativeConfig.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
+        when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(
                 Stream.of(getIsee ? CRITERIA_CODE_ISEE : null,
@@ -193,9 +195,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     })
     void retrieveAllAuthorities_Ranking(boolean getIsee, boolean getResidence, boolean getBirthDate) {
 
-        Map<String, PdndInitiativeConfig> mockConfigMap = Mockito.mock(Map.class);
-        Mockito.when(mockConfigMap.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
-        Mockito.when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mockConfigMap);
+        when(mapPdndInitiativeConfig.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
+        when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
         // Given
         initiativeConfig.setAutomatedCriteriaCodes(Collections.emptyList());
         initiativeConfig.setRankingFields(Stream.of(
@@ -270,13 +271,12 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
 
-        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
+        when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
 
-        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
+        when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
 
-        Map<String, PdndInitiativeConfig> mockConfigMap = Mockito.mock(Map.class);
-        Mockito.when(mockConfigMap.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
-        Mockito.when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mockConfigMap);
+        when(mapPdndInitiativeConfig.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
+        when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
@@ -284,8 +284,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
         // Then
         Assertions.assertNull(result);
 
-        Mockito.verify(onboardingRescheduleServiceMock)
-                .reschedule(Mockito.eq(onboardingRequest), Mockito.argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), Mockito.eq("Daily limit reached"), Mockito.any());
+        verify(onboardingRescheduleServiceMock)
+                .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), eq("Daily limit reached"), any());
     }
 
     @Test
@@ -299,16 +299,16 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
 
-        Mockito.when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
+        when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
                 .thenReturn(Mono.just(Optional.of(List.of(expectedRejectionReasonISEE))));
 
-        Mockito.when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
+        when(anprDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
                 .thenReturn(Mono.just(Optional.of(List.of(expectedRejectionReasonResidence, expectedRejectionReasonBirthdate))));
 
 
-        Map<String, PdndInitiativeConfig> mockConfigMap = Mockito.mock(Map.class);
-        Mockito.when(mockConfigMap.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
-        Mockito.when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mockConfigMap);
+        Map<String, PdndInitiativeConfig> mockConfigMap = mock(Map.class);
+        when(mockConfigMap.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
+        when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mockConfigMap);
 
         // When
         Mono<OnboardingDTO> retrieveMono = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message);
