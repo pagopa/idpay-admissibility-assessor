@@ -141,7 +141,8 @@ public class AnprC021RestClientImplIntegrationTest extends BaseWireMockTest {
     void testInvalidRequest(){
         Mono<RispostaE002OKDTO> mono = anprC021RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG);
         IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
-        Assertions.assertTrue(exception.getMessage().startsWith("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioNotifica/v1: 400 Bad Request"));
+        System.out.println(exception.getMessage());
+        Assertions.assertTrue(exception.getMessage().startsWith("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioAccertamentoStatoFamiglia/v1: 400 Bad Request"));
     }
 
     @Test

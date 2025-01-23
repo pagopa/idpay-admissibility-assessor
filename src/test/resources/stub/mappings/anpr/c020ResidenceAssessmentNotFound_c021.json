@@ -28,7 +28,7 @@
         "equalToJson": {
           "idOperazioneClient": "${json-unit.regex}[0-9]+",
           "criteriRicerca": {
-            "codiceFiscale": "CF_INVALID_REQUEST",
+            "codiceFiscale": "CF_NOT_FOUND",
             "idANPR" : null,
             "cognome" : null,
             "senzaCognome" : null,
@@ -40,20 +40,26 @@
           "datiRichiesta": {
             "dataRiferimentoRichiesta": "${json-unit.regex}[0-9]{4}-[0-9]{2}-[0-9]{2}",
             "motivoRichiesta": "1",
-            "casoUso": "C021"
+            "casoUso": "C001"
           }
         }
       }
     ]
   },
   "response": {
-    "status": "400",
+    "status": "404",
     "jsonBody": {
-      "type": "https://govway.org/handling-errors/400/InvalidRequestContent.html",
-      "title": "InvalidRequestContent",
-      "status": 400,
-      "detail": "Request content not conform to API specification: Validation error(s) :\nbody.datiRichiesta.casoUso: Null value is not allowed. (code: 1021)\nFrom: body.datiRichiesta.<#/components/schemas/TipoDatiRichiestaE002>.casoUso.<nullable>\nValidation warning(s) :\nbody.datiRichiesta.dataRiferimentoRichiesta: Format 'YYYY-MM-DD' is unknown, validation passes. (code: 1008)\nFrom: body.datiRichiesta.<#/components/schemas/TipoDatiRichiestaE002>.dataRiferimentoRichiesta.<format>\n",
-      "govway_id": "2ee9edf2-61ed-11ee-bdb9-005056ae1884"
+      "listaErrori": [
+        {
+          "codiceErroreAnomalia": "EN122",
+          "testoErroreAnomalia": "La richiesta effettuata non produce alcun risultato",
+          "tipoErroreAnomalia": "E"
+        }
+      ],
+      "idOperazioneANPR": "58438306"
+    },
+    "headers": {
+      "Content-Type": "application/json"
     }
   }
 }
