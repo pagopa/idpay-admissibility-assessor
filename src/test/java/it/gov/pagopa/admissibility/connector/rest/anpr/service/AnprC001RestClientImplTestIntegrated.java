@@ -1,10 +1,10 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import org.springframework.test.context.TestPropertySource;
  * See confluence page: <a href="https://pagopa.atlassian.net/wiki/spaces/IDPAY/pages/615974424/Secrets+UnitTests">Secrets for UnitTests</a>
  */
 @SuppressWarnings({"squid:S3577", "NewClassNamingConvention"}) // suppressing class name not match alert: we are not using the Test suffix in order to let not execute this test by default maven configuration because it depends on properties not pushable. See
-//@TestPropertySource(locations = {"classpath:/secrets/pdndConfig.properties"})
+@TestPropertySource(locations = {"classpath:/secrets/pdndConfig.properties"})
 @ContextConfiguration(inheritInitializers = false)
 class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
 
@@ -27,7 +27,7 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
     private AnprC001RestClient anprC001RestClient;
 
     @Autowired
-    private PdndInitiativeConfig pdndInitiativeConfig;
+    private PagoPaAnprPdndConfig pdndInitiativeConfig;
 
     @Test
     void getResidenceAssessment(){
@@ -38,7 +38,7 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
         sequenceGeneratorRepository.save(new CustomSequenceGenerator(OnboardingConstants.ANPR_E002_INVOKE, sequenceVal)).block();
 
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig).block();
+        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig.getPagopaPdndConfiguration().get("c001")).block();
 
         // Then
         Assertions.assertNotNull(result);
