@@ -8,26 +8,13 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoCriteriRicercaE002DTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiRichiestaE002DTO;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
-import it.gov.pagopa.common.reactive.pdnd.service.BaseRestPdndServiceClient;
 import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 @Service
-@Slf4j
-public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE002DTO, RispostaE002OKDTO> implements AnprC001RestClient {
-    private final  SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-
-    private final CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
+public class AnprC001RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO> implements AnprC001RestClient{
 
     protected AnprC001RestClientImpl(
             ObjectMapper objectMapper,
@@ -38,31 +25,13 @@ public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE
             PdndRestClient pdndRestClient,
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,
-
             CustomSequenceGeneratorRepository customSequenceGeneratorRepository) {
-        super(buildDefaultPdndServiceConfig(anprConfig, anprC001ServiceConfig, RispostaE002OKDTO.class), objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient);
-        this.customSequenceGeneratorRepository = customSequenceGeneratorRepository;
+        super(objectMapper, pdndConfig, anprConfig, anprC001ServiceConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient, customSequenceGeneratorRepository, RispostaE002OKDTO.class);
     }
 
     @Override
-    public Mono<RispostaE002OKDTO> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
-        return generateRequest(fiscalCode)
-                .flatMap(request -> invokePdndRestService(
-                        h -> {},
-                        request,
-                        pdndInitiativeConfig
-                ));
-    }
-
-
-
-    private Mono<RichiestaE002DTO> generateRequest(String fiscalCode) {
-        return customSequenceGeneratorRepository.nextValue(OnboardingConstants.ANPR_E002_INVOKE)
-                .map(sequenceValue -> createRequest(fiscalCode, sequenceValue));
-    }
-
-    private RichiestaE002DTO createRequest(String fiscalCode, Long sequenceValue) {
-        String dateNow = dateFormat.format(new Date());
+    protected RichiestaE002DTO createRequest(String fiscalCode, Long sequenceValue) {
+        String dateNow = getCurrentDate();
 
         TipoCriteriRicercaE002DTO criteriRicercaE002DTO = new TipoCriteriRicercaE002DTO()
                 .codiceFiscale(fiscalCode);
@@ -77,5 +46,6 @@ public class AnprC001RestClientImpl extends BaseRestPdndServiceClient<RichiestaE
                 .criteriRicerca(criteriRicercaE002DTO)
                 .datiRichiesta(datiRichiestaE002DTO);
     }
+
 
 }
