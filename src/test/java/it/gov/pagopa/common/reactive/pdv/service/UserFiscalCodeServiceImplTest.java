@@ -1,6 +1,7 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.google.common.cache.Cache;
+import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.IntStream;
 
+import static org.mockito.Mockito.when;
+
 @ExtendWith(MockitoExtension.class)
 class UserFiscalCodeServiceImplTest {
 
@@ -27,6 +30,10 @@ class UserFiscalCodeServiceImplTest {
 
     private final int initialSizeCache = 2;
     private Field userCacheField;
+
+
+    final String  userIdTest = "USERID_0";
+    final String cf = "FISCALCODE_0";
 
     @BeforeEach
     void setUp() {
@@ -49,31 +56,31 @@ class UserFiscalCodeServiceImplTest {
     @Test
     void getUserInfoNotInCache(){
         // Given
-        String userIdTest = "USERID_NEW";
-        Mockito.when(userFiscalCodeRestClientMock.retrieveUserInfo(userIdTest)).thenReturn(Mono.just(UserInfoPDV.builder().pii("FISCALCODE_RETRIEVED").build()));
+        final String userIdTestNotInCache = "USERID_NEW";
+        final String cfNotInCache = "CF_NEW";
+        Mockito.when(userFiscalCodeRestClientMock.retrieveUserInfo(userIdTestNotInCache)).thenReturn(Mono.just(UserInfoPDV.builder().pii(cfNotInCache).build()));
 
         // When
         Cache<String, String> inspectCache = retrieveCache();
-        Assertions.assertNull(inspectCache.getIfPresent(userIdTest));
+        Assertions.assertNull(inspectCache.getIfPresent(userIdTestNotInCache));
         Assertions.assertEquals(initialSizeCache,inspectCache.size());
 
-        String result = userFiscalCodeService.getUserFiscalCode(userIdTest).block();
+        String result = userFiscalCodeService.getUserFiscalCode(userIdTestNotInCache).block();
 
 
         // Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals("FISCALCODE_RETRIEVED", result);
-        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
+        Assertions.assertEquals(cfNotInCache, result);
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTestNotInCache));
         Assertions.assertEquals(initialSizeCache+1,inspectCache.size());
 
 
-        Mockito.verify(userFiscalCodeRestClientMock).retrieveUserInfo(userIdTest);
+        Mockito.verify(userFiscalCodeRestClientMock).retrieveUserInfo(userIdTestNotInCache);
     }
 
     @Test
     void getUserInfoInCache(){
         // Given
-        String userIdTest = "USERID_0";
 
         // When
         Cache<String, String> inspectCache = retrieveCache();
@@ -96,4 +103,46 @@ class UserFiscalCodeServiceImplTest {
         //noinspection unchecked
         return (Cache<String, String>) cacheBefore;
     }
+
+    @Test
+    void getUserIdNotInCache(){
+        // Given
+        when(userFiscalCodeRestClientMock.retrieveUserId(cf)).thenReturn(Mono.just(UserIdPDV.builder().token(userIdTest).build()));
+
+        // When
+        Cache<String, String> inspectCache = retrieveCache();
+        Assertions.assertNull(inspectCache.getIfPresent(cf));
+        Assertions.assertEquals(initialSizeCache,inspectCache.size());
+
+        String result = userFiscalCodeService.getUserId(cf).block();
+
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(userIdTest, result);
+        Assertions.assertEquals(initialSizeCache+1,inspectCache.size());
+
+
+        Mockito.verify(userFiscalCodeRestClientMock).retrieveUserId(cf);
+    }
+
+    @Test
+    void getUserIdInCache(){
+        // Given
+
+        // When
+        Cache<String, String> inspectCache = retrieveCache();
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
+        Assertions.assertEquals(initialSizeCache,inspectCache.size());
+
+        String result = userFiscalCodeService.getUserId(userIdTest).block();
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals("FISCALCODE_0", result);
+        Assertions.assertNotNull(inspectCache.getIfPresent(userIdTest));
+        Assertions.assertEquals(initialSizeCache,inspectCache.size());
+
+        Mockito.verify(userFiscalCodeRestClientMock, Mockito.never()).retrieveUserInfo(userIdTest);
+    }
+
 }

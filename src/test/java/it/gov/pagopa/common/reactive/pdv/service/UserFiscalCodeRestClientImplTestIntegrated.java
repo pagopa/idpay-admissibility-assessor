@@ -1,6 +1,7 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.junit.jupiter.api.Assertions;
@@ -50,6 +51,25 @@ class UserFiscalCodeRestClientImplTestIntegrated {
     void retrieveUserInfoNotFound() {
         try{
             userFiscalCodeRestClient.retrieveUserInfo(userIdNotFound).block();
+        }catch (Throwable e){
+            Assertions.assertTrue(e instanceof WebClientException);
+            Assertions.assertEquals(WebClientResponseException.NotFound.class,e.getClass());
+        }
+    }
+
+    @Test
+    void retrieveUserIdOk() {
+        UserIdPDV result = userFiscalCodeRestClient.retrieveUserId(fiscalCodeOKExpected).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(userIdOK,result.getToken());
+
+    }
+
+    @Test
+    void retrieveUserIdNotFound() {
+        try{
+            userFiscalCodeRestClient.retrieveUserId(userIdNotFound).block();
         }catch (Throwable e){
             Assertions.assertTrue(e instanceof WebClientException);
             Assertions.assertEquals(WebClientResponseException.NotFound.class,e.getClass());
