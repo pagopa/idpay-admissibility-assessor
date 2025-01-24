@@ -75,7 +75,6 @@ import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_T
         "app.anpr.pagopaPdndConfiguration.c001.pub: -----BEGIN PUBLIC KEY-----\\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzpmDQPdy/FazkTIi+Qjt\\najcBLG/yeQ55+PHdxy0adEzpBYmNrgmGlYEH/ArNEeF/KgJPrLgxukA2FPN0qzlB\\n1KH4ue7JG0f6JEsq/e5H/iOjRtVqzCqa790w8hVDw5HxgYhvNuk3jcUaxNo+2Uhu\\nsBXs/DReAtJDSa/sI8zs+A+lPyOP9tet8qIXLuuZbNDVvbRGIAvGwzr0cxEzvtxt\\nHWdJXB/gpQ5e0ncXpyXT1Tp9yQrjg5VMeukKm0IAOujG2ZjDNxgy96QSs8BhK7HN\\n2HiJbbGjjEacSW5aNHelrl6Kp4uhr2JbyxY5nQwMdg4FHVXakZBUcm083mBxFoXQ\\ncwIDAQAB\\n-----END PUBLIC KEY-----"
 
 })
-@TestPropertySource(locations = {"classpath:/secrets/pdndConfig.properties"})
 @MongoTest
 public class AnprC001RestClientImplIntegrationTest extends BaseWireMockTest {
 
