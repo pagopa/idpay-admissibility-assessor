@@ -49,7 +49,7 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private CriteriaCodeService criteriaCodeServiceMock;
 
-    @Mock private  AnprC021RestClient anprC021RestClientMock;
+    @Mock private AnprC021RestClient anprC021RestClientMock;
 
     @Mock private  UserFiscalCodeService userFiscalCodeServiceMock;
 

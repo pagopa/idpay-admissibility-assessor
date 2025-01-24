@@ -71,13 +71,6 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
     }
 
     private Mono<R> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
-
-        log.info("[PDND_SERVICE_INVOKE] AccessToken: {}", pdndAuthData.getAccessToken());
-        log.info("[PDND_SERVICE_INVOKE] Digest: {}", digest);
-        log.info("[PDND_SERVICE_INVOKE] Agid-JWT-Signature: {}", agidJwtSignature);
-        log.info("[PDND_SERVICE_INVOKE] Agid-JWT-TrackingEvidence: {}", pdndAuthData.getAgidJwtTrackingEvidence());
-        log.info("[PDND_SERVICE_INVOKE] Body: {}", bodyString);
-
         return PerformanceLogger.logTimingOnNext(
                 "PDND_SERVICE_INVOKE",
                 webClient.method(pdndServiceConfig.getHttpMethod())
