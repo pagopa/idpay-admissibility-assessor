@@ -10,7 +10,7 @@
 	<groupId>it.gov.pagopa</groupId>
 	<artifactId>idpay-admissibility-assessor</artifactId>
 	<name>idpay-admissibility-assessor</name>
-	<version>1.3.3</version>
+	<version>1.4.0</version>
 
 	<properties>
 		<java.version>17</java.version>
@@ -376,6 +376,37 @@
 								<apiPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.api
 								</apiPackage>
 								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.config
+								</configPackage>
+								<dateLibrary>java17</dateLibrary>
+								<useSpringBoot3>true</useSpringBoot3>
+								<useJakartaEe>true</useJakartaEe>
+							</configOptions>
+							<modelNameSuffix>DTO</modelNameSuffix>
+						</configuration>
+					</execution>
+					<execution>
+						<id>idpay-admissibility-assessor-pdnd-family-status-assessment-client</id>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+						<phase>process-resources</phase>
+						<configuration>
+							<inputSpec>${project.basedir}/src/main/resources/wsdocs/anpr/C021-servizioAccertamentoStatoFamiglia.yaml</inputSpec>
+							<generatorName>java</generatorName>
+							<library>webclient</library>
+							<generateApiDocumentation>false</generateApiDocumentation>
+							<generateApiTests>false</generateApiTests>
+							<generateModelTests>false</generateModelTests>
+							<generateSupportingFiles>true</generateSupportingFiles>
+							<configOptions>
+								<swaggerAnnotations>false</swaggerAnnotations>
+								<openApiNullable>false</openApiNullable>
+								<basePackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client</basePackage>
+								<modelPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto
+								</modelPackage>
+								<apiPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.api
+								</apiPackage>
+								<configPackage>it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.config
 								</configPackage>
 								<dateLibrary>java17</dateLibrary>
 								<useSpringBoot3>true</useSpringBoot3>
