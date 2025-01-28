@@ -21,8 +21,5 @@ public class AnprInfo {
     private String familyId;
     private String initiativeId;
     private String userId;
-    private Set<String> childListIds;//TODO to be removed
-
-    //TODO chiarire se il nome e il cognome possono essere salvate in chiaro su DB
     private List<Child> childList;
 }

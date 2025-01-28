@@ -212,19 +212,15 @@ class FamilyDataRetrieverFacadeServiceTest {
         info.setFamilyId("testFamilyId");
         info.setInitiativeId("testInitiativeId");
         info.setUserId("testUserId");
-        Set<String> childListIds = new HashSet<>();
         List<Child> childList = new ArrayList<>();
-        childListIds.add("childListId1");
-        childListIds.add("childListId2");
+
         childList.add(new Child("child1", "nome1", "cognome1"));
         childList.add(new Child("child2", "nome2", "cognome2"));
-        info.setChildListIds(childListIds);
         info.setChildList(childList);
 
         assertEquals("testFamilyId", info.getFamilyId());
         assertEquals("testInitiativeId", info.getInitiativeId());
         assertEquals("testUserId", info.getUserId());
-        assertEquals(childListIds, info.getChildListIds());
         assertEquals(childList, info.getChildList());
     }
 
@@ -234,14 +230,12 @@ class FamilyDataRetrieverFacadeServiceTest {
                 .familyId("testFamilyId")
                 .initiativeId("testInitiativeId")
                 .userId("testUserId")
-                .childListIds(new HashSet<>())
                 .childList(new ArrayList<>())
                 .hiddenBuild();
 
         assertEquals("testFamilyId", info.getFamilyId());
         assertEquals("testInitiativeId", info.getInitiativeId());
         assertEquals("testUserId", info.getUserId());
-        assertEquals(new HashSet<>(), info.getChildListIds());
         assertEquals(new ArrayList<>(), info.getChildList());
     }
 

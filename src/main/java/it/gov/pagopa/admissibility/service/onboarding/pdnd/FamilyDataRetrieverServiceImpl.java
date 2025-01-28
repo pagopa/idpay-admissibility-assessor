@@ -57,15 +57,14 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
             throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
         }
 
-        Set<String> childIds = new HashSet<>();
         List<Child> childList = new ArrayList<>();
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childIds, childList))
+                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, childIds, memberIds, childList));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList));
     }
 
-    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, Set<String> childIds, List<Child> childList) {
+    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
         if (datiSoggetto.getGeneralita() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() == null) {
@@ -78,16 +77,13 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
                     if (isChild(datiSoggetto)) {
-                        childIds.add(fiscalCodeHashed);
                         childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
                     }
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest,
-                                                              Set<String> childIds, Set<String> memberIds, List<Child> childList) {
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList) {
         AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
-        anprInfo.setChildListIds(childIds);
         anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
                 .map(savedInfo -> buildFamily(response.getIdOperazioneANPR(), memberIds));
@@ -106,6 +102,6 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new HashSet<>(), new ArrayList<>());
+        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>());
     }
 }
