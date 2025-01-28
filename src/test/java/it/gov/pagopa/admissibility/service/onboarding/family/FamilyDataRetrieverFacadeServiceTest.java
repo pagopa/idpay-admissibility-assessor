@@ -12,6 +12,7 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.AnprInfo;
+import it.gov.pagopa.admissibility.model.Child;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
@@ -32,10 +33,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -215,14 +213,19 @@ class FamilyDataRetrieverFacadeServiceTest {
         info.setInitiativeId("testInitiativeId");
         info.setUserId("testUserId");
         Set<String> childListIds = new HashSet<>();
+        List<Child> childList = new ArrayList<>();
         childListIds.add("childListId1");
         childListIds.add("childListId2");
+        childList.add(new Child("child1", "nome1", "cognome1"));
+        childList.add(new Child("child2", "nome2", "cognome2"));
         info.setChildListIds(childListIds);
+        info.setChildList(childList);
 
         assertEquals("testFamilyId", info.getFamilyId());
         assertEquals("testInitiativeId", info.getInitiativeId());
         assertEquals("testUserId", info.getUserId());
         assertEquals(childListIds, info.getChildListIds());
+        assertEquals(childList, info.getChildList());
     }
 
     @Test
@@ -232,12 +235,42 @@ class FamilyDataRetrieverFacadeServiceTest {
                 .initiativeId("testInitiativeId")
                 .userId("testUserId")
                 .childListIds(new HashSet<>())
+                .childList(new ArrayList<>())
                 .hiddenBuild();
 
         assertEquals("testFamilyId", info.getFamilyId());
         assertEquals("testInitiativeId", info.getInitiativeId());
         assertEquals("testUserId", info.getUserId());
         assertEquals(new HashSet<>(), info.getChildListIds());
+        assertEquals(new ArrayList<>(), info.getChildList());
+    }
+
+    @Test
+    void testNoArgsConstructor() {
+        Child child = new Child();
+        assertNull(child.getUserId());
+        assertNull(child.getNome());
+        assertNull(child.getCognome());
+    }
+
+    @Test
+    void testAllArgsConstructor() {
+        Child child = new Child("user123", "Mario", "Rossi");
+        assertEquals("user123", child.getUserId());
+        assertEquals("Mario", child.getNome());
+        assertEquals("Rossi", child.getCognome());
+    }
+
+    @Test
+    void testSettersAndGetters() {
+        Child child = new Child();
+        child.setUserId("user456");
+        child.setNome("Luigi");
+        child.setCognome("Bianchi");
+
+        assertEquals("user456", child.getUserId());
+        assertEquals("Luigi", child.getNome());
+        assertEquals("Bianchi", child.getCognome());
     }
 }
 

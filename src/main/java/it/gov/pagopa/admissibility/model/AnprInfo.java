@@ -7,6 +7,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
 import java.util.Set;
 
 @Document("anpr_info")
@@ -20,6 +21,8 @@ public class AnprInfo {
     private String familyId;
     private String initiativeId;
     private String userId;
-    private Set<String> childListIds;
+    private Set<String> childListIds;//TODO to be removed
 
+    //TODO chiarire se il nome e il cognome possono essere salvate in chiaro su DB
+    private List<Child> childList;
 }

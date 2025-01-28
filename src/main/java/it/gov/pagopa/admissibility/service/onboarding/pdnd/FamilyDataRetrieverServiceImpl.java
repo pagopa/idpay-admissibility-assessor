@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.model.AnprInfo;
+import it.gov.pagopa.admissibility.model.Child;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.springframework.messaging.Message;
@@ -16,9 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,13 +58,14 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         Set<String> childIds = new HashSet<>();
+        List<Child> childList = new ArrayList<>();
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childIds))
+                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childIds, childList))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, childIds, memberIds));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, childIds, memberIds, childList));
     }
 
-    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, Set<String> childIds) {
+    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, Set<String> childIds, List<Child> childList) {
         if (datiSoggetto.getGeneralita() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() == null) {
@@ -73,19 +73,22 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         String fiscalCode = datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale();
+        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
+        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
                     if (isChild(datiSoggetto)) {
                         childIds.add(fiscalCodeHashed);
+                        childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
                     }
                 });
     }
 
     private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest,
-                                                              Set<String> childIds, Set<String> memberIds) {
+                                                              Set<String> childIds, Set<String> memberIds, List<Child> childList) {
         AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
         anprInfo.setChildListIds(childIds);
-
+        anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
                 .map(savedInfo -> buildFamily(response.getIdOperazioneANPR(), memberIds));
     }
@@ -103,6 +106,6 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new HashSet<>());
+        return new AnprInfo(familyId, initiativeId, userId, new HashSet<>(), new ArrayList<>());
     }
 }
