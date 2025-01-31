@@ -87,7 +87,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String organizationName, String initiativeName) {
         if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
-            initiativeName.equalsIgnoreCase("bonus") &&
+            initiativeName.toLowerCase().contains("bonus") &&
             childList.isEmpty())
             return Mono.empty();
 
