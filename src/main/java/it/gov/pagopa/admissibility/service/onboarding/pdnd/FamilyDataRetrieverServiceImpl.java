@@ -38,13 +38,16 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     @Override
-    public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
+    public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest,
+                                                 Message<String> message,
+                                                 String organizationName,
+                                                 String initiativeName) {
         // TODO: Handle PDND call and implement re-scheduling if dailyLimit is reached
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(this::invokeAnprC021)
                 .publishOn(Schedulers.boundedElastic())
-                .flatMap(response -> processAnprResponse(response, onboardingRequest));
+                .flatMap(response -> processAnprResponse(response, onboardingRequest,organizationName,initiativeName));
     }
 
     private Mono<RispostaE002OKDTO> invokeAnprC021(String fiscalCode) {
@@ -52,7 +55,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig);
     }
 
-    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest) {
+    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, String organizationName, String initiativeName) {
         if (response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() == null) {
             throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
         }
@@ -61,7 +64,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
                 .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,organizationName,initiativeName));
     }
 
     private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
@@ -82,7 +85,12 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList) {
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String organizationName, String initiativeName) {
+        if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
+            initiativeName.equalsIgnoreCase("bonus") &&
+            childList.isEmpty())
+            return Mono.empty();
+
         AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
         anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
@@ -97,8 +105,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private boolean isChild(TipoDatiSoggettiEnteDTO datiSoggetto) {
-        return datiSoggetto.getLegameSoggetto() != null
-                && "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+        return datiSoggetto.getLegameSoggetto() != null  && "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
