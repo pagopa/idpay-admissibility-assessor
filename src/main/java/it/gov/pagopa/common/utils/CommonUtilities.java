@@ -1,6 +1,7 @@
 package it.gov.pagopa.common.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.springframework.messaging.Message;
 
@@ -69,5 +70,13 @@ public class CommonUtilities {
     /** To convert euro into cents */
     public static Long euroToCents(BigDecimal euro){
         return euro == null? null : euro.multiply(ONE_HUNDRED).longValue();
+    }
+
+    public static <T> String convertToJson(T object, ObjectMapper objectMapper) {
+        try {
+            return objectMapper.writeValueAsString(object);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Error converting request in JSON",e);
+        }
     }
 }

@@ -45,7 +45,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
 
         Mono<Optional<Family>> familyRetrieverMono = onboardingRequest.getFamily() != null
                 ? Mono.just(Optional.of(onboardingRequest.getFamily()))
-                : (familyDataRetrieverService.retrieveFamily(onboardingRequest, message)
+                : (familyDataRetrieverService.retrieveFamily(onboardingRequest, message,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName())
                         .switchIfEmpty(Mono.just(Optional.empty())));
 
         return familyRetrieverMono

@@ -1,10 +1,10 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.admissibility.utils.Utils;
 import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -78,7 +78,7 @@ public class UserFiscalCodeRestClientImpl implements UserFiscalCodeRestClient {
 
     @Override
     public Mono<UserIdPDV> retrieveUserId(String fiscalCode) {
-        String bodyString = Utils.convertToJson(new UserInfoPDV(fiscalCode), objectMapper);
+        String bodyString = CommonUtilities.convertToJson(new UserInfoPDV(fiscalCode), objectMapper);
         return PerformanceLogger.logTimingOnNext(
                         "PDV_INTEGRATION",
                         webClient
