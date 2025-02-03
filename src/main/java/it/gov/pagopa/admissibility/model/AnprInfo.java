@@ -7,6 +7,7 @@ import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.List;
 import java.util.Set;
 
 @Document("anpr_info")
@@ -20,6 +21,5 @@ public class AnprInfo {
     private String familyId;
     private String initiativeId;
     private String userId;
-    private Set<String> childListIds;
-
+    private List<Child> childList;
 }

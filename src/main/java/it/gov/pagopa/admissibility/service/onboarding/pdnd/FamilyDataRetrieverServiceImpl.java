@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.model.AnprInfo;
+import it.gov.pagopa.admissibility.model.Child;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.springframework.messaging.Message;
@@ -16,9 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,13 +38,17 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     @Override
-    public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message) {
+    public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest,
+                                                 Message<String> message,
+                                                 String initiativeName,
+                                                 String organizationName
+                                                 ) {
         // TODO: Handle PDND call and implement re-scheduling if dailyLimit is reached
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(this::invokeAnprC021)
                 .publishOn(Schedulers.boundedElastic())
-                .flatMap(response -> processAnprResponse(response, onboardingRequest));
+                .flatMap(response -> processAnprResponse(response, onboardingRequest,initiativeName,organizationName));
     }
 
     private Mono<RispostaE002OKDTO> invokeAnprC021(String fiscalCode) {
@@ -53,19 +56,19 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig);
     }
 
-    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest) {
+    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest,  String initiativeName, String organizationName) {
         if (response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() == null) {
             throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
         }
 
-        Set<String> childIds = new HashSet<>();
+        List<Child> childList = new ArrayList<>();
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childIds))
+                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, childIds, memberIds));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName));
     }
 
-    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, Set<String> childIds) {
+    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
         if (datiSoggetto.getGeneralita() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() == null) {
@@ -76,16 +79,21 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
                     if (isChild(datiSoggetto)) {
-                        childIds.add(fiscalCodeHashed);
+                        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
+                        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
+                        childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
                     }
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest,
-                                                              Set<String> childIds, Set<String> memberIds) {
-        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
-        anprInfo.setChildListIds(childIds);
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName) {
+        if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
+            initiativeName.toLowerCase().contains("bonus") &&
+            childList.isEmpty())
+            return Mono.empty();
 
+        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
+        anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
                 .map(savedInfo -> buildFamily(response.getIdOperazioneANPR(), memberIds));
     }
@@ -98,11 +106,10 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private boolean isChild(TipoDatiSoggettiEnteDTO datiSoggetto) {
-        return datiSoggetto.getLegameSoggetto() != null
-                && "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+        return datiSoggetto.getLegameSoggetto() != null  && "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new HashSet<>());
+        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>());
     }
 }

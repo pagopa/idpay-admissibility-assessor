@@ -8,5 +8,8 @@ import reactor.core.publisher.Mono;
 import java.util.Optional;
 
 public interface FamilyDataRetrieverService {
-    Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest, Message<String> message);
+    Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest,
+                                          Message<String> message,
+                                          String organizationName,
+                                          String initiativeName);
 }
