@@ -40,14 +40,15 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     @Override
     public Mono<Optional<Family>> retrieveFamily(OnboardingDTO onboardingRequest,
                                                  Message<String> message,
-                                                 String organizationName,
-                                                 String initiativeName) {
+                                                 String initiativeName,
+                                                 String organizationName
+                                                 ) {
         // TODO: Handle PDND call and implement re-scheduling if dailyLimit is reached
 
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(this::invokeAnprC021)
                 .publishOn(Schedulers.boundedElastic())
-                .flatMap(response -> processAnprResponse(response, onboardingRequest,organizationName,initiativeName));
+                .flatMap(response -> processAnprResponse(response, onboardingRequest,initiativeName,organizationName));
     }
 
     private Mono<RispostaE002OKDTO> invokeAnprC021(String fiscalCode) {
@@ -55,7 +56,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig);
     }
 
-    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, String organizationName, String initiativeName) {
+    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response, OnboardingDTO onboardingRequest,  String initiativeName, String organizationName) {
         if (response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() == null) {
             throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
         }
@@ -64,7 +65,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
                 .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,organizationName,initiativeName));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName));
     }
 
     private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
@@ -75,17 +76,17 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         String fiscalCode = datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale();
-        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
-        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
                     if (isChild(datiSoggetto)) {
+                        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
+                        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
                         childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
                     }
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String organizationName, String initiativeName) {
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName) {
         if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
             initiativeName.toLowerCase().contains("bonus") &&
             childList.isEmpty())
