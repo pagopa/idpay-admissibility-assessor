@@ -45,12 +45,20 @@ class FamilyDataRetrieverServiceTest {
 
     private final OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
     private final Family family = new Family("FAMILYID", Set.of(request.getUserId()));
+
+
     private final InitiativeConfig initiativeConfig = InitiativeConfig.builder()
             .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
             .initiativeName("initiative")
             .organizationName("organization")
+
             .build();
 
+    private final InitiativeConfig initiativeConfigGuidonia = InitiativeConfig.builder()
+            .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
+            .initiativeName("bonus")
+            .organizationName("comune di guidonia montecelio")
+            .build();
 
     @Test
     void testRetrieveFamily_OK(){
@@ -82,6 +90,200 @@ class FamilyDataRetrieverServiceTest {
         Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
 
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectNext(Optional.of(familyTest))
+                .verifyComplete();
+    }
+
+    @Test
+    void testRetrieveFamily_Exception_ListaDatiSoggettoEmpty(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+
+        eoo20kDTO.setListaSoggetti(null);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_Exception_DatiSoggettoNull(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        eoo20kDTO.setListaSoggetti(new TipoListaSoggettiDTO());
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_Exception_GeneralitaNull(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        TipoListaSoggettiDTO listaSoggettiDTO = new TipoListaSoggettiDTO();
+        TipoDatiSoggettiEnteDTO  datiSoggettiEnteDTO = new TipoDatiSoggettiEnteDTO();
+
+        datiSoggettiEnteDTO.setGeneralita(null);
+        listaSoggettiDTO.addDatiSoggettoItem(datiSoggettiEnteDTO);
+        eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_Exception_GeneralitaCodFiscaleNull(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        TipoListaSoggettiDTO listaSoggettiDTO = new TipoListaSoggettiDTO();
+        TipoDatiSoggettiEnteDTO  datiSoggettiEnteDTO = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO generalitaDTO = new TipoGeneralitaDTO();
+
+        datiSoggettiEnteDTO.setGeneralita(generalitaDTO);
+        listaSoggettiDTO.addDatiSoggettoItem(datiSoggettiEnteDTO);
+        eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_Exception_GeneralitaCodFiscaleCodFiscaleNull(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        TipoListaSoggettiDTO listaSoggettiDTO = new TipoListaSoggettiDTO();
+        TipoDatiSoggettiEnteDTO  datiSoggettiEnteDTO = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO generalitaDTO = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO codiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+
+        generalitaDTO.setCodiceFiscale(codiceFiscaleDTO);
+        datiSoggettiEnteDTO.setGeneralita(generalitaDTO);
+        listaSoggettiDTO.addDatiSoggettoItem(datiSoggettiEnteDTO);
+        eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_ReturnEmptyResponse(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        TipoListaSoggettiDTO listaSoggettiDTO = new TipoListaSoggettiDTO();
+        TipoDatiSoggettiEnteDTO  datiSoggettiEnteDTO = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO generalitaDTO = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO codiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+
+        codiceFiscaleDTO.setCodFiscale(fiscalCode);
+        generalitaDTO.setCodiceFiscale(codiceFiscaleDTO);
+        datiSoggettiEnteDTO.setGeneralita(generalitaDTO);
+        listaSoggettiDTO.addDatiSoggettoItem(datiSoggettiEnteDTO);
+        eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Family familyTest = new Family();
+        familyTest.setFamilyId(idOperazioneANPR);
+        familyTest.setMemberIds(Set.of(fiscalCodeHashed));
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null, initiativeConfigGuidonia.getInitiativeName(),initiativeConfigGuidonia.getOrganizationName()))
+                .expectComplete()
+                .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_OK_WithChild(){
+
+        String fiscalCode = "fiscalCode";
+        String fiscalCodeHashed = "fiscalCodeHashed";
+        String idOperazioneANPR =  "idOperazioneANPR";
+
+        RispostaE002OKDTO eoo20kDTO = new RispostaE002OKDTO();
+        TipoListaSoggettiDTO listaSoggettiDTO = new TipoListaSoggettiDTO();
+        TipoDatiSoggettiEnteDTO  datiSoggettiEnteDTO = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO generalitaDTO = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO codiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+
+        codiceFiscaleDTO.setCodFiscale(fiscalCode);
+        generalitaDTO.setCodiceFiscale(codiceFiscaleDTO);
+        datiSoggettiEnteDTO.setGeneralita(generalitaDTO);
+        datiSoggettiEnteDTO.setLegameSoggetto(new TipoLegameSoggettoCompletoDTO().codiceLegame("3"));
+        listaSoggettiDTO.addDatiSoggettoItem(datiSoggettiEnteDTO);
+        eoo20kDTO.setListaSoggetti(listaSoggettiDTO);
+        eoo20kDTO.idOperazioneANPR(idOperazioneANPR);
+
+        Family familyTest = new Family();
+        familyTest.setFamilyId(idOperazioneANPR);
+        familyTest.setMemberIds(Set.of(fiscalCodeHashed));
+
+        Mockito.when(userFiscalCodeServiceMock.getUserFiscalCode(request.getUserId())).thenReturn(Mono.just(fiscalCode));
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode),any())).thenReturn(Mono.just(eoo20kDTO));
+        Mockito.when(userFiscalCodeServiceMock.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
+        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(request,null,initiativeConfigGuidonia.getInitiativeName(),initiativeConfigGuidonia.getOrganizationName()))
                 .expectNext(Optional.of(familyTest))
                 .verifyComplete();
     }
