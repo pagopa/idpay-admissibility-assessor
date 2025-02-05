@@ -12,7 +12,7 @@ import lombok.*;
 @EqualsAndHashCode
 @ToString
 @Builder
-public class SelfCriteriaTextDTO {
+public class SelfCriteriaTextDTO implements AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems {
 
     @JsonProperty("description")
     private String description;
