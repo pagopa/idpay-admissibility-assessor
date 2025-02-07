@@ -5,19 +5,22 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
-import java.util.Set;
+
 
 @Document("anpr_info")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder(toBuilder = true, builderMethodName = "hiddenBuilder", buildMethodName = "hiddenBuild")
+@SuperBuilder
 @FieldNameConstants
 public class AnprInfo {
 
+    @Id
+    private String id;
     private String familyId;
     private String initiativeId;
     private String userId;

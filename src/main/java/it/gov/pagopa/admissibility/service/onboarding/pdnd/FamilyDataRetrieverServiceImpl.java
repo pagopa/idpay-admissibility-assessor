@@ -119,6 +119,10 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>());
+        return  AnprInfo.builder()
+                .familyId(familyId)
+                .initiativeId(initiativeId)
+                .userId(userId)
+                .childList(new ArrayList<>()).build();
     }
 }

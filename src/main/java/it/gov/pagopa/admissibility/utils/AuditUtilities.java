@@ -32,4 +32,11 @@ public class AuditUtilities {
                 "Onboarded families deleted.", familyId, initiativeId
         );
     }
+
+    public void logDeletedAnprInfo(String familyId, String initiativeId) {
+        AuditLogger.logAuditString(
+                CEF_FAMILY_PATTERN_DELETE,
+                "Anpr info deleted.", familyId, initiativeId
+        );
+    }
 }

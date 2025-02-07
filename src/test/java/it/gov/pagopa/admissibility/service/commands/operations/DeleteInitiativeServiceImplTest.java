@@ -2,10 +2,12 @@ package it.gov.pagopa.admissibility.service.commands.operations;
 
 import com.mongodb.MongoException;
 import com.mongodb.client.result.DeleteResult;
+import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.admissibility.model.AnprInfo;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import org.junit.jupiter.api.Assertions;
@@ -23,6 +25,8 @@ class DeleteInitiativeServiceImplTest {
     @Mock private DroolsRuleRepository droolsRuleRepositoryMock;
     @Mock private InitiativeCountersRepository initiativeCountersRepositoryMock;
     @Mock private OnboardingFamiliesRepository onboardingFamiliesRepositoryMock;
+
+    @Mock private AnprInfoRepository anprInfoRepositoryMock;
     @Mock private AuditUtilities auditUtilitiesMock;
 
     private DeleteInitiativeService deleteInitiativeService;
@@ -35,6 +39,7 @@ class DeleteInitiativeServiceImplTest {
                 droolsRuleRepositoryMock,
                 initiativeCountersRepositoryMock,
                 onboardingFamiliesRepositoryMock,
+                anprInfoRepositoryMock,
                 auditUtilitiesMock,
                 PAGE_SIZE, 1000L);
     }
@@ -62,6 +67,14 @@ class DeleteInitiativeServiceImplTest {
         Mockito.when(onboardingFamiliesRepositoryMock.deleteById(onboardingFamilies.getId()))
                 .thenReturn(Mono.empty());
 
+        AnprInfo anprInfo = AnprInfo.builder().id("id").initiativeId(initiativeId).build();
+
+        Mockito.when(anprInfoRepositoryMock.findByInitiativeIdWithBatch(initiativeId,PAGE_SIZE))
+                .thenReturn(Flux.just(anprInfo));
+
+        Mockito.when(anprInfoRepositoryMock.deleteById(anprInfo.getId()))
+                .thenReturn(Mono.empty());
+
 
         String result = deleteInitiativeService.execute(initiativeId).block();
 
@@ -71,7 +84,8 @@ class DeleteInitiativeServiceImplTest {
         Mockito.verify(initiativeCountersRepositoryMock, Mockito.times(1)).removeById(Mockito.anyString());
         Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).findByInitiativeIdWithBatch(Mockito.anyString(),Mockito.anyInt());
         Mockito.verify(onboardingFamiliesRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
-
+        Mockito.verify(anprInfoRepositoryMock, Mockito.times(1)).findByInitiativeIdWithBatch(Mockito.anyString(),Mockito.anyInt());
+        Mockito.verify(anprInfoRepositoryMock, Mockito.times(1)).deleteById(Mockito.anyString());
     }
 
     @Test

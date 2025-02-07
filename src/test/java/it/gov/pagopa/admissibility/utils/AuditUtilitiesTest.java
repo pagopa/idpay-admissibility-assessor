@@ -69,4 +69,20 @@ class AuditUtilitiesTest {
                 memoryAppender.getLoggedEvents().get(0).getFormattedMessage()
         );
     }
+
+    @Test
+    void logDeletedAnprInfo_ok(){
+        auditUtilities.logDeletedAnprInfo(FAMILY_ID, INITIATIVE_ID);
+
+        Assertions.assertEquals(
+                ("CEF:0|PagoPa|IDPAY|1.0|7|User interaction|2| event=AdmissibilityAssessor dstip=%s msg=Anpr info deleted." +
+                        " cs1Label=familyId cs1=%s cs2Label=initiativeId cs2=%s")
+                        .formatted(
+                                AuditLogger.SRCIP,
+                                FAMILY_ID,
+                                INITIATIVE_ID
+                        ),
+                memoryAppender.getLoggedEvents().get(0).getFormattedMessage()
+        );
+    }
 }

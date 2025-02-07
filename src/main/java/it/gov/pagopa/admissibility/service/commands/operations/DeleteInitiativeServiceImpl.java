@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.commands.operations;
 
+import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
 import it.gov.pagopa.admissibility.connector.repository.DroolsRuleRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
@@ -19,6 +20,7 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     private final DroolsRuleRepository droolsRuleRepository;
     private final InitiativeCountersRepository initiativeCountersRepository;
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
+    private final AnprInfoRepository anprInfoRepository;
     private final AuditUtilities auditUtilities;
     private final int pageSize;
     private final long delay;
@@ -26,12 +28,13 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     public DeleteInitiativeServiceImpl(DroolsRuleRepository droolsRuleRepository,
                                        InitiativeCountersRepository initiativeCountersRepository,
                                        OnboardingFamiliesRepository onboardingFamiliesRepository,
-                                       AuditUtilities auditUtilities,
+                                       AnprInfoRepository anprInfoRepository, AuditUtilities auditUtilities,
                                        @Value("${app.delete.paginationSize}") int pageSize,
                                        @Value("${app.delete.delayTime}") long delay) {
         this.droolsRuleRepository = droolsRuleRepository;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
+        this.anprInfoRepository = anprInfoRepository;
         this.auditUtilities = auditUtilities;
         this.pageSize = pageSize;
         this.delay = delay;
@@ -43,12 +46,17 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
         return  execAndLogTiming("DELETE_DROOLS_RULE", initiativeId, deleteDroolsRule(initiativeId))
                 .then(execAndLogTiming("DELETE_INITIATIVE_COUNTERS", initiativeId, deleteInitiativeCounters(initiativeId)))
                 .then(execAndLogTiming("DELETE_ONBOARDING_FAMILIES", initiativeId, deleteOnboardingFamilies(initiativeId)))
+                .then(execAndLogTiming("DELETE_ANPR_INFO", initiativeId, deleteAnprInfo(initiativeId)))
                 .then(Mono.just(initiativeId));
     }
+
+
 
     private Mono<?> execAndLogTiming(String deleteFlowName, String initiativeId, Mono<?> deleteMono) {
         return PerformanceLogger.logTimingFinally(deleteFlowName, deleteMono, initiativeId);
     }
+
+
 
     private Mono<Void> deleteDroolsRule(String initiativeId) {
         return droolsRuleRepository.removeById(initiativeId)
@@ -69,12 +77,20 @@ public class DeleteInitiativeServiceImpl implements DeleteInitiativeService{
     }
 
     private Mono<Void> deleteOnboardingFamilies(String initiativeId) {
-
         return onboardingFamiliesRepository.findByInitiativeIdWithBatch(initiativeId, pageSize)
                 .flatMap(of -> onboardingFamiliesRepository.deleteById(of.getId())
                         .then(Mono.just(of).delayElement(Duration.ofMillis(delay))), pageSize)
                 .doOnNext(familyId -> auditUtilities.logDeletedOnboardingFamilies(familyId.getFamilyId(), initiativeId))
                 .then()
                 .doOnSuccess(i -> log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: onboarding_families", initiativeId));
+    }
+
+    private Mono<Void> deleteAnprInfo(String initiativeId) {
+        return anprInfoRepository.findByInitiativeIdWithBatch(initiativeId, pageSize)
+                .flatMap(of -> anprInfoRepository.deleteById(of.getId())
+                        .then(Mono.just(of).delayElement(Duration.ofMillis(delay))), pageSize)
+                .doOnNext(anprInfo -> auditUtilities.logDeletedAnprInfo(anprInfo.getFamilyId(), initiativeId))
+                .then()
+                .doOnSuccess(i -> log.info("[DELETE_INITIATIVE] Deleted initiative {} from collection: anpr_info", initiativeId));
     }
 }
