@@ -10,6 +10,7 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessme
 import it.gov.pagopa.admissibility.model.AnprInfo;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.admissibility.utils.ExternalConstants;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,6 +45,9 @@ class FamilyDataRetrieverServiceTest {
 
     @MockBean
     private AnprInfoRepository anprInfoRepositoryMock;
+
+    @MockBean
+    private ExternalConstants externalConstants;
 
     @Autowired
     private FamilyDataRetrieverServiceImpl familyDataRetrieverService;
@@ -108,6 +113,10 @@ class FamilyDataRetrieverServiceTest {
         Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode), any())).thenReturn(Mono.just(response));
         Mockito.when(userFiscalCodeService.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
         Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
+        List<String> entityEnabledList = new ArrayList<>();
+        entityEnabledList.add("COMUNE DI GUIDONIA MONTECELIO");
+        entityEnabledList.add("COMUNE DI ROMA");
+        Mockito.when(externalConstants.getEntityEnabledList()).thenReturn(entityEnabledList);
     }
 
     @Test

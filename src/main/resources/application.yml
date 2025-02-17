@@ -421,3 +421,8 @@ app:
           gcm:
             iv: ${UTIL_CRYPTO_AES_MODE_GCM_IV:IV_SAMPLE}
             tLen: ${UTIL_CRYPTO_AES_MODE_GCM_TAG_LEN:16}
+external:
+  constant:
+    entityEnabledList:
+    - "COMUNE DI GUIDONIA MONTECELIO"
+    - "ALTRO"
