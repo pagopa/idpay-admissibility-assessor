@@ -97,7 +97,7 @@ import java.util.stream.Stream;
                 "app.pdv.retry.delay-millis=5000",
                 "app.pdv.retry.max-attempts=3",
                 //endregion
-
+                "external.constant.entityEnabledList=COMUNE DI GUIDONIA MONTECELIO"
 
         })
 @AutoConfigureSingleInstanceMongodb

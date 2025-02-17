@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
+import it.gov.pagopa.admissibility.utils.ExternalConstants;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
 
     @Autowired
     private PagoPaAnprPdndConfig pdndInitiativeConfig;
+
+    @Autowired
+    private ExternalConstants externalConstants;
 
     @Test
     void getResidenceAssessment(){
