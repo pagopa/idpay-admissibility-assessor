@@ -29,4 +29,7 @@ public abstract class EvaluationDTO {
     public abstract Long getRankingValue();
     public abstract void setRankingValue(Long rankingValue);
     private Set<String> memberIds;
+
+    //
+    private String serviceId;
 }

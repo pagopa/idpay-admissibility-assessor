@@ -32,4 +32,7 @@ public class OnboardingDTO {
 
     // Info filled during processing
     private boolean budgetReserved;
+
+    //
+    private String serviceId;
 }

@@ -35,6 +35,9 @@ public class Onboarding2EvaluationMapper {
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
+        //
+        out.setServiceId(onboardingDTO.getServiceId());
+
         if(CollectionUtils.isEmpty(rejectionReasons)){
             out.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
         } else {
