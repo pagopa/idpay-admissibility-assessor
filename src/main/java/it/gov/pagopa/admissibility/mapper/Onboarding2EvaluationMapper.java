@@ -73,6 +73,9 @@ public class Onboarding2EvaluationMapper {
 
         out.setOnboardingKo(false);
 
+        //
+        out.setServiceId(onboardingDTO.getServiceId());
+
         return out;
     }
 
@@ -112,6 +115,9 @@ public class Onboarding2EvaluationMapper {
             out.setFamilyId(request.getFamily().getFamilyId());
             out.setMemberIds(request.getFamily().getMemberIds());
         }
+
+        //
+        out.setServiceId(request.getServiceId());
 
         return out;
     }
