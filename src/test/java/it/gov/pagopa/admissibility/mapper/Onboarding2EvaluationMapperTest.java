@@ -52,7 +52,8 @@ class Onboarding2EvaluationMapperTest {
                 Family.builder()
                         .familyId("FAMILYID")
                         .memberIds(Set.of("USERID")).build(),
-                false
+                false,
+                "SERVICE"
         );
 
         //init initiativeConfig

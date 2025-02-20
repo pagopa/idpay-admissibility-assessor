@@ -145,7 +145,8 @@ class OnboardingConsensusCheckTest {
                 new Residence(),
                 new BirthDate(),
                 null,
-                false
+                false,
+                "SERVICE"
         );
     }
 
