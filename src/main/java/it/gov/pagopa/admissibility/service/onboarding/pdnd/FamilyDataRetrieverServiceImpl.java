@@ -17,6 +17,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -78,7 +80,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         String fiscalCode = datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale();
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
-                    if (isChild(datiSoggetto)) {
+                    if (isChildOnboarded(datiSoggetto)) {
                         String nomeFiglio = datiSoggetto.getGeneralita().getNome();
                         String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
                         childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
@@ -99,14 +101,21 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private Optional<Family> buildFamily(String familyId, Set<String> memberIds) {
-        Family family = new Family();
-        family.setFamilyId(familyId);
-        family.setMemberIds(memberIds);
+        Family family = Family.builder()
+                .familyId(familyId)
+                .memberIds(memberIds)
+                .build();
         return Optional.of(family);
     }
 
-    private boolean isChild(TipoDatiSoggettiEnteDTO datiSoggetto) {
-        return datiSoggetto.getLegameSoggetto() != null  && "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+    private boolean isChildOnboarded(TipoDatiSoggettiEnteDTO datiSoggetto) {
+        return datiSoggetto.getLegameSoggetto() != null &&
+                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame()) &&
+                datiSoggetto.getGeneralita() != null &&
+                datiSoggetto.getGeneralita().getDataNascita() != null &&
+                LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                        .plusYears(18)
+                        .isAfter(LocalDate.of(2024, 12, 31));
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {

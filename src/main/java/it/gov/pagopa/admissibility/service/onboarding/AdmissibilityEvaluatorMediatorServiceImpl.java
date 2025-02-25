@@ -105,7 +105,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     EvaluationDTO evaluationDTO = req2ev.getValue();
 
                     if (evaluationDTO instanceof EvaluationCompletedDTO evaluation) {
-                        callOnboardingNotifier(evaluation);
+                        callOnboardingNotifier(evaluation,request);
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
                         }
@@ -268,9 +268,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 });
     }
 
-    private void callOnboardingNotifier(EvaluationCompletedDTO evaluationCompletedDTO) {
+    private void callOnboardingNotifier(EvaluationCompletedDTO evaluationCompletedDTO, OnboardingDTO onboardingDTO) {
         log.info("[ONBOARDING_REQUEST] notifying onboarding request to outcome topic: {}", evaluationCompletedDTO);
         try {
+            evaluationCompletedDTO.setServiceId(onboardingDTO.getServiceId());
             if (!onboardingNotifierService.notify(evaluationCompletedDTO)) {
                 throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while onboarding notify");
             }
@@ -317,7 +318,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 callOnboardingNotifier(evaluation.toBuilder()
                         .userId(userId)
                         .status(status)
-                        .build());
+                        .build(),
+                        request);
             }
         });
     }

@@ -35,6 +35,9 @@ public class Onboarding2EvaluationMapper {
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
+        //
+        out.setServiceId(onboardingDTO.getServiceId());
+
         if(CollectionUtils.isEmpty(rejectionReasons)){
             out.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
         } else {
@@ -69,6 +72,9 @@ public class Onboarding2EvaluationMapper {
         setRankingValue(onboardingDTO, initiative, out);
 
         out.setOnboardingKo(false);
+
+        //
+        out.setServiceId(onboardingDTO.getServiceId());
 
         return out;
     }
@@ -109,6 +115,9 @@ public class Onboarding2EvaluationMapper {
             out.setFamilyId(request.getFamily().getFamilyId());
             out.setMemberIds(request.getFamily().getMemberIds());
         }
+
+        //
+        out.setServiceId(request.getServiceId());
 
         return out;
     }
