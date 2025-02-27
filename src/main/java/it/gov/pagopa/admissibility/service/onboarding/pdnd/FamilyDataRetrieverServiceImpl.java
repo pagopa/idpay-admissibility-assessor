@@ -10,6 +10,7 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessme
 import it.gov.pagopa.admissibility.model.AnprInfo;
 import it.gov.pagopa.admissibility.model.Child;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.admissibility.utils.ExternalConstants;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -24,19 +25,23 @@ import java.util.stream.Collectors;
 
 @Service
 public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverService {
+    public static final String CODICE_LEGAME_3 = "3";
     private final AnprC021RestClient anprC021RestClient;
     private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
     private final UserFiscalCodeService userFiscalCodeService;
     private final AnprInfoRepository anprInfoRepository;
+    private final ExternalConstants externalConstants;
 
     public FamilyDataRetrieverServiceImpl(AnprC021RestClient anprC021RestClient,
                                           PagoPaAnprPdndConfig pagoPaAnprPdndConfig,
                                           UserFiscalCodeService userFiscalCodeService,
-                                          AnprInfoRepository anprInfoRepository) {
+                                          AnprInfoRepository anprInfoRepository,
+                                          ExternalConstants externalConstants) {
         this.anprC021RestClient = anprC021RestClient;
         this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
         this.userFiscalCodeService = userFiscalCodeService;
         this.anprInfoRepository = anprInfoRepository;
+        this.externalConstants = externalConstants;
     }
 
     @Override
@@ -89,7 +94,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName) {
-        if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
+        if (this.externalConstants.getEntityEnabledList().contains(organizationName.toUpperCase()) &&
             initiativeName.toLowerCase().contains("bonus") &&
             childList.isEmpty())
             return Mono.empty();
@@ -110,7 +115,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private boolean isChildOnboarded(TipoDatiSoggettiEnteDTO datiSoggetto) {
         return datiSoggetto.getLegameSoggetto() != null &&
-                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame()) &&
+                CODICE_LEGAME_3.equals(datiSoggetto.getLegameSoggetto().getCodiceLegame()) &&
                 datiSoggetto.getGeneralita() != null &&
                 datiSoggetto.getGeneralita().getDataNascita() != null &&
                 LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
