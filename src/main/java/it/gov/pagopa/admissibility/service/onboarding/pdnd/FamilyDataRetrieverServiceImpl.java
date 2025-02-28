@@ -129,7 +129,8 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return birthDate.isAfter(LocalDate.now().minusYears(18));
+        return birthDate.plusYears(18)
+                .isBefore(LocalDate.of(2024, 12, 31));
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId, Integer underAgeNumber) {
