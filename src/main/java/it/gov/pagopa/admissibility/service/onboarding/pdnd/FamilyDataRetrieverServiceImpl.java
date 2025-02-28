@@ -64,13 +64,15 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         List<Child> childList = new ArrayList<>();
+        List<Integer> underAgeNumber = new ArrayList<>();
+        underAgeNumber.add(0);
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
+                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList, underAgeNumber))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName,underAgeNumber));
     }
 
-    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
+    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList, List<Integer> underAgeNumber) {
         if (datiSoggetto.getGeneralita() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() == null) {
@@ -85,16 +87,19 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                         String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
                         childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
                     }
+                    if(isChildUnder18(datiSoggetto)){
+                        underAgeNumber.set(0, underAgeNumber.get(0) + 1);
+                    }
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName) {
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName, List<Integer> underAgeNumber) {
         if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
             initiativeName.toLowerCase().contains("bonus") &&
             childList.isEmpty())
             return Mono.empty();
 
-        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
+        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId(), underAgeNumber.get(0));
         anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
                 .map(savedInfo -> buildFamily(response.getIdOperazioneANPR(), memberIds));
@@ -118,7 +123,17 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                         .isAfter(LocalDate.of(2024, 12, 31));
     }
 
-    private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>());
+    private boolean isChildUnder18(TipoDatiSoggettiEnteDTO datiSoggetto) {
+        if (datiSoggetto.getGeneralita() == null || datiSoggetto.getGeneralita().getDataNascita() == null) {
+            return false;
+        }
+
+        LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return birthDate.plusYears(18)
+                .isBefore(LocalDate.of(2024, 12, 31));
+    }
+
+    private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId, Integer underAgeNumber) {
+        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>(), underAgeNumber);
     }
 }
