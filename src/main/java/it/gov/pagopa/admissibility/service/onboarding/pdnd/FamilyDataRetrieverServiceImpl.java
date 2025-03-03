@@ -82,13 +82,13 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         String fiscalCode = datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale();
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
-                    if (isChildOnboarded(datiSoggetto)) {
-                        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
-                        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
-                        childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
-                    }
                     if(isChildUnder18(datiSoggetto)){
                         underAgeNumber.set(0, underAgeNumber.get(0) + 1);
+                        if (isChildOnboarded(datiSoggetto)) {
+                            String nomeFiglio = datiSoggetto.getGeneralita().getNome();
+                            String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
+                            childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
+                            }
                     }
                 });
     }
@@ -115,22 +115,16 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private boolean isChildOnboarded(TipoDatiSoggettiEnteDTO datiSoggetto) {
         return datiSoggetto.getLegameSoggetto() != null &&
-                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame()) &&
-                datiSoggetto.getGeneralita() != null &&
-                datiSoggetto.getGeneralita().getDataNascita() != null &&
-                LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                        .plusYears(18)
-                        .isAfter(LocalDate.of(2024, 12, 31));
+                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
     }
 
     private boolean isChildUnder18(TipoDatiSoggettiEnteDTO datiSoggetto) {
         if (datiSoggetto.getGeneralita() == null || datiSoggetto.getGeneralita().getDataNascita() == null) {
             return false;
         }
-
         LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return birthDate.plusYears(18)
-                .isBefore(LocalDate.of(2024, 12, 31));
+        final LocalDate today = LocalDate.now();
+        return birthDate.isAfter(today.minusYears(18));
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId, Integer underAgeNumber) {
