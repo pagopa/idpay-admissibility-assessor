@@ -115,7 +115,8 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private boolean isChildOnboarded(TipoDatiSoggettiEnteDTO datiSoggetto) {
         return datiSoggetto.getLegameSoggetto() != null &&
-                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+               "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+
     }
 
     private boolean isChildUnder18(TipoDatiSoggettiEnteDTO datiSoggetto) {
