@@ -122,10 +122,9 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         if (datiSoggetto.getGeneralita() == null || datiSoggetto.getGeneralita().getDataNascita() == null) {
             return false;
         }
-
         LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return birthDate.plusYears(18)
-                .isAfter(LocalDate.of(2024, 12, 31));
+        final LocalDate today = LocalDate.now();
+        return birthDate.isAfter(today.minusYears(18));
     }
 
     private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId, Integer underAgeNumber) {
