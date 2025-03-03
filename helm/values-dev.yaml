@@ -9,11 +9,11 @@ microservice-chart:
 
   resources:
     requests:
-      memory: "768Mi"
-      cpu: "150m"
+      memory: "1Gi"
+      cpu: "500m"
     limits:
-      memory: "768Mi"
-      cpu: "600m"
+      memory: "1.5Gi"
+      cpu: "750m"
 
   autoscaling:
     enable: true
@@ -46,8 +46,8 @@ microservice-chart:
 
   envConfig:
     JAVA_TOOL_OPTIONS: >-
-      -XX:InitialRAMPercentage=75.0
-      -XX:MaxRAMPercentage=85.0
+      -XX:InitialRAMPercentage=80.0
+      -XX:MaxRAMPercentage=90.0
       -XX:+UseG1GC
       -XX:+UseContainerSupport
       -Djava.security.egd=file:/dev/./urandom
