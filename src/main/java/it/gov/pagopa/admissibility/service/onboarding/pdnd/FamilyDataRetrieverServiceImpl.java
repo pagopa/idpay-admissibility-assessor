@@ -64,13 +64,15 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         List<Child> childList = new ArrayList<>();
+        List<Integer> underAgeNumber = new ArrayList<>();
+        underAgeNumber.add(0);
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList))
+                .flatMap(datiSoggetto -> processDatiSoggetto(datiSoggetto, childList, underAgeNumber))
                 .collect(Collectors.toSet())
-                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName));
+                .flatMap(memberIds -> saveAnprInfoAndBuildFamily(response, onboardingRequest, memberIds, childList,initiativeName,organizationName,underAgeNumber));
     }
 
-    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList) {
+    private Mono<String> processDatiSoggetto(TipoDatiSoggettiEnteDTO datiSoggetto, List<Child> childList, List<Integer> underAgeNumber) {
         if (datiSoggetto.getGeneralita() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale() == null
                 || datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() == null) {
@@ -80,21 +82,24 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         String fiscalCode = datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale();
         return userFiscalCodeService.getUserId(fiscalCode)
                 .doOnNext(fiscalCodeHashed -> {
-                    if (isChildOnboarded(datiSoggetto)) {
-                        String nomeFiglio = datiSoggetto.getGeneralita().getNome();
-                        String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
-                        childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
+                    if(isChildUnder18(datiSoggetto)){
+                        underAgeNumber.set(0, underAgeNumber.get(0) + 1);
+                        if (isChildOnboarded(datiSoggetto)) {
+                            String nomeFiglio = datiSoggetto.getGeneralita().getNome();
+                            String cognomeFiglio = datiSoggetto.getGeneralita().getCognome();
+                            childList.add(new Child(fiscalCodeHashed, nomeFiglio, cognomeFiglio));
+                            }
                     }
                 });
     }
 
-    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName) {
+    private Mono<Optional<Family>> saveAnprInfoAndBuildFamily(RispostaE002OKDTO response, OnboardingDTO onboardingRequest, Set<String> memberIds, List<Child> childList, String initiativeName, String organizationName, List<Integer> underAgeNumber) {
         if (organizationName.equalsIgnoreCase("comune di guidonia montecelio") &&
             initiativeName.toLowerCase().contains("bonus") &&
             childList.isEmpty())
             return Mono.empty();
 
-        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
+        AnprInfo anprInfo = buildAnprInfo(response.getIdOperazioneANPR(), onboardingRequest.getInitiativeId(), onboardingRequest.getUserId(), underAgeNumber.get(0));
         anprInfo.setChildList(childList);
         return anprInfoRepository.save(anprInfo)
                 .map(savedInfo -> buildFamily(response.getIdOperazioneANPR(), memberIds));
@@ -110,15 +115,20 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
 
     private boolean isChildOnboarded(TipoDatiSoggettiEnteDTO datiSoggetto) {
         return datiSoggetto.getLegameSoggetto() != null &&
-                "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame()) &&
-                datiSoggetto.getGeneralita() != null &&
-                datiSoggetto.getGeneralita().getDataNascita() != null &&
-                LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                        .plusYears(18)
-                        .isAfter(LocalDate.of(2024, 12, 31));
+               "3".equals(datiSoggetto.getLegameSoggetto().getCodiceLegame());
+
     }
 
-    private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId) {
-        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>());
+    private boolean isChildUnder18(TipoDatiSoggettiEnteDTO datiSoggetto) {
+        if (datiSoggetto.getGeneralita() == null || datiSoggetto.getGeneralita().getDataNascita() == null) {
+            return false;
+        }
+        LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        final LocalDate today = LocalDate.now();
+        return birthDate.isAfter(today.minusYears(18));
+    }
+
+    private AnprInfo buildAnprInfo(String familyId, String initiativeId, String userId, Integer underAgeNumber) {
+        return new AnprInfo(familyId, initiativeId, userId, new ArrayList<>(), underAgeNumber);
     }
 }
