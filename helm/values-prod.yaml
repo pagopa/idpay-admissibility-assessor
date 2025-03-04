@@ -46,7 +46,7 @@ microservice-chart:
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
 
   envConfig:
-    JAVA_TOOL_OPTIONS: ->
+    JAVA_TOOL_OPTIONS: >-
       -XX:InitialRAMPercentage=80.0
       -XX:MaxRAMPercentage=90.0
       -XX:+UseG1GC
