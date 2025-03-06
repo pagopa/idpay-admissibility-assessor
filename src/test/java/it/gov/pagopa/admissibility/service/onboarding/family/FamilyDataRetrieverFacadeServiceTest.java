@@ -1,5 +1,9 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
+import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
+import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
+import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -9,12 +13,12 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +35,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 @ExtendWith(MockitoExtension.class)
 class FamilyDataRetrieverFacadeServiceTest {
 
@@ -39,14 +45,22 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private CriteriaCodeService criteriaCodeServiceMock;
 
+    @Mock private AnprC021RestClient anprC021RestClientMock;
+
+    @Mock private UserFiscalCodeService userFiscalCodeServiceMock;
+
     private final Onboarding2EvaluationMapper evaluationMapper = new Onboarding2EvaluationMapper();
 
     private FamilyDataRetrieverFacadeService service;
 
+
+    @Mock private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
+
+    @Mock private AnprInfoRepository anprInfoRepositoryMock;
+
     @BeforeEach
     void init(){
         service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper);
-
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
     }
 
@@ -59,6 +73,8 @@ class FamilyDataRetrieverFacadeServiceTest {
     private final Family family = new Family("FAMILYID", Set.of(request.getUserId()));
     private final InitiativeConfig initiativeConfig = InitiativeConfig.builder()
             .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
+            .initiativeName("initiative")
+            .organizationName("organization")
             .build();
     private final OnboardingFamilies onboardingFamilies = new OnboardingFamilies(family, request.getInitiativeId());
     private final Message<String> message = MessageBuilder.withPayload("").build();
@@ -75,27 +91,27 @@ class FamilyDataRetrieverFacadeServiceTest {
 
     private void testNoFamily(Mono<Optional<Family>> noFamilyResult) {
         // Given
-        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message)).thenReturn(noFamilyResult);
+        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName())).thenReturn(noFamilyResult);
         EvaluationDTO expectedResult = evaluationMapper.apply(request, initiativeConfig, List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO, OnboardingConstants.REJECTION_REASON_FAMILY_KO, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH_LABEL, "Nucleo familiare non disponibile")));
 
         // When
         EvaluationDTO result = service.retrieveFamily(request, initiativeConfig, message).block();
 
         // Then
-        Assertions.assertNotNull(result);
+        assertNotNull(result);
 
         // the mapper use now()
         Assertions.assertFalse(expectedResult.getAdmissibilityCheckDate().isAfter(result.getAdmissibilityCheckDate()));
         expectedResult.setAdmissibilityCheckDate(null);
         result.setAdmissibilityCheckDate(null);
-        Assertions.assertEquals(expectedResult, result);
+        assertEquals(expectedResult, result);
 
         Mockito.verify(criteriaCodeServiceMock).getCriteriaCodeConfig(CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY);
     }
 
     @Test
     void testNewFamilyNoCached() {
-        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message)).thenReturn(Mono.just(Optional.of(family)));
+        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName())).thenReturn(Mono.just(Optional.of(family)));
         request.setFamily(null);
         testNewFamily();
     }
@@ -114,13 +130,13 @@ class FamilyDataRetrieverFacadeServiceTest {
         EvaluationDTO result = service.retrieveFamily(request, initiativeConfig, message).block();
 
         // Then
-        Assertions.assertNull(result);
+        assertNull(result);
         Assertions.assertSame(request.getFamily(), family);
     }
 
     @Test
     void testFamilyAlreadyOnboardedNoCached() {
-        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message)).thenReturn(Mono.just(Optional.of(family)));
+        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message, initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName())).thenReturn(Mono.just(Optional.of(family)));
         request.setFamily(null);
 
         testFamilyAlreadyOnboarded();
@@ -131,6 +147,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
         testFamilyAlreadyOnboarded();
     }
+
 
     void testFamilyAlreadyOnboarded() {
         // Given
@@ -149,4 +166,6 @@ class FamilyDataRetrieverFacadeServiceTest {
         Assertions.assertSame(result, expectedEvaluationResult);
         Assertions.assertSame(request.getFamily(), family);
     }
+
 }
+

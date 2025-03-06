@@ -2,26 +2,28 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
-import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
+import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC021ServiceConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RichiestaE002DTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoCriteriRicercaE002DTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiRichiestaE002DTO;
+
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RichiestaE002DTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoCriteriRicercaE002DTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiRichiestaE002DTO;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
 import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-@Service
-public class AnprC001RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO> implements AnprC001RestClient{
 
-    protected AnprC001RestClientImpl(
+@Service
+public class AnprC021RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO> implements AnprC021RestClient{
+
+    protected AnprC021RestClientImpl(
             ObjectMapper objectMapper,
             PdndConfig pdndConfig,
             AnprConfig anprConfig,
-            AnprC001ServiceConfig anprC001ServiceConfig,
-            AnprSignAlgorithmC001Retriever jwtSignAlgorithmRetrieverService,
+            AnprC021ServiceConfig anprC001ServiceConfig,
+            AnprSignAlgorithmC021Retriever jwtSignAlgorithmRetrieverService,
             PdndRestClient pdndRestClient,
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,
@@ -39,7 +41,7 @@ public class AnprC001RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002
         TipoDatiRichiestaE002DTO datiRichiestaE002DTO = new TipoDatiRichiestaE002DTO()
                 .dataRiferimentoRichiesta(dateNow)
                 .motivoRichiesta("1")
-                .casoUso("C001");
+                .casoUso("C021");
 
         return new RichiestaE002DTO()
                 .idOperazioneClient(String.valueOf(sequenceValue))

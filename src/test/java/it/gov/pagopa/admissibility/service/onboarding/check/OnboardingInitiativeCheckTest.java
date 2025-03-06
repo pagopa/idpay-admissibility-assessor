@@ -139,7 +139,8 @@ class OnboardingInitiativeCheckTest {
                 new Residence(),
                 new BirthDate(),
                 null,
-                false
+                false,
+                "SERVICE"
         );
     }
 }

@@ -1,0 +1,30 @@
+{
+  "request": {
+    "method": "PUT",
+    "urlPathPattern": "/pdv/tokens",
+    "bodyPatterns" : [
+      {
+        "equalToJson": {
+          "pii": "USERID_BADREQUEST_1"
+        }
+      }],
+     "headers": {
+      "x-api-key": {
+        "matches": "x_api_key([0-9]?)+"
+      }
+    }
+  },
+  "response": {
+    "status": "400",
+    "jsonBody": {
+      "type": "type",
+      "title": "Bad request",
+      "status": "400",
+      "details": "details",
+      "instance": "instance"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+      }

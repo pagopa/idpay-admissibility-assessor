@@ -2,7 +2,6 @@ package it.gov.pagopa.common.reactive.pdnd.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
-import it.gov.pagopa.admissibility.utils.Utils;
 import it.gov.pagopa.common.http.utils.NettySslUtils;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
 import it.gov.pagopa.common.reactive.pdnd.config.BasePdndServiceProviderConfig;
@@ -12,6 +11,7 @@ import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
 import it.gov.pagopa.common.reactive.pdnd.utils.AgidUtils;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
+import it.gov.pagopa.common.utils.CommonUtilities;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -63,7 +63,7 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
     }
 
     protected Mono<R> invokePdndRestService(Consumer<HttpHeaders> httpHeadersConsumer, T body, PdndInitiativeConfig pdndInitiativeConfig) {
-        String bodyString = Utils.convertToJson(body, objectMapper);
+        String bodyString = CommonUtilities.convertToJson(body, objectMapper);
         String digest = AgidUtils.buildDigest(bodyString);
         return retrievePdndAuthData(pdndInitiativeConfig)
                 .flatMap(pdndAuthData -> AgidUtils.buildAgidJwtSignature(pdndServiceConfig, pdndInitiativeConfig, pdndAuthData.getJwtSignAlgorithm(), digest)
@@ -71,6 +71,13 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
     }
 
     private Mono<R> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
+
+        log.info("[PDND_SERVICE_INVOKE] AccessToken: {}", pdndAuthData.getAccessToken());
+        log.info("[PDND_SERVICE_INVOKE] Digest: {}", digest);
+        log.info("[PDND_SERVICE_INVOKE] Agid-JWT-Signature: {}", agidJwtSignature);
+        log.info("[PDND_SERVICE_INVOKE] Agid-JWT-TrackingEvidence: {}", pdndAuthData.getAgidJwtTrackingEvidence());
+        log.info("[PDND_SERVICE_INVOKE] Body: {}", bodyString);
+
         return PerformanceLogger.logTimingOnNext(
                 "PDND_SERVICE_INVOKE",
                 webClient.method(pdndServiceConfig.getHttpMethod())

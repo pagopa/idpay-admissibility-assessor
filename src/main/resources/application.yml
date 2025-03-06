@@ -302,51 +302,19 @@ app:
     config:
       audience: ${PDND_ACCESS_TOKEN_AUDIENCE:auth.uat.interop.pagopa.it/client-assertion}
   anpr:
-    pagopa-pdnd-configuration:
-      client-id: ${PAGOPA_PDND_CONFIGURATION_CLIENT_ID:5df9f218-df34-4f05-a9c4-e4a74b2a8e3f}
-      kid: ${PAGOPA_PDND_CONFIGURATION_KID:r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY}
-      purpose-id: ${PAGOPA_PDND_CONFIGURATION_PURPOSE_ID:8af4c795-8066-4407-a0b3-c95c2daefd6c}
-      key: |-
-        ${PAGOPA_PDND_CONFIGURATION_JWT_KEY:-----BEGIN PRIVATE KEY-----
-        MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCsM4kqzDAJop1g
-        ltodnPduAQiXvPUCtmk0jnhkZpdxGK2LCOv9b196dbr2YbsgCUhO4+1oi7iKCBdN
-        xJG5q6Wt6zYS+4/sqMvS1+jH8+y2poxnMsXzA5h8kTiInx99xAvrssnf9bCfYWFh
-        VX7gPYBhbxA91GbjTockbts0ouZ0z0AVRCnrOhO816DJZDIB8fjSLvZSimW0O5tw
-        DKQPpiCRFy0K0p3yH8FGkhG0yfQAYsz+jmrBi754IDLz/s+mPcfMLAeQM4lp3+Da
-        lGPiygl2+fms/pMzg5W1ntV6HGKieRpxwE9zIMZKsijnzftdhoa/evtGfSsKmV/G
-        dTga2Z3nAgMBAAECggEAEC6FmMJ4Tyd7T3zNgVPjQnCRbKTihz858qjislibqZKO
-        mE6d0oJ5P+o5R/bWHUQSCevMPvNGQ55QBkxO/1ocZxP/0FfYZf5UrPsCEmwfFejf
-        r8DrLhNr7GS/IcOGM4zNK/hwlP2i+88sVfexRQQygLVtmsnPY1PZSjiqm68lJdu+
-        aP8TYM10y1aeiYnfuUYvnvXJFXeTEockhaUJTmeIQNbbUy+pyJ0mAPASPtXRLr8h
-        UflutICnWcx4v/qkCn1jmHw+NMA4q7hOH7UuOAqj53FqGMN+IWfjMmmYoQ7MVURx
-        8CrnEtlCOua+C8EEIFL2ylvV7X0cv/DqCJLVQoegsQKBgQDLzMaAjNgD8xSXp+Gj
-        beeUsSGptEaGMuA89AzyTnCyvU9a1HGwDAghoQPae+pVk7R5uokojWkBVzP/kKxv
-        ZldGwPOegUUdBLS4yJML+OkqtoCgf3Mbcozm5dVYtx7bYdhh3PswzRmn/h/YjEAz
-        +/mxi6dJir0k0Nd4YNtQbzBctwKBgQDYTtSmJvVQdOHnzqA/LRmMF1l+HaqLuDfu
-        B4rDlxCdDfOAvHqz+3YapP3B4MQuz29TSDqwAnzoN2XZX5B6g/jKauWpAwZkFXuO
-        fqcfNG/+MewTcHIYNm+EtgXtIsnCXDfAeXdQapzNsOX+XSF/aWcgGHg18xOBPt0R
-        7Aoa/h34UQKBgQCsCzGjwcJ2CxXeNPYxfg1ao/HUDoDet0I/kpL/VqKi8Vd1SRS0
-        VmPi58eWALfBCJD5ljRFjKMRY6lc3KgE3vNconTG4UAUEC30NDaWi8liqnCJjS4C
-        BMDYBzwEyYn+D2qYqvFOsEYxYEFIEJX+jH+sl0VguwOTec38LF/YVhUQnwKBgG5u
-        2Kw3SZkZA1ioqjF24gsexKbZmH+avps8qICw+F9mhwIbt/15jVOPFqrMCPzpFKoN
-        P0ErFAAugEYZPxb9l6AoMTY3gCTKvvkB+mq5B9BcRm2qQ+XOrOKxV5c44o7jK+eN
-        W/fnZkSxYsqZW4fEFU1SkNTiU/vxT0ZeHs6nHD/xAoGAOIqaqQnJfGj/wLo3Z9o5
-        /Oxu1zTPGZC6SqpdygCjlQ0kQ8Bp0LV7nL06/VCHAHI2lF12xApRnFk7GY3xyqK8
-        nYxeRASCj3GGmLupGshtfCtDBeysE2h7kj3Bo0d6g1Ye+j8BUZuZaZm6WNlo7cgE
-        NLHn1k0IpmXFOiFa1Y1D6Bc=
-        -----END PRIVATE KEY-----
-        }
-      pub: |-
-        ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB:-----BEGIN PUBLIC KEY-----
-        MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDOJKswwCaKdYJbaHZz3
-        bgEIl7z1ArZpNI54ZGaXcRitiwjr/W9fenW69mG7IAlITuPtaIu4iggXTcSRuaul
-        res2EvuP7KjL0tfox/PstqaMZzLF8wOYfJE4iJ8ffcQL67LJ3/Wwn2FhYVV+4D2A
-        YW8QPdRm406HJG7bNKLmdM9AFUQp6zoTvNegyWQyAfH40i72UopltDubcAykD6Yg
-        kRctCtKd8h/BRpIRtMn0AGLM/o5qwYu+eCAy8/7Ppj3HzCwHkDOJad/g2pRj4soJ
-        dvn5rP6TM4OVtZ7VehxionkaccBPcyDGSrIo5837XYaGv3r7Rn0rCplfxnU4Gtmd
-        5wIDAQAB
-        -----END PUBLIC KEY-----
-        }
+    pagopaPdndConfiguration:
+      c021:
+        client-id: ${PAGOPA_PDND_CONFIGURATION_CLIENT_ID_C021:}
+        kid: ${PAGOPA_PDND_CONFIGURATION_KID_C021:}
+        purpose-id: ${PAGOPA_PDND_CONFIGURATION_PURPOSE_ID_C021:}
+        key: ${PAGOPA_PDND_CONFIGURATION_JWT_KEY_C021:}
+        pub: ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB_C021:}
+      c001:
+        client-id: ${PAGOPA_PDND_CONFIGURATION_CLIENT_ID_C001:}
+        kid: ${PAGOPA_PDND_CONFIGURATION_KID_C001:}
+        purpose-id: ${PAGOPA_PDND_CONFIGURATION_PURPOSE_ID_C001:}
+        key: ${PAGOPA_PDND_CONFIGURATION_JWT_KEY_C001:}
+        pub: ${PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB_C001:}
     config:
       base-url: ${ANPR_BASE_URL:http://anpr}
       auth-expiration-seconds: ${ANPR_AUTH_EXPIRATION_SECONDS:420} # 7 minutes
@@ -364,6 +332,11 @@ app:
         audience: ${ANPR_C001_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1}
         httpMethod: POST
         path: /C001-servizioNotifica/v1/anpr-service-e002
+    c021-servizio-accertamento-stato-famiglia:
+      config:
+        audience: ${ANPR_C021_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioAccertamentoStatoFamiglia/v1}
+        httpMethod: POST
+        path: /C021-servizioAccertamentoStatoFamiglia/v1/anpr-service-e002
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}

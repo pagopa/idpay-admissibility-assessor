@@ -27,7 +27,7 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
     private AnprC001RestClient anprC001RestClient;
 
     @Autowired
-    private PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
+    private PagoPaAnprPdndConfig pdndInitiativeConfig;
 
     @Test
     void getResidenceAssessment(){
@@ -38,7 +38,7 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
         sequenceGeneratorRepository.save(new CustomSequenceGenerator(OnboardingConstants.ANPR_E002_INVOKE, sequenceVal)).block();
 
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pagoPaAnprPdndConfig).block();
+        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig.getPagopaPdndConfiguration().get("c001")).block();
 
         // Then
         Assertions.assertNotNull(result);

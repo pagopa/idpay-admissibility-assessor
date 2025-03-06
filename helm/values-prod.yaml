@@ -30,26 +30,39 @@ microservice-chart:
   envSecret:
     aks-api-url: cstar-p-weu-prod01-aks-apiserver-url
     APPLICATIONINSIGHTS_CONNECTION_STRING: appinsights-instrumentation-key
+    PAGOPA_PDND_CONFIGURATION_JWT_KEY_C001: pagopa-pdnd-configuration-jwt-key-c001
+    PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB_C001: pagopa-pdnd-configuration-agid-jwt-pub-c001
+    PAGOPA_PDND_CONFIGURATION_CLIENT_ID_C001: pagopa-pdnd-configuration-client-id-c001
+    PAGOPA_PDND_CONFIGURATION_KID_C001: pagopa-pdnd-configuration-kid-c001
+    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID_C001: pagopa-pdnd-configuration-purpose-id-c001
+    PAGOPA_PDND_CONFIGURATION_JWT_KEY_C021: pagopa-pdnd-configuration-jwt-key-c021
+    PAGOPA_PDND_CONFIGURATION_AGID_JWT_PUB_C021: pagopa-pdnd-configuration-agid-jwt-pub-c021
+    PAGOPA_PDND_CONFIGURATION_CLIENT_ID_C021: pagopa-pdnd-configuration-client-id-c021
+    PAGOPA_PDND_CONFIGURATION_KID_C021: pagopa-pdnd-configuration-kid-c021
+    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID_C021: pagopa-pdnd-configuration-purpose-id-c021
 
   keyvault:
     name: "cstar-p-idpay-kv"
     tenantId: "7788edaf-0346-4068-9d79-c868aed15b3d"
 
   envConfig:
-    JAVA_TOOL_OPTIONS: "-Xms256m -Xmx512m -Djava.util.concurrent.ForkJoinPool.common.parallelism=7 -Dio.netty.eventLoopThreads=100 -javaagent:/app/applicationinsights-agent.jar -Dapplicationinsights.configuration.file=/mnt/file-config-external/appinsights-config/applicationinsights.json"
+    JAVA_TOOL_OPTIONS: >-
+      -XX:InitialRAMPercentage=80.0
+      -XX:MaxRAMPercentage=90.0
+      -XX:+UseG1GC
+      -XX:+UseContainerSupport
+      -Djava.security.egd=file:/dev/./urandom
+      -Djava.util.concurrent.ForkJoinPool.common.parallelism=7 
+      -Dio.netty.eventLoopThreads=100
+      -javaagent:/app/applicationinsights-agent.jar 
+      -Dapplicationinsights.configuration.file=/mnt/file-config-external/appinsights-config/applicationinsights.json
+
     CACHE_REFRESH_MS_RATE: "60000"
     REDIS_CACHE_ENABLED: "true"
 
-    #TODO PROD URL?
-    PDND_BASE_URL: https://auth.interop.pagopa.it
     #TODO PROD AUDIENCE?
     PDND_ACCESS_TOKEN_AUDIENCE: auth.interop.pagopa.it/client-assertion
 
-    #TODO PROD values?
-    #This should be removed once read from initiative
-    PAGOPA_PDND_CONFIGURATION_CLIENT_ID: 5df9f218-df34-4f05-a9c4-e4a74b2a8e3f
-    PAGOPA_PDND_CONFIGURATION_KID: r3ee8wZ39fxq71LinbYDgpoHeywbuzLyc4ynVldEAKY
-    PAGOPA_PDND_CONFIGURATION_PURPOSE_ID: 8af4c795-8066-4407-a0b3-c95c2daefd6c
 
     ANPR_ENV: prod
     ANPR_AUTH_USERID: pagopa-idpay

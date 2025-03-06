@@ -1,7 +1,7 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
+import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -11,7 +11,6 @@ import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.Exceptions;
 
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
@@ -23,7 +22,7 @@ import reactor.core.Exceptions;
 })
 @AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdv")
 @SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class, ObjectMapper.class})
-class UserFiscalCodeRestClientImplTest {
+class UserIdRestClientImplTest {
 
 
 
@@ -33,17 +32,17 @@ class UserFiscalCodeRestClientImplTest {
 
     @Test
     void retrieveUserInfoOk() {
-        String userId = "USERID_OK_1";
+        String userId = "CF_OK";
 
-        UserInfoPDV result = userFiscalCodeRestClient.retrieveUserInfo(userId).block();
+        UserIdPDV result = userFiscalCodeRestClient.retrieveUserId(userId).block();
 
         Assertions.assertNotNull(result);
-        Assertions.assertEquals("fiscalCode",result.getPii());
+        Assertions.assertEquals("USERID_OK",result.getToken());
     }
 
     @Test
     void retrieveUserInfoNotFound() {
-        String userId = "USERID_NOTFOUND_1";
+        String userId = "USER_NOT_FOUND_1";
 
         try{
             userFiscalCodeRestClient.retrieveUserInfo(userId).block();
@@ -77,26 +76,4 @@ class UserFiscalCodeRestClientImplTest {
         }
     }
 
-    @Test
-    void retrieveUserInfoTooManyRequest() {
-        String userId = "USERID_TOOMANYREQUEST_1";
-
-        try{
-            userFiscalCodeRestClient.retrieveUserInfo(userId).block();
-        }catch (Throwable e){
-            Assertions.assertTrue(Exceptions.isRetryExhausted(e));
-        }
-    }
-
-    @Test
-    void retrieveUserInfoHttpForbidden() {
-        String userId = "USERID_FORBIDDEN_1";
-
-        try{
-            userFiscalCodeRestClient.retrieveUserInfo(userId).block();
-        }catch (Throwable e){
-            Assertions.assertTrue(e instanceof WebClientException);
-            Assertions.assertEquals(WebClientResponseException.Forbidden.class,e.getClass());
-        }
-    }
 }
