@@ -63,6 +63,7 @@ microservice-chart:
     #TODO PROD AUDIENCE?
     PDND_ACCESS_TOKEN_AUDIENCE: auth.interop.pagopa.it/client-assertion
 
+    PDND_BASE_URL: https://auth.interop.pagopa.it
 
     ANPR_ENV: prod
     ANPR_AUTH_USERID: pagopa-idpay
