@@ -20,7 +20,6 @@ public class AdmissibilityErrorNotifierServiceImpl implements AdmissibilityError
     private static final String KAFKA_BINDINGS_ADMISSIBILITY_OUT = "admissibilityProcessorOut-out-0";
     private static final String KAFKA_BINDINGS_ADMISSIBILITY_RANKING_REQUEST = "rankingRequest-out-0";
     private static final String KAFKA_BINDINGS_ADMISSIBILITY_COMMANDS = "consumerCommands-in-0";
-
     private final ErrorNotifierService errorNotifierService;
     private final String admissibilityServer;
     private final KafkaConfiguration kafkaConfiguration;
