@@ -3,6 +3,7 @@
 #
 FROM maven:3.9.9-amazoncorretto-21-al2023@sha256:281aeb7254dde09226bde36c2ce236ead71c6451298986a79fa542bc26444225 AS buildtime
 
+
 WORKDIR /build
 COPY . .
 
