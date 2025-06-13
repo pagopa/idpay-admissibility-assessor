@@ -6,4 +6,5 @@ import reactor.core.publisher.Mono;
 public interface InitiativeStatusService {
 
     Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId);
+    
 }
