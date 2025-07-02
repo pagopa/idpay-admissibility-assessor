@@ -25,10 +25,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -120,7 +117,11 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
             return kieBase.getKiePackages().stream()
                     .flatMap(p -> p.getRules().stream())
                     .map(r -> ((RuleImpl) r).getAgendaGroup())
+                    //.map(r -> (String) r.getMetaData().get("agenda-group" /*test agendaGroup*/))
+                    .filter(Objects::nonNull)
                     .collect(Collectors.toSet());
+
+
         }
     }
 

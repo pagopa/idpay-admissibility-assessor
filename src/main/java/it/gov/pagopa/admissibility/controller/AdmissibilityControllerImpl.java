@@ -24,4 +24,5 @@ public class AdmissibilityControllerImpl implements AdmissibilityController{
             return initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId)
                     .switchIfEmpty(Mono.error(new ClientExceptionWithBody(HttpStatus.NOT_FOUND, OnboardingConstants.ExceptionCode.INITIATIVE_NOT_FOUND, "The initiative with id %s does not exist".formatted(initiativeId))));
     }
+    
 }
