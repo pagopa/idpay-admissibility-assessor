@@ -8,7 +8,6 @@ import java.time.Period;
 @Slf4j
 public final class Utils {
     private Utils(){}
-
     public static final String FISCAL_CODE_STRUCTURE_REGEX = "^([A-Za-z]{6}[0-9lmnpqrstuvLMNPQRSTUV]{2}[abcdehlmprstABCDEHLMPRST][0-9lmnpqrstuvLMNPQRSTUV]{2}[A-Za-z][0-9lmnpqrstuvLMNPQRSTUV]{3}[A-Za-z])$";
     public static final String FISCAL_CODE_MONTH_LETTERS = "ABCDEHLMPRST";
 
