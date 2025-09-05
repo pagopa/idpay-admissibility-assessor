@@ -1,7 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
-import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
@@ -26,10 +25,10 @@ import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = { FamilyDataRetrieverServiceImpl.class })
 class FamilyDataRetrieverServiceTest {
-
 
     @MockBean
     private AnprC021RestClient anprC021RestClientMock;
@@ -39,9 +38,6 @@ class FamilyDataRetrieverServiceTest {
 
     @MockBean
     private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
-
-    @MockBean
-    private AnprInfoRepository anprInfoRepositoryMock;
 
     @Autowired
     private FamilyDataRetrieverServiceImpl familyDataRetrieverService;
