@@ -7,7 +7,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
-import it.gov.pagopa.admissibility.model.AnprInfo;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
@@ -61,12 +60,6 @@ class FamilyDataRetrieverServiceTest {
             .organizationName("organization")
             .build();
 
-    private static final InitiativeConfig INITIATIVE_CONFIG_GUIDONIA = InitiativeConfig.builder()
-            .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
-            .initiativeName("bonus")
-            .organizationName("comune di guidonia montecelio")
-            .build();
-
     private static final Family EXPECTED_FAMILY = Family.builder()
             .familyId(ID_OPERAZIONE_ANPR)
             .memberIds(Set.of(FISCAL_CODE_HASHED))
@@ -107,13 +100,10 @@ class FamilyDataRetrieverServiceTest {
         Mockito.when(userFiscalCodeService.getUserFiscalCode(REQUEST.getUserId())).thenReturn(Mono.just(fiscalCode));
         Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode), any())).thenReturn(Mono.just(response));
         Mockito.when(userFiscalCodeService.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
-        Mockito.when(anprInfoRepositoryMock.save(any())).thenReturn(Mono.justOrEmpty(new AnprInfo()));
     }
 
     @Test
-    void testRetrieveFamily_OK_WithOutChild() {
-
-
+    void testRetrieveFamily_OK_WithFamily() {
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
                 List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
 
@@ -126,9 +116,8 @@ class FamilyDataRetrieverServiceTest {
 
     @Test
     void testRetrieveFamily_Exception_ListaDatiSoggettoEmpty() {
-
-
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, null);
+        response.setListaSoggetti(null);
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
@@ -138,8 +127,6 @@ class FamilyDataRetrieverServiceTest {
 
     @Test
     void testRetrieveFamily_Exception_DatiSoggettoNull() {
-
-
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of());
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
@@ -150,8 +137,6 @@ class FamilyDataRetrieverServiceTest {
 
     @Test
     void testRetrieveFamily_Exception_GeneralitaNull() {
-
-
         TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
         datiSoggetti.setGeneralita(null);
 
@@ -164,29 +149,34 @@ class FamilyDataRetrieverServiceTest {
     }
 
     @Test
-    void testRetrieveFamily_ReturnEmptyResponse() {
+    void testProcessDatiSoggetto_Exception_CodiceFiscaleNull(){
+        TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
+        tipoGeneralita.setCodiceFiscale(null);
+        datiSoggetti.setGeneralita(tipoGeneralita);
 
-
-        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
-                List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
-
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of(datiSoggetti));
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
-        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG_GUIDONIA.getInitiativeName(), INITIATIVE_CONFIG_GUIDONIA.getOrganizationName()))
-                .expectComplete()
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
                 .verify();
     }
 
     @Test
-    void testRetrieveFamily_OK_WithChild() {
-        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
-                List.of(createDatiSoggetti(FISCAL_CODE, "2007-12-31", "3"), createDatiSoggetti(FISCAL_CODE, "2007-12-31","1"))
-        );
+    void testProcessDatiSoggetto_Exception_CodFiscaleNull(){
+        TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO tipoCodiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+        tipoCodiceFiscaleDTO.setCodFiscale(null);
+        tipoGeneralita.setCodiceFiscale(tipoCodiceFiscaleDTO);
+        datiSoggetti.setGeneralita(tipoGeneralita);
 
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of(datiSoggetti));
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
-        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG_GUIDONIA.getInitiativeName(), INITIATIVE_CONFIG_GUIDONIA.getOrganizationName()))
-                .expectNext(Optional.of(EXPECTED_FAMILY))
-                .verifyComplete();
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
+                .expectError(IllegalArgumentException.class)
+                .verify();
     }
 }
