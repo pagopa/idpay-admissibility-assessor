@@ -101,7 +101,7 @@ class Initiative2InitiativeConfigMapperTest {
         Assertions.assertTrue(result.getRankingFields().isEmpty());
         Assertions.assertTrue(result.getIsLogoPresent());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
+        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion", "iseeThresholdCode");
     }
 
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
@@ -128,8 +128,9 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
                 .startDate(LocalDate.MIN)
                 .endDate(LocalDate.MAX)
-                .budgetCents(10_00L)
+                .budgetCents(1000_00L)
                 .beneficiaryBudgetCents(1_00L)
+                .beneficiaryBudgetMaxCents(100_00L)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .build());
 
@@ -139,6 +140,7 @@ class Initiative2InitiativeConfigMapperTest {
                         AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).pdndConfig(new PdndInitiativeConfig("CLIENTID2", "KID2", "PURPOSEID2")).build(),
                         AutomatedCriteriaDTO.builder().code("CODE3").pdndConfig(new PdndInitiativeConfig("CLIENTID3", "KID3", "PURPOSEID3")).build()
                 ))
+                        .selfDeclarationCriteria(List.of(SelfCriteriaMultiConsentDTO.builder().description("MULTI_CONSENT_ISEE").subDescription("MULTI_CONSENT_ISEE").code("isee").thresholdCode("THRESHOLD_CODE").build()))
                 .build());
 
         return initiative2BuildDTO;
