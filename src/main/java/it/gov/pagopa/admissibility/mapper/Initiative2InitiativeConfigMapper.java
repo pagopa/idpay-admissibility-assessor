@@ -43,7 +43,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
     }
 
     private String retrieveThresholdCodeIseeInfo(Initiative2BuildDTO initiative) {
-        if(initiative.getBeneficiaryRule() != null && initiative.getBeneficiaryRule().getSelfDeclarationCriteria() != null) {
+        if(initiative.getBeneficiaryRule().getSelfDeclarationCriteria() != null) {
             List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria = initiative.getBeneficiaryRule().getSelfDeclarationCriteria();
 
             for (AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems selfDeclaration : selfDeclarationCriteria) {

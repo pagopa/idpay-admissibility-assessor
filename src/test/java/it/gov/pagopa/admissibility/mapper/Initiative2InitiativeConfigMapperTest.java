@@ -12,6 +12,8 @@ import org.springframework.data.domain.Sort;
 import java.time.LocalDate;
 import java.util.List;
 
+import static it.gov.pagopa.admissibility.utils.OnboardingConstants.CONSENT_CRITERIA_CODE_ISEE;
+
 class Initiative2InitiativeConfigMapperTest {
     private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper = new Initiative2InitiativeConfigMapper();
 
@@ -110,7 +112,7 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
         initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
                 .selfDeclarationCriteria(List.of(
-                        SelfCriteriaMultiConsentDTO.builder().code("isee").thresholdCode("THRESHOLD_CODE").build()
+                        SelfCriteriaMultiConsentDTO.builder().code(CONSENT_CRITERIA_CODE_ISEE).thresholdCode("THRESHOLD_CODE").build()
                 ))
                 .build());
 
