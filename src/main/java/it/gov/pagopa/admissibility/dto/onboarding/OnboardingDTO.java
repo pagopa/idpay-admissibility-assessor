@@ -35,4 +35,6 @@ public class OnboardingDTO {
 
     //
     private String serviceId;
+
+    private Boolean verifyIsee;
 }
