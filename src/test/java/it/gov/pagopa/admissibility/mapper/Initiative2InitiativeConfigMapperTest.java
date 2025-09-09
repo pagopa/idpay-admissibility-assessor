@@ -104,6 +104,56 @@ class Initiative2InitiativeConfigMapperTest {
         TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion", "iseeThresholdCode");
     }
 
+    @Test
+    void testSelftDeclarationConsent_iseeType() {
+        Initiative2BuildDTO initiative2BuildDTO = initDto();
+        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
+        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                .selfDeclarationCriteria(List.of(
+                        SelfCriteriaMultiConsentDTO.builder().code("isee").thresholdCode("THRESHOLD_CODE").build()
+                ))
+                .build());
+
+        setAdditionalInfo(initiative2BuildDTO);
+
+        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+
+        Assertions.assertNotNull(result);
+
+        commonAssertions(initiative2BuildDTO,result);
+        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
+        Assertions.assertTrue(result.getRankingFields().isEmpty());
+        Assertions.assertTrue(result.getIsLogoPresent());
+
+        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
+    }
+
+    @Test
+    void testSelftDeclarationConsent_notIseeType() {
+        Initiative2BuildDTO initiative2BuildDTO = initDto();
+        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
+        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
+                .selfDeclarationCriteria(List.of(
+                        SelfCriteriaMultiConsentDTO.builder().code("CODE").thresholdCode("THRESHOLD_CODE").build()
+                ))
+                .build());
+
+        setAdditionalInfo(initiative2BuildDTO);
+
+        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+
+        Assertions.assertNotNull(result);
+
+        commonAssertions(initiative2BuildDTO,result);
+        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
+        Assertions.assertTrue(result.getRankingFields().isEmpty());
+        Assertions.assertTrue(result.getIsLogoPresent());
+
+        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion", "iseeThresholdCode");
+    }
+
+
+
     private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
         initiative2BuildDTO.setAdditionalInfo(InitiativeAdditionalInfoDTO.builder()
                 .serviceName("SERVICENAME")
