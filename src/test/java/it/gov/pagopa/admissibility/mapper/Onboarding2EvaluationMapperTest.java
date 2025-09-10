@@ -54,6 +54,7 @@ class Onboarding2EvaluationMapperTest {
                         .memberIds(Set.of("USERID")).build(),
                 false,
                 "SERVICE",
+                Boolean.TRUE,
                 Boolean.TRUE
         );
 
@@ -92,7 +93,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(0, Long.valueOf(10_00L).compareTo(resultCompleted.getBeneficiaryBudgetCents()));
         Assertions.assertTrue(CollectionUtils.isEmpty(resultCompleted.getOnboardingRejectionReasons()));
 
-        TestUtils.checkNotNullFields(resultCompleted,"rankingValue");
+        TestUtils.checkNotNullFields(resultCompleted,"rankingValue", "rewardBeneficiaryBudgetCents");
     }
 
     @Test
@@ -128,7 +129,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted, "familyId", "memberIds", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudgetCents", "rankingValue", "initiativeRewardType", "isLogoPresent");
+        TestUtils.checkNotNullFields(resultCompleted, "familyId", "memberIds", "initiativeName", "organizationId", "organizationName", "serviceId", "initiativeEndDate", "beneficiaryBudgetCents", "rankingValue", "initiativeRewardType", "isLogoPresent", "rewardBeneficiaryBudgetCents");
     }
 
     @Test
@@ -156,7 +157,7 @@ class Onboarding2EvaluationMapperTest {
 
         commonAssertionsInitiativeConfig2EvaluationCompleted(resultCompleted, null);
 
-        TestUtils.checkNotNullFields(resultCompleted,"rankingValue");
+        TestUtils.checkNotNullFields(resultCompleted,"rankingValue", "rewardBeneficiaryBudgetCents");
     }
 
     @Test
@@ -205,7 +206,7 @@ class Onboarding2EvaluationMapperTest {
 
         Assertions.assertEquals(rejectReasons, resultCompleted.getOnboardingRejectionReasons());
 
-        TestUtils.checkNotNullFields(resultCompleted);
+        TestUtils.checkNotNullFields(resultCompleted, "rewardBeneficiaryBudgetCents");
     }
 
     @Test
@@ -238,7 +239,7 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(expectedRankingValue, resultRankingRequest.getRankingValue());
 
-        TestUtils.checkNotNullFields(resultRankingRequest);
+        TestUtils.checkNotNullFields(resultRankingRequest, "rewardBeneficiaryBudgetCents");
     }
 
     private void commonAssertionsInitiativeConfig2EvaluationCompleted(EvaluationCompletedDTO resultCompleted, Long expectedRankingValue) {

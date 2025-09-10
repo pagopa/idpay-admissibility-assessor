@@ -141,6 +141,7 @@ class OnboardingInitiativeCheckTest {
                 null,
                 false,
                 "SERVICE",
+                Boolean.TRUE,
                 Boolean.TRUE
         );
     }

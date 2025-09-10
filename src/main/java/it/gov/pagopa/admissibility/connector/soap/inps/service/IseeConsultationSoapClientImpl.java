@@ -3,7 +3,7 @@ package it.gov.pagopa.admissibility.connector.soap.inps.service;
 import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.*;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.*;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.common.reactive.soap.utils.SoapUtils;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;

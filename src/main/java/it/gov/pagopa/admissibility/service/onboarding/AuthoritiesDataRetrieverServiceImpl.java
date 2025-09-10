@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
 import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsThresholdRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
@@ -40,6 +41,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
     private final UserFiscalCodeService userFiscalCodeService;
     private final InpsDataRetrieverService inpsDataRetrieverService;
+    private final InpsThresholdRetrieverService inpsThresholdRetrieverService;
     private final AnprDataRetrieverService anprDataRetrieverService;
     private final OnboardingRescheduleService onboardingRescheduleService;
     private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
@@ -51,6 +53,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             OnboardingRescheduleService onboardingRescheduleService,
             UserFiscalCodeService userFiscalCodeService,
             InpsDataRetrieverService inpsDataRetrieverService,
+            InpsThresholdRetrieverService inpsThresholdRetrieverService,
             AnprDataRetrieverService anprDataRetrieverService,
             PagoPaAnprPdndConfig pagoPaAnprPdndConfig) {
         this.onboardingRescheduleService = onboardingRescheduleService;
@@ -58,6 +61,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         this.nextDay = nextDay;
         this.userFiscalCodeService = userFiscalCodeService;
         this.inpsDataRetrieverService = inpsDataRetrieverService;
+        this.inpsThresholdRetrieverService = inpsThresholdRetrieverService;
         this.anprDataRetrieverService = anprDataRetrieverService;
         this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
     }
@@ -95,7 +99,9 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
                 onboardingRequest.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE),
                 iseeTypes,
                 onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE),
-                onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE)
+                onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE),
+                onboardingRequest.getVerifyIsee() && initiativeConfig.getIseeThresholdCode() != null,
+                initiativeConfig.getIseeThresholdCode()
         );
     }
 
@@ -103,7 +109,9 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
 
 
         Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
-                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest);
+                pdndServicesInvocation.getIseeThresholdCode() == null ?
+                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest)
+                : inpsThresholdRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest);
 
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationSingle =
                 anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001")  , pdndServicesInvocation, onboardingRequest);
