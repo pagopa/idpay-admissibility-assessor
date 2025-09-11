@@ -147,6 +147,7 @@ class OnboardingConsensusCheckTest {
                 null,
                 false,
                 "SERVICE",
+                Boolean.TRUE,
                 Boolean.TRUE
         );
     }

@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprDataRetrieverService;
 import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetrieverService;
+import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsThresholdRetrieverService;
 import it.gov.pagopa.admissibility.connector.soap.inps.utils.InpsInvokeTestUtils;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -13,8 +14,8 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.EsitoEnum;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.Order;
@@ -65,6 +66,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @Mock
     private InpsDataRetrieverService inpsDataRetrieverServiceSpy;
     @Mock
+    private InpsThresholdRetrieverService inpsThresholdRetrieverServiceSpy;
+    @Mock
     private OnboardingRescheduleService onboardingRescheduleServiceMock;
     @Mock
     private PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
@@ -83,7 +86,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     @BeforeEach
     void setUp() {
 
-        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(60L, false, onboardingRescheduleServiceMock, userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, anprDataRetrieverServiceSpy, pagoPaAnprPdndConfig);
+        authoritiesDataRetrieverService = new AuthoritiesDataRetrieverServiceImpl(60L, false, onboardingRescheduleServiceMock, userFiscalCodeServiceMock, inpsDataRetrieverServiceSpy, inpsThresholdRetrieverServiceSpy, anprDataRetrieverServiceSpy, pagoPaAnprPdndConfig);
 
         onboardingRequest = OnboardingDTO.builder()
                 .userId("USERID")
@@ -93,6 +96,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .pdndAccept(true)
                 .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
                 .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
+                .verifyIsee(true)
                 .build();
 
         LocalDate now = LocalDate.now();
@@ -127,18 +131,22 @@ class AuthoritiesDataRetrieverServiceImplTest {
     }
 
     //region test utilities
-    private PdndServicesInvocation configureAuthoritiesDataRetrieverMocks(boolean getIsee, boolean getResidence, boolean getBirthDate) {
-        PdndServicesInvocation expectedPdndServicesInvocation = buildExpectedPdndServiceInvocation(getIsee, getResidence, getBirthDate);
+    private PdndServicesInvocation configureAuthoritiesDataRetrieverMocks(boolean getIsee, boolean getResidence, boolean getBirthDate, boolean verifyIsee) {
+        PdndServicesInvocation expectedPdndServicesInvocation = buildExpectedPdndServiceInvocation(getIsee, getResidence, getBirthDate, verifyIsee);
         if (expectedPdndServicesInvocation.requirePdndInvocation()) {
             when(userFiscalCodeServiceMock.getUserFiscalCode(onboardingRequest.getUserId())).thenReturn(Mono.just(FISCAL_CODE));
         }
-        configureInpsDataRetriever(expectedPdndServicesInvocation);
+        if (expectedPdndServicesInvocation.getIseeThresholdCode() == null){
+            configureInpsDataRetriever(expectedPdndServicesInvocation);
+        } else {
+            configureInpsThresholdRetriever(expectedPdndServicesInvocation);
+        }
         configureAnprDataRetriever(expectedPdndServicesInvocation);
         return expectedPdndServicesInvocation;
     }
 
-    private PdndServicesInvocation buildExpectedPdndServiceInvocation(boolean getIsee, boolean getResidence, boolean getBirthDate) {
-        return new PdndServicesInvocation(getIsee, ISEE_TYPOLOGIES_REQUESTED, getResidence, getBirthDate);
+    private PdndServicesInvocation buildExpectedPdndServiceInvocation(boolean getIsee, boolean getResidence, boolean getBirthDate, boolean verifyIsee) {
+        return new PdndServicesInvocation(getIsee, ISEE_TYPOLOGIES_REQUESTED, getResidence, getBirthDate, verifyIsee, verifyIsee ? "THRESHOLD_CODE" : null);
     }
 
     private void configureAnprDataRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
@@ -161,16 +169,26 @@ class AuthoritiesDataRetrieverServiceImplTest {
             return Mono.just(Optional.of(Collections.emptyList()));
         }));
     }
+
+    private void configureInpsThresholdRetriever(PdndServicesInvocation expectedPdndServicesInvocation) {
+        when(inpsThresholdRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.defer(() -> {
+            if (expectedPdndServicesInvocation.isVerifyIseeThreshold()) {
+                onboardingRequest.setUnderThreshold(Boolean.TRUE);
+            }
+            return Mono.just(Optional.of(Collections.emptyList()));
+        }));
+    }
 //endregion
 
     @ParameterizedTest
     @CsvSource({
-            "true, true, true",
-            "true, false, false",
-            "false, true, false",
-            "false, false, true",
+            "true, true, true, false",
+            "true, false, false, false",
+            "false, true, false, false",
+            "false, false, true, false",
+            "false, false, false, true",
     })
-    void retrieveAllAuthorities_AutomatedCriteria(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+    void retrieveAllAuthorities_AutomatedCriteria(boolean getIsee, boolean getResidence, boolean getBirthDate, boolean verifyIsee) {
 
         when(mapPdndInitiativeConfig.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
         when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
@@ -183,17 +201,20 @@ class AuthoritiesDataRetrieverServiceImplTest {
                         .toList());
         initiativeConfig.setRankingFields(Collections.emptyList());
 
-        retrieveAllAuthorities(getIsee, getResidence, getBirthDate);
+        initiativeConfig.setIseeThresholdCode(verifyIsee ? "THRESHOLD_CODE" : null);
+
+        retrieveAllAuthorities(getIsee, getResidence, getBirthDate, verifyIsee);
     }
 
     @ParameterizedTest
     @CsvSource({
-            "true, true, true",
-            "true, false, false",
-            "false, true, false",
-            "false, false, true",
+            "true, true, true, false",
+            "true, false, false, false",
+            "false, true, false, false",
+            "false, false, true, false",
+            "false, false, false, true",
     })
-    void retrieveAllAuthorities_Ranking(boolean getIsee, boolean getResidence, boolean getBirthDate) {
+    void retrieveAllAuthorities_Ranking(boolean getIsee, boolean getResidence, boolean getBirthDate, boolean verifyIsee) {
 
         when(mapPdndInitiativeConfig.get("c001")).thenReturn(PDND_INITIATIVE_CONFIG);
         when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
@@ -205,12 +226,13 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 getBirthDate? Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_BIRTHDATE).direction(Sort.Direction.ASC).build(): null)
                 .filter(Objects::nonNull)
                 .toList());
+        initiativeConfig.setIseeThresholdCode(verifyIsee ? "THRESHOLD_CODE" : null);
 
-        retrieveAllAuthorities(getIsee, getResidence, getBirthDate);
+        retrieveAllAuthorities(getIsee, getResidence, getBirthDate, verifyIsee);
     }
 
-    void retrieveAllAuthorities(boolean getIsee, boolean getResidence, boolean getBirthDate) {
-        configureAuthoritiesDataRetrieverMocks(getIsee, getResidence, getBirthDate);
+    void retrieveAllAuthorities(boolean getIsee, boolean getResidence, boolean getBirthDate, boolean verifyIsee) {
+        configureAuthoritiesDataRetrieverMocks(getIsee, getResidence, getBirthDate, verifyIsee);
 
         // When
         OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
@@ -269,7 +291,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         initiativeConfig.setAutomatedCriteriaCodes(List.of(CRITERIA_CODE_ISEE, CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_BIRTHDATE));
         initiativeConfig.setRankingFields(Collections.emptyList());
 
-        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
+        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true, false);
 
         when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest)).thenReturn(Mono.just(Optional.empty()));
 
@@ -297,7 +319,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         OnboardingRejectionReason expectedRejectionReasonResidence = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO, CRITERIA_CODE_RESIDENCE, null, null, null);
         OnboardingRejectionReason expectedRejectionReasonBirthdate = new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO, CRITERIA_CODE_BIRTHDATE, null, null, null);
 
-        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true);
+        PdndServicesInvocation expectedPdndServicesInvocation = configureAuthoritiesDataRetrieverMocks(true, true, true, false);
 
         when(inpsDataRetrieverServiceSpy.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, expectedPdndServicesInvocation, onboardingRequest))
                 .thenReturn(Mono.just(Optional.of(List.of(expectedRejectionReasonISEE))));

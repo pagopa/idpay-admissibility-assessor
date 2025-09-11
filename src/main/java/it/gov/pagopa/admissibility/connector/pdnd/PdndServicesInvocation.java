@@ -17,8 +17,10 @@ public class PdndServicesInvocation {
     List<IseeTypologyEnum> iseeTypes;
     boolean getResidence;
     boolean getBirthDate;
+    boolean verifyIseeThreshold;
+    String iseeThresholdCode;
 
     public boolean requirePdndInvocation() {
-        return getIsee || getResidence || getBirthDate;
+        return getIsee || getResidence || getBirthDate || verifyIseeThreshold;
     }
 }
