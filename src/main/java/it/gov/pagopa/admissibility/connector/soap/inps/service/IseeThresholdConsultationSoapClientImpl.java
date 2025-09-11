@@ -33,8 +33,8 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
     private ConsultazioneSogliaIndicatoreRequestType getRequest(String fiscalCode, String thresholdCode) {
         ConsultazioneSogliaIndicatoreRequestType consultazioneSogliaIndicatoreRequestType = new ConsultazioneSogliaIndicatoreRequestType();
 
-        consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(thresholdCode);
         consultazioneSogliaIndicatoreRequestType.setCodiceFiscale(fiscalCode);
+        consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(thresholdCode);
         consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.SI);
         consultazioneSogliaIndicatoreRequestType.setDataValidita(DatatypeFactory.newDefaultInstance().newXMLGregorianCalendar(new GregorianCalendar()));  //TODO TBV field not required
 
