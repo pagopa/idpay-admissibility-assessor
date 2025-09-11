@@ -62,17 +62,15 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
     }
 
     private Mono<List<OnboardingRejectionReason>> processResponse(String fiscalCode, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
-        Mono<List<OnboardingRejectionReason>> inpsInvoke = iseeNotFoundRejectionReasonMono;
-
         return iseeThresholdConsultationSoapClient
                 .verifyThresholdIsee(fiscalCode, pdndServicesInvocation.getIseeThresholdCode())
                 .map(inpsResponse -> extractData(inpsResponse, onboardingRequest))
-                .switchIfEmpty(inpsInvoke);
+                .switchIfEmpty(iseeNotFoundRejectionReasonMono);
     }
 
     private List<OnboardingRejectionReason> extractData(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
         if (inpsResponse != null) {
-            onboardingRequest.setUnderThreshold(getIseeFromResponse(inpsResponse));
+            verifyThresholdIseeFromResponse(inpsResponse, onboardingRequest);
         }
 
         if(onboardingRequest.getUnderThreshold() == null) {
@@ -94,11 +92,9 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
         );
     }
 
-    private Boolean getIseeFromResponse(ConsultazioneSogliaIndicatoreResponseType inpsResponse) {
+    private void verifyThresholdIseeFromResponse(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
         if(inpsResponse.getDatiIndicatore() != null && inpsResponse.getDatiIndicatore().getSottoSoglia()!=null) {
-            return SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getSottoSoglia()) ? Boolean.TRUE : Boolean.FALSE;
+           onboardingRequest.setUnderThreshold(SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getSottoSoglia()) ? Boolean.TRUE : Boolean.FALSE);
         }
-        return null;
-
     }
 }

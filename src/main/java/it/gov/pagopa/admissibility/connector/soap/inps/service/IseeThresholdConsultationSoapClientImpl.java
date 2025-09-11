@@ -22,6 +22,8 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
             EsitoEnum.DATABASE_OFFLINE, EsitoEnum.ERRORE_INTERNO
     );
 
+    private static final DatatypeFactory DATATYPE_FACTORY = DatatypeFactory.newDefaultInstance();
+
     private final ISvcConsultazione portSvcConsultazione;
 
     public IseeThresholdConsultationSoapClientImpl(InpsThresholdClientConfig inpsClientConfig) {
@@ -36,7 +38,7 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
         consultazioneSogliaIndicatoreRequestType.setCodiceFiscale(fiscalCode);
         consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(thresholdCode);
         consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.SI);
-        consultazioneSogliaIndicatoreRequestType.setDataValidita(DatatypeFactory.newDefaultInstance().newXMLGregorianCalendar(new GregorianCalendar()));  //TODO TBV field not required
+        consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
 
         return consultazioneSogliaIndicatoreRequestType;
     }
@@ -48,7 +50,6 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
 
     @Override
     public Mono<ConsultazioneSogliaIndicatoreResponseType> verifyThresholdIsee(String fiscalCode, String thresholdCode) {
-        // TODO why pdnd's accessToken is not used?
         return PerformanceLogger.logTimingOnNext(
                 "INPS_INVOCATION",
                 callService(fiscalCode, thresholdCode)
@@ -65,7 +66,6 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
                             }
                         })
 
-                        //TODO define error code for retry
                         .onErrorResume(ExecutionException.class, e -> {
                             if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("Too Many Requests")) {
                                 return Mono.error(new InpsDailyRequestLimitException(e));
