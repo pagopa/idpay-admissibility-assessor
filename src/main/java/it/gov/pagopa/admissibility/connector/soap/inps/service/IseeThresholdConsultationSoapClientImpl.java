@@ -1,8 +1,6 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsThresholdClientConfig;
-import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.*;
 import it.gov.pagopa.common.reactive.soap.utils.SoapUtils;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
@@ -13,7 +11,6 @@ import reactor.core.publisher.Mono;
 import javax.xml.datatype.DatatypeFactory;
 import java.util.GregorianCalendar;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 @Service
 @Slf4j
@@ -53,28 +50,16 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
         return PerformanceLogger.logTimingOnNext(
                 "INPS_INVOCATION",
                 callService(fiscalCode, thresholdCode)
-                        .flatMap(response -> {
-                            ConsultazioneSogliaIndicatoreResponseType result = response.getConsultazioneSogliaIndicatoreResult();
-                            if (RETRYABLE_OUTCOMES.contains(result.getEsito())) {
-                                log.warn("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned a retryable result! {} - {}: {}", result.getIdRichiesta(), result.getEsito(), result.getDescrizioneErrore());
-                                return Mono.empty(); // Returning empty in order to retry later
-                            } else {
-                                if(!EsitoEnum.OK.equals(result.getEsito())){
-                                    log.error("[ONBOARDING_REQUEST][INPS_INVOCATION] Invocation returned no data!  esito:{} id:{}: {}", result.getEsito(), result.getIdRichiesta(), result.getDescrizioneErrore());
-                                }
-                                return Mono.just(result);
-                            }
-                        })
-
-                        .onErrorResume(ExecutionException.class, e -> {
-                            if (e.getCause() instanceof ClientTransportException clientTransportException && clientTransportException.getMessage().contains("Too Many Requests")) {
-                                return Mono.error(new InpsDailyRequestLimitException(e));
-                            } else {
-                                return Mono.error(new IllegalStateException("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e));
-                            }
-                        })
-                , x -> "THRESHOLD_ISEE");
-
+                        .map(ConsultazioneSogliaIndicatoreResponse::getConsultazioneSogliaIndicatoreResult)
+                        .flatMap(result -> IseeUtils.handleServiceOutcome(
+                                result,
+                                result.getEsito(),
+                                result.getIdRichiesta(),
+                                result.getDescrizioneErrore(),
+                                RETRYABLE_OUTCOMES,
+                                EsitoEnum.OK
+                        ))
+                        .onErrorResume(IseeUtils::handleError),
+                x -> "THRESHOLD_ISEE");
     }
-
 }
