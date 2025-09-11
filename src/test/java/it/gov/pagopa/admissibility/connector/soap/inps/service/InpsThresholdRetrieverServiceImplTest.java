@@ -93,7 +93,7 @@ class InpsThresholdRetrieverServiceImplTest {
         if (verifyIsee) {
             Assertions.assertEquals(threshold, onboardingRequest.getUnderThreshold());
         } else {
-            Assertions.assertNull(onboardingRequest.getIsee()); //TODO
+            Assertions.assertNull(onboardingRequest.getUserId());
         }
     }
 
