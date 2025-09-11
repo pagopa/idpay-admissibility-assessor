@@ -32,5 +32,4 @@ public abstract class EvaluationDTO {
 
     //
     private String serviceId;
-    private Long rewardBeneficiaryBudgetCents;
 }

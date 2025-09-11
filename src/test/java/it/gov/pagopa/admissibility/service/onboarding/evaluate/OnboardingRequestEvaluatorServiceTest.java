@@ -61,7 +61,7 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertSame(mockedRuleEngineResult, resultCompleted);
@@ -94,7 +94,7 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
@@ -124,7 +124,7 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
@@ -153,12 +153,12 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
         Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
-        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents(), result.getRewardBeneficiaryBudgetCents());
+        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents(), ((EvaluationCompletedDTO) result).getBeneficiaryBudgetCents());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
         Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents()));
@@ -183,12 +183,12 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
         Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
-        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetCents(), result.getRewardBeneficiaryBudgetCents());
+        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetCents(), ((EvaluationCompletedDTO) result).getBeneficiaryBudgetCents());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
         Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents()));

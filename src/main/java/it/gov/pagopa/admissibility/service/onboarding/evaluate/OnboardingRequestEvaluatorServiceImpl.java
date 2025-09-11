@@ -30,8 +30,8 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
             if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, result);
-                return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), result.getRewardBeneficiaryBudgetCents())
+                calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, evaluationCompletedDTO);
+                return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), evaluationCompletedDTO.getBeneficiaryBudgetCents())
                         .map(c -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
                             onboardingRequest.setBudgetReserved(true);
@@ -56,12 +56,12 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         return Mono.just(result);
     }
 
-    private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, EvaluationDTO result) {
+    private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, EvaluationCompletedDTO result) {
         if(initiativeConfig.getIseeThresholdCode() != null && initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() != null
             && Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) && Boolean.TRUE.equals(onboardingRequest.getUnderThreshold())){
-                result.setRewardBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents());
+                result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents());
         } else {
-            result.setRewardBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetCents());
+            result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetCents());
         }
     }
 }
