@@ -441,14 +441,11 @@
 					</execution>
 				</executions>
 			</plugin>
-
-
 			<plugin>
 				<groupId>com.sun.xml.ws</groupId>
 				<artifactId>jaxws-maven-plugin</artifactId>
 				<version>3.0.0</version>
-				<!-- Configurazione comune -->
-				<executions> <!-- Prima execution -->
+				<executions>
 					<execution>
 						<id>isee-indicatore</id>
 						<phase>generate-sources</phase>
@@ -471,8 +468,6 @@
 							<verbose>true</verbose>
 						</configuration>
 					</execution>
-
-					<!-- Seconda execution -->
 					<execution>
 						<id>isee-soglia</id>
 						<phase>generate-sources</phase>
