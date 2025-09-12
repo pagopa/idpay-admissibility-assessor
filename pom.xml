@@ -453,7 +453,7 @@
 							<goal>wsimport</goal>
 						</goals>
 						<configuration>
-							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/consultazione</wsdlDirectory>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps</wsdlDirectory>
 							<wsdlLocation>/wsdocs/inps/consultazione/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
 							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore</packageName>
 							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/indicatore/</sourceDestDir>
@@ -474,7 +474,7 @@
 							<goal>wsimport</goal>
 						</goals>
 						<configuration>
-							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/soglia</wsdlDirectory>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps</wsdlDirectory>
 							<wsdlLocation>/wsdocs/inps/soglia/ConsultazioneISEE.wsdl</wsdlLocation>
 							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.soglia</packageName>
 							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/soglia/</sourceDestDir>
