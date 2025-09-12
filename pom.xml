@@ -453,12 +453,12 @@
 							<goal>wsimport</goal>
 						</goals>
 						<configuration>
-							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/consultazione</wsdlDirectory>
-							<wsdlLocation>/wsdocs/inps/consultazione/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/indicatore</wsdlDirectory>
+							<wsdlLocation>/wsdocs/inps/indicatore/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
 							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore</packageName>
 							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/indicatore/</sourceDestDir>
 							<bindingFiles>
-								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/consultazione/ConsultazioneISEE_async_mapping.xml</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/indicatore/ConsultazioneISEE_async_mapping.xml</bindingFile>
 								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
 								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
 								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
