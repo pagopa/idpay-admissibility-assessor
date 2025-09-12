@@ -486,7 +486,7 @@
 							</bindingFiles>
 							<keep>true</keep>
 							<verbose>true</verbose>
-						</configuration>
+					</configuration>
 					</execution>
 				</executions>
 			</plugin>
