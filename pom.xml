@@ -453,9 +453,8 @@
 							<goal>wsimport</goal>
 						</goals>
 						<configuration>
-							<wsdlFiles>
-								<wsdlFile>${project.basedir}/src/main/resources/wsdocs/inps/consultazione/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlFile>
-							</wsdlFiles>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/consultazione</wsdlDirectory>
+							<wsdlLocation>/wsdocs/inps/consultazione/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
 							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore</packageName>
 							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/indicatore/</sourceDestDir>
 							<bindingFiles>
@@ -475,20 +474,19 @@
 							<goal>wsimport</goal>
 						</goals>
 						<configuration>
-							<wsdlFiles>
-								<wsdlFile>${project.basedir}/src/main/resources/wsdocs/inps/soglia/ConsultazioneISEE.wsdl</wsdlFile>
-							</wsdlFiles>
-						<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.soglia</packageName>
-						<sourceDestDir>${project.build.directory}/generated-sources/wsimport/soglia/</sourceDestDir>
-						<bindingFiles>
-							<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/soglia/ConsultazioneSogliaISEE_async_mapping.xml</bindingFile>
-							<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
-							<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
-							<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
-						</bindingFiles>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/soglia</wsdlDirectory>
+							<wsdlLocation>/wsdocs/inps/soglia/ConsultazioneISEE.wsdl</wsdlLocation>
+							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.soglia</packageName>
+							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/soglia/</sourceDestDir>
+							<bindingFiles>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/soglia/ConsultazioneSogliaISEE_async_mapping.xml</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
+							</bindingFiles>
 							<keep>true</keep>
 							<verbose>true</verbose>
-					</configuration>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>
