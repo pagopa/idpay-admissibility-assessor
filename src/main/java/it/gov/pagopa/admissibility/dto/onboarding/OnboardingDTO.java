@@ -35,4 +35,8 @@ public class OnboardingDTO {
 
     //
     private String serviceId;
+
+    private Boolean verifyIsee;
+    // data fetched if the initiative requires them
+    private Boolean underThreshold;
 }

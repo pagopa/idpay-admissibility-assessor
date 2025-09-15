@@ -140,7 +140,9 @@ class OnboardingInitiativeCheckTest {
                 new BirthDate(),
                 null,
                 false,
-                "SERVICE"
+                "SERVICE",
+                Boolean.TRUE,
+                Boolean.TRUE
         );
     }
 }

@@ -2,9 +2,9 @@ package it.gov.pagopa.admissibility.connector.soap.inps.config;
 
 import com.sun.xml.ws.developer.WSBindingProvider;
 import it.gov.pagopa.admissibility.config.InpsConfiguration;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ISvcConsultazione;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.Identity;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.SvcConsultazione;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.ISvcConsultazione;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.Identity;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.SvcConsultazione;
 import it.gov.pagopa.common.http.utils.JdkSslUtils;
 import it.gov.pagopa.common.soap.service.SoapLoggingHandler;
 import it.gov.pagopa.common.soap.utils.SoapUtils;
@@ -14,16 +14,16 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Data
-public class InpsClientConfig {
+public class InpsThresholdClientConfig {
     private final ISvcConsultazione portSvcConsultazione;
     private final InpsConfiguration inpsConfiguration;
 
-    public InpsClientConfig(SoapLoggingHandler soapLoggingHandler,
-                            InpsConfiguration inpsConfiguration)  {
+    public InpsThresholdClientConfig(SoapLoggingHandler soapLoggingHandler,
+                                     InpsConfiguration inpsConfiguration)  {
         this.inpsConfiguration = inpsConfiguration;
         this.portSvcConsultazione = new SvcConsultazione().getPort(ISvcConsultazione.class);
 
-        it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.Identity identity = new Identity();
+        Identity identity = new Identity();
         identity.setCodiceUfficio(inpsConfiguration.getOfficeCodeForInps());
         identity.setUserId(inpsConfiguration.getUserIdForInps());
         ((WSBindingProvider) portSvcConsultazione).setOutboundHeaders(identity);

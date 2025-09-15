@@ -34,6 +34,10 @@ public final class OnboardingConstants {
     public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
     //endregion
 
+    //region multi_consent code
+    public static final String CONSENT_CRITERIA_CODE_ISEE = "isee";
+    //endregion
+
     //region global sequence id
     public static final String ANPR_E002_INVOKE = "ANPR_E002_INVOKE";
     //endregion

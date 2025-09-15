@@ -1,6 +1,6 @@
 package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import reactor.core.publisher.Mono;
 

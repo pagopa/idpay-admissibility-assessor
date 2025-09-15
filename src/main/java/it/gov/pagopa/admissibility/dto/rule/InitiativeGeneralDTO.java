@@ -37,6 +37,9 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("beneficiaryBudgetCents")
   private Long beneficiaryBudgetCents;
 
+  @JsonProperty("beneficiaryBudgetMaxCents")
+  private Long beneficiaryBudgetMaxCents;
+
   @JsonProperty("startDate")
   private LocalDate startDate;
 

@@ -4,8 +4,8 @@ import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.soap.inps.utils.InpsInvokeTestUtils;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.EsitoEnum;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -63,7 +63,7 @@ class InpsDataRetrieverServiceImplTest {
     }
 
     private PdndServicesInvocation buildPdndServicesInvocation(boolean getIsee) {
-        return new PdndServicesInvocation(getIsee, List.of(ISEE_TYPOLOGY1, ISEE_TYPOLOGY2), false, false);
+        return new PdndServicesInvocation(getIsee, List.of(ISEE_TYPOLOGY1, ISEE_TYPOLOGY2), false, false,false, null);
     }
 
     @Test
@@ -136,7 +136,7 @@ class InpsDataRetrieverServiceImplTest {
             }
         }
 
-        PdndServicesInvocation pdndServicesInvocation = new PdndServicesInvocation(true, iseeTypes, false, false);
+        PdndServicesInvocation pdndServicesInvocation = new PdndServicesInvocation(true, iseeTypes, false, false, false, null);
 
         // When
         Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();

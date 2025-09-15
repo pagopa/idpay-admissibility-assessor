@@ -33,7 +33,9 @@ class Onboarding2OnboardingDroolsMapperTest {
                 new BirthDate(),
                 new Family(),
                 false,
-                "SERVICE"
+                "SERVICE",
+                Boolean.TRUE,
+                Boolean.TRUE
         );
 
         Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
@@ -54,7 +56,6 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertSame(objectMock1.getResidence(), result.getResidence());
         Assertions.assertSame(objectMock1.getBirthDate(), result.getBirthDate());
 
-
-        TestUtils.checkNotNullFields(result,"serviceId");
+        TestUtils.checkNotNullFields(result,"serviceId", "verifyIsee", "underThreshold");
     }
 }
