@@ -148,6 +148,8 @@ class OnboardingConsensusCheckTest {
                 false,
                 "SERVICE",
                 Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
                 Boolean.TRUE
         );
     }
