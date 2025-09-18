@@ -55,6 +55,8 @@ class Onboarding2EvaluationMapperTest {
                 false,
                 "SERVICE",
                 Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
                 Boolean.TRUE
         );
 

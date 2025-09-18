@@ -35,6 +35,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 false,
                 "SERVICE",
                 Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
                 Boolean.TRUE
         );
 
