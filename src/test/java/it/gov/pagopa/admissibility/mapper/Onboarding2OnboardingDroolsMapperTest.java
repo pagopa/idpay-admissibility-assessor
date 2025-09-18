@@ -57,7 +57,8 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertNotNull(result.getOnboardingRejectionReasons());
         Assertions.assertSame(objectMock1.getResidence(), result.getResidence());
         Assertions.assertSame(objectMock1.getBirthDate(), result.getBirthDate());
+        Assertions.assertSame(objectMock1.getChannel(), result.getChannel());
 
-        TestUtils.checkNotNullFields(result,"serviceId", "verifyIsee", "underThreshold");
+        TestUtils.checkNotNullFields(result,"serviceId", "verifyIsee", "underThreshold", "userMail");
     }
 }
