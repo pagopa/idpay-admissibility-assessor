@@ -27,6 +27,8 @@ public class Onboarding2OnboardingDroolsMapper implements Function<OnboardingDTO
         out.setBirthDate(onboardingDTO.getBirthDate());
         out.setFamily(onboardingDTO.getFamily());
         out.setChannel(onboardingDTO.getChannel());
+        out.setUserMail(onboardingDTO.getUserMail());
+        out.setVerifyIsee(onboardingDTO.getVerifyIsee());
         return out;
     }
 }
