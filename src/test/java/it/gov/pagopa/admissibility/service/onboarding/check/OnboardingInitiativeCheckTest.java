@@ -142,6 +142,8 @@ class OnboardingInitiativeCheckTest {
                 false,
                 "SERVICE",
                 Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
                 Boolean.TRUE
         );
     }

@@ -37,6 +37,9 @@ public class Onboarding2EvaluationMapper {
 
         //
         out.setServiceId(onboardingDTO.getServiceId());
+        out.setVerifyIsee(onboardingDTO.getVerifyIsee());
+        out.setUserMail(onboardingDTO.getUserMail());
+        out.setChannel(onboardingDTO.getChannel());
 
         if(CollectionUtils.isEmpty(rejectionReasons)){
             out.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
@@ -75,6 +78,9 @@ public class Onboarding2EvaluationMapper {
 
         //
         out.setServiceId(onboardingDTO.getServiceId());
+        out.setVerifyIsee(onboardingDTO.getVerifyIsee());
+        out.setUserMail(onboardingDTO.getUserMail());
+        out.setChannel(onboardingDTO.getChannel());
 
         return out;
     }
@@ -118,6 +124,9 @@ public class Onboarding2EvaluationMapper {
 
         //
         out.setServiceId(request.getServiceId());
+        out.setVerifyIsee(request.getVerifyIsee());
+        out.setUserMail(request.getUserMail());
+        out.setChannel(request.getChannel());
 
         return out;
     }

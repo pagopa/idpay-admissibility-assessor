@@ -32,4 +32,8 @@ public abstract class EvaluationDTO {
 
     //
     private String serviceId;
+
+    private Boolean verifyIsee;
+    private String userMail;
+    private String channel;
 }
