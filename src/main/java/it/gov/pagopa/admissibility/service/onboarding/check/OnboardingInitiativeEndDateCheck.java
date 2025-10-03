@@ -35,7 +35,7 @@ public class OnboardingInitiativeEndDateCheck implements OnboardingCheck{
             return OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL;
         }
 
-        if(!LocalDate.now().isAfter(initiativeConfig.getEndDate())) return OnboardingConstants.REJECTION_REASON_INITIATIVE_ENDED;
+        if(!LocalDate.now().isBefore(initiativeConfig.getEndDate())) return OnboardingConstants.REJECTION_REASON_INITIATIVE_ENDED;
 
         return null;
     }

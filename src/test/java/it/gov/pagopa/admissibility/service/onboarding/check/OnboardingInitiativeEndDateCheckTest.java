@@ -40,14 +40,31 @@ class OnboardingInitiativeEndDateCheckTest {
     }
 
     @Test
-    void testInitiativeNotEndedYet() {
-        // given
+    void testInitiativeEndDateInFuture_accept() {
+        // given: endDate futura → now < endDate → NO rifiuto
         OnboardingDTO onboardingDTO = Mockito.mock(OnboardingDTO.class);
         Mockito.when(onboardingDTO.getUserId()).thenReturn("user2");
         Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative2");
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setEndDate(LocalDate.now().plusDays(5)); // futura → non ancora terminata
+        initiativeConfig.setEndDate(LocalDate.now().plusDays(5));
+
+        // when
+        OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());
+
+        // then
+        assertNull(result, "Con endDate futura non deve esserci motivo di rifiuto");
+    }
+
+    @Test
+    void testInitiativeEndDateToday_reject() {
+        // given: endDate oggi → now >= endDate → RIFIUTO
+        OnboardingDTO onboardingDTO = Mockito.mock(OnboardingDTO.class);
+        Mockito.when(onboardingDTO.getUserId()).thenReturn("user3");
+        Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative3");
+
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setEndDate(LocalDate.now());
 
         // when
         OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());
@@ -59,20 +76,21 @@ class OnboardingInitiativeEndDateCheckTest {
     }
 
     @Test
-    void testInitiativeEnded() {
-        // given
+    void testInitiativeEndDateInPast_reject() {
+        // given: endDate passata → now >= endDate → RIFIUTO
         OnboardingDTO onboardingDTO = Mockito.mock(OnboardingDTO.class);
-        Mockito.when(onboardingDTO.getUserId()).thenReturn("user3");
-        Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative3");
+        Mockito.when(onboardingDTO.getUserId()).thenReturn("user4");
+        Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative4");
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setEndDate(LocalDate.now().minusDays(1)); // già terminata
+        initiativeConfig.setEndDate(LocalDate.now().minusDays(1));
 
         // when
         OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());
 
         // then
-        assertNull(result, "Se l’iniziativa è già terminata, non deve esserci motivo di rifiuto");
+        assertNotNull(result);
+        assertEquals(OnboardingConstants.REJECTION_REASON_INITIATIVE_ENDED, result.getCode());
+        assertEquals(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST, result.getType());
     }
 }
-
