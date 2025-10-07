@@ -150,6 +150,8 @@ class OnboardingConsensusCheckTest {
                 Boolean.TRUE,
                 "USERMAIL",
                 "CHANNEL",
+                "NAME",
+                "SURNAME",
                 Boolean.TRUE
         );
     }

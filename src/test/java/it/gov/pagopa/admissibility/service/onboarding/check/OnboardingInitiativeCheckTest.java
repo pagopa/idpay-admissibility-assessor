@@ -144,6 +144,8 @@ class OnboardingInitiativeCheckTest {
                 Boolean.TRUE,
                 "USERMAIL",
                 "CHANNEL",
+                "NAME",
+                "SURNAME",
                 Boolean.TRUE
         );
     }
