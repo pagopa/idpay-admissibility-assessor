@@ -65,6 +65,7 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
         }
 
         log.info("[ONBOARDING_REQUEST] Updating user family onboarding status: userId {}; familyId {}; initiativeId {}; status {}", result.getUserId(), family.getFamilyId(), initiativeConfig.getInitiativeId(), resultedStatus);
+        log.info("[ONBOARDING_REQUEST_FAMILY] Updating user family: {}", family);
 
         return onboardingFamiliesRepository.updateOnboardingFamilyOutcome(family, initiativeConfig.getInitiativeId(), resultedStatus, resultedOnboardingRejectionReasons)
                 .then(Mono.just(result));
