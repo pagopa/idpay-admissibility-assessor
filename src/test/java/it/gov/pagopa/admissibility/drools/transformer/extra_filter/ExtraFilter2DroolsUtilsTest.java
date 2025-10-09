@@ -42,7 +42,9 @@ class ExtraFilter2DroolsUtilsTest {
             Map.entry("verifyIsee", Boolean.class),
             Map.entry("underThreshold", Boolean.class),
             Map.entry("userMail", String.class),
-            Map.entry("channel", String.class)
+            Map.entry("channel", String.class),
+            Map.entry("name", String.class),
+            Map.entry("surname", String.class)
     );
 
     public static final Set<String> expectedFields = expectedFields2Class.keySet();
