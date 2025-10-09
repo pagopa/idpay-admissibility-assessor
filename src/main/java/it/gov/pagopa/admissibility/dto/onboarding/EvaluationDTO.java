@@ -36,4 +36,6 @@ public abstract class EvaluationDTO {
     private Boolean verifyIsee;
     private String userMail;
     private String channel;
+    private String name;
+    private String surname;
 }
