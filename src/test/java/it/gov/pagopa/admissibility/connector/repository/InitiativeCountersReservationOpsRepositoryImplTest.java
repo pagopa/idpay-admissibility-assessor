@@ -72,4 +72,24 @@ class InitiativeCountersReservationOpsRepositoryImplTest {
         Assertions.assertEquals(euro2cents(expectedResidualBudgetCents), c.getResidualInitiativeBudgetCents());
         Assertions.assertEquals(expectedReservations, c.getOnboarded());
     }
+
+    @Test
+    void deallocatedBudget(){
+        initiativeCountersRepository.save(InitiativeCounters.builder()
+                .id("test")
+                .initiativeBudgetCents(euro2cents(BigDecimal.valueOf(1000)))
+                .reservedInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(300)))
+                .residualInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(700)))
+                .spentInitiativeBudgetCents(0L)
+                .build()).block();
+
+        initiativeCountersRepository.deallocatedPartialBudget("test", 100_00).block();
+
+        InitiativeCounters result = initiativeCountersRepository.findById("test").block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(800_00, result.getResidualInitiativeBudgetCents());
+        Assertions.assertEquals(200_00, result.getReservedInitiativeBudgetCents());
+
+    }
 }
