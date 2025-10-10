@@ -38,7 +38,20 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                         .inc(FIELD_RESERVED_BUDGET_CENTS,reservationCents)
                         .inc(FIELD_RESIDUAL_BUDGET_CENTS,-reservationCents),
                 FindAndModifyOptions.options().returnNew(true),
-        InitiativeCounters.class
+                InitiativeCounters.class
+        );
+    }
+
+    public Mono<InitiativeCounters> deallocatedPartialBudget(String initiativeId, long deallocatedBudget) {
+        return mongoTemplate.findAndModify(
+                Query.query(Criteria
+                        .where(FIELD_ID).is(initiativeId)
+                ),
+                new Update()
+                        .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
+                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget),
+                FindAndModifyOptions.options().returnNew(true),
+                InitiativeCounters.class
         );
     }
 }

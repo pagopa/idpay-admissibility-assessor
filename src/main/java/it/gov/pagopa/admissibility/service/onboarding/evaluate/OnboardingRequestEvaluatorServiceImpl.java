@@ -31,7 +31,15 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
             if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, evaluationCompletedDTO);
-                return initiativeCountersRepository.reserveBudget(onboardingRequest.getInitiativeId(), evaluationCompletedDTO.getBeneficiaryBudgetCents())
+                long deallocatedBudget = Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) ?
+                        initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() - evaluationCompletedDTO.getBeneficiaryBudgetCents() : 0;
+
+                Mono<EvaluationDTO> budgetMono = (deallocatedBudget > 0)
+                        ? initiativeCountersRepository.deallocatedPartialBudget(evaluationCompletedDTO.getInitiativeId(), deallocatedBudget)
+                        .thenReturn(evaluationCompletedDTO)
+                        : Mono.just(evaluationCompletedDTO);
+
+                return budgetMono
                         .map(c -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
                             onboardingRequest.setBudgetReserved(true);
