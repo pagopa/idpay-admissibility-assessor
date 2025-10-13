@@ -32,6 +32,4 @@ public class InitiativeCounters {
     private Long residualInitiativeBudgetCents=0L;
     @Builder.Default
     private Long spentInitiativeBudgetCents =0L;
-    @Builder.Default
-    private Map<String, Preallocation> preallocationMap = new HashMap<>();
-}
+    private InitiativeCountersPreallocations preallocationData;}

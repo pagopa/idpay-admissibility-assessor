@@ -6,19 +6,23 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 
+@Slf4j
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldNameConstants
-public class Preallocation {
+@Builder
+@FieldNameConstants()
+public class InitiativeCountersPreallocations {
 
+    private String initiativeId;
     private String userId;
     private PreallocationStatus status;
     private LocalDateTime createdAt;
     private Long sequenceNumber;
     private LocalDateTime enqueuedTime;
+
 }
