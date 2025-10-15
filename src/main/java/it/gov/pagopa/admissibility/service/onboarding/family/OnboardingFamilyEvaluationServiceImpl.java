@@ -52,6 +52,19 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     }
 
     @Override
+    public Mono<EvaluationDTO> retrieveAndCheckOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
+        log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+
+        return retrieveFamily ?
+                familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
+                        .flatMap(evaluation ->
+                                onboardingFamiliesRepository.findById(OnboardingFamilies.buildId(evaluation.getFamilyId(), evaluation.getInitiativeId()))
+                                        .flatMap(f -> existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f, initiativeConfig, message))
+                                        .switchIfEmpty(Mono.just(evaluation)))
+                : Mono.empty();
+    }
+
+    @Override
     public Mono<EvaluationDTO> updateOnboardingFamilyOutcome(Family family, InitiativeConfig initiativeConfig, EvaluationDTO result) {
         OnboardingFamilyEvaluationStatus resultedStatus;
         List<OnboardingRejectionReason> resultedOnboardingRejectionReasons;

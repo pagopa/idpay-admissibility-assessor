@@ -241,7 +241,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         if(isFamilyInitiative(initiativeConfig)){
-            return onboardingFamilyEvaluationService.checkOnboardingFamily(onboardingRequest, initiativeConfig, message, retrieveFamily);
+            return onboardingFamilyEvaluationService.retrieveAndCheckOnboardingFamily(onboardingRequest, initiativeConfig, message, retrieveFamily);
         } else {
             return Mono.empty();
         }

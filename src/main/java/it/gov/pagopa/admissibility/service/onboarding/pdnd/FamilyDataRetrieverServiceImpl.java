@@ -14,6 +14,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,6 +59,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         }
 
         return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
+                .filter(datiSoggetto -> !isUnder18(datiSoggetto))
                 .flatMap(this::processDatiSoggetto)
                 .collect(Collectors.toSet())
                 .flatMap(memberIds -> buildFamily(response.getIdOperazioneANPR(), memberIds));
@@ -79,5 +82,13 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 .memberIds(memberIds)
                 .build();
         return Mono.just(Optional.of(family));
+    }
+    private boolean isUnder18(TipoDatiSoggettiEnteDTO datiSoggetto) {
+        if (datiSoggetto.getGeneralita() == null || datiSoggetto.getGeneralita().getDataNascita() == null) {
+            return false;
+        }
+        LocalDate birthDate = LocalDate.parse(datiSoggetto.getGeneralita().getDataNascita(), DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        final LocalDate today = LocalDate.now();
+        return birthDate.isAfter(today.minusYears(18));
     }
 }
