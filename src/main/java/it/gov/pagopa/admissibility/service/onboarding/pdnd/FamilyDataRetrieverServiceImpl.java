@@ -16,7 +16,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -26,13 +25,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     private final AnprC021RestClient anprC021RestClient;
     private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
     private final UserFiscalCodeService userFiscalCodeService;
-    private final DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-            .append(DateTimeFormatter.ISO_LOCAL_DATE)
-            .optionalStart()
-            .appendLiteral('T')
-            .append(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-            .optionalEnd()
-            .toFormatter();
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public FamilyDataRetrieverServiceImpl(AnprC021RestClient anprC021RestClient,
                                           PagoPaAnprPdndConfig pagoPaAnprPdndConfig,
