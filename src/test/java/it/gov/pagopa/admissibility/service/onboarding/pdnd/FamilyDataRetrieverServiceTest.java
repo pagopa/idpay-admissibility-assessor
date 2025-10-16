@@ -19,6 +19,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -174,5 +176,29 @@ class FamilyDataRetrieverServiceTest {
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
                 .expectError(IllegalArgumentException.class)
                 .verify();
+    }
+
+    @Test
+    void testRetrieveFamily_OK_familyWithMemberUnder18() {
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
+                List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
+
+        TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO tipoCodiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+        tipoCodiceFiscaleDTO.setCodFiscale("CF_UNDER_18");
+        tipoGeneralita.setCodiceFiscale(tipoCodiceFiscaleDTO);
+        LocalDate lastYear = LocalDate.now().minusYears(1);
+        tipoGeneralita.setDataNascita(lastYear.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        datiSoggetti.setGeneralita(tipoGeneralita);
+
+        assert response.getListaSoggetti() != null;
+        response.getListaSoggetti().addDatiSoggettoItem(datiSoggetti);
+
+        mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
+                .expectNext(Optional.of(EXPECTED_FAMILY))
+                .verifyComplete();
     }
 }
