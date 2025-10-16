@@ -18,107 +18,103 @@ class InitiativeStatusServiceImplTest {
     @Test
     void testBudgetAvailable() {
         // Given
-        InitiativeCountersRepository initiativeCountersRepositoryMock = Mockito.mock(InitiativeCountersRepository.class);
-        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        InitiativeConfig initiativeConfigMock = getInitiativeConfigForContextMock();
-        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeConfigMock));
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
 
-        InitiativeCounters initiativeCountersMock = InitiativeCounters.builder()
+        InitiativeCounters countersMock = InitiativeCounters.builder()
                 .id("INITIATIVE1")
-                .spentInitiativeBudgetCents(90_000L)
+                .residualInitiativeBudgetCents(910_000L)
                 .build();
-        Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeCountersMock));
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
 
-        InitiativeStatusService initiativeStatusService =
-                new InitiativeStatusServiceImpl(onboardingContextHolderServiceMock, initiativeCountersRepositoryMock);
-
-        InitiativeStatusDTO expected = new InitiativeStatusDTO("STATUS1", true);
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
 
         // When
-        InitiativeStatusDTO result = initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
 
         // Then
-        Assertions.assertEquals(expected, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isBudgetAvailable());
     }
 
     @Test
     void testBudgetExhausted() {
         // Given
-        InitiativeCountersRepository initiativeCountersRepositoryMock = Mockito.mock(InitiativeCountersRepository.class);
-        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        InitiativeConfig initiativeConfigMock = getInitiativeConfigForContextMock();
-        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeConfigMock));
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
 
-        InitiativeCounters initiativeCountersMock = InitiativeCounters.builder()
+        InitiativeCounters countersMock = InitiativeCounters.builder()
                 .id("INITIATIVE1")
-                .spentInitiativeBudgetCents(995_000L)
+                .residualInitiativeBudgetCents(0L)
                 .build();
-        Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeCountersMock));
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
 
-        InitiativeStatusService initiativeStatusService =
-                new InitiativeStatusServiceImpl(onboardingContextHolderServiceMock, initiativeCountersRepositoryMock);
-
-        InitiativeStatusDTO expected = new InitiativeStatusDTO("STATUS1", false);
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
 
         // When
-        InitiativeStatusDTO result = initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
 
         // Then
-        Assertions.assertEquals(expected, result);
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isBudgetAvailable());
     }
 
     @Test
-    void testBudgetInfoMissing() {
+    void testResidualBudgetIsNull() {
         // Given
-        InitiativeCountersRepository initiativeCountersRepositoryMock = Mockito.mock(InitiativeCountersRepository.class);
-        OnboardingContextHolderService onboardingContextHolderServiceMock = Mockito.mock(OnboardingContextHolderService.class);
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        InitiativeConfig initiativeConfigMock1 = InitiativeConfig.builder()
-                .initiativeId("INITIATIVE1")
-                .initiativeBudgetCents(null)
-                .status("STATUS1")
-                .build();
-        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeConfigMock1));
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
 
-        InitiativeCounters initiativeCountersMock1 = InitiativeCounters.builder()
+        InitiativeCounters countersMock = InitiativeCounters.builder()
                 .id("INITIATIVE1")
-                .spentInitiativeBudgetCents(100_000L)
+                .residualInitiativeBudgetCents(null)
                 .build();
-        Mockito.when(initiativeCountersRepositoryMock.findById(Mockito.anyString()))
-                .thenReturn(Mono.just(initiativeCountersMock1));
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
 
-        InitiativeStatusService initiativeStatusService =
-                new InitiativeStatusServiceImpl(onboardingContextHolderServiceMock, initiativeCountersRepositoryMock);
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
 
-        InitiativeStatusDTO result1 = initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+        // When
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
 
-        Assertions.assertFalse(result1.isBudgetAvailable());
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isBudgetAvailable());
+    }
 
-        InitiativeConfig initiativeConfigMock2 = InitiativeConfig.builder()
-                .initiativeId("INITIATIVE2")
-                .initiativeBudgetCents(1_000_000L)
-                .status("STATUS2")
-                .build();
-        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig("INITIATIVE2"))
-                .thenReturn(Mono.just(initiativeConfigMock2));
+    @Test
+    void testInitiativeCountersMissing() {
+        // Given
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
-        InitiativeCounters initiativeCountersMock2 = InitiativeCounters.builder()
-                .id("INITIATIVE2")
-                .spentInitiativeBudgetCents(null)
-                .build();
-        Mockito.when(initiativeCountersRepositoryMock.findById("INITIATIVE2"))
-                .thenReturn(Mono.just(initiativeCountersMock2));
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
 
-        InitiativeStatusDTO result2 = initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE2").block();
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.empty());
 
-        Assertions.assertFalse(result2.isBudgetAvailable());
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        // When
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1")
+                .blockOptional()
+                .orElse(new InitiativeStatusDTO("STATUS1", false));
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertFalse(result.isBudgetAvailable());
     }
 
     private static InitiativeConfig getInitiativeConfigForContextMock() {

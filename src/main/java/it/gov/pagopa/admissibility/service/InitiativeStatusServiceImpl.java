@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
+import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,31 +30,31 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                 .map(initiativeCounters -> {
                                     InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
                                     initiativeStatus.setStatus(initiativeConfig.getStatus());
-                                    initiativeStatus.setBudgetAvailable(
-                                            isInitiativeBudgetAvailable(
-                                                    initiativeConfig.getInitiativeBudgetCents(),
-                                                    initiativeCounters.getSpentInitiativeBudgetCents()
-                                            )
-                                    );
+                                    initiativeStatus.setBudgetAvailable(isInitiativeBudgetAvailable(initiativeCounters));
 
                                     log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
-                                            initiativeId, initiativeStatus.getStatus(), initiativeStatus.isBudgetAvailable());
+                                            sanitizeForLog(initiativeId), sanitizeForLog(initiativeStatus.getStatus()), initiativeStatus.isBudgetAvailable());
                                     return initiativeStatus;
                                 }));
     }
 
 
-    private boolean isInitiativeBudgetAvailable(Long initiativeBudgetCents, Long spentInitiativeBudgetCents) {
-        if (initiativeBudgetCents == null || spentInitiativeBudgetCents == null) {
-            log.warn("[ADMISSIBILITY][INITIATIVE_STATUS] Missing budget info: initiativeBudgetCents={} spentInitiativeBudgetCents={}", initiativeBudgetCents, spentInitiativeBudgetCents);
+    private boolean isInitiativeBudgetAvailable(InitiativeCounters initiativeCounters) {
+        if (initiativeCounters == null || initiativeCounters.getResidualInitiativeBudgetCents() == null) {
+            log.warn("[ADMISSIBILITY][INITIATIVE_STATUS] Missing residual budget info: initiativeCounters={}", initiativeCounters);
             return false;
         }
 
-        long residualBudget = initiativeBudgetCents - spentInitiativeBudgetCents;
+        boolean available = initiativeCounters.getResidualInitiativeBudgetCents() >= 10000;
 
-        boolean available = residualBudget >= 10000;
+        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Using residualInitiativeBudgetCents={} => available={}",
+                initiativeCounters.getResidualInitiativeBudgetCents(), available);
 
-        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Calculated residualBudget={} => available={}", residualBudget, available);
         return available;
+    }
+
+    private static String sanitizeForLog(String input) {
+        if (input == null) return null;
+        return input.replaceAll("[\n\r\t]", "_");
     }
 }
