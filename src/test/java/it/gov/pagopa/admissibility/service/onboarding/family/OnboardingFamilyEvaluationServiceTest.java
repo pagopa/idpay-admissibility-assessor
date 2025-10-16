@@ -210,4 +210,18 @@ class OnboardingFamilyEvaluationServiceTest {
 
         Assertions.assertEquals(expectedResult, result);
     }
+
+    @Test
+    void testRetrieveAndCheckOnboardingFamily_NoRetrieveFamily(){
+        // Given
+        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
+
+        // When
+        EvaluationDTO result = service.retrieveAndCheckOnboardingFamily(request, initiativeConfig, expectedMessage, false).block();
+
+        // Then
+        Assertions.assertNull(result);
+    }
 }
