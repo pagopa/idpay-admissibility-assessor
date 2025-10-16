@@ -25,11 +25,12 @@ public class InitiativeCounters {
     private Long initiativeBudgetCents;
 
     @Builder.Default
-    private Long onboarded=0L;
+    private Long onboarded = 0L;
     @Builder.Default
-    private Long reservedInitiativeBudgetCents=0L;
+    private Long reservedInitiativeBudgetCents = 0L;
     @Builder.Default
-    private Long residualInitiativeBudgetCents=0L;
+    private Long residualInitiativeBudgetCents = 0L;
     @Builder.Default
-    private Long spentInitiativeBudgetCents =0L;
-    private InitiativeCountersPreallocations preallocationData;}
+    private Long spentInitiativeBudgetCents = 0L;
+
+}
