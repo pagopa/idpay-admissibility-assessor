@@ -32,8 +32,10 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                     initiativeStatus.setStatus(initiativeConfig.getStatus());
                                     initiativeStatus.setBudgetAvailable(isInitiativeBudgetAvailable(initiativeCounters));
 
-                                    log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
-                                            sanitizeForLog(initiativeId), sanitizeForLog(initiativeStatus.getStatus()), initiativeStatus.isBudgetAvailable());
+                                    log.info(String.format("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative %s having status: %s budgetAvailable: %b",
+                                            sanitizeForLog(initiativeId),
+                                            sanitizeForLog(initiativeStatus.getStatus()),
+                                            initiativeStatus.isBudgetAvailable()));
                                     return initiativeStatus;
                                 }));
     }
