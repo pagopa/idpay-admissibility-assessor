@@ -57,6 +57,6 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
     private static String sanitizeForLog(String input) {
         if (input == null) return null;
-        return input.replaceAll("[\n\r\t]", "_");
+        return input.replaceAll("[^a-zA-Z0-9-_]", "_");
     }
 }
