@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.service;
 
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.InitiativeStatusDTO;
-import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,28 +29,30 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                 .map(initiativeCounters -> {
                                     InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
                                     initiativeStatus.setStatus(initiativeConfig.getStatus());
-                                    initiativeStatus.setBudgetAvailable(isInitiativeBudgetAvailable(initiativeCounters));
+                                    initiativeStatus.setBudgetAvailable(isInitiativeBudgetAvailable(
+                                            initiativeConfig.getInitiativeBudgetCents(),
+                                            initiativeCounters.getSpentInitiativeBudgetCents())
+                                    );
 
-                                    log.info(String.format("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative %s having status: %s budgetAvailable: %b",
-                                            sanitizeForLog(initiativeId),
-                                            sanitizeForLog(initiativeStatus.getStatus()),
-                                            initiativeStatus.isBudgetAvailable()));
+
+                                    log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
+                                            sanitizeForLog(initiativeId), sanitizeForLog(initiativeStatus.getStatus()), initiativeStatus.isBudgetAvailable());
                                     return initiativeStatus;
                                 }));
     }
 
 
-    private boolean isInitiativeBudgetAvailable(InitiativeCounters initiativeCounters) {
-        if (initiativeCounters == null || initiativeCounters.getResidualInitiativeBudgetCents() == null) {
-            log.warn("[ADMISSIBILITY][INITIATIVE_STATUS] Missing residual budget info: initiativeCounters={}", initiativeCounters);
+    private boolean isInitiativeBudgetAvailable(Long initiativeBudgetCents, Long spentInitiativeBudgetCents) {
+        if (initiativeBudgetCents == null || spentInitiativeBudgetCents == null) {
+            log.warn("[ADMISSIBILITY][INITIATIVE_STATUS] Missing budget info: initiativeBudgetCents={} spentInitiativeBudgetCents={}", initiativeBudgetCents, spentInitiativeBudgetCents);
             return false;
         }
 
-        boolean available = initiativeCounters.getResidualInitiativeBudgetCents() >= 10000;
+        long residualBudget = initiativeBudgetCents - spentInitiativeBudgetCents;
 
-        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Using residualInitiativeBudgetCents={} => available={}",
-                initiativeCounters.getResidualInitiativeBudgetCents(), available);
+        boolean available = residualBudget >= 10000;
 
+        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Calculated residualBudget={} => available={}", residualBudget, available);
         return available;
     }
 
