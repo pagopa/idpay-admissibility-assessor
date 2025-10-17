@@ -169,6 +169,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true)
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
+                        .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
 
                         .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 

@@ -1,21 +1,25 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersPreallocationsRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
+import it.gov.pagopa.admissibility.utils.Utils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
+import org.springframework.transaction.ReactiveTransaction;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,6 +35,11 @@ class OnboardingRequestEvaluatorServiceTest {
     private RuleEngineService ruleEngineService;
     @Mock
     private InitiativeCountersRepository initiativeCountersRepository;
+    @Mock
+    private InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
+    @Mock
+    private ReactiveMongoTransactionManager transactionManager;
+
 
     @InjectMocks
     private OnboardingRequestEvaluatorServiceImpl onboardingRequestEvaluatorService;
@@ -43,6 +52,7 @@ class OnboardingRequestEvaluatorServiceTest {
 
         initiativeConfig.setInitiativeBudgetCents(10_00L);
         initiativeConfig.setBeneficiaryInitiativeBudgetCents(1_00L);
+        initiativeConfig.setBeneficiaryInitiativeBudgetMaxCents(2_00L);
     }
 
     @Test
@@ -181,4 +191,116 @@ class OnboardingRequestEvaluatorServiceTest {
 
         Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
     }
+
+
+    @Test
+    void updateInitiativeBudget_deallocateOnboardingKO() {
+        EvaluationCompletedDTO evaluationDTO = EvaluationCompletedDTO.builder()
+                .userId("USERID")
+                .initiativeId(initiativeConfig.getInitiativeId())
+                .verifyIsee(false)
+                .status(OnboardingEvaluationStatus.ONBOARDING_KO)
+                .build();
+
+        InitiativeCounters mockCounter = Mockito.mock(InitiativeCounters.class);
+
+        try (MockedStatic<Utils> utilsMock = Mockito.mockStatic(Utils.class);
+             MockedStatic<TransactionalOperator> transactionalOperatorMock = Mockito.mockStatic(TransactionalOperator.class)) {
+
+            utilsMock.when(() -> Utils.computePreallocationId(evaluationDTO.getUserId(), evaluationDTO.getInitiativeId()))
+                    .thenReturn(evaluationDTO.getUserId() + "_" + evaluationDTO.getInitiativeId());
+
+            Mockito.when(initiativeCountersPreallocationsRepository.deleteByIdReturningResult(
+                            evaluationDTO.getUserId() + "_" + evaluationDTO.getInitiativeId()))
+                    .thenReturn(Mono.just(true));
+
+            Mockito.when(initiativeCountersRepository.deallocatedPartialBudget(
+                            initiativeConfig.getInitiativeId(),
+                            initiativeConfig.getBeneficiaryInitiativeBudgetCents()))
+                    .thenReturn(Mono.just(mockCounter));
+
+            TransactionalOperator transactionalOperator = Mockito.mock(TransactionalOperator.class);
+            transactionalOperatorMock.when(() -> TransactionalOperator.create(transactionManager))
+                    .thenReturn(transactionalOperator);
+
+            Mockito.when(transactionalOperator.transactional(Mockito.any(Mono.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            StepVerifier.create(onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+                    .expectNext(evaluationDTO)
+                    .verifyComplete();
+
+            Mockito.verify(initiativeCountersPreallocationsRepository).deleteByIdReturningResult(Mockito.any());
+            Mockito.verify(initiativeCountersRepository).deallocatedPartialBudget(Mockito.any(), Mockito.anyLong());
+        }
+    }
+
+
+
+    @Test
+    void updateInitiativeBudget_withJoined() {
+        EvaluationCompletedDTO evaluationDTO = EvaluationCompletedDTO.builder()
+                .userId("USERID")
+                .initiativeId(initiativeConfig.getInitiativeId())
+                .verifyIsee(true)
+                .status(OnboardingEvaluationStatus.JOINED)
+                .build();
+
+        InitiativeCounters mockCounter = Mockito.mock(InitiativeCounters.class);
+
+        try (MockedStatic<TransactionalOperator> transactionalOperatorMock = Mockito.mockStatic(TransactionalOperator.class)) {
+
+            Mockito.when(initiativeCountersPreallocationsRepository.deleteByIdReturningResult(Utils.computePreallocationId(evaluationDTO.getUserId(), evaluationDTO.getInitiativeId())))
+                    .thenReturn(Mono.just(true));
+
+            Mockito.when(initiativeCountersRepository.deallocatedPartialBudget(initiativeConfig.getInitiativeId(), initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents()))
+                    .thenReturn(Mono.just(mockCounter));
+
+            TransactionalOperator transactionalOperator = Mockito.mock(TransactionalOperator.class);
+            transactionalOperatorMock.when(() -> TransactionalOperator.create(transactionManager))
+                    .thenReturn(transactionalOperator);
+
+            Mockito.when(transactionalOperator.transactional(Mockito.any(Mono.class)))
+                    .thenAnswer(invocation -> invocation.getArgument(0));
+
+            StepVerifier.create(onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+                    .expectNext(evaluationDTO)
+                    .verifyComplete();
+        }
+    }
+
+    @Test
+    void updateInitiativeBudget_notDeallocateForOnboarding_OK(){
+        // Given
+        EvaluationCompletedDTO completed = EvaluationCompletedDTO.builder()
+                .userId("USERID")
+                .initiativeId(initiativeConfig.getInitiativeId())
+                .verifyIsee(true)
+                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
+                .build();
+
+
+        // When
+        EvaluationDTO result = onboardingRequestEvaluatorService.updateInitiativeBudget(completed, initiativeConfig).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(completed, result);
+
+        Mockito.verify(initiativeCountersPreallocationsRepository, Mockito.never()).deleteByIdReturningResult(Mockito.any());
+        Mockito.verify(initiativeCountersRepository, Mockito.never()).deallocatedPartialBudget(Mockito.any(), Mockito.anyLong());
+    }
+
+    @Test
+    void updateInitiativeBudget_notEvaluatedComplete(){
+        RankingRequestDTO evaluation = new RankingRequestDTO();
+
+        EvaluationDTO result = onboardingRequestEvaluatorService.updateInitiativeBudget(evaluation, initiativeConfig).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(evaluation, result);
+    }
+
+
+
+
 }

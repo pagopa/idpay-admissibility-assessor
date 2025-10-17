@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.model;
 
+import it.gov.pagopa.admissibility.enums.PreallocationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,8 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Data
@@ -19,17 +19,16 @@ import java.util.Map;
 @Builder
 @Document(collection = "initiative_counters")
 @FieldNameConstants()
-public class InitiativeCounters {
+public class InitiativeCountersPreallocations {
+
     @Id
     private String id;
-    private Long initiativeBudgetCents;
+    private String initiativeId;
+    private String userId;
+    private PreallocationStatus status;
+    private LocalDateTime createdAt;
+    private Long sequenceNumber;
+    private LocalDateTime enqueuedTime;
+    private Long preallocatedAmountCents;
 
-    @Builder.Default
-    private Long onboarded=0L;
-    @Builder.Default
-    private Long reservedInitiativeBudgetCents=0L;
-    @Builder.Default
-    private Long residualInitiativeBudgetCents=0L;
-    @Builder.Default
-    private Long spentInitiativeBudgetCents =0L;
 }

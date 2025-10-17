@@ -54,10 +54,12 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     @Override
     public Mono<EvaluationDTO> retrieveAndCheckOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-
+//TODO familyId different for same family
         return retrieveFamily ?
                 familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
                         .flatMap(evaluation ->
+//                                        onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
+//                                                .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
                                 onboardingFamiliesRepository.findById(OnboardingFamilies.buildId(evaluation.getFamilyId(), evaluation.getInitiativeId()))
                                         .flatMap(f -> existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f, initiativeConfig, message))
                                         .switchIfEmpty(Mono.just(evaluation)))
