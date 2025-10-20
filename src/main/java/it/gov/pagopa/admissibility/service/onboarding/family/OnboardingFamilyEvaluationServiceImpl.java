@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
+import it.gov.pagopa.admissibility.connector.rest.onboarding.OnboardingRestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -12,6 +13,7 @@ import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
@@ -27,13 +29,16 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final ExistentFamilyHandlerService existentFamilyHandlerService;
     private final FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService;
+    private final OnboardingRestClient onboardingRestClient;
 
-    public OnboardingFamilyEvaluationServiceImpl(OnboardingFamiliesRepository onboardingFamiliesRepository, ExistentFamilyHandlerService existentFamilyHandlerService, FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService) {
+    public OnboardingFamilyEvaluationServiceImpl(OnboardingFamiliesRepository onboardingFamiliesRepository, ExistentFamilyHandlerService existentFamilyHandlerService, FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService, OnboardingRestClient onboardingRestClient) {
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.existentFamilyHandlerService = existentFamilyHandlerService;
         this.familyDataRetrieverFacadeService = familyDataRetrieverFacadeService;
+        this.onboardingRestClient = onboardingRestClient;
     }
 
+    @Deprecated
     @Override
     public Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
@@ -58,12 +63,30 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
         return retrieveFamily ?
                 familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
                         .flatMap(evaluation ->
-//                                        onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
-//                                                .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
-                                onboardingFamiliesRepository.findById(OnboardingFamilies.buildId(evaluation.getFamilyId(), evaluation.getInitiativeId()))
-                                        .flatMap(f -> existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f, initiativeConfig, message))
+                                        onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
+                                                .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
+//                                onboardingFamiliesRepository.findById(OnboardingFamilies.buildId(evaluation.getFamilyId(), evaluation.getInitiativeId()))
+                                        .flatMap(f -> {
+                                            if(f.getFirst().getFamilyId().equals(evaluation.getFamilyId())){
+                                                return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.getFirst(), initiativeConfig, message);
+                                            } else {
+                                                return checkFamilyMembers(evaluation, onboardingRequest, initiativeConfig);
+                                            }})
                                         .switchIfEmpty(Mono.just(evaluation)))
                 : Mono.empty();
+    }
+
+    private Mono<EvaluationDTO> checkFamilyMembers(EvaluationDTO evaluation, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+        return Flux.fromIterable(evaluation.getMemberIds())
+                .flatMap(memberId -> onboardingRestClient.alreadyOnboardingStatus(evaluation.getInitiativeId(), memberId))
+                .any(Boolean::booleanValue)
+                .flatMap(isAlreadyMemberFamilyOk -> {
+                    if(isAlreadyMemberFamilyOk){
+                        OnboardingFamilies family = new OnboardingFamilies();
+                        return existentFamilyHandlerService.mapFamilyOnboardingResult(onboardingRequest,family, initiativeConfig);
+                } else {
+                    return Mono.just(evaluation);
+                }});
     }
 
     @Override
