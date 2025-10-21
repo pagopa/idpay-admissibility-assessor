@@ -1,9 +1,8 @@
 package it.gov.pagopa.admissibility.connector.rest.onboarding;
 
+import org.apache.commons.lang3.tuple.Pair;
 import reactor.core.publisher.Mono;
 
 public interface OnboardingRestClient {
-    ///idpay/onboarding
-    ///{initiativeId}/{userId}/status
-    Mono<Boolean> alreadyOnboardingStatus(String initiativeId, String userId);
+    Mono<Pair<Boolean, String>> alreadyOnboardingStatus(String initiativeId, String userId);
 }

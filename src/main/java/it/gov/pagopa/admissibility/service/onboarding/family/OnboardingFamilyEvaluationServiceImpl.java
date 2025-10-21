@@ -38,7 +38,6 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
         this.onboardingRestClient = onboardingRestClient;
     }
 
-    @Deprecated
     @Override
     public Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
@@ -51,7 +50,7 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
                                 familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
                                 : Mono.empty();
                     } else {
-                        return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.get(0), initiativeConfig, message);
+                        return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.getFirst(), initiativeConfig, message);
                     }
                 });
     }
@@ -59,34 +58,44 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     @Override
     public Mono<EvaluationDTO> retrieveAndCheckOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-//TODO familyId different for same family
         return retrieveFamily ?
                 familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
                         .flatMap(evaluation ->
                                         onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId())
                                                 .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
-//                                onboardingFamiliesRepository.findById(OnboardingFamilies.buildId(evaluation.getFamilyId(), evaluation.getInitiativeId()))
                                         .flatMap(f -> {
-                                            if(f.getFirst().getFamilyId().equals(evaluation.getFamilyId())){
-                                                return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.getFirst(), initiativeConfig, message);
-                                            } else {
-                                                return checkFamilyMembers(evaluation, onboardingRequest, initiativeConfig);
-                                            }})
-                                        .switchIfEmpty(Mono.just(evaluation)))
+                                            if(!f.isEmpty()){
+                                                if(f.getFirst().getFamilyId().equals(evaluation.getFamilyId())){
+                                                     return existentFamilyHandlerService.handleExistentFamily(onboardingRequest, f.getFirst(), initiativeConfig, message);
+                                                } else {
+                                                     return checkFamilyMembers(evaluation, onboardingRequest, initiativeConfig);
+                                                }
+                                            } else{
+                                                return Mono.just(evaluation);
+                                            }
+                                        })
+                        )
                 : Mono.empty();
     }
 
     private Mono<EvaluationDTO> checkFamilyMembers(EvaluationDTO evaluation, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         return Flux.fromIterable(evaluation.getMemberIds())
+                .filter(member -> !member.equals(evaluation.getUserId()))
                 .flatMap(memberId -> onboardingRestClient.alreadyOnboardingStatus(evaluation.getInitiativeId(), memberId))
-                .any(Boolean::booleanValue)
-                .flatMap(isAlreadyMemberFamilyOk -> {
-                    if(isAlreadyMemberFamilyOk){
-                        OnboardingFamilies family = new OnboardingFamilies();
-                        return existentFamilyHandlerService.mapFamilyOnboardingResult(onboardingRequest,family, initiativeConfig);
-                } else {
-                    return Mono.just(evaluation);
-                }});
+                .filter(isOnboarding2UserId ->  Boolean.TRUE.equals(isOnboarding2UserId.getKey()))
+                .next()
+                .flatMap(onboardingMemberInfo  ->  {
+                    OnboardingFamilies  family =  new  OnboardingFamilies();
+                    family.setOnboardingRejectionReasons(Collections.emptyList());
+                    return onboardingFamiliesRepository.findByMemberIdsInAndInitiativeId(onboardingMemberInfo.getValue(), onboardingRequest.getInitiativeId())
+                            .collectSortedList(COMPARATOR_FAMILIES_CREATE_DATE_DESC)
+                            .switchIfEmpty(Mono.just(List.of(family)))
+                            .flatMap(onboardingFamily -> {
+                                log.info("[CHECK_FAMILY_MEMBER] Processing family onboarding evaluation for userId={} in initiativeId={}. Found another onboarded family member with userId={} and familyId={}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), onboardingMemberInfo.getValue(), onboardingFamily.getFirst().getFamilyId());
+                                return existentFamilyHandlerService.mapFamilyOnboardingResult(onboardingRequest,  onboardingFamily.getFirst(),  initiativeConfig);
+                            });
+                })
+                .switchIfEmpty(Mono.just(evaluation));
     }
 
     @Override

@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.connector.rest.onboarding;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingStatusDTO;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -21,15 +22,15 @@ import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOA
 @Slf4j
 @Service
 public class OnboardingRestClientImpl implements  OnboardingRestClient{
-    private final String GET_STATUS_URI = "/idpay/onboarding/{initiativeId}/{userId}/status";
+    private static final String GET_STATUS_URI = "/idpay/onboarding/{initiativeId}/{userId}/status";
     private final int idpayOnboardingRetryDelay;
     private final long idpayOnboardingMaxAttempts;
     private final WebClient webClient;
 
     public OnboardingRestClientImpl(
-            @Value("${app.idpay-onboarding-workflow.base-url}") String idpayOnboardingBaseUrl,
-            @Value("${app.idpay-onboarding-workflow.retry.delay-millis}") int idpayOnboardingRetryDelay,
-            @Value("${app.idpay-onboarding-workflow.retry.max-attempts}") long idpayOnboardingMaxAttempts,
+            @Value("${app.onboarding-workflow.base-url}") String idpayOnboardingBaseUrl,
+            @Value("${app.onboarding-workflow.retry.delay-millis}") int idpayOnboardingRetryDelay,
+            @Value("${app.onboarding-workflow.retry.max-attempts}") long idpayOnboardingMaxAttempts,
             WebClient.Builder webClientBuilder) {
         this.idpayOnboardingRetryDelay = idpayOnboardingRetryDelay;
         this.idpayOnboardingMaxAttempts = idpayOnboardingMaxAttempts;
@@ -39,7 +40,7 @@ public class OnboardingRestClientImpl implements  OnboardingRestClient{
     }
 
     @Override
-    public Mono<Boolean> alreadyOnboardingStatus(String initiativeId, String userId) {
+    public Mono<Pair<Boolean, String>> alreadyOnboardingStatus(String initiativeId, String userId) {
         return PerformanceLogger.logTimingOnNext("ONBOARDING_STATUS_INTEGRATION",
                         webClient
                                 .method(HttpMethod.GET)
@@ -57,12 +58,12 @@ public class OnboardingRestClientImpl implements  OnboardingRestClient{
                         OnboardingStatusDTO dto = response.getBody();
                         if (ONBOARDING_OK.toString().equals(dto.getStatus())) {
                             log.debug("Onboarding status ricevuto: {}", dto);
-                            return true;
+                            return Pair.of(true, userId);
                         }
                     }
-                    return false;
+                    return Pair.of(false, (String) null);
                 })
-                .defaultIfEmpty(false)
+                .defaultIfEmpty(Pair.of(false, null))
                 .retryWhen(Retry.fixedDelay(idpayOnboardingMaxAttempts, Duration.ofMillis(idpayOnboardingRetryDelay))
                         .filter(ex -> {
                             boolean retry = ex instanceof WebClientResponseException.TooManyRequests;
