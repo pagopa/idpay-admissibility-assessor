@@ -1,0 +1,17 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/onboardingMock/idpay/onboarding/initiativeId_[0-9]+/userId_onboardingOK/status"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "status": "ONBOARDING_OK",
+      "statusDate": "2025-10-21T10:00:00",
+      "onboardingOkDate": "2025-10-21T10:05:00"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

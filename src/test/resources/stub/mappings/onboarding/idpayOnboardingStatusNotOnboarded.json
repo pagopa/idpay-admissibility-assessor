@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/onboardingMock/idpay/onboarding/initiativeId_[0-9]+/userId_NotOnboarded/status"
+  },
+  "response": {
+    "status": 404,
+    "jsonBody": {
+      "code": "ONBOARDING_USER_NOT_ONBOARDED",
+      "message": "Something went wrong handling the request"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

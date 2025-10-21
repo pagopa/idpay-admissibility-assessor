@@ -77,7 +77,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 .collectSortedList(Comparator.comparing(fc -> fc))
                 .flatMap(list -> {
                     if(list.isEmpty()){
-                        return Mono.error(new RuntimeException("The families contain only members under 18 or without a fiscal code."));
+                        return Mono.error(new IllegalStateException("The families contain only members under 18 or without a fiscal code."));
                     }
                     else {
                         return processFamilyData(list); }
@@ -91,29 +91,26 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                     .flatMap(userFiscalCodeService::getUserId)
                     .collect(Collectors.toSet())
                     .flatMap(membersId -> buildFamily(familyId, membersId));
-        } catch (RuntimeException e) {
+        } catch (NoSuchAlgorithmException e) {
+            log.error("[FAMILY_DATA_RETRIEVER] Error while calculating the hashed familyId");
             return Mono.error(e);
         }
     }
 
-    public static String calculateFamilyHash(List<String> userMembers) {
-        try {
-            String concatenazioneCodiciFiscali = userMembers.stream()
-                    .map(FamilyDataRetrieverServiceImpl::normalizeCodiceFiscale)
-                    .sorted()
-                    .collect(Collectors.joining());
+    private static String calculateFamilyHash(List<String> userMembers) throws NoSuchAlgorithmException {
+        String concatenazioneCodiciFiscali = userMembers.stream()
+                .map(FamilyDataRetrieverServiceImpl::normalizeCodiceFiscale)
+                .sorted()
+                .collect(Collectors.joining());
 
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hashBytes = digest.digest(concatenazioneCodiciFiscali.getBytes());
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        byte[] hashBytes = digest.digest(concatenazioneCodiciFiscali.getBytes());
 
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : hashBytes) {
-                hexString.append(String.format("%02x", b));
-            }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Errore durante il calcolo dell'hash SHA-256", e); //TODO update exception
+        StringBuilder hexString = new StringBuilder();
+        for (byte b : hashBytes) {
+            hexString.append(String.format("%02x", b));
         }
+        return hexString.toString();
     }
 
     private static String normalizeCodiceFiscale(String codiceFiscale) {

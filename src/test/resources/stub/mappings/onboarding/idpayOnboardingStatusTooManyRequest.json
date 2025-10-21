@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/onboardingMock/idpay/onboarding/initiativeId_[0-9]+/userId_TooManyRequest/status"
+  },
+  "response": {
+    "status": "429",
+    "jsonBody": {
+      "type": "type",
+      "title": "Too many request",
+      "status": "429",
+      "details": "details",
+      "instance": "instance"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

@@ -12,7 +12,7 @@ public class AuditUtilities {
 
     private static final String CEF = String.format("CEF:0|PagoPa|IDPAY|1.0|7|User interaction|2| event=AdmissibilityAssessor dstip=%s", AuditLogger.SRCIP);
     private static final String CEF_FAMILY_PATTERN_DELETE = CEF + " msg={} cs1Label=familyId cs1={} cs2Label=initiativeId cs2={}";
-    private static final String CEF_ANPR_PATTERN = CEF + " msg={} cs1Label=familyId cs1={} cs2Label=initiativeId cs2={} cs3Label=result cs3={} cs4Label=timestamp cs4={}";
+    private static final String CEF_ANPR_PATTERN = CEF + " msg={} cs1Label=userId cs1={} cs2Label=initiativeId cs2={} cs3Label=operationAnprId cs3={} cs4Label=timestamp cs4={}";
     private static final String CEF_PATTERN_DELETE = CEF + " msg={} cs1Label=initiativeId cs1={}";
 
     public void logDeletedDroolsRule(String initiativeId) {
@@ -33,10 +33,10 @@ public class AuditUtilities {
                 "Onboarded families deleted.", familyId, initiativeId
         );
     }
-    public void logAnprFamilies(String familyId, String initiativeId, String result, String timestamp) {
+    public void logAnprFamilies(String userId, String initiativeId, String result, String timestamp) {
         AuditLogger.logAuditString(
                 CEF_ANPR_PATTERN,
-                "ANPR families retrieve.", familyId, initiativeId, result, timestamp
+                "ANPR families retrieve.", userId, initiativeId, result, timestamp
         );
     }
 }
