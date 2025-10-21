@@ -150,7 +150,7 @@ class FamilyDataRetrieverServiceTest {
                 .retrieveFamily(REQUEST, null,
                         INITIATIVE_CONFIG.getInitiativeName(),
                         INITIATIVE_CONFIG.getOrganizationName());
-        Assertions.assertThrows(RuntimeException.class, () -> result.block());
+        Assertions.assertThrows(RuntimeException.class, result::block);
     }
 
     @Test

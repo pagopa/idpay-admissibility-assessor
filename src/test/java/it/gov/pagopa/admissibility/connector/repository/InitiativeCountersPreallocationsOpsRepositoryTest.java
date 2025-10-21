@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static it.gov.pagopa.admissibility.utils.Utils.computePreallocationId;
-import static org.junit.jupiter.api.Assertions.*;
 
 @MongoTest
 class InitiativeCountersPreallocationsOpsRepositoryTest {
