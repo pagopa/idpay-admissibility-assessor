@@ -225,11 +225,6 @@
 				<version>1.4.21</version>
 			</dependency>
 			<dependency>
-				<groupId>net.minidev</groupId>
-				<artifactId>json-smart</artifactId>
-				<version>2.5.2</version>
-			</dependency>
-			<dependency>
 				<groupId>com.azure.spring</groupId>
 				<artifactId>spring-cloud-azure-dependencies</artifactId>
 				<version>5.23.0</version>
