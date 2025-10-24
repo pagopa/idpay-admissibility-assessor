@@ -4,5 +4,5 @@ import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import reactor.core.publisher.Mono;
 
 public interface InitiativeCountersReservationOpsRepository {
-    Mono<InitiativeCounters> reserveBudget(String initiativeId, Long reservationCents);
+    Mono<InitiativeCounters> deallocatedPartialBudget(String initiativeId, long deallocatedBudget);
 }

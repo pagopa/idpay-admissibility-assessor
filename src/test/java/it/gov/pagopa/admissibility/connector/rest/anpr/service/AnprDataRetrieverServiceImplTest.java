@@ -92,7 +92,7 @@ class AnprDataRetrieverServiceImplTest {
     }
 
     private PdndServicesInvocation buildPdndServicesInvocation(boolean getResidence, boolean getBirthDate) {
-        return new PdndServicesInvocation(false, null, getResidence, getBirthDate);
+        return new PdndServicesInvocation(false, null, getResidence, getBirthDate, false, null);
     }
 
     private void testInvokeOK(boolean getResidence, boolean getBirthDate) {

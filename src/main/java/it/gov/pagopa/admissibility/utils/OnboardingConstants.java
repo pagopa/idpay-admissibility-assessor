@@ -13,6 +13,7 @@ public final class OnboardingConstants {
     public static final String REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL = "CONSENSUS_CHECK_TC_ACCEPT_FAIL";
     public static final String REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL = "CONSENSUS_CHECK_CRITERIA_CONSENSUS_FAIL";
     public static final String REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED = "INITIATIVE_BUDGET_EXHAUSTED";
+    public static final String REJECTION_REASON_INITIATIVE_ENDED = "REJECTION_REASON_INITIATIVE_ENDED";
     public static final String REJECTION_REASON_CONSENSUS_CHECK_SELF_DECLARATION_FAIL_FORMAT = "CONSENSUS_CHECK_SELF_DECLARATION_%s_FAIL";
     public static final String REJECTION_REASON_CONSENSUS_PDND_FAIL = "CONSENSUS_CHECK_PDND_FAIL";
     public static final String REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT = "AUTOMATED_CRITERIA_%s_FAIL";
@@ -32,6 +33,10 @@ public final class OnboardingConstants {
     public static final String CRITERIA_CODE_FAMILY = "FAMILY";
     public static final String CRITERIA_CODE_BIRTHDATE = "BIRTHDATE";
     public static final String CRITERIA_CODE_RESIDENCE = "RESIDENCE";
+    //endregion
+
+    //region multi_consent code
+    public static final String CONSENT_CRITERIA_CODE_ISEE = "isee";
     //endregion
 
     //region global sequence id

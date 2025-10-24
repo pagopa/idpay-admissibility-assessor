@@ -2,10 +2,10 @@ package it.gov.pagopa.admissibility.connector.soap.inps.utils;
 
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ConsultazioneIndicatoreResponseType;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.EsitoEnum;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.ObjectFactory;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.TypeEsitoConsultazioneIndicatore;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.EsitoEnum;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ObjectFactory;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.TypeEsitoConsultazioneIndicatore;
 
 import jakarta.xml.bind.*;
 import javax.xml.stream.XMLInputFactory;

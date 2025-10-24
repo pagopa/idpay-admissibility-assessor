@@ -62,6 +62,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
 
                                 .onErrorResume(FamilyOnboardingRequestCreated.class, x -> {
                                     log.info("[ONBOARDING_REQUEST] User family onboarding request created by {}: familyId {}; initiativeId {}", onboardingRequest.getUserId(), family.getFamilyId(), onboardingRequest.getInitiativeId());
+                                    log.info("[ONBOARDING_REQUEST_FAMILY] User family onboarding request created: {}", family);
 
                                     return Mono.empty();
                                 });

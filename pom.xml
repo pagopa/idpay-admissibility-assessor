@@ -447,23 +447,48 @@
 				<version>3.0.0</version>
 				<executions>
 					<execution>
+						<id>isee-indicatore</id>
+						<phase>generate-sources</phase>
 						<goals>
 							<goal>wsimport</goal>
 						</goals>
+						<configuration>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/indicatore</wsdlDirectory>
+							<wsdlLocation>/wsdocs/inps/indicatore/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
+							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore</packageName>
+							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/indicatore/</sourceDestDir>
+							<bindingFiles>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/indicatore/ConsultazioneISEE_async_mapping.xml</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
+							</bindingFiles>
+							<keep>true</keep>
+							<verbose>true</verbose>
+						</configuration>
+					</execution>
+					<execution>
+						<id>isee-soglia</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>wsimport</goal>
+						</goals>
+						<configuration>
+							<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/soglia</wsdlDirectory>
+							<wsdlLocation>/wsdocs/inps/soglia/ConsultazioneISEE.wsdl</wsdlLocation>
+							<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client.soglia</packageName>
+							<sourceDestDir>${project.build.directory}/generated-sources/wsimport/soglia/</sourceDestDir>
+							<bindingFiles>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/soglia/ConsultazioneSogliaISEE_async_mapping.xml</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
+								<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
+							</bindingFiles>
+							<keep>true</keep>
+							<verbose>true</verbose>
+					</configuration>
 					</execution>
 				</executions>
-				<configuration>
-					<wsdlDirectory>${project.basedir}/src/main/resources/wsdocs/inps/</wsdlDirectory>
-					<wsdlLocation>/wsdocs/inps/ConsultazioneISEE_v2.8_PDND.wsdl</wsdlLocation>
-					<packageName>it.gov.pagopa.admissibility.generated.soap.ws.client</packageName>
-					<sourceDestDir>${project.build.directory}/generated-sources/wsimport/</sourceDestDir>
-					<bindingFiles>
-						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_async_mapping.xml</bindingFile>
-						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ConsultazioneISEE_IdentityHeader.xsd</bindingFile>
-						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_EsitoConsultazioneIndicatore.xsd</bindingFile>
-						<bindingFile>${project.basedir}/src/main/resources/wsdocs/inps/ISEE_TipiComuni.xsd</bindingFile>
-					</bindingFiles>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

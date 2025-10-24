@@ -35,4 +35,12 @@ public class OnboardingDTO {
 
     //
     private String serviceId;
+
+    private Boolean verifyIsee;
+    private String userMail;
+    private String channel;
+    private String name;
+    private String surname;
+    // data fetched if the initiative requires them
+    private Boolean underThreshold;
 }

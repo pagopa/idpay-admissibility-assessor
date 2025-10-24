@@ -1,9 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
-import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
-import it.gov.pagopa.admissibility.connector.repository.AnprInfoRepository;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
-import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -18,7 +15,6 @@ import it.gov.pagopa.admissibility.service.onboarding.pdnd.FamilyDataRetrieverSe
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
-import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,19 +40,9 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Mock private OnboardingFamiliesRepository repositoryMock;
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private CriteriaCodeService criteriaCodeServiceMock;
-
-    @Mock private AnprC021RestClient anprC021RestClientMock;
-
-    @Mock private UserFiscalCodeService userFiscalCodeServiceMock;
-
     private final Onboarding2EvaluationMapper evaluationMapper = new Onboarding2EvaluationMapper();
 
     private FamilyDataRetrieverFacadeService service;
-
-
-    @Mock private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
-
-    @Mock private AnprInfoRepository anprInfoRepositoryMock;
 
     @BeforeEach
     void init(){

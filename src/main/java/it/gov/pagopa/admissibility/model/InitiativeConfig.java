@@ -29,9 +29,11 @@ public class InitiativeConfig {
     private List<String> automatedCriteriaCodes;
     private Long initiativeBudgetCents;
     private Long beneficiaryInitiativeBudgetCents;
+    private Long beneficiaryInitiativeBudgetMaxCents;
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;
     private Boolean isLogoPresent;
     private InitiativeGeneralDTO.BeneficiaryTypeEnum beneficiaryType;
+    private String iseeThresholdCode;
 }

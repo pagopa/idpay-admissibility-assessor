@@ -8,7 +8,6 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +20,9 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingRequestEvaluatorServiceTest {
@@ -61,7 +63,7 @@ class OnboardingRequestEvaluatorServiceTest {
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertSame(mockedRuleEngineResult, resultCompleted);
@@ -83,55 +85,99 @@ class OnboardingRequestEvaluatorServiceTest {
     }
 
     @Test
-    void testRejectedNoBudget(){
-        //given
-        configureSuccesfulRuleEngine();
-        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents())))
-                .thenReturn(Mono.empty());
-
-        //when
-        final EvaluationDTO result = onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig).block();
-
-        //then
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
-
-        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
-        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_KO, resultCompleted.getStatus());
-        Assertions.assertEquals(List.of(
-                        OnboardingRejectionReason.builder()
-                                .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
-                                .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
-                                .build()
-                )
-                , resultCompleted.getOnboardingRejectionReasons());
-
-        Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
-        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents()));
-
-        Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
-    }
-
-    @Test
     void testSuccessful(){
         //give
+        onboardingRequest.setVerifyIsee(false);
+        onboardingRequest.setUnderThreshold(false);
+        initiativeConfig.setBeneficiaryInitiativeBudgetMaxCents(200_00L);
+        initiativeConfig.setIseeThresholdCode("THRESHOLD_CODE");
+
         configureSuccesfulRuleEngine();
-        Mockito.when(initiativeCountersRepository.reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents())))
-                .thenReturn(Mono.just(new InitiativeCounters()));
+
+        initiativeConfig.setBeneficiaryInitiativeBudgetCents(10000L);
+        initiativeConfig.setBeneficiaryInitiativeBudgetMaxCents(20000L);
 
         //when
         final EvaluationDTO result = onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig).block();
 
         //then
         Assertions.assertNotNull(result);
-        Assertions.assertTrue(result instanceof EvaluationCompletedDTO);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
 
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
         Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
 
         Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
-        Mockito.verify(initiativeCountersRepository).reserveBudget(Mockito.same(onboardingRequest.getInitiativeId()), Mockito.same(initiativeConfig.getBeneficiaryInitiativeBudgetCents()));
+        Mockito.verify(initiativeCountersRepository, never()).deallocatedPartialBudget(Mockito.any(), Mockito.eq(10000));
+
+        Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
+    }
+
+    @Test
+    void testSuccessfulBudgetMax() {
+        //give
+        onboardingRequest.setVerifyIsee(true);
+        onboardingRequest.setUnderThreshold(true);
+
+        initiativeConfig.setBeneficiaryInitiativeBudgetMaxCents(200_00L);
+        initiativeConfig.setIseeThresholdCode("THRESHOLD_CODE");
+
+        configureSuccesfulRuleEngine();
+
+
+        //when
+        final EvaluationDTO result = onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig).block();
+
+        //then
+        Assertions.assertNotNull(result);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+
+        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
+        Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
+        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents(), ((EvaluationCompletedDTO) result).getBeneficiaryBudgetCents());
+
+        Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
+        Mockito.verify(initiativeCountersRepository,never()).deallocatedPartialBudget(Mockito.any(), Mockito.eq(10000));
+
+        Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
+    }
+
+    @Test
+    void testSuccessfulBudgetMin() {
+        //give
+        String initiative = "INITIATIVE_ID";
+        onboardingRequest.setVerifyIsee(true);
+        onboardingRequest.setUnderThreshold(false);
+        onboardingRequest.setInitiativeId(initiative);
+        initiativeConfig.setInitiativeBudgetCents(1000000L);
+        initiativeConfig.setBeneficiaryInitiativeBudgetCents(100_00L);
+        initiativeConfig.setBeneficiaryInitiativeBudgetMaxCents(200_00L);
+        initiativeConfig.setIseeThresholdCode("THRESHOLD_CODE");
+        initiativeConfig.setInitiativeId(initiative);
+
+        configureSuccesfulRuleEngine();
+
+        InitiativeCounters counters = new InitiativeCounters();
+
+        Mockito.when(
+                initiativeCountersRepository.deallocatedPartialBudget(Mockito.any(), Mockito.eq(100_00L))
+        ).thenReturn(Mono.just(counters));
+        //when
+        final EvaluationDTO result = onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig).block();
+
+        //then
+        Assertions.assertNotNull(result);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+
+        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+        Assertions.assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK, resultCompleted.getStatus());
+        Assertions.assertEquals(Collections.emptyList(), resultCompleted.getOnboardingRejectionReasons());
+        Assertions.assertEquals(initiativeConfig.getBeneficiaryInitiativeBudgetCents(), ((EvaluationCompletedDTO) result).getBeneficiaryBudgetCents());
+
+        Mockito.verify(ruleEngineService).applyRules(Mockito.same(onboardingRequest), Mockito.same(initiativeConfig));
+        Mockito.verify(initiativeCountersRepository, times(1)).deallocatedPartialBudget(Mockito.any(), Mockito.anyLong());
 
         Mockito.verifyNoMoreInteractions(ruleEngineService, initiativeCountersRepository);
     }

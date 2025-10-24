@@ -146,7 +146,13 @@ class OnboardingConsensusCheckTest {
                 new BirthDate(),
                 null,
                 false,
-                "SERVICE"
+                "SERVICE",
+                Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
+                "NAME",
+                "SURNAME",
+                Boolean.TRUE
         );
     }
 
