@@ -174,10 +174,14 @@ class OnboardingFamilyEvaluationServiceTest {
 
         EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
+        expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_1"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
         Mockito.when(familyDataRetrieverFacadeServiceMock.retrieveFamily(Mockito.same(request), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))).thenReturn(Mono.just(expectedResult));
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId())).thenReturn(Flux.empty());
+
+        Mockito.when(onboardingRestClientMock.alreadyOnboardingStatus(request.getInitiativeId(), "ANOTHER_USER_1"))
+                .thenReturn(Mono.just(Pair.of(false, null)));
 
         // When
         EvaluationDTO result = service.retrieveAndCheckOnboardingFamily(request, initiativeConfig, expectedMessage, true).block();

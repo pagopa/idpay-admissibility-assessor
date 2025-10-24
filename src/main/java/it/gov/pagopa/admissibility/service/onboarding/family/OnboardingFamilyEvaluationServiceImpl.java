@@ -71,7 +71,7 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
                                                      return checkFamilyMembers(evaluation, onboardingRequest, initiativeConfig);
                                                 }
                                             } else{
-                                                return Mono.just(evaluation);
+                                                return checkFamilyMembers(evaluation, onboardingRequest, initiativeConfig);
                                             }
                                         })
                         )
