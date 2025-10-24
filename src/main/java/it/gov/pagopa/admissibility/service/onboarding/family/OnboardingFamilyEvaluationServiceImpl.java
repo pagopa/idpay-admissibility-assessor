@@ -79,6 +79,7 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     }
 
     private Mono<EvaluationDTO> checkFamilyMembers(EvaluationDTO evaluation, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+        log.info("[ONBOARDING_REQUEST] Checking if a family member of user {} is already onboarded", onboardingRequest.getUserId());
         return Flux.fromIterable(evaluation.getMemberIds())
                 .filter(member -> !member.equals(evaluation.getUserId()))
                 .flatMap(memberId -> onboardingRestClient.alreadyOnboardingStatus(evaluation.getInitiativeId(), memberId))
