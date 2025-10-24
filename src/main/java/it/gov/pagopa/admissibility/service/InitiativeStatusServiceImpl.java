@@ -22,27 +22,42 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
     @Override
     public Mono<InitiativeStatusDTO> getInitiativeStatusAndBudgetAvailable(String initiativeId) {
         log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Fetching initiative having id: {}", initiativeId);
+
         return contextHolderService.getInitiativeConfig(initiativeId)
                 .flatMap(initiativeConfig ->
                         initiativeCountersRepository.findById(initiativeId)
                                 .map(initiativeCounters -> {
-                                InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
-                                initiativeStatus.setStatus(initiativeConfig.getStatus());
-                                initiativeStatus.setBudgetAvailable(
-                                        isInitiativeBudgetAvailable(
-                                                initiativeCounters.getResidualInitiativeBudgetCents(),
-                                                initiativeConfig.getBeneficiaryInitiativeBudgetCents()
-                                        )
-                                );
+                                    InitiativeStatusDTO initiativeStatus = new InitiativeStatusDTO();
+                                    initiativeStatus.setStatus(initiativeConfig.getStatus());
+                                    initiativeStatus.setBudgetAvailable(isInitiativeBudgetAvailable(
+                                            initiativeConfig.getInitiativeBudgetCents(),
+                                            initiativeCounters.getSpentInitiativeBudgetCents())
+                                    );
 
-                                log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
-                                        initiativeId, initiativeStatus.getStatus(), initiativeStatus.isBudgetAvailable());
-                                return initiativeStatus;
-                                })
-                );
+
+                                    log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
+                                            sanitizeForLog(initiativeId), sanitizeForLog(initiativeStatus.getStatus()), initiativeStatus.isBudgetAvailable());
+                                    return initiativeStatus;
+                                }));
     }
 
-    private boolean isInitiativeBudgetAvailable(Long residualBudget, Long beneficiaryBudget) {
-        return residualBudget.compareTo(beneficiaryBudget) > -1;
+
+    private boolean isInitiativeBudgetAvailable(Long initiativeBudgetCents, Long spentInitiativeBudgetCents) {
+        if (initiativeBudgetCents == null || spentInitiativeBudgetCents == null) {
+            log.warn("[ADMISSIBILITY][INITIATIVE_STATUS] Missing budget info: initiativeBudgetCents={} spentInitiativeBudgetCents={}", initiativeBudgetCents, spentInitiativeBudgetCents);
+            return false;
+        }
+
+        long residualBudget = initiativeBudgetCents - spentInitiativeBudgetCents;
+
+        boolean available = residualBudget >= 10000;
+
+        log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Calculated residualBudget={} => available={}", residualBudget, available);
+        return available;
+    }
+
+    private static String sanitizeForLog(String input) {
+        if (input == null) return null;
+        return input.replaceAll("[^a-zA-Z0-9-_]", "_");
     }
 }
