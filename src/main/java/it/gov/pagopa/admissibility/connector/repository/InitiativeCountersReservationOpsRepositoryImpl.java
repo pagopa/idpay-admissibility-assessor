@@ -54,4 +54,18 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                 InitiativeCounters.class
         );
     }
+
+    public Mono<InitiativeCounters> deallocateBudget(String initiativeId, long deallocatedBudget) {
+        return mongoTemplate.findAndModify(
+                Query.query(Criteria
+                        .where(FIELD_ID).is(initiativeId)
+                ),
+                new Update()
+                        .inc(FIELD_ONBOARDED, -1)
+                        .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
+                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget),
+                FindAndModifyOptions.options().returnNew(true),
+                InitiativeCounters.class
+        );
+    }
 }

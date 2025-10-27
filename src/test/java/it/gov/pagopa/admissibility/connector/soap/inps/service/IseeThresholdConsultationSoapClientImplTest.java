@@ -5,7 +5,7 @@ import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsThresholdClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.*;
-import org.jetbrains.annotations.NotNull;
+import jakarta.validation.constraints.NotNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

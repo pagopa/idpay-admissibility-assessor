@@ -5,4 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface InitiativeCountersReservationOpsRepository {
     Mono<InitiativeCounters> deallocatedPartialBudget(String initiativeId, long deallocatedBudget);
+    Mono<InitiativeCounters> deallocateBudget(String initiativeId, long deallocatedBudget);
 }

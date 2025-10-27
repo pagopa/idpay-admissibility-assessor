@@ -6,8 +6,8 @@ import it.gov.pagopa.admissibility.drools.model.filter.Filter;
 import it.gov.pagopa.admissibility.drools.model.filter.FilterOperator;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
+import jakarta.annotation.Nullable;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import java.util.function.BiFunction;
