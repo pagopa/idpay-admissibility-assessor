@@ -240,7 +240,7 @@ class OnboardingFamilyEvaluationServiceTest {
 
         EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("NEW_FAMILY");
-        expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_1",  "ANOTHER_USER_2"));
+        expectedResult.setMemberIds(Set.of(request.getUserId(),  "ANOTHER_USER_2"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
         Mockito.when(familyDataRetrieverFacadeServiceMock.retrieveFamily(Mockito.same(request), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))).thenReturn(Mono.just(expectedResult));
@@ -250,14 +250,11 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId()))
                 .thenReturn(Flux.just(onboardingFamily));
 
-        Mockito.when(onboardingRestClientMock.alreadyOnboardingStatus(request.getInitiativeId(), "ANOTHER_USER_1"))
-                .thenReturn(Mono.just(Pair.of(false, null)));
-
         Mockito.when(onboardingRestClientMock.alreadyOnboardingStatus(request.getInitiativeId(), "ANOTHER_USER_2"))
                 .thenReturn(Mono.just(Pair.of(true, "ANOTHER_USER_2")));
 
 
-        Family familyAnotherMember = new Family("ANOTHER_FAMILY", Set.of("ANOTHER_USER_2", "ANOTHER_USER"));
+        Family familyAnotherMember = new Family("ANOTHER_FAMILY", Set.of("ANOTHER_USER_2"));
         OnboardingFamilies onboardingFamilyAnotherMember = new OnboardingFamilies(familyAnotherMember, "INITIATIVEID");
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId("ANOTHER_USER_2", request.getInitiativeId()))
                 .thenReturn(Flux.just(onboardingFamilyAnotherMember));
