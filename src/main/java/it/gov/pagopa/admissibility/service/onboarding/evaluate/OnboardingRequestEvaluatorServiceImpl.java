@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
+import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersPreallocationsRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
@@ -8,8 +9,11 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -18,10 +22,14 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
 
     private final RuleEngineService ruleEngineService;
     private final InitiativeCountersRepository initiativeCountersRepository;
+    private final InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
+    private final ReactiveMongoTransactionManager transactionManager;
 
-    public OnboardingRequestEvaluatorServiceImpl(RuleEngineService ruleEngineService, InitiativeCountersRepository initiativeCountersRepository) {
+    public OnboardingRequestEvaluatorServiceImpl(RuleEngineService ruleEngineService, InitiativeCountersRepository initiativeCountersRepository, InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository, ReactiveMongoTransactionManager transactionManager) {
         this.ruleEngineService = ruleEngineService;
         this.initiativeCountersRepository = initiativeCountersRepository;
+        this.initiativeCountersPreallocationsRepository = initiativeCountersPreallocationsRepository;
+        this.transactionManager = transactionManager;
     }
 
     @Override
@@ -71,5 +79,24 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
         } else {
             result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetCents());
         }
+    }
+
+    @Override
+    public Mono<EvaluationDTO> updateInitiativeBudget(EvaluationDTO evaluationDTO, InitiativeConfig initiativeConfig) {
+        if(evaluationDTO instanceof EvaluationCompletedDTO completedDTO
+                && (OnboardingEvaluationStatus.ONBOARDING_KO.equals(completedDTO.getStatus()) || OnboardingEvaluationStatus.JOINED.equals(completedDTO.getStatus()))) {
+            long deallocateBudget = Boolean.TRUE.equals(completedDTO.getVerifyIsee()) ? initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() : initiativeConfig.getBeneficiaryInitiativeBudgetCents();
+
+            TransactionalOperator transactionalOperator = TransactionalOperator.create(transactionManager);
+
+            return transactionalOperator.transactional(
+                    initiativeCountersPreallocationsRepository.deleteByIdReturningResult(Utils.computePreallocationId(evaluationDTO.getUserId(), evaluationDTO.getInitiativeId()))
+                            .filter(Boolean::booleanValue)
+                            .flatMap(deleted -> initiativeCountersRepository
+                                    .deallocatedPartialBudget(completedDTO.getInitiativeId(), deallocateBudget))
+                            .then(Mono.just(evaluationDTO)));
+
+        }
+        return Mono.just(evaluationDTO);
     }
 }

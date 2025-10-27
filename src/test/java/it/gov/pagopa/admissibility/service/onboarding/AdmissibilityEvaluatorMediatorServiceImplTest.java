@@ -114,6 +114,8 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
 
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
         // When
@@ -205,6 +207,8 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding2), Mockito.any(), Mockito.eq(msgs.get(1)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding2), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO2));
 
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO1))).thenReturn(false);
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO2))).thenThrow(new RuntimeException());
 
@@ -267,22 +271,22 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
 
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_first, initiativeConfig, msgs.get(0), true)).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding_first, initiativeConfig, msgs.get(0), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family1);
             onboarding_first.setFamily(family1);
             return Mono.empty();
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_waitingFirst, initiativeConfig, msgs.get(1), true)).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding_waitingFirst, initiativeConfig, msgs.get(1), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family2);
             onboarding_waitingFirst.setFamily(family2);
             return Mono.error(new WaitingFamilyOnBoardingException());
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyOk, initiativeConfig, msgs.get(2), true)).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding_familyOk, initiativeConfig, msgs.get(2), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family3);
             onboarding_familyOk.setFamily(family3);
             return Mono.just(expectedEvaluationOnboardingFamilyOk);
         });
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding_familyKo, initiativeConfig, msgs.get(3), true)).thenAnswer(i -> {
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding_familyKo, initiativeConfig, msgs.get(3), true)).thenAnswer(i -> {
             i.getArgument(0, OnboardingDTO.class).setFamily(family4);
             onboarding_familyKo.setFamily(family4);
             return Mono.just(expectedEvaluationOnboardingFamilyKo);
@@ -295,6 +299,8 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .retrieve(Mockito.eq(onboarding_first), Mockito.same(initiativeConfig), Mockito.same(msgs.get(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding_first), Mockito.any())).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
         Mockito.when(onboardingFamilyEvaluationServiceMock.updateOnboardingFamilyOutcome(Mockito.same(family1), Mockito.eq(initiativeConfig), Mockito.same(expectedEvaluationOnboardingFirst))).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
+
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -355,7 +361,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                         .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
                         .code(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL).build());
 
-        Mockito.when(onboardingFamilyEvaluationServiceMock.checkOnboardingFamily(onboarding, initiativeConfig, msgs.get(0), false))
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding, initiativeConfig, msgs.get(0), false))
                         .thenReturn(Mono.empty());
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);

@@ -57,7 +57,8 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
         }
     }
 
-    private Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig) {
+    @Override
+    public Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig) {
         if(initiativeConfig.isRankingInitiative()){
             return Mono.error(SkipAlreadyRankingFamilyOnBoardingException::new);
         }

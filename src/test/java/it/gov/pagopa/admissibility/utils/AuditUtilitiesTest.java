@@ -69,4 +69,25 @@ class AuditUtilitiesTest {
                 memoryAppender.getLoggedEvents().get(0).getFormattedMessage()
         );
     }
+
+    @Test
+    void logAnprFamilies_ok(){
+        String userId = "USER_ID";
+        String operationId = "OPERATION_ID";
+        String timestamp = "2025-10-21T14:27:45.008906930";
+        auditUtilities.logAnprFamilies(userId, INITIATIVE_ID, operationId, timestamp);
+
+        Assertions.assertEquals(
+                ("CEF:0|PagoPa|IDPAY|1.0|7|User interaction|2| event=AdmissibilityAssessor dstip=%s msg=ANPR families retrieve." +
+                        " cs1Label=userId cs1=%s cs2Label=initiativeId cs2=%s cs3Label=operationAnprId cs3=%s cs4Label=timestamp cs4=%s")
+                        .formatted(
+                                AuditLogger.SRCIP,
+                                userId,
+                                INITIATIVE_ID,
+                                operationId,
+                                timestamp
+                        ),
+                memoryAppender.getLoggedEvents().get(0).getFormattedMessage()
+        );
+    }
 }
