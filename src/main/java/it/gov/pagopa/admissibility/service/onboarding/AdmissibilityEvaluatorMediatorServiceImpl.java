@@ -23,9 +23,9 @@ import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import it.gov.pagopa.common.utils.CommonUtilities;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
@@ -169,6 +169,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true)
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
+                        .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
 
                         .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 
@@ -241,7 +242,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> checkOnboardingFamily(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, boolean retrieveFamily) {
         if(isFamilyInitiative(initiativeConfig)){
-            return onboardingFamilyEvaluationService.checkOnboardingFamily(onboardingRequest, initiativeConfig, message, retrieveFamily);
+            return onboardingFamilyEvaluationService.retrieveAndCheckOnboardingFamily(onboardingRequest, initiativeConfig, message, retrieveFamily);
         } else {
             return Mono.empty();
         }

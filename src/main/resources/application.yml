@@ -408,6 +408,12 @@ app:
         NLHn1k0IpmXFOiFa1Y1D6Bc=
         -----END PRIVATE KEY-----
         }
+  onboarding-workflow:
+    base-url: ${IDPAY_ONBOARDING_WORKFLOW_BASE_URL:http://idpay-onboarding-workflow}
+    retry:
+      delay-millis: ${IDPAY_ONBOARDING_WORKFLOW_RETRY_DELAY_MILLIS:2000}
+      max-attempts: ${IDPAY_ONBOARDING_WORKFLOW_RETRY_MAX_ATTEMPTS:${RETRY_MAX_ATTEMPTS:10}}
+
   util:
     crypto:
       aes:

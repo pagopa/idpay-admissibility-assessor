@@ -8,4 +8,5 @@ import reactor.core.publisher.Mono;
 /** It will evaluate {@link OnboardingDTO} request and reserve budget */
 public interface OnboardingRequestEvaluatorService {
     Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig);
+    Mono<EvaluationDTO> updateInitiativeBudget(EvaluationDTO evaluationDTO, InitiativeConfig initiativeConfig);
 }

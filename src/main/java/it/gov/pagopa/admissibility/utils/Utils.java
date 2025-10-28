@@ -70,6 +70,10 @@ public final class Utils {
     }
     //endregion
 
+    public static String computePreallocationId(String userId, String initiativeId) {
+        return userId + "_" + initiativeId;
+    }
+
 
 
 

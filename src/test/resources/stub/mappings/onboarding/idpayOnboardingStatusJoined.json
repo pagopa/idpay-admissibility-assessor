@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/onboardingMock/idpay/onboarding/initiativeId_[0-9]+/userId_JOINED/status"
+  },
+  "response": {
+    "status": 400,
+    "jsonBody": {
+      "code": "ONBOARDING_FAMILY_UNIT_ALREADY_JOINED",
+      "message": "Something went wrong handling the request"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

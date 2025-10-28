@@ -8,7 +8,9 @@ import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
+import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
@@ -19,6 +21,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,6 +43,9 @@ class FamilyDataRetrieverServiceTest {
     @MockBean
     private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
 
+    @MockBean
+    private AuditUtilities auditUtilities;
+
     @Autowired
     private FamilyDataRetrieverServiceImpl familyDataRetrieverService;
 
@@ -57,7 +64,7 @@ class FamilyDataRetrieverServiceTest {
             .build();
 
     private static final Family EXPECTED_FAMILY = Family.builder()
-            .familyId(ID_OPERAZIONE_ANPR)
+            .familyId("3b3be3e7704b96cb177b9076c92b0c31c71a0163220f2f06f3370fec41d21c7b")
             .memberIds(Set.of(FISCAL_CODE_HASHED))
             .build();
 
@@ -139,9 +146,11 @@ class FamilyDataRetrieverServiceTest {
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of(datiSoggetti));
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
-        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
-                .expectError(IllegalArgumentException.class)
-                .verify();
+        Mono<Optional<Family>> result = familyDataRetrieverService
+                .retrieveFamily(REQUEST, null,
+                        INITIATIVE_CONFIG.getInitiativeName(),
+                        INITIATIVE_CONFIG.getOrganizationName());
+        Assertions.assertThrows(RuntimeException.class, result::block);
     }
 
     @Test
@@ -154,9 +163,11 @@ class FamilyDataRetrieverServiceTest {
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of(datiSoggetti));
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
-        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
-                .expectError(IllegalArgumentException.class)
-                .verify();
+        Mono<Optional<Family>> result = familyDataRetrieverService
+                .retrieveFamily(REQUEST, null,
+                        INITIATIVE_CONFIG.getInitiativeName(),
+                        INITIATIVE_CONFIG.getOrganizationName());
+        Assertions.assertThrows(RuntimeException.class, result::block);
     }
 
     @Test
@@ -171,8 +182,35 @@ class FamilyDataRetrieverServiceTest {
         RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR, List.of(datiSoggetti));
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
+        Mono<Optional<Family>> result = familyDataRetrieverService
+                .retrieveFamily(REQUEST, null,
+                        INITIATIVE_CONFIG.getInitiativeName(),
+                        INITIATIVE_CONFIG.getOrganizationName());
+
+        Assertions.assertThrows(RuntimeException.class, result::block);
+    }
+
+    @Test
+    void testRetrieveFamily_OK_familyWithMemberUnder18() {
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
+                List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
+
+        TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
+        TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
+        TipoCodiceFiscaleDTO tipoCodiceFiscaleDTO = new TipoCodiceFiscaleDTO();
+        tipoCodiceFiscaleDTO.setCodFiscale("CF_UNDER_18");
+        tipoGeneralita.setCodiceFiscale(tipoCodiceFiscaleDTO);
+        LocalDate lastYear = LocalDate.now().minusYears(1);
+        tipoGeneralita.setDataNascita(lastYear.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        datiSoggetti.setGeneralita(tipoGeneralita);
+
+        assert response.getListaSoggetti() != null;
+        response.getListaSoggetti().addDatiSoggettoItem(datiSoggetti);
+
+        mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
+
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
-                .expectError(IllegalArgumentException.class)
-                .verify();
+                .expectNext(Optional.of(EXPECTED_FAMILY))
+                .verifyComplete();
     }
 }
