@@ -235,16 +235,6 @@
 				<scope>import</scope>
 			</dependency>
 			<dependency>
-				<groupId>io.projectreactor.netty</groupId>
-				<artifactId>reactor-netty-core</artifactId>
-				<version>1.1.22</version>
-			</dependency>
-			<dependency>
-				<groupId>io.projectreactor.netty</groupId>
-				<artifactId>reactor-netty-http</artifactId>
-				<version>1.1.22</version>
-			</dependency>
-			<dependency>
 				<groupId>org.mvel</groupId>
 				<artifactId>mvel2</artifactId>
 				<version>2.5.2.Final</version>
