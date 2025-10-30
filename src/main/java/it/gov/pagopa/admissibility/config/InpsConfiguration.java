@@ -13,7 +13,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class InpsConfiguration {
+
     private Inps inps;
+    private InpsMock inpsMock;
 
     @Getter
     @Setter
@@ -22,21 +24,21 @@ public class InpsConfiguration {
         private Header header;
         private Secure secure;
     }
+
+    @Getter
+    @Setter
+    public static class InpsMock {
+        private boolean enabledIsee;
+        private String baseUrl;
+    }
+
     @Getter
     @Setter
     public static class IseeConsultation {
         private String baseUrl;
         private Config config;
 
-        private boolean mockEnabled;
-        private String mockBaseUrl;
         private String realBaseUrl;
-
-        @PostConstruct
-        public void init() {
-            this.baseUrl = mockEnabled ? mockBaseUrl : realBaseUrl;
-            log.info("[INPS_ISEE_CONFIGURATION] Using {} base URL: {}", mockEnabled ? "MOCK" : "REAL", baseUrl);
-        }
     }
 
     @Getter
@@ -61,32 +63,25 @@ public class InpsConfiguration {
     }
 
     public String getBaseUrlForInps() {
+        if (inpsMock.isEnabledIsee()){
+            return inpsMock.getBaseUrl();
+        }
         if (inps != null && inps.getIseeConsultation() != null) {
-            IseeConsultation ic = inps.getIseeConsultation();
-            if (ic.isMockEnabled()) {
-                return ic.getMockBaseUrl();
-            } else {
-                return ic.getRealBaseUrl();
-            }
+            return inps.getIseeConsultation().getBaseUrl();
         }
         return null;
     }
 
     public Integer getConnectionTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getConnectionTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getConnectionTimeout();
         }
         return null;
     }
+
     public Integer getRequestTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getRequestTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getRequestTimeout();
         }
         return null;
     }
