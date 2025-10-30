@@ -1,10 +1,13 @@
 package it.gov.pagopa.admissibility.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+@Slf4j
 @Getter
 @Setter
 @Configuration
@@ -14,7 +17,7 @@ public class InpsConfiguration {
 
     @Getter
     @Setter
-    public static class Inps{
+    public static class Inps {
         private IseeConsultation iseeConsultation;
         private Header header;
         private Secure secure;
@@ -24,6 +27,16 @@ public class InpsConfiguration {
     public static class IseeConsultation {
         private String baseUrl;
         private Config config;
+
+        private boolean mockEnabled;
+        private String mockBaseUrl;
+        private String realBaseUrl;
+
+        @PostConstruct
+        public void init() {
+            this.baseUrl = mockEnabled ? mockBaseUrl : realBaseUrl;
+            log.info("[INPS_ISEE_CONFIGURATION] Using {} base URL: {}", mockEnabled ? "MOCK" : "REAL", baseUrl);
+        }
     }
 
     @Getter
@@ -49,10 +62,16 @@ public class InpsConfiguration {
 
     public String getBaseUrlForInps() {
         if (inps != null && inps.getIseeConsultation() != null) {
-            return inps.getIseeConsultation().getBaseUrl();
+            IseeConsultation ic = inps.getIseeConsultation();
+            if (ic.isMockEnabled()) {
+                return ic.getMockBaseUrl();
+            } else {
+                return ic.getRealBaseUrl();
+            }
         }
         return null;
     }
+
     public Integer getConnectionTimeoutForInps() {
         if (inps != null && inps.getIseeConsultation() != null) {
             Config config = inps.getIseeConsultation().getConfig();
