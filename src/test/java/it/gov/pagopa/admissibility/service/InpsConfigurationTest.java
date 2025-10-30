@@ -1,5 +1,6 @@
-package it.gov.pagopa.admissibility.config;
+package it.gov.pagopa.admissibility.service;
 
+import it.gov.pagopa.admissibility.config.InpsConfiguration;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
