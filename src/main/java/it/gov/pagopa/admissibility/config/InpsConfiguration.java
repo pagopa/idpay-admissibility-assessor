@@ -5,6 +5,9 @@ import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @Getter
 @Setter
 @Configuration
@@ -45,6 +48,19 @@ public class InpsConfiguration {
     public static class Secure {
         private String cert;
         private String key;
+
+        public void setCert(String cert) {
+            if (cert != null) {
+                try {
+                    byte[] decodedBytes = Base64.getDecoder().decode(cert);
+                    this.cert = new String(decodedBytes, StandardCharsets.UTF_8);
+                } catch (IllegalArgumentException e) {
+                    this.cert = null;
+                }
+            } else {
+                this.cert = null;
+            }
+        }
     }
 
     public String getBaseUrlForInps() {
