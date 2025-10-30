@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.config;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
