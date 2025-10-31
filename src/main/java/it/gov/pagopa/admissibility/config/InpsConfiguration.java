@@ -15,20 +15,32 @@ import java.util.Base64;
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class InpsConfiguration {
+
     private Inps inps;
+    private InpsMock inpsMock;
 
     @Getter
     @Setter
-    public static class Inps{
+    public static class Inps {
         private IseeConsultation iseeConsultation;
         private Header header;
         private Secure secure;
     }
+
+    @Getter
+    @Setter
+    public static class InpsMock {
+        private boolean enabledIsee;
+        private String baseUrl;
+    }
+
     @Getter
     @Setter
     public static class IseeConsultation {
         private String baseUrl;
         private Config config;
+
+        private String realBaseUrl;
     }
 
     @Getter
@@ -68,26 +80,25 @@ public class InpsConfiguration {
     }
 
     public String getBaseUrlForInps() {
+        if (inpsMock.isEnabledIsee()){
+            return inpsMock.getBaseUrl();
+        }
         if (inps != null && inps.getIseeConsultation() != null) {
             return inps.getIseeConsultation().getBaseUrl();
         }
         return null;
     }
+
     public Integer getConnectionTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getConnectionTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getConnectionTimeout();
         }
         return null;
     }
+
     public Integer getRequestTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getRequestTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getRequestTimeout();
         }
         return null;
     }
