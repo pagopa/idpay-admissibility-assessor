@@ -51,7 +51,7 @@ public class TestConnectionControllerImpl implements TestConnectionController{
 
         consultazioneSogliaIndicatoreRequestType.setCodiceFiscale(userCode);
         consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(threshold);
-        consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.SI);
+        consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.NO);
         consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
 
         return SoapUtils.soapInvoke2Mono(asyncHandler ->
