@@ -61,6 +61,7 @@ public class InpsConfiguration {
                     this.cert = null;
                 }
             } else {
+                log.error("[INPS_CONFIG] Does not set string cert ");
                 this.cert = null;
             }
         }
