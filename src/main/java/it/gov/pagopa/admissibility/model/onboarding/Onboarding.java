@@ -1,14 +1,12 @@
 package it.gov.pagopa.admissibility.model.onboarding;
 
 import lombok.Data;
-import lombok.experimental.FieldNameConstants;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
 @Data
-@FieldNameConstants
 @Document(collection = "onboarding_citizen")
 public class Onboarding {
     public Onboarding(String initiativeId, String userId) {
