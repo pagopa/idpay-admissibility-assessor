@@ -84,10 +84,9 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
 
     private Mono<EvaluationDTO> checkFamilyMembers(EvaluationDTO evaluation, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         log.info("[ONBOARDING_REQUEST] Checking if a family member of user {} is already onboarded", onboardingRequest.getUserId());
-        HashSet<String> membersId = new HashSet<>(evaluation.getMemberIds());
-        membersId.remove(evaluation.getUserId());
-        Set<String> onboardingsId = membersId.stream().map(memberId -> Onboarding.buildId(onboardingRequest.getInitiativeId(), memberId)).collect(Collectors.toSet());
-        return onboardingRepository.findByIdInAndStatus(onboardingsId, OnboardingEvaluationStatus.ONBOARDING_OK.name())
+        Set<String> onboardingIds = evaluation.getMemberIds().stream().filter(u -> !u.equals(evaluation.getUserId()))
+                .map(memberId -> Onboarding.buildId(onboardingRequest.getInitiativeId(), memberId)).collect(Collectors.toSet());
+        return onboardingRepository.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name())
                 .collectList()
                 .flatMap(familiesOk -> {
                     if (!familiesOk.isEmpty()){
