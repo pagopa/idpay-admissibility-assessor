@@ -11,15 +11,14 @@ import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
+import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -85,9 +84,9 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
 
     private Mono<EvaluationDTO> checkFamilyMembers(EvaluationDTO evaluation, OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         log.info("[ONBOARDING_REQUEST] Checking if a family member of user {} is already onboarded", onboardingRequest.getUserId());
-        HashSet<String> membersId = new HashSet<>(evaluation.getMemberIds());
-        membersId.remove(evaluation.getUserId());
-        return onboardingRepository.findByInitiativeIdAndUserIdInAndStatus(onboardingRequest.getInitiativeId(), membersId, OnboardingEvaluationStatus.ONBOARDING_OK.name())
+        Set<String> onboardingIds = evaluation.getMemberIds().stream().filter(u -> !u.equals(evaluation.getUserId()))
+                .map(memberId -> Onboarding.buildId(onboardingRequest.getInitiativeId(), memberId)).collect(Collectors.toSet());
+        return onboardingRepository.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name())
                 .collectList()
                 .flatMap(familiesOk -> {
                     if (!familiesOk.isEmpty()){
