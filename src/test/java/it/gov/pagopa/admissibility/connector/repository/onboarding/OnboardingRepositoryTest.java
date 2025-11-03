@@ -10,8 +10,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @MongoTest
 class OnboardingRepositoryTest {
@@ -45,7 +47,8 @@ class OnboardingRepositoryTest {
         onboardingRepository.saveAll(onboardings).blockLast();
         testData.addAll(onboardings);
 
-        List<OnboardingFamilyInfo> result = onboardingRepository.findByInitiativeIdAndUserIdInAndStatus(INITIATIVE, Set.of(userId, userId2), OnboardingEvaluationStatus.ONBOARDING_OK.name())
+        Set<String> onboardingIds = new HashSet<>(Set.of(userId, userId2)).stream().map(u -> Onboarding.buildId(INITIATIVE, u)).collect(Collectors.toSet());
+        List<OnboardingFamilyInfo> result = onboardingRepository.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name())
                 .collectList()
                 .block();
 
@@ -67,7 +70,8 @@ class OnboardingRepositoryTest {
         onboardingRepository.saveAll(onboardings).blockLast();
         testData.addAll(onboardings);
 
-        List<OnboardingFamilyInfo> result = onboardingRepository.findByInitiativeIdAndUserIdInAndStatus("INITIATIVE_2", Set.of(userId), OnboardingEvaluationStatus.ONBOARDING_OK.name())
+        Set<String> onboardingIds = new HashSet<>(Set.of(userId)).stream().map(u -> Onboarding.buildId("INITIATIVE_2", u)).collect(Collectors.toSet());
+        List<OnboardingFamilyInfo> result = onboardingRepository.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name())
                 .collectList()
                 .block();
 

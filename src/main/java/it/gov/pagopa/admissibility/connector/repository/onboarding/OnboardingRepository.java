@@ -10,5 +10,5 @@ import java.util.Set;
 
 @Repository
 public interface OnboardingRepository extends ReactiveMongoRepository<Onboarding, String> {
-    Flux<OnboardingFamilyInfo> findByInitiativeIdAndUserIdInAndStatus(String initiativeId, Set<String> userIds, String status);
+    Flux<OnboardingFamilyInfo> findByIdInAndStatus(Set<String> onboardingIds, String status);
 }
