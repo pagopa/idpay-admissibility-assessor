@@ -13,6 +13,7 @@ import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
+import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import it.gov.pagopa.admissibility.model.onboarding.OnboardingFamilyInfo;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import org.junit.jupiter.api.AfterEach;
@@ -32,8 +33,10 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingFamilyEvaluationServiceTest {
@@ -180,7 +183,8 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(familyDataRetrieverFacadeServiceMock.retrieveFamily(Mockito.same(request), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))).thenReturn(Mono.just(expectedResult));
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId())).thenReturn(Flux.empty());
 
-        Mockito.when(onboardingRepositoryMock.findByInitiativeIdAndUserIdInAndStatus(request.getInitiativeId(), Set.of("ANOTHER_USER_1"), OnboardingEvaluationStatus.ONBOARDING_OK.name()))
+        Set<String> onboardingIds = new HashSet<>(Set.of("ANOTHER_USER_1")).stream().map(u -> Onboarding.buildId(request.getInitiativeId(), u)).collect(Collectors.toSet());
+        Mockito.when(onboardingRepositoryMock.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name()))
                 .thenReturn(Flux.empty());
 
         // When
@@ -210,7 +214,8 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId()))
                 .thenReturn(Flux.just(onboardingFamily));
 
-        Mockito.when(onboardingRepositoryMock.findByInitiativeIdAndUserIdInAndStatus(request.getInitiativeId(), Set.of("ANOTHER_USER"), OnboardingEvaluationStatus.ONBOARDING_OK.name()))
+        Set<String> onboardingIds = new HashSet<>(Set.of("ANOTHER_USER")).stream().map(u -> Onboarding.buildId(request.getInitiativeId(), u)).collect(Collectors.toSet());
+        Mockito.when(onboardingRepositoryMock.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name()))
                 .thenReturn(Flux.empty());
 
         // When
@@ -287,7 +292,8 @@ class OnboardingFamilyEvaluationServiceTest {
             @Override public String getInitiativeId() { return request.getInitiativeId(); }
             @Override public String getStatus() { return OnboardingEvaluationStatus.ONBOARDING_OK.name(); }
         };
-        Mockito.when(onboardingRepositoryMock.findByInitiativeIdAndUserIdInAndStatus(request.getInitiativeId(), Set.of("ANOTHER_USER_2"),OnboardingEvaluationStatus.ONBOARDING_OK.name()))
+        Set<String> onboardingIds = new HashSet<>(Set.of("ANOTHER_USER_2")).stream().map(u -> Onboarding.buildId(request.getInitiativeId(), u)).collect(Collectors.toSet());
+        Mockito.when(onboardingRepositoryMock.findByIdInAndStatus(onboardingIds,OnboardingEvaluationStatus.ONBOARDING_OK.name()))
                 .thenReturn(Flux.just(onboardingView));
 
         Mockito.when(existentFamilyHandlerServiceMock.mapFamilyMemberAlreadyOnboardingResult(
@@ -319,7 +325,8 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId()))
                 .thenReturn(Flux.just(onboardingFamily));
 
-        Mockito.when(onboardingRepositoryMock.findByInitiativeIdAndUserIdInAndStatus(request.getInitiativeId(), Set.of("ANOTHER_USER_1",  "ANOTHER_USER_2"), OnboardingEvaluationStatus.ONBOARDING_OK.name()))
+        Set<String> onboardingIds = new HashSet<>(Set.of("ANOTHER_USER_1",  "ANOTHER_USER_2")).stream().map(u -> Onboarding.buildId(request.getInitiativeId(), u)).collect(Collectors.toSet());
+        Mockito.when(onboardingRepositoryMock.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name()))
                 .thenReturn(Flux.empty());
 
         // When
