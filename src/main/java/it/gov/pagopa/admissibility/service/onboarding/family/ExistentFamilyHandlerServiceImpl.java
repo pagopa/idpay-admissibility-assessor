@@ -47,6 +47,9 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
         onboardingRequest.setFamily(new Family(family.getFamilyId(), family.getMemberIds()));
 
         if(OnboardingFamilyEvaluationStatus.IN_PROGRESS.equals(family.getStatus())){
+            if(onboardingRequest.getUserId().equals(family.getCreatedBy())){
+                return Mono.empty();
+            }
             onboardingRescheduleService.reschedule(
                     onboardingRequest,
                     OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
