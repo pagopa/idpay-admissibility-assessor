@@ -33,7 +33,7 @@ public class SoapLoggingHandler implements SOAPHandler<SOAPMessageContext> {
                     : "INBOUND MESSAGE";
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
                 message.writeTo(outputStream);
-                log.info("Obtained a {} message: {}", msgType, outputStream);
+                log.debug("Obtained a {} message: {}", msgType, outputStream);
             } catch (SOAPException | IOException e) {
                 log.error(String.format("Something gone wrong while tracing soap %s", msgType));
             }
