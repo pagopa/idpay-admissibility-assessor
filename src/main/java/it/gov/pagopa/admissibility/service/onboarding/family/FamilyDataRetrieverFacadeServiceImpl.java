@@ -83,6 +83,6 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
 
     private Mono<EvaluationDTO> handleCreateConflict(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, Family family) {
         return repository.findById(OnboardingFamilies.buildId(family, onboardingRequest.getInitiativeId()))
-                .flatMap(previousFamilyRequest -> existentFamilyHandlerService.handleExistentFamily(onboardingRequest, previousFamilyRequest, initiativeConfig, message));
+                .flatMap(previousFamilyRequest -> existentFamilyHandlerService.handleExistentFamilyCreate(onboardingRequest, previousFamilyRequest, initiativeConfig, message));
     }
 }
