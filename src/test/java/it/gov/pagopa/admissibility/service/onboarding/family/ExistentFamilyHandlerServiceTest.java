@@ -79,6 +79,19 @@ class ExistentFamilyHandlerServiceTest {
     }
 
     @Test
+    void testInProgressByUserResubmitted(){
+        // Given
+        family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        family.setCreateBy(request.getUserId());
+
+        // When
+        EvaluationDTO result = service.handleExistentFamily(request, family, initiativeConfig, message).block();
+
+        Assertions.assertNull(result);
+        Mockito.verifyNoMoreInteractions(onboardingRescheduleServiceMock);
+    }
+
+    @Test
     void testOnboardingOk(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.ONBOARDING_OK);
