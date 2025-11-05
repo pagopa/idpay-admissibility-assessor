@@ -19,10 +19,11 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
     Flux<OnboardingFamilies> findByMemberIdsInAndInitiativeId(String memberId, String initiativeId);
 
     /** it will create if not exists a new {@link it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus#IN_PROGRESS} if the provided id not exists. If it doesn't exist, it will return empty */
-    default Mono<OnboardingFamilies> createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(Family family, String initiativeId) {
+    default Mono<OnboardingFamilies> createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(Family family, String initiativeId, String userId) {
         OnboardingFamilies onboardingInProgress = OnboardingFamilies.builder(family, initiativeId)
                 .status(OnboardingFamilyEvaluationStatus.IN_PROGRESS)
                 .createDate(LocalDateTime.now())
+                .createdBy(userId)
                 .build();
 
         return insert(onboardingInProgress)
