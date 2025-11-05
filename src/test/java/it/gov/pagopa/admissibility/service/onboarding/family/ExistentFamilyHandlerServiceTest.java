@@ -82,7 +82,7 @@ class ExistentFamilyHandlerServiceTest {
     void testInProgressByUserResubmitted(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        family.setCreatedBy(request.getUserId());
+        family.setCreateBy(request.getUserId());
 
         // When
         EvaluationDTO result = service.handleExistentFamily(request, family, initiativeConfig, message).block();
