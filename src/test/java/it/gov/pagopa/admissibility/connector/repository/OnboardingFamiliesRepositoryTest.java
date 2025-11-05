@@ -73,10 +73,11 @@ class OnboardingFamiliesRepositoryTest{
         Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
         OnboardingFamilies expectedResult = new OnboardingFamilies(f1, "INITIATIVEID");
         expectedResult.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        expectedResult.setCreateBy("ID1");
         testData.add(expectedResult);
 
         // When not exists
-        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId()).block();
+        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
 
         // Then after create
         Assertions.assertNotNull(result);
@@ -87,7 +88,7 @@ class OnboardingFamiliesRepositoryTest{
         Assertions.assertEquals(expectedResult, result);
 
         // When exists
-        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId()).block();
+        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
 
         // Then afterDeleteResult
         Assertions.assertNull(resultWhenAlreadyExists);

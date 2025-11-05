@@ -16,4 +16,5 @@ import reactor.core.publisher.Mono;
 public interface ExistentFamilyHandlerService {
     Mono<EvaluationDTO> handleExistentFamily(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig, Message<String> message);
     Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig);
+    Mono<EvaluationDTO> mapFamilyMemberAlreadyOnboardingResult(OnboardingDTO onboardingRequest, String familyId, InitiativeConfig initiativeConfig);
 }

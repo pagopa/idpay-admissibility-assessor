@@ -79,6 +79,19 @@ class ExistentFamilyHandlerServiceTest {
     }
 
     @Test
+    void testInProgressByUserResubmitted(){
+        // Given
+        family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        family.setCreateBy(request.getUserId());
+
+        // When
+        EvaluationDTO result = service.handleExistentFamily(request, family, initiativeConfig, message).block();
+
+        Assertions.assertNull(result);
+        Mockito.verifyNoMoreInteractions(onboardingRescheduleServiceMock);
+    }
+
+    @Test
     void testOnboardingOk(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.ONBOARDING_OK);
@@ -129,5 +142,18 @@ class ExistentFamilyHandlerServiceTest {
 
         //Then
         Assertions.assertThrows(SkipAlreadyRankingFamilyOnBoardingException.class,mono::block);
+    }
+
+    @Test
+    void mapFamilyMemberAlreadyOnboardingResultTest(){
+        OnboardingDTO onboardingRequest = OnboardingDTOFaker.mockInstance(1, initiativeConfig.getInitiativeId());
+        onboardingRequest.setStatus("ON_EVALUATION");
+
+        EvaluationDTO result = service.mapFamilyMemberAlreadyOnboardingResult(onboardingRequest, "FAMILY_ID", initiativeConfig).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
+        EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+        Assertions.assertEquals(OnboardingEvaluationStatus.JOINED, resultCompleted.getStatus());
     }
 }
