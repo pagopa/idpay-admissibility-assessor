@@ -36,6 +36,8 @@ import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_T
         properties = {
                 WIREMOCK_TEST_PROP2BASEPATH_SECURE_MAP_PREFIX + "app.inps.iseeConsultation.base-url=inps/isee",
 
+                "app.inps-mock.enabled-isee=false",
+                "app.inps-mock.base-url=http://idpay-mock-baseurl",
                 "app.inps.iseeConsultation.base-url=inps/isee",
                 "app.inps.iseeConsultation.config.connection-timeout=10000",
                 "app.inps.iseeConsultation.config.request-timeout=60000",

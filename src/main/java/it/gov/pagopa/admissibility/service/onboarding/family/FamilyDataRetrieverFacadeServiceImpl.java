@@ -54,7 +54,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                         Family family = familyOpt.get();
                         onboardingRequest.setFamily(family);
 
-                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId())
+                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId())
                                 .map((Function<? super OnboardingFamilies, EvaluationDTO>) x -> {
                                     throw new FamilyOnboardingRequestCreated();
                                 })

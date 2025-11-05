@@ -109,7 +109,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
     void testNewFamily() {
         // Given
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
                         .thenReturn(Mono.just(onboardingFamilies));
 
         // When
@@ -139,7 +139,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         // Given
         EvaluationCompletedDTO expectedEvaluationResult = new EvaluationCompletedDTO();
 
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
                 .thenReturn(Mono.empty());
         Mockito.when(repositoryMock.findById("FAMILYID_INITIATIVEID")).thenReturn(Mono.just(onboardingFamilies));
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamily(request, onboardingFamilies, initiativeConfig, message))

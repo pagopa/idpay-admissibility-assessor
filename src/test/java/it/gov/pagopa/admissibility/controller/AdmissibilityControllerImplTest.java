@@ -25,7 +25,7 @@ class AdmissibilityControllerImplTest {
     void getInitiativeStatusOk() {
         String initiativeId = "INITIATIVE1";
 
-        InitiativeStatusDTO is = new InitiativeStatusDTO("STATUS1", true);
+        InitiativeStatusDTO is = new InitiativeStatusDTO("STATUS1", true, true);
 
         //initiativeId present in request
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId))

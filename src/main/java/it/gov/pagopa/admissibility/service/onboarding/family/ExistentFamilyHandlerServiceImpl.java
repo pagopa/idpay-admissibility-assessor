@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 
 @Slf4j
 @Service
@@ -46,6 +47,9 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
         onboardingRequest.setFamily(new Family(family.getFamilyId(), family.getMemberIds()));
 
         if(OnboardingFamilyEvaluationStatus.IN_PROGRESS.equals(family.getStatus())){
+            if(onboardingRequest.getUserId().equals(family.getCreateBy())){
+                return Mono.empty();
+            }
             onboardingRescheduleService.reschedule(
                     onboardingRequest,
                     OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
@@ -69,6 +73,17 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
             } else {
                 evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.REJECTED);
             }
+        }
+        return Mono.just(evaluation);
+    }
+
+    @Override
+    public Mono<EvaluationDTO> mapFamilyMemberAlreadyOnboardingResult(OnboardingDTO onboardingRequest, String familyId, InitiativeConfig initiativeConfig) {
+        Family family = new Family(familyId, Collections.emptySet());
+        onboardingRequest.setFamily(family);
+        EvaluationDTO evaluation = mapper.apply(onboardingRequest, initiativeConfig, Collections.emptyList());
+        if(evaluation instanceof EvaluationCompletedDTO evaluationCompletedDTO){
+            evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.JOINED);
         }
         return Mono.just(evaluation);
     }
