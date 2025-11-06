@@ -14,6 +14,8 @@ import reactor.core.publisher.Mono;
  *     <li>Otherwise it will return a {@link EvaluationDTO} configured with the same result built for the previous family members</li>
  * </ul> */
 public interface ExistentFamilyHandlerService {
+
+    Mono<EvaluationDTO> handleExistentFamilyCreate(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig, Message<String> message);
     Mono<EvaluationDTO> handleExistentFamily(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig, Message<String> message);
     Mono<EvaluationDTO> mapFamilyOnboardingResult(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig);
     Mono<EvaluationDTO> mapFamilyMemberAlreadyOnboardingResult(OnboardingDTO onboardingRequest, String familyId, InitiativeConfig initiativeConfig);

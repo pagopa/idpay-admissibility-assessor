@@ -278,8 +278,8 @@ app:
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
     FAMILY:
-      authority: "INPS"
-      authorityLabel: "Istituto Nazionale Previdenza Sociale"
+      authority: "ANPR"
+      authorityLabel: "Anagrafe Nazionale della Popolazione Residente"
       onboardingField: "family"
   pdv:
     base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
