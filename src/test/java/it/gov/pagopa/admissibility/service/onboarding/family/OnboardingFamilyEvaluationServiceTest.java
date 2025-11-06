@@ -200,7 +200,7 @@ class OnboardingFamilyEvaluationServiceTest {
     }
 
     @Test
-    void testRetrieveAndCheckOnboardingFamily_alreadyFamilyOK(){
+    void testRetrieveAndCheckOnboardingFamily_alreadyFamilyOKWithoutNoMemberOnboarded(){
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
@@ -226,6 +226,44 @@ class OnboardingFamilyEvaluationServiceTest {
 
         // Then
         Assertions.assertNull(result);
+    }
+
+    @Test
+    void testRetrieveAndCheckOnboardingFamily_alreadyFamilyOKWithAnotherMemberOnboarded(){
+        // Given
+        OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
+        InitiativeConfig initiativeConfig = new InitiativeConfig();
+        initiativeConfig.setInitiativeId("INITIATIVEID");
+
+        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        expectedResult.setFamilyId("FAMILY_1");
+        expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER"));
+        @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
+
+        Family family = new Family(expectedResult.getFamilyId(), Set.of(request.getUserId(), "ANOTHER_USER"));
+        request.setFamily(family);
+
+        Mockito.when(familyDataRetrieverFacadeServiceMock
+                .retrieveFamily(Mockito.same(request), Mockito.same(initiativeConfig), Mockito.same(expectedMessage))
+        ).thenReturn(Mono.error(new FamilyAlreadyOnBoardingException()));
+
+        OnboardingFamilyInfo onboardingView = new OnboardingFamilyInfo() {
+            @Override public String getId() { return "ANOTHER_USER_FAMILY_OF_ANOTHER_USER"; }
+            @Override public String getUserId() { return "ANOTHER_USER"; }
+            @Override public String getFamilyId() { return "FAMILY_OF_ANOTHER_USER"; }
+            @Override public String getInitiativeId() { return request.getInitiativeId(); }
+            @Override public String getStatus() { return OnboardingEvaluationStatus.ONBOARDING_OK.name(); }
+        };
+        Set<String> onboardingIds = new HashSet<>(Set.of("ANOTHER_USER")).stream().map(u -> Onboarding.buildId(request.getInitiativeId(), u)).collect(Collectors.toSet());
+        Mockito.when(onboardingRepositoryMock.findByIdInAndStatus(onboardingIds, OnboardingEvaluationStatus.ONBOARDING_OK.name()))
+                .thenReturn(Flux.just(onboardingView));
+        Mockito.when(existentFamilyHandlerServiceMock.mapFamilyMemberAlreadyOnboardingResult(request, request.getFamily().getFamilyId(), initiativeConfig))
+                        .thenReturn(Mono.just(expectedResult));
+        // When
+        EvaluationDTO result = service.retrieveAndCheckOnboardingFamily(request, initiativeConfig, expectedMessage, true).block();
+
+        // Then
+        Assertions.assertEquals(expectedResult, result);
     }
 
     @Test
