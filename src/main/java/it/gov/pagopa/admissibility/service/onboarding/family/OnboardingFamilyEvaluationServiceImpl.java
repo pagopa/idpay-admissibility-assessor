@@ -82,10 +82,11 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
                 .collectList()
                 .flatMap(familiesOk -> {
                     if (!familiesOk.isEmpty()){
-                        return existentFamilyHandlerService.mapFamilyMemberAlreadyOnboardingResult(onboardingRequest,  onboardingRequest.getFamily().getFamilyId(),  initiativeConfig)
+                        Family retrieveFamily = onboardingRequest.getFamily();
+                        return existentFamilyHandlerService.mapFamilyMemberAlreadyOnboardingResult(onboardingRequest,  familiesOk.getFirst().getFamilyId(),  initiativeConfig)
                                 .flatMap(ev -> {
                                     if(isNewFamily){
-                                        return updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
+                                        return updateOnboardingFamilyOutcome(retrieveFamily, initiativeConfig, ev);
                                     }
                                     return Mono.just(ev);
                                 });
