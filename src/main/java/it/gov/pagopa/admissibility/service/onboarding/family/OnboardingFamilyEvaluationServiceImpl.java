@@ -65,16 +65,16 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
         log.debug("[ONBOARDING_REQUEST] Checking if user family has been onboarded: userId {}; initiativeId {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
         return retrieveFamily ?
                 familyDataRetrieverFacadeService.retrieveFamily(onboardingRequest, initiativeConfig, message)
-                        .switchIfEmpty(Mono.defer(() -> checkFamilyMembers(onboardingRequest, initiativeConfig)))
+                        .switchIfEmpty(Mono.defer(() -> checkFamilyMembers(onboardingRequest, initiativeConfig, true)))
                         .onErrorResume(FamilyAlreadyOnBoardingException.class, x -> {
                             log.info("[ONBOARDING_REQUEST][FAMILY_ALREADY_ONBOARDED] User family already onboarded for initiativeId {}", onboardingRequest.getInitiativeId());
-                            return checkFamilyMembers(onboardingRequest, initiativeConfig);
+                            return checkFamilyMembers(onboardingRequest, initiativeConfig, false);
                         })
 
                 : Mono.empty();
     }
 
-    private Mono<EvaluationDTO> checkFamilyMembers(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+    private Mono<EvaluationDTO> checkFamilyMembers(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, boolean isNewFamily) {
         log.info("[ONBOARDING_REQUEST] Checking if a family member of user {} is already onboarded", onboardingRequest.getUserId());
         Set<String> onboardingIds = onboardingRequest.getFamily().getMemberIds().stream().filter(u -> !u.equals(onboardingRequest.getUserId()))
                 .map(memberId -> Onboarding.buildId(onboardingRequest.getInitiativeId(), memberId)).collect(Collectors.toSet());
@@ -82,7 +82,13 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
                 .collectList()
                 .flatMap(familiesOk -> {
                     if (!familiesOk.isEmpty()){
-                        return existentFamilyHandlerService.mapFamilyMemberAlreadyOnboardingResult(onboardingRequest,  onboardingRequest.getFamily().getFamilyId(),  initiativeConfig);
+                        return existentFamilyHandlerService.mapFamilyMemberAlreadyOnboardingResult(onboardingRequest,  onboardingRequest.getFamily().getFamilyId(),  initiativeConfig)
+                                .flatMap(ev -> {
+                                    if(isNewFamily){
+                                        return updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
+                                    }
+                                    return Mono.just(ev);
+                                });
                     } else {
                         return Mono.empty();
                     }

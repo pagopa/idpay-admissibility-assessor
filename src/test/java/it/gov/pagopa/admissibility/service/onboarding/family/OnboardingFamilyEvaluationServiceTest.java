@@ -294,6 +294,9 @@ class OnboardingFamilyEvaluationServiceTest {
         Mockito.when(existentFamilyHandlerServiceMock.mapFamilyMemberAlreadyOnboardingResult(
                 Mockito.same(request), Mockito.same("NEW_FAMILY"), Mockito.same(initiativeConfig))).thenReturn(Mono.just(expectedResult));
 
+        UpdateResult updateResultMock = Mockito.mock(UpdateResult.class);
+        Mockito.when(onboardingFamiliesRepositoryMock.updateOnboardingFamilyOutcome(request.getFamily(), initiativeConfig.getInitiativeId(), OnboardingFamilyEvaluationStatus.ONBOARDING_OK, Collections.emptyList()))
+                .thenReturn(Mono.just(updateResultMock));
         // When
         EvaluationDTO result = service.retrieveAndCheckOnboardingFamily(request, initiativeConfig, expectedMessage, true).block();
 
