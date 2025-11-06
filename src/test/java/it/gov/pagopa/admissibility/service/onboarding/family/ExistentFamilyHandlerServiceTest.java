@@ -8,6 +8,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
+import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
@@ -155,5 +156,52 @@ class ExistentFamilyHandlerServiceTest {
         Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
         EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
         Assertions.assertEquals(OnboardingEvaluationStatus.JOINED, resultCompleted.getStatus());
+    }
+
+    @Test
+    void handleExistentFamilyCreateTest_inProgressFamily(){
+        // Given
+        family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        OffsetDateTime requestDateTime = OffsetDateTime.now();
+
+        // When
+        Mono<EvaluationDTO> mono = service.handleExistentFamilyCreate(request, family, initiativeConfig, message);
+        Assertions.assertThrows(WaitingFamilyOnBoardingException.class, mono::block);
+
+        Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
+
+        Mockito.verify(onboardingRescheduleServiceMock).reschedule(
+                Mockito.same(request),
+                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
+                Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
+                Mockito.same(message));
+    }
+
+    @Test
+    void handleExistentFamilyCreateTest_inProgressFamilyUserCreated(){
+        // Given
+        family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
+        family.setCreateBy(request.getUserId());
+
+        // When
+        Mono<EvaluationDTO> mono = service.handleExistentFamilyCreate(request, family, initiativeConfig, message);
+        Assertions.assertNull(mono.block());
+
+        Mockito.verifyNoMoreInteractions(onboardingRescheduleServiceMock);
+    }
+
+    @Test
+    void handleExistentFamilyCreateTest_familyAlreadyProcessed(){
+        // Given
+        family.setStatus(OnboardingFamilyEvaluationStatus.ONBOARDING_OK);
+        family.setCreateBy(request.getUserId());
+
+        // When
+        Mono<EvaluationDTO> mono = service.handleExistentFamilyCreate(request, family, initiativeConfig, message);
+        Assertions.assertThrows(FamilyAlreadyOnBoardingException.class, mono::block);
+
+        Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
+
+        Mockito.verifyNoMoreInteractions(onboardingRescheduleServiceMock);
     }
 }

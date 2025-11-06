@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
+import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -39,6 +40,26 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
         this.onboardingRescheduleService = onboardingRescheduleService;
 
         this.familyOnboardingInProgressDelayDuration=Duration.ofMinutes(familyOnboardingInProgressDelayMinutes);
+    }
+
+    @Override
+    public Mono<EvaluationDTO> handleExistentFamilyCreate(OnboardingDTO onboardingRequest, OnboardingFamilies family, InitiativeConfig initiativeConfig, Message<String> message) {
+        log.info("[ONBOARDING_REQUEST] User family has been already onboarded: userId {}; familyId {}; initiativeId {}; onboardingFamilyStatus {}", onboardingRequest.getUserId(), family.getFamilyId(), onboardingRequest.getInitiativeId(), family.getStatus());
+        onboardingRequest.setFamily(new Family(family.getFamilyId(), family.getMemberIds()));
+
+        if(OnboardingFamilyEvaluationStatus.IN_PROGRESS.equals(family.getStatus())){
+            if(onboardingRequest.getUserId().equals(family.getCreateBy())){
+                return Mono.empty();
+            }
+            onboardingRescheduleService.reschedule(
+                    onboardingRequest,
+                    OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
+                    "Family %s onboarding IN_PROGRESS into initiative %s".formatted(family.getFamilyId(), family.getInitiativeId()),
+                    message);
+            return Mono.error(WaitingFamilyOnBoardingException::new);
+        } else {
+            return Mono.error(FamilyAlreadyOnBoardingException::new);
+        }
     }
 
     @Override
