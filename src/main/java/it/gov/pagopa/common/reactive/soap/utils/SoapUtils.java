@@ -20,10 +20,6 @@ public class SoapUtils {
             try {
                 sink.success(res.get(1, TimeUnit.MILLISECONDS));
             } catch (ExecutionException | TimeoutException e) {
-                log.error("""
-                ERROR MESSAGE : {}
-                ERROR CAUSE : {}
-                """, e.getMessage(), e.getCause());
                 sink.error(e);
             } catch (InterruptedException e) {
                 log.warn("Interrupted!", e);
