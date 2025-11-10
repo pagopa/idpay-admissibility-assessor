@@ -41,6 +41,6 @@ public class OnboardingDTO {
     private String channel;
     private String name;
     private String surname;
-    // data fetched if the initiative requires them
+    // data fetched if the initiative requires them underThreshold or deformed
     private Boolean underThreshold;
 }
