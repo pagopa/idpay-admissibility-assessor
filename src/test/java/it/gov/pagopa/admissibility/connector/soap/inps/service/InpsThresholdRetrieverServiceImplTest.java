@@ -109,6 +109,108 @@ class InpsThresholdRetrieverServiceImplTest {
         testExtractWhenNoIsee();
     }
 
+    @Test
+    void testVerifyThresholdIseeFromResponse_underThresholdDeformed(){
+        // Given
+        DatiIndicatoreType dati = new DatiIndicatoreType();
+        dati.setSottoSoglia(SiNoEnum.SI);
+        dati.setPresenzaDifformita(SiNoEnum.SI);
+        inpsResponse.setDatiIndicatore(dati);
+
+        Mockito.when(iseeThresholdConsultationSoapClientMock.verifyThresholdIsee(FISCAL_CODE, "THRESHOLD_CODE"))
+                .thenReturn(Mono.just(inpsResponse));
+
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = inpsThresholdRetrieverService
+                .invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, "THRESHOLD_CODE"), onboardingRequest)
+                .block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+        Assertions.assertFalse(onboardingRequest.getUnderThreshold());
+
+    }
+    @Test
+    void testVerifyThresholdIseeFromResponse_underThresholdNotDeformed(){
+        // Given
+        DatiIndicatoreType dati = new DatiIndicatoreType();
+        dati.setSottoSoglia(SiNoEnum.SI);
+        dati.setPresenzaDifformita(SiNoEnum.NO);
+        inpsResponse.setDatiIndicatore(dati);
+
+        Mockito.when(iseeThresholdConsultationSoapClientMock.verifyThresholdIsee(FISCAL_CODE, "THRESHOLD_CODE"))
+                .thenReturn(Mono.just(inpsResponse));
+
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = inpsThresholdRetrieverService
+                .invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, "THRESHOLD_CODE"), onboardingRequest)
+                .block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+        Assertions.assertTrue(onboardingRequest.getUnderThreshold());
+
+    }
+
+    @Test
+    void testVerifyThresholdIseeFromResponse_overThresholdDeformed(){
+        // Given
+        DatiIndicatoreType dati = new DatiIndicatoreType();
+        dati.setSottoSoglia(SiNoEnum.NO);
+        dati.setPresenzaDifformita(SiNoEnum.SI);
+        inpsResponse.setDatiIndicatore(dati);
+
+        Mockito.when(iseeThresholdConsultationSoapClientMock.verifyThresholdIsee(FISCAL_CODE, "THRESHOLD_CODE"))
+                .thenReturn(Mono.just(inpsResponse));
+
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = inpsThresholdRetrieverService
+                .invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, "THRESHOLD_CODE"), onboardingRequest)
+                .block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+        Assertions.assertFalse(onboardingRequest.getUnderThreshold());
+
+    }
+    @Test
+    void testVerifyThresholdIseeFromResponse_overThresholdNotDeformed(){
+        // Given
+        DatiIndicatoreType dati = new DatiIndicatoreType();
+        dati.setSottoSoglia(SiNoEnum.NO);
+        dati.setPresenzaDifformita(SiNoEnum.NO);
+        inpsResponse.setDatiIndicatore(dati);
+
+        Mockito.when(iseeThresholdConsultationSoapClientMock.verifyThresholdIsee(FISCAL_CODE, "THRESHOLD_CODE"))
+                .thenReturn(Mono.just(inpsResponse));
+
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        // When
+        Optional<List<OnboardingRejectionReason>> result = inpsThresholdRetrieverService
+                .invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, "THRESHOLD_CODE"), onboardingRequest)
+                .block();
+
+        // Then
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+        Assertions.assertFalse(onboardingRequest.getUnderThreshold());
+
+    }
+
     private void testExtractWhenNoIsee() {
         // Given
         Mockito.when(iseeThresholdConsultationSoapClientMock.verifyThresholdIsee(FISCAL_CODE, "THRESHOLD_CODE")).thenReturn(Mono.just(inpsResponse));
