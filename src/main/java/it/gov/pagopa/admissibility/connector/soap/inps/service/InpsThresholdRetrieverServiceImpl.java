@@ -93,7 +93,7 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
     }
 
     private void verifyThresholdIseeFromResponse(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
-        if(inpsResponse.getDatiIndicatore() != null) {
+        if(inpsResponse.getDatiIndicatore() != null && inpsResponse.getDatiIndicatore().getSottoSoglia() != null) {
             Boolean isUnderThreshold = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getSottoSoglia()) ? Boolean.TRUE : Boolean.FALSE;
             Boolean isDeformed = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getPresenzaDifformita()) ? Boolean.TRUE : Boolean.FALSE;
             onboardingRequest.setUnderThreshold(isUnderThreshold && !isDeformed);

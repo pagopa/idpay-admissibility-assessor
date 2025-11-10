@@ -5,10 +5,14 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = InpsConfiguration.class)
@@ -26,6 +30,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class InpsConfigurationTest {
 
+    @Value("${app.inps.secure.cert}")
+    private String cert;
+
     @Autowired
     private InpsConfiguration inpsConfiguration;
 
@@ -41,12 +48,15 @@ class InpsConfigurationTest {
                 ? mock.getBaseUrl()
                 : inps.getIseeConsultation().getBaseUrl();
 
+        byte[] decodedBytes = Base64.getDecoder().decode(cert);
+        String expectedCert = new String(decodedBytes, StandardCharsets.UTF_8);
+
         Assertions.assertEquals(expectedBaseUrl, inpsConfiguration.getBaseUrlForInps());
         Assertions.assertEquals(10, inps.getIseeConsultation().getConfig().getConnectionTimeout());
         Assertions.assertEquals(20, inps.getIseeConsultation().getConfig().getRequestTimeout());
         Assertions.assertEquals("usertest", inps.getHeader().getUserId());
         Assertions.assertEquals("testOfficeCode", inps.getHeader().getOfficeCode());
-        Assertions.assertEquals("testCert", inps.getSecure().getCert());
+        Assertions.assertEquals(expectedCert, inps.getSecure().getCert());
         Assertions.assertEquals("testKey", inps.getSecure().getKey());
     }
 
