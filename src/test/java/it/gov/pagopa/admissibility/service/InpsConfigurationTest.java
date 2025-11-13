@@ -11,35 +11,27 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 @ExtendWith(SpringExtension.class)
 @EnableConfigurationProperties(value = InpsConfiguration.class)
 @TestPropertySource(properties = {
-        "app.inps.iseeConsultation.base-url=testBaseUrl",
+        "app.inps-mock.enabled-isee=true",
+        "app.inps-mock.base-url=testMockBaseUrl",
+        "app.inps.iseeConsultation.base-url=testRealBaseUrl",
         "app.inps.iseeConsultation.config.connection-timeout=10",
         "app.inps.iseeConsultation.config.request-timeout=20",
         "app.inps.header.userId=usertest",
-        "app.inps.secure.cert=testCert",
-        "app.inps.secure.key=testKey",
         "app.inps.header.officeCode=testOfficeCode",
-
+        "app.inps.secure.cert=testCert",
+        "app.inps.secure.key=testKey"
 })
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
- class InpsConfigurationTest {
-    @Value("${app.inps.iseeConsultation.base-url}")
-    private String baseUrl;
-    @Value("${app.inps.iseeConsultation.config.connection-timeout}")
-    private Integer connectionTimeout;
-    @Value("${app.inps.iseeConsultation.config.request-timeout}")
-    private Integer requestTimeout;
-    @Value("${app.inps.header.userId}")
-    private String userId;
-    @Value("${app.inps.header.officeCode}")
-    private String officeCode;
+class InpsConfigurationTest {
+
     @Value("${app.inps.secure.cert}")
     private String cert;
-    @Value("${app.inps.secure.key}")
-    private String key;
-
 
     @Autowired
     private InpsConfiguration inpsConfiguration;
@@ -47,91 +39,87 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
     @Test
     void givenPropertiesWhenGetInpsThenReturnInfo() {
         InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-
         Assertions.assertNotNull(inps);
-        Assertions.assertEquals(baseUrl, inps.getIseeConsultation().getBaseUrl());
-        Assertions.assertEquals(connectionTimeout, inps.getIseeConsultation().getConfig().getConnectionTimeout());
-        Assertions.assertEquals(requestTimeout, inps.getIseeConsultation().getConfig().getRequestTimeout());
-        Assertions.assertEquals(userId, inps.getHeader().getUserId());
-        Assertions.assertEquals(officeCode, inps.getHeader().getOfficeCode());
-        Assertions.assertEquals(cert, inps.getSecure().getCert());
-        Assertions.assertEquals(key, inps.getSecure().getKey());
 
+        InpsConfiguration.InpsMock mock = inpsConfiguration.getInpsMock();
+        Assertions.assertNotNull(mock);
+
+        String expectedBaseUrl = mock.isEnabledIsee()
+                ? mock.getBaseUrl()
+                : inps.getIseeConsultation().getBaseUrl();
+
+        byte[] decodedBytes = Base64.getDecoder().decode(cert);
+        String expectedCert = new String(decodedBytes, StandardCharsets.UTF_8);
+
+        Assertions.assertEquals(expectedBaseUrl, inpsConfiguration.getBaseUrlForInps());
+        Assertions.assertEquals(10, inps.getIseeConsultation().getConfig().getConnectionTimeout());
+        Assertions.assertEquals(20, inps.getIseeConsultation().getConfig().getRequestTimeout());
+        Assertions.assertEquals("usertest", inps.getHeader().getUserId());
+        Assertions.assertEquals("testOfficeCode", inps.getHeader().getOfficeCode());
+        Assertions.assertEquals(expectedCert, inps.getSecure().getCert());
+        Assertions.assertEquals("testKey", inps.getSecure().getKey());
     }
 
     @Test
-    void givenNullInpsIseeConsultationWhenGetBaseUrlThenReturnNull(){
-        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-        inps.setIseeConsultation(null);
+    void givenMockEnabledTrueThenBaseUrlIsMock() {
+        inpsConfiguration.getInpsMock().setEnabledIsee(true);
+        inpsConfiguration.getInpsMock().setBaseUrl("mockBaseUrl");
+        inpsConfiguration.getInps().getIseeConsultation().setBaseUrl("realBaseUrl");
 
-        String baseUrlForInps = inpsConfiguration.getBaseUrlForInps();
-
-        Assertions.assertNull(baseUrlForInps);
+        Assertions.assertEquals("mockBaseUrl", inpsConfiguration.getBaseUrlForInps());
     }
 
     @Test
-    void givenNullInpsConfigWhenGetConnectionTimeoutAndRequestTimeoutThenReturnNull(){
-        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-        inps.getIseeConsultation().setConfig(null);
+    void givenMockDisabledThenBaseUrlIsReal() {
+        inpsConfiguration.getInpsMock().setEnabledIsee(false);
+        inpsConfiguration.getInpsMock().setBaseUrl("mockBaseUrl");
+        inpsConfiguration.getInps().getIseeConsultation().setBaseUrl("realBaseUrl");
 
-        Integer connectionTimeoutForInps = inpsConfiguration.getConnectionTimeoutForInps();
-        Integer requestTimeoutForInps = inpsConfiguration.getRequestTimeoutForInps();
-
-        Assertions.assertNull(connectionTimeoutForInps);
-        Assertions.assertNull(requestTimeoutForInps);
+        Assertions.assertEquals("realBaseUrl", inpsConfiguration.getBaseUrlForInps());
     }
 
     @Test
-    void givenNullHeaderWhenGetOfficeCodeAndUserIdThenReturnNull(){
-        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-        inps.setHeader(null);
+    void givenNullInpsIseeConsultationWhenGetBaseUrlThenReturnNull() {
+        inpsConfiguration.getInpsMock().setEnabledIsee(false);
+        inpsConfiguration.getInps().setIseeConsultation(null);
 
-        String officeCodeForInps = inpsConfiguration.getOfficeCodeForInps();
-        String userIdForInps = inpsConfiguration.getUserIdForInps();
+        String baseUrl = inpsConfiguration.getBaseUrlForInps();
 
-        Assertions.assertNull(officeCodeForInps);
-        Assertions.assertNull(userIdForInps);
+        Assertions.assertNull(baseUrl, "Expected null when iseeConsultation is null and mock disabled");
     }
 
     @Test
-    void givenNullSecureWhenGetCertAndKeyThenReturnNull(){
-        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-        inps.setSecure(null);
-
-        String certForInps = inpsConfiguration.getCertForInps();
-        String keyForInps = inpsConfiguration.getKeyForInps();
-
-
-        Assertions.assertNull(certForInps);
-        Assertions.assertNull(keyForInps);
+    void givenNullInpsConfigWhenGetConnectionTimeoutAndRequestTimeoutThenReturnNull() {
+        inpsConfiguration.getInps().getIseeConsultation().setConfig(null);
+        Assertions.assertNull(inpsConfiguration.getConnectionTimeoutForInps());
+        Assertions.assertNull(inpsConfiguration.getRequestTimeoutForInps());
     }
 
     @Test
-    void givenNullInpsWhenGetAllThenReturnNull(){
-        InpsConfiguration.Inps inps = inpsConfiguration.getInps();
-        inps.setIseeConsultation(null);
-        inps.setHeader(null);
-        inps.setSecure(null);
-
-        String certForInps = inpsConfiguration.getCertForInps();
-        String keyForInps = inpsConfiguration.getKeyForInps();
-        String officeCodeForInps = inpsConfiguration.getOfficeCodeForInps();
-        String userIdForInps = inpsConfiguration.getUserIdForInps();
-        Integer connectionTimeoutForInps = inpsConfiguration.getConnectionTimeoutForInps();
-        Integer requestTimeoutForInps = inpsConfiguration.getRequestTimeoutForInps();
-        String baseUrlForInps = inpsConfiguration.getBaseUrlForInps();
-
-        Assertions.assertNull(baseUrlForInps);
-        Assertions.assertNull(connectionTimeoutForInps);
-        Assertions.assertNull(requestTimeoutForInps);
-        Assertions.assertNull(officeCodeForInps);
-        Assertions.assertNull(userIdForInps);
-        Assertions.assertNull(certForInps);
-        Assertions.assertNull(keyForInps);
-
+    void givenNullHeaderWhenGetOfficeCodeAndUserIdThenReturnNull() {
+        inpsConfiguration.getInps().setHeader(null);
+        Assertions.assertNull(inpsConfiguration.getOfficeCodeForInps());
+        Assertions.assertNull(inpsConfiguration.getUserIdForInps());
     }
 
+    @Test
+    void givenNullSecureWhenGetCertAndKeyThenReturnNull() {
+        inpsConfiguration.getInps().setSecure(null);
+        Assertions.assertNull(inpsConfiguration.getCertForInps());
+        Assertions.assertNull(inpsConfiguration.getKeyForInps());
+    }
 
+    @Test
+    void givenInpsIsNullThenAllGettersReturnNull() {
+        inpsConfiguration.getInpsMock().setEnabledIsee(false);
+        inpsConfiguration.setInps(null);
 
+        Assertions.assertNull(inpsConfiguration.getBaseUrlForInps());
+        Assertions.assertNull(inpsConfiguration.getConnectionTimeoutForInps());
+        Assertions.assertNull(inpsConfiguration.getRequestTimeoutForInps());
+        Assertions.assertNull(inpsConfiguration.getOfficeCodeForInps());
+        Assertions.assertNull(inpsConfiguration.getUserIdForInps());
+        Assertions.assertNull(inpsConfiguration.getCertForInps());
+        Assertions.assertNull(inpsConfiguration.getKeyForInps());
+    }
 }
-

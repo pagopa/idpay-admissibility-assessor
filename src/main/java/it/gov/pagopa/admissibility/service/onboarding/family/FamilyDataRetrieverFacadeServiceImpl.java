@@ -54,7 +54,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                         Family family = familyOpt.get();
                         onboardingRequest.setFamily(family);
 
-                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId())
+                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId())
                                 .map((Function<? super OnboardingFamilies, EvaluationDTO>) x -> {
                                     throw new FamilyOnboardingRequestCreated();
                                 })
@@ -83,6 +83,6 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
 
     private Mono<EvaluationDTO> handleCreateConflict(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message, Family family) {
         return repository.findById(OnboardingFamilies.buildId(family, onboardingRequest.getInitiativeId()))
-                .flatMap(previousFamilyRequest -> existentFamilyHandlerService.handleExistentFamily(onboardingRequest, previousFamilyRequest, initiativeConfig, message));
+                .flatMap(previousFamilyRequest -> existentFamilyHandlerService.handleExistentFamilyCreate(onboardingRequest, previousFamilyRequest, initiativeConfig, message));
     }
 }

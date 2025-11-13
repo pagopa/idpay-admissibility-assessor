@@ -2,28 +2,45 @@ package it.gov.pagopa.admissibility.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
+@Slf4j
 @Getter
 @Setter
 @Configuration
 @ConfigurationProperties(prefix = "app")
 public class InpsConfiguration {
+
     private Inps inps;
+    private InpsMock inpsMock;
 
     @Getter
     @Setter
-    public static class Inps{
+    public static class Inps {
         private IseeConsultation iseeConsultation;
         private Header header;
         private Secure secure;
     }
+
+    @Getter
+    @Setter
+    public static class InpsMock {
+        private boolean enabledIsee;
+        private String baseUrl;
+    }
+
     @Getter
     @Setter
     public static class IseeConsultation {
         private String baseUrl;
         private Config config;
+
+        private String realBaseUrl;
     }
 
     @Getter
@@ -45,29 +62,43 @@ public class InpsConfiguration {
     public static class Secure {
         private String cert;
         private String key;
+
+        public void setCert(String cert) {
+            if (cert != null) {
+                try {
+                    byte[] decodedBytes = Base64.getDecoder().decode(cert);
+                    this.cert = new String(decodedBytes, StandardCharsets.UTF_8);
+                } catch (IllegalArgumentException e) {
+                    log.error("[INPS_CONFIG] Cannot decode cert");
+                    this.cert = null;
+                }
+            } else {
+                log.error("[INPS_CONFIG] Does not set string cert ");
+                this.cert = null;
+            }
+        }
     }
 
     public String getBaseUrlForInps() {
+        if (inpsMock.isEnabledIsee()){
+            return inpsMock.getBaseUrl();
+        }
         if (inps != null && inps.getIseeConsultation() != null) {
             return inps.getIseeConsultation().getBaseUrl();
         }
         return null;
     }
+
     public Integer getConnectionTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getConnectionTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getConnectionTimeout();
         }
         return null;
     }
+
     public Integer getRequestTimeoutForInps() {
-        if (inps != null && inps.getIseeConsultation() != null) {
-            Config config = inps.getIseeConsultation().getConfig();
-            if(config != null) {
-                return config.getRequestTimeout();
-            }
+        if (inps != null && inps.getIseeConsultation() != null && inps.getIseeConsultation().getConfig() != null) {
+            return inps.getIseeConsultation().getConfig().getRequestTimeout();
         }
         return null;
     }

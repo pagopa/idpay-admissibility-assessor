@@ -34,6 +34,13 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                             initiativeCounters.getSpentInitiativeBudgetCents())
                                     );
 
+                                    initiativeStatus.setResidualBudgetAvailable(
+                                            hasResidualAvailableBudget(
+                                                    initiativeCounters.getResidualInitiativeBudgetCents(),
+                                                    initiativeConfig.getBeneficiaryInitiativeBudgetCents()
+                                            )
+                                    );
+
 
                                     log.info("[ADMISSIBILITY][INITIATIVE_STATUS] Found initiative {} having status: {} budgetAvailable: {}",
                                             sanitizeForLog(initiativeId), sanitizeForLog(initiativeStatus.getStatus()), initiativeStatus.isBudgetAvailable());
@@ -54,6 +61,12 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
 
         log.debug("[ADMISSIBILITY][INITIATIVE_STATUS] Calculated residualBudget={} => available={}", residualBudget, available);
         return available;
+    }
+
+    private boolean hasResidualAvailableBudget(Long residualBudget, Long beneficiaryBudgetCents) {
+        return residualBudget != null
+                && beneficiaryBudgetCents != null
+                && residualBudget.compareTo(beneficiaryBudgetCents) >= 0;
     }
 
     private static String sanitizeForLog(String input) {
