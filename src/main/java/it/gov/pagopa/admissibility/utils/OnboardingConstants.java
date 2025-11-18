@@ -51,4 +51,8 @@ public final class OnboardingConstants {
 
         public static final String INITIATIVE_NOT_FOUND = "ADMISSIBILITY_INITIATIVE_NOT_FOUND";
     }
+
+
+    /** Initial status*/
+    public static final String ON_EVALUATION = "ON_EVALUATION";
 }
