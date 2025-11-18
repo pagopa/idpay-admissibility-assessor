@@ -382,7 +382,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
             return Mono.just(expectedEvaluationOnboardingFamilyKo);
         });
 
-        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(i -> Mono.error(new IllegalStateException("UNEXPECTED")));
+//        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(i -> Mono.error(new IllegalStateException("UNEXPECTED")));
 
         Mockito.doAnswer(i -> Mono.just(i.getArgument(0)))
                 .when(authoritiesDataRetrieverServiceMock)
