@@ -251,7 +251,7 @@ app:
   onboarding-request:
     max-retry: ${ONBOARDING_REQUEST_ERROR_MAX_RETRY:3}
     delay-message:
-      next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:false}
+      next-day: ${ONBOARDING_REQUEST_DELAY_NEXT_DAY:true}
       delay-minutes: ${ONBOARDING_REQUEST_DELAY_MINUTES:60}
     delay-family-in-progress:
       delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}

@@ -4,6 +4,7 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -109,7 +110,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         if (evaluation.getRankingValue() != null) {
                             callRankingNotifier(onboarding2EvaluationMapper.apply(request, evaluation));
                         }
-                        inviteFamilyMembers(request, evaluation);
+//                        inviteFamilyMembers(request, evaluation);
                     } else {
                         callRankingNotifier((RankingRequestDTO) evaluationDTO);
                     }
@@ -186,18 +187,31 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
                                 return Mono.error(e);
                             } else {
-                                return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig
-                                        , List.of(new OnboardingRejectionReason(
-                                                OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                                                OnboardingConstants.REJECTION_REASON_GENERIC_ERROR,
-                                                null, null, null
-                                        ))));
+                                if(e instanceof InpsGenericException){
+                                    onboardingRequest.setUnderThreshold(false);
+                                    return onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig)
+                                            .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+                                            .onErrorResume( exception ->
+                                                    buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
+                                            );
+
+                                }
+                                return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig);
                             }
                         });
             }
         } else {
             return Mono.empty();
         }
+    }
+
+    private Mono<EvaluationDTO> buildOnboardingGenericErrorKo(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+        return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig
+                , List.of(new OnboardingRejectionReason(
+                        OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
+                        OnboardingConstants.REJECTION_REASON_GENERIC_ERROR,
+                        null, null, null
+                ))));
     }
 
     @NotNull

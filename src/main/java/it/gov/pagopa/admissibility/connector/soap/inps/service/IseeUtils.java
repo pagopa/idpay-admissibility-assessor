@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.connector.soap.inps.service;
 
 import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
+import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
@@ -40,7 +41,7 @@ public final class IseeUtils {
                 && clientTransportException.getMessage().contains("Too Many Requests")) {
             return Mono.error(new InpsDailyRequestLimitException(e));
         } else {
-            return Mono.error(new IllegalStateException(
+            return Mono.error(new InpsGenericException(
                     "[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e));
         }
     }
