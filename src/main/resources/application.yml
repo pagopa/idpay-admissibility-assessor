@@ -255,6 +255,8 @@ app:
       delay-minutes: ${ONBOARDING_REQUEST_DELAY_MINUTES:60}
     delay-family-in-progress:
       delay-minutes: ${ONBOARDING_FAMILY_REQUEST_IN_PROGRESS_DELAY_MINUTES:5}
+    anpr-family-delay-message:
+      delay-minutes: ${ONBOARDING_ANPR_FAMILY_LIMITS_DELAY_MINUTES:60}
   beneficiary-rule:
     # if true, it will try to build each rule singularly, but this will take more time
     online-syntax-check: ${BENEFICIARY_RULE_BUILD_ONLINE_SYNTAX_CHECK:false}

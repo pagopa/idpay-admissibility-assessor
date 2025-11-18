@@ -17,6 +17,7 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import it.gov.pagopa.admissibility.model.onboarding.OnboardingFamilyInfo;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -30,6 +31,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -43,10 +45,12 @@ import java.util.stream.Collectors;
 @ExtendWith(MockitoExtension.class)
 class OnboardingFamilyEvaluationServiceTest {
 
+    private static final Long DELAY_MINUTES = 2L;
     @Mock private OnboardingFamiliesRepository onboardingFamiliesRepositoryMock;
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private FamilyDataRetrieverFacadeService familyDataRetrieverFacadeServiceMock;
     @Mock private OnboardingRepository onboardingRepositoryMock;
+    @Mock private OnboardingRescheduleService onboardingRescheduleServiceMock;
 
     private OnboardingFamilyEvaluationService service;
 
@@ -54,7 +58,7 @@ class OnboardingFamilyEvaluationServiceTest {
 
     @BeforeEach
     void init(){
-        service = new OnboardingFamilyEvaluationServiceImpl(onboardingFamiliesRepositoryMock, existentFamilyHandlerServiceMock, familyDataRetrieverFacadeServiceMock, onboardingRepositoryMock);
+        service = new OnboardingFamilyEvaluationServiceImpl(DELAY_MINUTES, onboardingFamiliesRepositoryMock, existentFamilyHandlerServiceMock, familyDataRetrieverFacadeServiceMock, onboardingRepositoryMock, onboardingRescheduleServiceMock);
     }
 
     @AfterEach
@@ -411,5 +415,18 @@ class OnboardingFamilyEvaluationServiceTest {
 
         // Then
         Assertions.assertNull(result);
+    }
+
+    @Test
+    void rescheduleRequestAnprLimitMessageTest(){
+        // Given
+        OnboardingDTO request = Mockito.mock(OnboardingDTO.class);
+        Message<String> message = MessageBuilder.withPayload("MESSAGE").build();
+
+        // When
+        service.rescheduleRequestAnprLimitMessage(request, message);
+
+        // Then
+        Mockito.verify(onboardingRescheduleServiceMock).reschedule(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any());
     }
 }

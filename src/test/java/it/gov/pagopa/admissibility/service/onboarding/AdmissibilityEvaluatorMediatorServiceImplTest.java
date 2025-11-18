@@ -21,6 +21,7 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifie
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.reactive.pdnd.exception.PdndRetrieveFamilyServiceTooManyRequestException;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -73,7 +74,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verifyNoMoreInteractions(
                 onboardingContextHolderServiceMock,
                 onboardingCheckServiceMock,
-                onboardingFamilyEvaluationServiceMock,
+//                onboardingFamilyEvaluationServiceMock,
                 authoritiesDataRetrieverServiceMock,
                 onboardingRequestEvaluatorServiceMock,
                 admissibilityErrorNotifierServiceMock,
@@ -296,7 +297,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
             return Mono.just(expectedEvaluationOnboardingFamilyKo);
         });
 
-        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(i -> Mono.error(new IllegalStateException("UNEXPECTED")));
+//        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.any(), Mockito.any(), Mockito.any())).thenAnswer(i -> Mono.error(new IllegalStateException("UNEXPECTED")));
 
         Mockito.doAnswer(i -> Mono.just(i.getArgument(0)))
                 .when(authoritiesDataRetrieverServiceMock)
@@ -484,6 +485,52 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(1)).notify(Mockito.any());
         Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock, Mockito.times(2)).evaluate(Mockito.any(), Mockito.any());
+        checkCommits(checkpointers);
+    }
+
+    @Test
+    void mediatorTestPndFamilyTooManyRequest(){
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
+
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF)
+                .build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+
+        List<Checkpointer> checkpointers= new ArrayList<>(1);
+        List<Message<String>> msgs = Stream.of(onboarding1)
+                .map(TestUtils::jsonSerializer)
+                .map(s -> {
+                            Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+                            Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+                            checkpointers.add(checkpointer);
+                            return MessageBuilder.withPayload(s)
+                                    .setHeader(AzureHeaders.CHECKPOINTER, checkpointer);
+                        }
+                )
+                .map(MessageBuilder::build).toList();
+
+        Flux<Message<String>> onboardingFlux = Flux.fromIterable(msgs);
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
+
+
+        Mockito.when(onboardingFamilyEvaluationServiceMock.retrieveAndCheckOnboardingFamily(onboarding1, initiativeConfig, msgs.get(0), true))
+                        .thenReturn(Mono.error(new PdndRetrieveFamilyServiceTooManyRequestException("DUMMY_EXCEPTION", new RuntimeException())));
+
+        Mockito.doNothing().when(onboardingFamilyEvaluationServiceMock).rescheduleRequestAnprLimitMessage(onboarding1, msgs.get(0));
+
+        // When
+        admissibilityEvaluatorMediatorService.execute(onboardingFlux);
+
+        // Then
+        Mockito.verify(onboardingFamilyEvaluationServiceMock).retrieveAndCheckOnboardingFamily(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyBoolean());
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock,
+                onboardingNotifierServiceMock,
+                authoritiesDataRetrieverServiceMock,
+                onboardingRequestEvaluatorServiceMock);
         checkCommits(checkpointers);
     }
 

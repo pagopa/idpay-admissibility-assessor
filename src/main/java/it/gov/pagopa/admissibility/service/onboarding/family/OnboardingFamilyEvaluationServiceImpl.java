@@ -13,11 +13,16 @@ import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
+import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
+import it.gov.pagopa.common.utils.CommonConstants;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,20 +32,27 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
 
     public static final Comparator<OnboardingFamilies> COMPARATOR_FAMILIES_CREATE_DATE_DESC = Comparator.comparing(OnboardingFamilies::getCreateDate).reversed();
 
+    private final Long delayMinutes;
+
     private final OnboardingFamiliesRepository onboardingFamiliesRepository;
     private final ExistentFamilyHandlerService existentFamilyHandlerService;
     private final FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService;
 
     private final OnboardingRepository onboardingRepository;
+    private final OnboardingRescheduleService onboardingRescheduleService;
 
-    public OnboardingFamilyEvaluationServiceImpl(OnboardingFamiliesRepository onboardingFamiliesRepository,
+
+    public OnboardingFamilyEvaluationServiceImpl(@Value("${app.onboarding-request.anpr-family-delay-message.delay-minutes}")Long delayMinutes,
+                                                 OnboardingFamiliesRepository onboardingFamiliesRepository,
                                                  ExistentFamilyHandlerService existentFamilyHandlerService,
                                                  FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService,
-                                                 OnboardingRepository onboardingRepository) {
+                                                 OnboardingRepository onboardingRepository, OnboardingRescheduleService onboardingRescheduleService) {
+        this.delayMinutes = delayMinutes;
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.existentFamilyHandlerService = existentFamilyHandlerService;
         this.familyDataRetrieverFacadeService = familyDataRetrieverFacadeService;
         this.onboardingRepository = onboardingRepository;
+        this.onboardingRescheduleService = onboardingRescheduleService;
     }
 
     @Override
@@ -121,6 +133,16 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
             case ONBOARDING_OK, JOINED, DEMANDED -> OnboardingFamilyEvaluationStatus.ONBOARDING_OK;
             case ONBOARDING_KO, REJECTED -> OnboardingFamilyEvaluationStatus.ONBOARDING_KO;
         };
+    }
+
+    private OffsetDateTime calcDelayRateLimit() {
+        return LocalDateTime.now().plusMinutes(this.delayMinutes).atZone(CommonConstants.ZONEID).toOffsetDateTime();
+
+    }
+
+    @Override
+    public void rescheduleRequestAnprLimitMessage(OnboardingDTO request, Message<String> message) {
+        onboardingRescheduleService.reschedule(request, calcDelayRateLimit(), "[ANPR][FAMILY_RETRIEVE] Daily limit reached", message);
     }
 
 }

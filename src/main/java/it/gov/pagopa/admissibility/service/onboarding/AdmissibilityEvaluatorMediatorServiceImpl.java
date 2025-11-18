@@ -22,6 +22,7 @@ import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierSe
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierServiceImpl;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
+import it.gov.pagopa.common.reactive.pdnd.exception.PdndRetrieveFamilyServiceTooManyRequestException;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import it.gov.pagopa.common.utils.CommonUtilities;
 import jakarta.validation.constraints.NotNull;
@@ -169,8 +170,14 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 return checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true)
-                        .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
+                        .switchIfEmpty(Mono.defer(() -> retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message)))
                         .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+
+                        .onErrorResume(PdndRetrieveFamilyServiceTooManyRequestException.class, e -> {
+                            log.info("[ONBOARDING_REQUEST] Pdnd service has bee invoked too times");
+                            onboardingFamilyEvaluationService.rescheduleRequestAnprLimitMessage(onboardingRequest, message);
+                            return Mono.empty();
+                        })
 
                         .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 

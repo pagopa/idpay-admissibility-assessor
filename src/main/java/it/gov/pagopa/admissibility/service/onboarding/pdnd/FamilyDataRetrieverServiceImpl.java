@@ -8,6 +8,8 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessme
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
+import it.gov.pagopa.common.reactive.pdnd.exception.PdndRetrieveFamilyServiceTooManyRequestException;
+import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.Message;
@@ -54,7 +56,10 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                 .flatMap(this::invokeAnprC021)
                 .publishOn(Schedulers.boundedElastic())
                 .doOnNext(rispostaE002OKDTO -> auditUtilities.logAnprFamilies(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), rispostaE002OKDTO.getIdOperazioneANPR(), LocalDateTime.now().toString()))
-                .flatMap(this::processAnprResponse);
+                .flatMap(this::processAnprResponse)
+                .onErrorResume(PdndServiceTooManyRequestException.class, e ->
+                    Mono.error(new PdndRetrieveFamilyServiceTooManyRequestException("[PDND][TOO_MANY_REQUEST] Pdnd retrieve family service has bee invoked too times", e)
+                ));
     }
 
     private Mono<RispostaE002OKDTO> invokeAnprC021(String fiscalCode) {
