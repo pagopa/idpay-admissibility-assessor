@@ -10,5 +10,5 @@ public enum OnboardingEvaluationStatus {
     /** In families initiatives, the status associated to other family's members which will ask to join to a ONBOARDING_OK family */
     JOINED,
     /** In families initiatives, the status associated to other family's members which will ask to join to a ONBOARDING_KO family */
-    REJECTED
+    REJECTED,
 }

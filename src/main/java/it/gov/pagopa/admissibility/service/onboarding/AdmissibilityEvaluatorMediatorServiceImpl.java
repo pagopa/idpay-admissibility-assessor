@@ -4,15 +4,18 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
+import it.gov.pagopa.admissibility.exception.AlreadyOnboardingException;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
+import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.evaluate.OnboardingRequestEvaluatorService;
 import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEvaluationService;
@@ -37,11 +40,15 @@ import reactor.core.scheduler.Schedulers;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
+import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOARDING_OK;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
+import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATION;
 
 @Service
 @Slf4j
 public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityEvaluatorMediatorService {
+    private static final String REJECTION_REASON_ALREADY_ONBOARDED = "USER_ALREADY_ONBOARDED";
     private static final List<String> REJECTION_REASON_CHECK_DATE_FAIL = List.of(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL, OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL);
 
     private final int maxOnboardingRequestRetry;
@@ -59,6 +66,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final OnboardingNotifierService onboardingNotifierService;
     private final RankingNotifierService rankingNotifierService;
 
+    private final OnboardingRepository onboardingRepository;
+
     @SuppressWarnings("squid:S00107") // suppressing too many parameters alert
     public AdmissibilityEvaluatorMediatorServiceImpl(
             @Value("${app.onboarding-request.max-retry}") int maxOnboardingRequestRetry,
@@ -71,7 +80,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
             ObjectMapper objectMapper,
             OnboardingNotifierService onboardingNotifierService,
-            RankingNotifierService rankingNotifierService) {
+            RankingNotifierService rankingNotifierService, OnboardingRepository onboardingRepository) {
         this.maxOnboardingRequestRetry = maxOnboardingRequestRetry;
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboardingCheckService = onboardingCheckService;
@@ -84,6 +93,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
         this.onboardingNotifierService = onboardingNotifierService;
         this.rankingNotifierService = rankingNotifierService;
+        this.onboardingRepository = onboardingRepository;
     }
 
     /**
@@ -168,12 +178,14 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 return checkRejectionType(message, onboardingRequest, initiativeConfig, rejectedRequest);
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true)
+                return checkAlreadyUserOnboarded(onboardingRequest)
+                        .switchIfEmpty(checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true))
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
                         .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
 
 //                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 
+                        .onErrorResume(AlreadyOnboardingException.class, e -> Mono.empty())
                         .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(e -> {
@@ -310,7 +322,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private void inviteFamilyMembers(OnboardingDTO request, EvaluationCompletedDTO evaluation) {
         if(request.getFamily()!=null){
-            if(OnboardingEvaluationStatus.ONBOARDING_OK.equals(evaluation.getStatus())){
+            if(ONBOARDING_OK.equals(evaluation.getStatus())){
                 callFamilyMembersNotifier(request, evaluation, OnboardingEvaluationStatus.DEMANDED);
             } else if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(evaluation.getStatus())){
                 log.info("[FAMILY_MEMBERS_NOTIFY_KO] Notify onboarding KO to member of the family {}", request.getFamily().getFamilyId());
@@ -339,4 +351,15 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         });
     }
 
+    private Mono<EvaluationDTO> checkAlreadyUserOnboarded(OnboardingDTO request){
+        return onboardingRepository.findById(Onboarding.buildId(request.getInitiativeId(), request.getUserId()))
+                .switchIfEmpty(Mono.error(new AlreadyOnboardingException()))
+                .flatMap(o -> {
+                    if (ON_EVALUATION.equals(o.getStatus())){
+                        return Mono.empty();
+                    } else {
+                        return Mono.error(new AlreadyOnboardingException());
+                    }
+                });
+    }
 }

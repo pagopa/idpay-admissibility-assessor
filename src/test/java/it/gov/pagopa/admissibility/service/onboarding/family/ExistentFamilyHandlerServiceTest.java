@@ -72,7 +72,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
 
-        Mockito.verify(onboardingRescheduleServiceMock).reschedule(
+        Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
                 Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
@@ -170,7 +170,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Assertions.assertEquals(new Family(family.getFamilyId(), family.getMemberIds()), request.getFamily());
 
-        Mockito.verify(onboardingRescheduleServiceMock).reschedule(
+        Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
                 Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
