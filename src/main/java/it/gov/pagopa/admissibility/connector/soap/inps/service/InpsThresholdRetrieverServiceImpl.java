@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyReques
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.ConsultazioneSogliaIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.SiNoEnum;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
@@ -93,6 +94,10 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
     }
 
     private void verifyThresholdIseeFromResponse(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
+        if (!EsitoEnum.OK.equals(inpsResponse.getEsito())){
+            onboardingRequest.setUnderThreshold(false);
+        }
+
         if(inpsResponse.getDatiIndicatore() != null && inpsResponse.getDatiIndicatore().getSottoSoglia() != null) {
             Boolean isUnderThreshold = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getSottoSoglia()) ? Boolean.TRUE : Boolean.FALSE;
             Boolean isDeformed = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getPresenzaDifformita()) ? Boolean.TRUE : Boolean.FALSE;
