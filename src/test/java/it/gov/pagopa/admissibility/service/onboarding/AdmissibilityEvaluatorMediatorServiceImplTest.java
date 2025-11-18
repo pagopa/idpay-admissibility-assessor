@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
+import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
@@ -19,6 +20,7 @@ import it.gov.pagopa.admissibility.service.onboarding.family.OnboardingFamilyEva
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingNotifierService;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.RankingNotifierService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
+import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -56,9 +58,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
     private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService;
 
+    private static final int maxRetry = 2;
+
     @BeforeEach
     void init(){
-        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(2, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, admissibilityErrorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
+        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(maxRetry, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, admissibilityErrorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock);
     }
 
     @AfterEach
@@ -383,6 +387,103 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
                 .code(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL).build()));
 
+        checkCommits(checkpointers);
+    }
+
+    @Test
+    void mediatorTestMaxRetryOnboarding(){
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
+
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+
+        List<Checkpointer> checkpointers= new ArrayList<>(1);
+        List<Message<String>> msgs = Stream.of(onboarding1)
+                .map(TestUtils::jsonSerializer)
+                .map(s -> {
+                            Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+                            Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+                            checkpointers.add(checkpointer);
+                            return MessageBuilder.withPayload(s)
+                                    .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                                    .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, String.valueOf(maxRetry));
+                        }
+                )
+                .map(MessageBuilder::build).toList();
+
+        Flux<Message<String>> onboardingFlux = Flux.fromIterable(msgs);
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
+
+
+        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        EvaluationCompletedDTO evaluationDTO1 = EvaluationCompletedDTO.builder().userId("USER1").status(OnboardingEvaluationStatus.ONBOARDING_KO).build();
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.any(), Mockito.any()))
+                .thenAnswer(i -> Mono.error(new InpsGenericException("DUMMY_EXCEPTION", new RuntimeException())))
+                .thenReturn(Mono.just(evaluationDTO1));
+
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        // When
+        admissibilityEvaluatorMediatorService.execute(onboardingFlux);
+
+        // Then
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock, onboardingFamilyEvaluationServiceMock);
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.times(1)).notify(Mockito.any());
+        Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(onboardingRequestEvaluatorServiceMock, Mockito.times(2)).evaluate(Mockito.any(), Mockito.any());
+        checkCommits(checkpointers);
+    }
+
+    @Test
+    void mediatorTestMaxRetryOnboardingGenericError(){
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
+
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+
+        List<Checkpointer> checkpointers= new ArrayList<>(1);
+        List<Message<String>> msgs = Stream.of(onboarding1)
+                .map(TestUtils::jsonSerializer)
+                .map(s -> {
+                            Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+                            Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+                            checkpointers.add(checkpointer);
+                            return MessageBuilder.withPayload(s)
+                                    .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                                    .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, String.valueOf(maxRetry));
+                        }
+                )
+                .map(MessageBuilder::build).toList();
+
+        Flux<Message<String>> onboardingFlux = Flux.fromIterable(msgs);
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.eq(onboarding1), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
+
+
+        Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
+
+        Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.any(), Mockito.any()))
+                .thenAnswer(i -> Mono.error(new InpsGenericException("DUMMY_EXCEPTION", new RuntimeException())))
+                .thenReturn(Mono.error(new RuntimeException("SECOND_ERROR")));
+
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        // When
+        admissibilityEvaluatorMediatorService.execute(onboardingFlux);
+
+        // Then
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock, onboardingFamilyEvaluationServiceMock);
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.times(1)).notify(Mockito.any());
+        Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(onboardingRequestEvaluatorServiceMock, Mockito.times(2)).evaluate(Mockito.any(), Mockito.any());
         checkCommits(checkpointers);
     }
 

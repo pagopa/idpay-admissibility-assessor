@@ -4,8 +4,14 @@ package it.gov.pagopa.admissibility.connector.soap.inps.service;
 import com.sun.xml.ws.client.ClientTransportException;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsThresholdClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
-import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.*;
+import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.ConsultazioneSogliaIndicatoreResponse;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.ConsultazioneSogliaIndicatoreResponseType;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.EsitoEnum;
+import it.gov.pagopa.admissibility.generated.soap.ws.client.soglia.ISvcConsultazione;
 import jakarta.validation.constraints.NotNull;
+import jakarta.xml.ws.AsyncHandler;
+import jakarta.xml.ws.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,9 +19,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.test.StepVerifier;
-
-import jakarta.xml.ws.AsyncHandler;
-import jakarta.xml.ws.Response;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -149,7 +152,7 @@ class IseeThresholdConsultationSoapClientImplTest {
 
 
         StepVerifier.create(client.verifyThresholdIsee("ABCDEF12G34H567I", "SOGLIA"))
-                .expectError(IllegalStateException.class)
+                .expectError(InpsGenericException.class)
                 .verify();
     }
 }

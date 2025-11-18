@@ -223,8 +223,8 @@ class InpsThresholdRetrieverServiceImplTest {
         // Then
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(List.of(buildExpectedIseeKoRejectionReason()), result.get());
-        Assertions.assertNull(onboardingRequest.getIsee());
+        Assertions.assertTrue(result.get().isEmpty());
+        Assertions.assertFalse(onboardingRequest.getUnderThreshold());
     }
 
     private OnboardingRejectionReason buildExpectedIseeKoRejectionReason() {
