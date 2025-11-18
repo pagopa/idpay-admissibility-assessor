@@ -312,7 +312,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         admissibilityEvaluatorMediatorService.execute(onboardingFlux);
 
         // Then
-        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
+        Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibility(Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.any());
 
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_first), Mockito.same(initiativeConfig), Mockito.any());
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_waitingFirst), Mockito.same(initiativeConfig), Mockito.any());

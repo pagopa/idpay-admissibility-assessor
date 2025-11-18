@@ -172,7 +172,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                         .switchIfEmpty(retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))
                         .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
 
-                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
+//                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
 

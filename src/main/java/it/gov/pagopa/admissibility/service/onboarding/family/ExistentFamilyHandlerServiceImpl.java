@@ -51,11 +51,11 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
             if(onboardingRequest.getUserId().equals(family.getCreateBy())){
                 return Mono.empty();
             }
-            onboardingRescheduleService.reschedule(
-                    onboardingRequest,
-                    OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
-                    "Family %s onboarding IN_PROGRESS into initiative %s".formatted(family.getFamilyId(), family.getInitiativeId()),
-                    message);
+//            onboardingRescheduleService.reschedule(
+//                    onboardingRequest,
+//                    OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
+//                    "Family %s onboarding IN_PROGRESS into initiative %s".formatted(family.getFamilyId(), family.getInitiativeId()),
+//                    message);
             return Mono.error(WaitingFamilyOnBoardingException::new);
         } else {
             return Mono.error(FamilyAlreadyOnBoardingException::new);
@@ -71,11 +71,11 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
             if(onboardingRequest.getUserId().equals(family.getCreateBy())){
                 return Mono.empty();
             }
-            onboardingRescheduleService.reschedule(
-                    onboardingRequest,
-                    OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
-                    "Family %s onboarding IN_PROGRESS into initiative %s".formatted(family.getFamilyId(), family.getInitiativeId()),
-                    message);
+//            onboardingRescheduleService.reschedule(
+//                    onboardingRequest,
+//                    OffsetDateTime.now().plus(familyOnboardingInProgressDelayDuration),
+//                    "Family %s onboarding IN_PROGRESS into initiative %s".formatted(family.getFamilyId(), family.getInitiativeId()),
+//                    message);
             return Mono.error(WaitingFamilyOnBoardingException::new);
         } else {
             return mapFamilyOnboardingResult(onboardingRequest, family, initiativeConfig);
