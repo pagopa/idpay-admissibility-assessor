@@ -14,6 +14,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
+import it.gov.pagopa.admissibility.exception.PdndException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.EsitoEnum;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -301,12 +302,10 @@ class AuthoritiesDataRetrieverServiceImplTest {
         when(pagoPaAnprPdndConfig.getPagopaPdndConfiguration()).thenReturn(mapPdndInitiativeConfig);
 
         // When
-        OnboardingDTO result = authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block();
+        Assertions.assertThrows(PdndException.class, () -> authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message).block());
 
         // Then
-        Assertions.assertNull(result);
-
-        verify(onboardingRescheduleServiceMock)
+        verify(onboardingRescheduleServiceMock, never())
                 .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), eq("Daily limit reached"), any());
     }
 

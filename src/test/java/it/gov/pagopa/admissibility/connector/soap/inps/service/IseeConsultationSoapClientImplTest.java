@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.connector.soap.inps.service;
 import it.gov.pagopa.admissibility.config.InpsConfiguration;
 import it.gov.pagopa.admissibility.connector.soap.inps.config.InpsClientConfig;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsDailyRequestLimitException;
+import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.ConsultazioneIndicatoreResponseType;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.EsitoEnum;
 import it.gov.pagopa.admissibility.generated.soap.ws.client.indicatore.TypeEsitoConsultazioneIndicatore;
@@ -98,7 +99,7 @@ public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
     @Test
     void getIseeUnexpectedResultCode() {
         Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_UNEXPECTED_RESULT_CODE, IseeTypologyEnum.ORDINARIO);
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
+        InpsGenericException exception = Assertions.assertThrows(InpsGenericException.class, mono::block);
         Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
     }
 
@@ -111,7 +112,7 @@ public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
     @Test
     void getIseeFaultMessage() {
         Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_FAULT_MESSAGE, IseeTypologyEnum.ORDINARIO);
-        IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
+        InpsGenericException exception = Assertions.assertThrows(InpsGenericException.class, mono::block);
         Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
 
     }
