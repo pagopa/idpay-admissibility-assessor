@@ -7,7 +7,9 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -26,6 +28,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.List;
 import java.util.Optional;
@@ -153,5 +156,32 @@ class FamilyDataRetrieverFacadeServiceTest {
         Assertions.assertSame(request.getFamily(), family);
     }
 
+
+    @Test
+    void testRetrieveFamily_whenFamilyDataRetrieverThrowsException_shouldReturnEvaluationKO() {
+        Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(
+                request,
+                message,
+                initiativeConfig.getInitiativeName(),
+                initiativeConfig.getOrganizationName()
+        )).thenReturn(Mono.error(new AnprAnomalyErrorCodeException("DUMMY_EXCEPTION")));
+
+        CriteriaCodeConfig mock = Mockito.mock(CriteriaCodeConfig.class);
+        Mockito.when(mock.getAuthority()).thenReturn("AUTH");
+        Mockito.when(mock.getAuthorityLabel()).thenReturn("AUTHORITY_LABEL");
+
+        Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_FAMILY))
+                        .thenReturn(mock);
+
+        StepVerifier.create(service.retrieveFamily(request, initiativeConfig, message))
+                .assertNext(result -> {
+                    assertInstanceOf(EvaluationCompletedDTO.class, result);
+                    EvaluationCompletedDTO resultCompleted = (EvaluationCompletedDTO) result;
+                    Assertions.assertNotNull(resultCompleted.getOnboardingRejectionReasons());
+                    Assertions.assertEquals("AUTH", resultCompleted.getOnboardingRejectionReasons().getFirst().getAuthority());
+                    Assertions.assertEquals("AUTHORITY_LABEL", resultCompleted.getOnboardingRejectionReasons().getFirst().getAuthorityLabel());
+                })
+                .verifyComplete();
+    }
 }
 
