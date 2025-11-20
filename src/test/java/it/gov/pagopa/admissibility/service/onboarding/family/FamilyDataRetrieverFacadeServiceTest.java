@@ -160,10 +160,10 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Test
     void testRetrieveFamily_whenFamilyDataRetrieverThrowsException_shouldReturnEvaluationKO() {
         Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(
-                Mockito.eq(request),
-                Mockito.eq(message),
-                Mockito.eq(initiativeConfig.getInitiativeName()),
-                Mockito.eq(initiativeConfig.getOrganizationName())
+                request,
+                message,
+                initiativeConfig.getInitiativeName(),
+                initiativeConfig.getOrganizationName()
         )).thenReturn(Mono.error(new AnprAnomalyErrorCodeException("DUMMY_EXCEPTION")));
 
         CriteriaCodeConfig mock = Mockito.mock(CriteriaCodeConfig.class);
