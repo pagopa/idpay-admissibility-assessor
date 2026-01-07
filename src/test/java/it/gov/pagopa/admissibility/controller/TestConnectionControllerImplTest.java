@@ -31,6 +31,7 @@ class TestConnectionControllerImplTest {
         // Arrange
         String threshold = "THRESHOLD_CODE";
         String userCode = "FISCAL_CODE";
+        String date = "2025-06-01";
 
         ConsultazioneSogliaIndicatoreResponse mockResponse = new ConsultazioneSogliaIndicatoreResponse();
 
@@ -40,7 +41,7 @@ class TestConnectionControllerImplTest {
                     .thenReturn(Mono.just(mockResponse));
 
             // Act
-            Mono<ConsultazioneSogliaIndicatoreResponse> result = controller.getThreshold(threshold, userCode);
+            Mono<ConsultazioneSogliaIndicatoreResponse> result = controller.getThreshold(threshold, userCode, date);
 
             // Assert
             StepVerifier.create(result)
