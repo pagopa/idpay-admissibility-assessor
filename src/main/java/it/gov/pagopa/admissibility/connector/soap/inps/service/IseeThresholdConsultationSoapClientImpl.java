@@ -35,7 +35,7 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
         consultazioneSogliaIndicatoreRequestType.setCodiceFiscale(fiscalCode);
         consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(thresholdCode);
         consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.NO);
-        consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
+        consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar("2025-12-30"));
 
         return consultazioneSogliaIndicatoreRequestType;
     }
