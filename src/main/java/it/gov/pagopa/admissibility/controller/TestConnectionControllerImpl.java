@@ -27,14 +27,14 @@ public class TestConnectionControllerImpl implements TestConnectionController{
     }
 
     @Override
-    public Mono<ConsultazioneSogliaIndicatoreResponse> getThreshold(String threshold, String userCode) {
+    public Mono<ConsultazioneSogliaIndicatoreResponse> getThreshold(String threshold, String userCode, String date) {
 
         ConsultazioneSogliaIndicatoreRequestType consultazioneSogliaIndicatoreRequestType = new ConsultazioneSogliaIndicatoreRequestType();
 
         consultazioneSogliaIndicatoreRequestType.setCodiceFiscale(userCode);
         consultazioneSogliaIndicatoreRequestType.setCodiceSoglia(threshold);
         consultazioneSogliaIndicatoreRequestType.setFornituraNucleo(SiNoEnum.NO);
-        consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar(new GregorianCalendar()));
+        consultazioneSogliaIndicatoreRequestType.setDataValidita(DATATYPE_FACTORY.newXMLGregorianCalendar(date));
 
         return SoapUtils.soapInvoke2Mono(asyncHandler ->
                 portSvcConsultazione.consultazioneSogliaIndicatoreAsync(consultazioneSogliaIndicatoreRequestType, asyncHandler));
