@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClien
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
+import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
@@ -17,6 +18,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -31,6 +33,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 
 @ExtendWith(SpringExtension.class)
+@TestPropertySource(properties = {
+        "app.anpr.c021-servizio-accertamento-stato-famiglia.ko-anomaly-code-list=EN122"
+})
 @ContextConfiguration(classes = { FamilyDataRetrieverServiceImpl.class })
 class FamilyDataRetrieverServiceTest {
 
@@ -154,7 +159,7 @@ class FamilyDataRetrieverServiceTest {
     }
 
     @Test
-    void testProcessDatiSoggetto_Exception_CodiceFiscaleNull(){
+    void testProcessDatiSoggetto_Exception_CodiceFiscaleNull() {
         TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
         TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
         tipoGeneralita.setCodiceFiscale(null);
@@ -171,7 +176,7 @@ class FamilyDataRetrieverServiceTest {
     }
 
     @Test
-    void testProcessDatiSoggetto_Exception_CodFiscaleNull(){
+    void testProcessDatiSoggetto_Exception_CodFiscaleNull() {
         TipoDatiSoggettiEnteDTO datiSoggetti = new TipoDatiSoggettiEnteDTO();
         TipoGeneralitaDTO tipoGeneralita = new TipoGeneralitaDTO();
         TipoCodiceFiscaleDTO tipoCodiceFiscaleDTO = new TipoCodiceFiscaleDTO();
@@ -213,4 +218,43 @@ class FamilyDataRetrieverServiceTest {
                 .expectNext(Optional.of(EXPECTED_FAMILY))
                 .verifyComplete();
     }
+
+    @Test
+    void testRetrieveFamily_KoAnomaly() {
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
+                List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
+
+        TipoErroriAnomaliaDTO anomalyError = new TipoErroriAnomaliaDTO();
+        anomalyError.codiceErroreAnomalia("EN122");
+        anomalyError.testoErroreAnomalia("Soggetto non registrato in ANPR");
+        anomalyError.tipoErroreAnomalia("E");
+
+        response.listaAnomalie(List.of(anomalyError));
+
+        mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
+
+        Mono<Optional<Family>> monoResult = familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName());
+
+        Assertions.assertThrows(AnprAnomalyErrorCodeException.class, monoResult::block);
+    }
+
+    @Test
+    void testRetrieveFamily_NoKoAnomaly() {
+        RispostaE002OKDTO response = createResponse(ID_OPERAZIONE_ANPR,
+                List.of(createDatiSoggetti(FISCAL_CODE, null, null)));
+
+        TipoErroriAnomaliaDTO anomalyError = new TipoErroriAnomaliaDTO();
+        anomalyError.codiceErroreAnomalia("EN124");
+        anomalyError.testoErroreAnomalia("Soggetto non registrato in ANPR");
+        anomalyError.tipoErroreAnomalia("E");
+
+        response.listaAnomalie(List.of(anomalyError));
+
+        mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
+
+        StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
+                .expectNext(Optional.of(EXPECTED_FAMILY))
+                .verifyComplete();
+    }
+
 }

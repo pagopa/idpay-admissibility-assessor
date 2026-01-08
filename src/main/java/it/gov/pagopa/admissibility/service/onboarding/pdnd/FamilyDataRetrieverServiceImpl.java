@@ -4,12 +4,15 @@ import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiSoggettiEnteDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoErroriAnomaliaDTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -31,15 +34,19 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     private final PagoPaAnprPdndConfig pagoPaAnprPdndConfig;
     private final UserFiscalCodeService userFiscalCodeService;
     private final AuditUtilities auditUtilities;
+    private final List<String> anprErrorCodeForExclude;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     public FamilyDataRetrieverServiceImpl(AnprC021RestClient anprC021RestClient,
                                           PagoPaAnprPdndConfig pagoPaAnprPdndConfig,
-                                          UserFiscalCodeService userFiscalCodeService, AuditUtilities auditUtilities) {
+                                          UserFiscalCodeService userFiscalCodeService,
+                                          AuditUtilities auditUtilities,
+                                          @Value("${app.anpr.c021-servizio-accertamento-stato-famiglia.ko-anomaly-code-list}")List<String> anprErrorCodeForExclude) {
         this.anprC021RestClient = anprC021RestClient;
         this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
         this.userFiscalCodeService = userFiscalCodeService;
         this.auditUtilities = auditUtilities;
+        this.anprErrorCodeForExclude = anprErrorCodeForExclude;
     }
 
     @Override
@@ -63,6 +70,13 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     }
 
     private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response) {
+        if(response.getListaAnomalie() != null && !response.getListaAnomalie().isEmpty()){
+            Optional<TipoErroriAnomaliaDTO> errorType = response.getListaAnomalie().stream().filter(a -> anprErrorCodeForExclude.contains(a.getCodiceErroreAnomalia())).findFirst();
+            if(errorType.isPresent()){
+                return Mono.error(new AnprAnomalyErrorCodeException("ANPR response is invalid. Anomaly preset encountered with code: %s".formatted(errorType.get().getCodiceErroreAnomalia())));
+            }
+        }
+
         if (response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() == null) {
             throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
         }

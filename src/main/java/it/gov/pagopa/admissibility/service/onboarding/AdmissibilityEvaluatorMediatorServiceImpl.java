@@ -205,10 +205,12 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                             .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
                                             .onErrorResume( exception ->
                                                     buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
+                                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig))
                                             );
 
                                 }
-                                return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig);
+                                return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
+                                        .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig));
                             }
                         });
             }
