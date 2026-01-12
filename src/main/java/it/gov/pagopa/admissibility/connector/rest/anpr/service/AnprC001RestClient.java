@@ -5,5 +5,5 @@ import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import reactor.core.publisher.Mono;
 
 public interface AnprC001RestClient {
-    Mono<RispostaE002OKDTO> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig);
+    Mono<?> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig);
 }
