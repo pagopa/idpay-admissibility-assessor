@@ -19,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Slf4j
-public abstract class BaseAnprRestClientImpl<T, R> extends BaseRestPdndServiceClient<T, R> {
+public abstract class BaseAnprRestClientImpl<T, R, E> extends BaseRestPdndServiceClient<T, R, E> {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
@@ -34,12 +34,14 @@ public abstract class BaseAnprRestClientImpl<T, R> extends BaseRestPdndServiceCl
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,
             CustomSequenceGeneratorRepository customSequenceGeneratorRepository,
-            Class<R> responseType) {
-        super(buildDefaultPdndServiceConfig(anprConfig, serviceConfig, responseType), objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient);
+            Class<R> responseType,
+            Class<E> responseErrorType) {
+        super(buildDefaultPdndServiceConfig(anprConfig, serviceConfig, responseType, responseErrorType), objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient);
         this.customSequenceGeneratorRepository = customSequenceGeneratorRepository;
     }
 
-    public Mono<R> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
+    //TODO re-check
+    public Mono<?> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
         return generateRequest(fiscalCode)
                 .flatMap(request -> invokePdndRestService(
                         h -> {},

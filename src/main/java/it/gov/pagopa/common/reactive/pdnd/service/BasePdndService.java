@@ -19,10 +19,10 @@ import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
-public abstract class BasePdndService<R> {
+public abstract class BasePdndService<R, S> {
 
     protected final ObjectMapper objectMapper;
-    protected final PdndServiceConfig<R> pdndServiceConfig;
+    protected final PdndServiceConfig<R, S> pdndServiceConfig;
     protected final PdndConfig pdndConfig;
     private final JwtSignAlgorithmRetrieverService jwtSignAlgorithmRetrieverService;
     private final PdndRestClient pdndRestClient;
@@ -30,7 +30,7 @@ public abstract class BasePdndService<R> {
     private final Cache<PdndInitiativeConfig, PdndAuthData> pdndAuthDataCache;
 
     protected BasePdndService(
-            PdndServiceConfig<R> pdndServiceConfig,
+            PdndServiceConfig<R, S> pdndServiceConfig,
             ObjectMapper objectMapper, PdndConfig pdndConfig, JwtSignAlgorithmRetrieverService jwtSignAlgorithmRetrieverService,
             PdndRestClient pdndRestClient) {
         this.objectMapper = objectMapper;
@@ -77,8 +77,8 @@ public abstract class BasePdndService<R> {
                         }));
     }
 
-    public static <R> PdndServiceConfig<R> buildDefaultPdndServiceConfig(BasePdndServiceProviderConfig providerConfig, BasePdndServiceConfig serviceConfig, Class<R> responseBodyClass) {
-        PdndServiceConfig<R> out = new PdndServiceConfig<>();
+    public static <R, E> PdndServiceConfig<R, E> buildDefaultPdndServiceConfig(BasePdndServiceProviderConfig providerConfig, BasePdndServiceConfig serviceConfig, Class<R> responseBodyClass, Class<E> responseErrorBodyClass) {
+        PdndServiceConfig<R, E> out = new PdndServiceConfig<>();
 
         // provider config
         out.setBaseUrl(providerConfig.getBaseUrl());
@@ -92,6 +92,7 @@ public abstract class BasePdndService<R> {
         out.setPath(serviceConfig.getPath());
 
         out.setResponseBodyClass(responseBodyClass);
+        out.setResponseErrorBodyClass(responseErrorBodyClass);
 
         return out;
     }

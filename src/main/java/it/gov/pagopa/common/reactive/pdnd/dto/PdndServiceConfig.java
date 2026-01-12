@@ -9,12 +9,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = true)
-public class PdndServiceConfig<R> extends BasePdndServiceProviderConfig {
+public class PdndServiceConfig<R, E> extends BasePdndServiceProviderConfig {
 
     private static final Predicate<Throwable> DEFAULT_TOOMANYREQUEST_PREDICATE = e -> e instanceof WebClientResponseException.TooManyRequests;
 
@@ -29,9 +30,14 @@ public class PdndServiceConfig<R> extends BasePdndServiceProviderConfig {
     @Getter
     private R emptyResponseBody;
 
+    //Error response
+    private Class<E> responseErrorBodyClass;
+    private Function<WebClientResponseException, E> errorMapper;
 
-    public void setResponseBodyClass(Class<R> responseBodyClass) {
+
+    public void setResponseBodyClass(Class<R> responseBodyClass, Class<E> responseErrorBodyClass) {
         this.responseBodyClass = responseBodyClass;
+        this.responseErrorBodyClass = responseErrorBodyClass;
         try {
             emptyResponseBody = responseBodyClass.getConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {

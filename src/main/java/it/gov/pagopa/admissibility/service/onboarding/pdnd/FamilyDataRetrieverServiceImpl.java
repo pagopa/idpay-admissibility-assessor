@@ -6,6 +6,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoErroriAnomaliaDTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
@@ -60,42 +61,66 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
         return userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
                 .flatMap(this::invokeAnprC021)
                 .publishOn(Schedulers.boundedElastic())
-                .doOnNext(rispostaE002OKDTO -> auditUtilities.logAnprFamilies(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), rispostaE002OKDTO.getIdOperazioneANPR(), LocalDateTime.now().toString()))
+                .doOnNext(risposta -> {
+                    String idResponse;
+                    if(risposta instanceof RispostaKODTO responseKO){
+                        idResponse = responseKO.getIdOperazioneANPR();
+                    } else if (risposta instanceof  RispostaE002OKDTO responseOK) {
+                        idResponse = responseOK.getIdOperazioneANPR();
+                    } else {
+                        idResponse = "N.A.";
+                    }
+                    auditUtilities.logAnprFamilies(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), idResponse, LocalDateTime.now().toString());
+
+                })
                 .flatMap(this::processAnprResponse);
     }
 
-    private Mono<RispostaE002OKDTO> invokeAnprC021(String fiscalCode) {
+    private Mono<?> invokeAnprC021(String fiscalCode) {
         PdndInitiativeConfig pdndInitiativeConfig = pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c021");
         return anprC021RestClient.invoke(fiscalCode, pdndInitiativeConfig);
     }
 
-    private Mono<Optional<Family>> processAnprResponse(RispostaE002OKDTO response) {
-        if(response.getListaAnomalie() != null && !response.getListaAnomalie().isEmpty()){
-            Optional<TipoErroriAnomaliaDTO> errorType = response.getListaAnomalie().stream().filter(a -> anprErrorCodeForExclude.contains(a.getCodiceErroreAnomalia())).findFirst();
-            if(errorType.isPresent()){
-                return Mono.error(new AnprAnomalyErrorCodeException("ANPR response is invalid. Anomaly preset encountered with code: %s".formatted(errorType.get().getCodiceErroreAnomalia())));
+    private Mono<Optional<Family>> processAnprResponse(Object response) {
+        if(response instanceof RispostaKODTO responseKO){
+            if(responseKO.getListaErrori() != null && !responseKO.getListaErrori().isEmpty()){
+                Optional<TipoErroriAnomaliaDTO> errorType = ((RispostaKODTO) response).getListaErrori().stream().filter(a -> anprErrorCodeForExclude.contains(a.getCodiceErroreAnomalia())).findFirst();
+                if(errorType.isPresent()){
+                    return Mono.error(new AnprAnomalyErrorCodeException("ANPR response is invalid. Anomaly preset encountered with code: %s".formatted(errorType.get().getCodiceErroreAnomalia())));
+                }
             }
-        }
+            return Mono.error(new IllegalArgumentException("Invalid ANPR response: missing required data."));
 
-        if (response.getListaSoggetti() == null || response.getListaSoggetti().getDatiSoggetto() == null) {
-            throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
-        }
 
-        log.info("[FAMILY_DATA_RETRIEVER] Processed family with {} members.", response.getListaSoggetti().getDatiSoggetto().size());
-        return Flux.fromIterable(response.getListaSoggetti().getDatiSoggetto())
-                .filter(datiSoggetto -> datiSoggetto.getGeneralita() != null
-                        && datiSoggetto.getGeneralita().getCodiceFiscale() != null
-                        &&datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() != null
-                        && !isUnder18(datiSoggetto))
-                .map(tipoDatiSoggettiEnteDTO -> tipoDatiSoggettiEnteDTO.getGeneralita().getCodiceFiscale().getCodFiscale())
-                .collectSortedList(Comparator.comparing(fc -> fc))
-                .flatMap(list -> {
-                    if(list.isEmpty()){
-                        return Mono.error(new IllegalStateException("The families contain only members under 18 or without a fiscal code."));
-                    }
-                    else {
-                        return processFamilyData(list); }
-                });
+        } else if (response instanceof RispostaE002OKDTO responseOk) {
+            if(responseOk.getListaAnomalie() != null && !responseOk.getListaAnomalie().isEmpty()){
+                Optional<TipoErroriAnomaliaDTO> errorType = responseOk.getListaAnomalie().stream().filter(a -> anprErrorCodeForExclude.contains(a.getCodiceErroreAnomalia())).findFirst();
+                if(errorType.isPresent()){
+                    return Mono.error(new AnprAnomalyErrorCodeException("ANPR response is invalid. Anomaly preset encountered with code: %s".formatted(errorType.get().getCodiceErroreAnomalia())));
+                }
+            }
+
+            if (responseOk.getListaSoggetti() == null || responseOk.getListaSoggetti().getDatiSoggetto() == null) {
+                throw new IllegalArgumentException("Invalid ANPR response: missing required data.");
+            }
+
+            log.info("[FAMILY_DATA_RETRIEVER] Processed family with {} members.", responseOk.getListaSoggetti().getDatiSoggetto().size());
+            return Flux.fromIterable(responseOk.getListaSoggetti().getDatiSoggetto())
+                    .filter(datiSoggetto -> datiSoggetto.getGeneralita() != null
+                            && datiSoggetto.getGeneralita().getCodiceFiscale() != null
+                            && datiSoggetto.getGeneralita().getCodiceFiscale().getCodFiscale() != null
+                            && !isUnder18(datiSoggetto))
+                    .map(tipoDatiSoggettiEnteDTO -> tipoDatiSoggettiEnteDTO.getGeneralita().getCodiceFiscale().getCodFiscale())
+                    .collectSortedList(Comparator.comparing(fc -> fc))
+                    .flatMap(list -> {
+                        if(list.isEmpty()){
+                            return Mono.error(new IllegalStateException("The families contain only members under 18 or without a fiscal code."));
+                        }
+                        else {
+                            return processFamilyData(list); }
+                    });
+        }
+        return Mono.empty();
     }
 
     private Mono<Optional<Family>> processFamilyData(List<String> userMembers) {

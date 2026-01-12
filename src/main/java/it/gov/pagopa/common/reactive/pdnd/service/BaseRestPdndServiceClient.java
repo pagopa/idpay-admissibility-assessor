@@ -1,5 +1,6 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.http.utils.NettySslUtils;
@@ -25,12 +26,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 @Slf4j
-public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R> {
+public abstract class BaseRestPdndServiceClient<T, R, S> extends BasePdndService<R, S> {
 
     private final WebClient webClient;
 
     protected BaseRestPdndServiceClient(
-            PdndServiceConfig<R> pdndServiceConfig,
+            PdndServiceConfig<R, S> pdndServiceConfig,
             ObjectMapper objectMapper,
             PdndConfig pdndConfig,
             JwtSignAlgorithmRetrieverService jwtSignAlgorithmRetrieverService,
@@ -62,15 +63,15 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
         }
     }
 
-    protected Mono<R> invokePdndRestService(Consumer<HttpHeaders> httpHeadersConsumer, T body, PdndInitiativeConfig pdndInitiativeConfig) {
+    protected Mono<?> invokePdndRestService(Consumer<HttpHeaders> httpHeadersConsumer, T body, PdndInitiativeConfig pdndInitiativeConfig) {
         String bodyString = CommonUtilities.convertToJson(body, objectMapper);
         String digest = AgidUtils.buildDigest(bodyString);
         return retrievePdndAuthData(pdndInitiativeConfig)
                 .flatMap(pdndAuthData -> AgidUtils.buildAgidJwtSignature(pdndServiceConfig, pdndInitiativeConfig, pdndAuthData.getJwtSignAlgorithm(), digest)
                         .flatMap(agidJwtSignature -> invokePdndRestService(pdndAuthData, httpHeadersConsumer, bodyString, digest, agidJwtSignature)));
     }
-
-    private Mono<R> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
+//TODO ritorno
+    private Mono<Object> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
 
         return PerformanceLogger.logTimingOnNext(
                 "PDND_SERVICE_INVOKE",
@@ -92,7 +93,12 @@ public abstract class BaseRestPdndServiceClient<T, R> extends BasePdndService<R>
                         .onErrorResume(e -> {
                             if(e instanceof WebClientResponseException.NotFound notFoundException){
                                 log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
-                                return Mono.just(pdndServiceConfig.getEmptyResponseBody());
+                                try {
+                                    S responseKo = objectMapper.readValue(notFoundException.getResponseBodyAsString(), pdndServiceConfig.getResponseErrorBodyClass());
+                                    return Mono.just(responseKo);
+                                } catch (JsonProcessingException ex) {
+                                    return Mono.error(new IllegalStateException("[PDND_SERVICE_INVOKE] Something went wrong when reading ko response"));
+                                }
                             } else if(pdndServiceConfig.getTooManyRequestPredicate().test(e)){
                                 return Mono.error(new PdndServiceTooManyRequestException(pdndServiceConfig, e));
                             }
