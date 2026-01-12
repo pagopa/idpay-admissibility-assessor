@@ -347,6 +347,7 @@ app:
         audience: ${ANPR_C021_AUDIENCE:https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C021-servizioAccertamentoStatoFamiglia/v1}
         httpMethod: POST
         path: /C021-servizioAccertamentoStatoFamiglia/v1/anpr-service-e002
+      ko-anomaly-code-list: ${ANPR_KO_ANOMALY_CODES_LIST:EN122,TEST001}
   inps:
     iseeConsultation:
       base-url: ${INPS_ISEE_CONSULTATION_BASE_URL:https://api.collaudo.inps.it/pdnd/soap/ConsultazioneISEE/v1}
