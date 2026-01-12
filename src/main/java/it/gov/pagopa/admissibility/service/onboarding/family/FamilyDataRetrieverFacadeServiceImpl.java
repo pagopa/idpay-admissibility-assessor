@@ -4,6 +4,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
+import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -70,6 +71,11 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                         EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingRequest, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
                         return Mono.just(evaluationKo);
                     }
+                })
+
+                .onErrorResume(AnprAnomalyErrorCodeException.class, e -> {
+                    EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingRequest, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
+                    return Mono.just(evaluationKo);
                 });
     }
 

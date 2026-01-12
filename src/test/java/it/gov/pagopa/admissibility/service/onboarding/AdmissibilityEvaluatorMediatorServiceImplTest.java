@@ -569,6 +569,9 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .thenAnswer(i -> Mono.error(new InpsGenericException("DUMMY_EXCEPTION", new RuntimeException())))
                 .thenReturn(Mono.error(new RuntimeException("SECOND_ERROR")));
 
+        EvaluationDTO evaluationKoMock = Mockito.mock(EvaluationDTO.class);
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+                .thenReturn(Mono.just(evaluationKoMock));
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
         // When
