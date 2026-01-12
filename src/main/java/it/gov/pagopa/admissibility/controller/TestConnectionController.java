@@ -10,5 +10,5 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/idpay/admissibility")
 public interface TestConnectionController {
     @GetMapping(value = "/inps/connection/test/threshold/{threshold}")
-    Mono<ConsultazioneSogliaIndicatoreResponse> getThreshold(@PathVariable("threshold") String threshold, @RequestHeader("X-User-Code") String userCode);
+    Mono<ConsultazioneSogliaIndicatoreResponse> getThreshold(@PathVariable("threshold") String threshold, @RequestHeader("X-User-Code") String userCode, @RequestHeader("X-Date") String date);
 }
