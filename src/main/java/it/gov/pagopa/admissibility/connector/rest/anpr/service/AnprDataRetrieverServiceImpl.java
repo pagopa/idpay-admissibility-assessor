@@ -1,10 +1,14 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseVisitor;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
+import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoGeneralitaDTO;
 import it.gov.pagopa.admissibility.connector.rest.anpr.mapper.TipoResidenzaDTO2ResidenceMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
@@ -61,7 +65,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
                 });
     }
 
-    private List<OnboardingRejectionReason> extractData(RispostaE002OKDTO anprResponse, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
+    private List<OnboardingRejectionReason> extractData(PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> anprResponse, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
         List<OnboardingRejectionReason> rejectionReasons = new ArrayList<>(2);
 
         if (pdndServicesInvocation.isGetResidence()) {
@@ -84,6 +88,37 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
                 !CollectionUtils.isEmpty(anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza())
                 &&
                 anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0) != null;
+    }
+
+    private void extractResidenceData(PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> response, OnboardingDTO onboardingRequest, List<OnboardingRejectionReason> rejectionReasons) {
+
+        onboardingRequest.setResidence(response.accept(new PdndResponseVisitor<>(){
+            public Residence onOk(RispostaE002OKDTO okdto){
+                if (okdto != null && checkResidenceDataPresence(okdto)) {
+                   return residenceMapper.apply(okdto.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0));
+                } else
+                    return null;
+            }
+
+            public Residence onKo(RispostaKODTO koDto){
+                return null;
+            }
+        }));
+
+        if (onboardingRequest.getResidence() == null) {
+            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_RESIDENCE);
+            rejectionReasons.add(
+                    new OnboardingRejectionReason(
+                            OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO,
+                            OnboardingConstants.REJECTION_REASON_RESIDENCE_KO,
+                            criteriaCodeConfig.getAuthority(),
+                            criteriaCodeConfig.getAuthorityLabel(),
+                            "Residenza non disponibile"
+                    )
+            );
+        } else {
+            // TODO TBD auditlog userId and residence obtained from ANPR
+        }
     }
 
     private void extractResidenceData(RispostaE002OKDTO anprResponse, OnboardingDTO onboardingRequest, List<OnboardingRejectionReason> rejectionReasons) {
@@ -121,6 +156,38 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
         if (anprResponse != null && checkPersonalInfoPresence(anprResponse)) {
             onboardingRequest.setBirthDate(getBirthDateFromAnpr(anprResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita()));
         }
+
+        if (onboardingRequest.getBirthDate() == null) {
+            CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
+            rejectionReasons.add(
+                    new OnboardingRejectionReason(
+                            OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO,
+                            OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO,
+                            criteriaCodeConfig.getAuthority(),
+                            criteriaCodeConfig.getAuthorityLabel(),
+                            "Data di nascita non disponibile"
+                    )
+            );
+        } else {
+            // TODO TBD auditlog userId and birth date obtained from ANPR
+        }
+    }
+
+    private void extractBirthdateData(PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> response, OnboardingDTO onboardingRequest, List<OnboardingRejectionReason> rejectionReasons) {
+        onboardingRequest.setBirthDate(
+                response.accept(new PdndResponseVisitor<>(){
+                    public BirthDate onOk(RispostaE002OKDTO okdto){
+                        if (okdto != null && checkPersonalInfoPresence(okdto)) {
+                            return getBirthDateFromAnpr(okdto.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita());
+                        } else
+                            return null;
+                    }
+
+                    public BirthDate onKo(RispostaKODTO koDto){
+                        return null;
+                    }
+                })
+        );
 
         if (onboardingRequest.getBirthDate() == null) {
             CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);

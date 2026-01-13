@@ -3,7 +3,10 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 import it.gov.pagopa.admissibility.BaseIntegrationTest;
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseVisitor;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
@@ -38,20 +41,30 @@ class AnprC001RestClientImplTestIntegrated extends BaseIntegrationTest {
         sequenceGeneratorRepository.save(new CustomSequenceGenerator(OnboardingConstants.ANPR_E002_INVOKE, sequenceVal)).block();
 
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig.getPagopaPdndConfiguration().get("c001")).block();
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> result = anprC001RestClient.invoke(fiscalCode, pdndInitiativeConfig.getPagopaPdndConfiguration().get("c001")).block();
 
         // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertNotNull(result.getIdOperazioneANPR());
+        result.accept(new PdndResponseVisitor<>() {
+            public Void onOk(RispostaE002OKDTO responseOk){
+                Assertions.assertNotNull(responseOk);
+                Assertions.assertNotNull(responseOk.getIdOperazioneANPR());
 
-        Assertions.assertEquals("SOGGETTO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getNome());
-        Assertions.assertEquals("SETTIMO", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCognome());
+                Assertions.assertEquals("SOGGETTO", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getNome());
+                Assertions.assertEquals("SETTIMO", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCognome());
 
-        Assertions.assertEquals("1990-01-01", result.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getDataNascita());
+                Assertions.assertEquals("1990-01-01", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getDataNascita());
 
-        Assertions.assertEquals("41026", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getCap());
-        Assertions.assertEquals("036030", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getCodiceIstat());
-        Assertions.assertEquals("PAVULLO NEL FRIGNANO", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getNomeComune());
-        Assertions.assertEquals("MO", result.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getSiglaProvinciaIstat());
+                Assertions.assertEquals("41026", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getCap());
+                Assertions.assertEquals("036030", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getCodiceIstat());
+                Assertions.assertEquals("PAVULLO NEL FRIGNANO", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getNomeComune());
+                Assertions.assertEquals("MO", responseOk.getListaSoggetti().getDatiSoggetto().get(0).getResidenza().get(0).getIndirizzo().getComune().getSiglaProvinciaIstat());
+                return null;
+            }
+
+            public Void onKo(RispostaKODTO responseKo){
+                Assertions.fail();
+                return null;
+            }
+        });
     }
 }

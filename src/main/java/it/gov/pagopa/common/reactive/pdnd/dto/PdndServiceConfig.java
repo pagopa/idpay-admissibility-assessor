@@ -9,7 +9,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Data
@@ -32,8 +31,6 @@ public class PdndServiceConfig<R, E> extends BasePdndServiceProviderConfig {
 
     //Error response
     private Class<E> responseErrorBodyClass;
-    private Function<WebClientResponseException, E> errorMapper;
-
 
     public void setResponseBodyClass(Class<R> responseBodyClass, Class<E> responseErrorBodyClass) {
         this.responseBodyClass = responseBodyClass;

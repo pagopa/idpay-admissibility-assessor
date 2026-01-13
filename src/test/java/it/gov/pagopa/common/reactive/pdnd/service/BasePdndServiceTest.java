@@ -24,7 +24,7 @@ class BasePdndServiceTest {
         DummyPdndServiceConfig serviceConfig = buildPdndServiceConfig();
 
         // When
-        PdndServiceConfig<String, String> result = BasePdndService.buildDefaultPdndServiceConfig(serviceProviderConfig, serviceConfig, String.class);
+        PdndServiceConfig<String, String> result = BasePdndService.buildDefaultPdndServiceConfig(serviceProviderConfig, serviceConfig, String.class, String.class);
 
         // Then
         Assertions.assertNotNull(result);

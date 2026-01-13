@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
@@ -40,8 +41,7 @@ public abstract class BaseAnprRestClientImpl<T, R, E> extends BaseRestPdndServic
         this.customSequenceGeneratorRepository = customSequenceGeneratorRepository;
     }
 
-    //TODO re-check
-    public Mono<?> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
+    public Mono<PdndResponseBase<R,E>> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
         return generateRequest(fiscalCode)
                 .flatMap(request -> invokePdndRestService(
                         h -> {},

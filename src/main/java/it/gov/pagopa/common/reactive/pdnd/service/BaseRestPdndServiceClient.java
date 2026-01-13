@@ -1,7 +1,9 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndKoResponse;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndOkResponse;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.http.utils.NettySslUtils;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
@@ -26,12 +28,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
 @Slf4j
-public abstract class BaseRestPdndServiceClient<T, R, S> extends BasePdndService<R, S> {
+public abstract class BaseRestPdndServiceClient<T, R, E> extends BasePdndService<R, E> {
 
     private final WebClient webClient;
 
     protected BaseRestPdndServiceClient(
-            PdndServiceConfig<R, S> pdndServiceConfig,
+            PdndServiceConfig<R, E> pdndServiceConfig,
             ObjectMapper objectMapper,
             PdndConfig pdndConfig,
             JwtSignAlgorithmRetrieverService jwtSignAlgorithmRetrieverService,
@@ -63,15 +65,58 @@ public abstract class BaseRestPdndServiceClient<T, R, S> extends BasePdndService
         }
     }
 
-    protected Mono<?> invokePdndRestService(Consumer<HttpHeaders> httpHeadersConsumer, T body, PdndInitiativeConfig pdndInitiativeConfig) {
+    protected Mono<PdndResponseBase<R,E>> invokePdndRestService(Consumer<HttpHeaders> httpHeadersConsumer, T body, PdndInitiativeConfig pdndInitiativeConfig) {
         String bodyString = CommonUtilities.convertToJson(body, objectMapper);
         String digest = AgidUtils.buildDigest(bodyString);
         return retrievePdndAuthData(pdndInitiativeConfig)
                 .flatMap(pdndAuthData -> AgidUtils.buildAgidJwtSignature(pdndServiceConfig, pdndInitiativeConfig, pdndAuthData.getJwtSignAlgorithm(), digest)
                         .flatMap(agidJwtSignature -> invokePdndRestService(pdndAuthData, httpHeadersConsumer, bodyString, digest, agidJwtSignature)));
     }
-//TODO ritorno
-    private Mono<Object> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
+    private Mono<PdndResponseBase<R,E>> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
+
+        return PerformanceLogger.logTimingOnNext(
+                "PDND_SERVICE_INVOKE",
+                webClient.method(pdndServiceConfig.getHttpMethod())
+                        .uri(pdndServiceConfig.getPath())
+                        .headers(httpHeaders -> {
+                            httpHeadersConsumer.accept(httpHeaders);
+                            httpHeaders.setBearerAuth(pdndAuthData.getAccessToken());
+                            httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+                            httpHeaders.add(HttpHeaders.CONTENT_ENCODING, StandardCharsets.UTF_8.name());
+                            httpHeaders.add("Digest", digest);
+                            httpHeaders.add("Agid-JWT-TrackingEvidence", pdndAuthData.getAgidJwtTrackingEvidence());
+                            httpHeaders.add("Agid-JWT-Signature", agidJwtSignature);
+                        })
+                        .bodyValue(bodyString)
+
+                        .exchangeToMono(response -> {
+
+                            if (response.statusCode().is2xxSuccessful()) {
+                                return response
+                                        .bodyToMono(pdndServiceConfig.getResponseBodyClass())
+                                        .map(PdndOkResponse::new);
+                            }
+
+                            return response.createException()
+                                    .flatMap(ex -> {
+                                        if(ex instanceof WebClientResponseException.NotFound notFoundException){
+                                            log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
+                                            E responseBody = ex.getResponseBodyAs(pdndServiceConfig.getResponseErrorBodyClass());
+                                            return Mono.just(new PdndKoResponse<>(responseBody));
+                                        } else if(pdndServiceConfig.getTooManyRequestPredicate().test(ex)) {
+                                            return Mono.error(new PdndServiceTooManyRequestException(pdndServiceConfig, ex));
+                                        } else {
+                                            return Mono.error(new IllegalStateException("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service %s: %s".formatted(pdndServiceConfig.getAudience(), ex.getMessage()), ex));
+                                        }
+                                    });
+
+                        }),
+                x -> "[" + getClass().getSimpleName() + "] "
+        );
+    }
+
+    /*
+    private Mono<R> invokePdndRestService(PdndAuthData pdndAuthData, Consumer<HttpHeaders> httpHeadersConsumer, String bodyString, String digest, String agidJwtSignature) {
 
         return PerformanceLogger.logTimingOnNext(
                 "PDND_SERVICE_INVOKE",
@@ -93,12 +138,7 @@ public abstract class BaseRestPdndServiceClient<T, R, S> extends BasePdndService
                         .onErrorResume(e -> {
                             if(e instanceof WebClientResponseException.NotFound notFoundException){
                                 log.error("[PDND_SERVICE_INVOKE] Cannot found data when invoking PDND service {}: {}", pdndServiceConfig.getAudience(), notFoundException.getResponseBodyAsString());
-                                try {
-                                    S responseKo = objectMapper.readValue(notFoundException.getResponseBodyAsString(), pdndServiceConfig.getResponseErrorBodyClass());
-                                    return Mono.just(responseKo);
-                                } catch (JsonProcessingException ex) {
-                                    return Mono.error(new IllegalStateException("[PDND_SERVICE_INVOKE] Something went wrong when reading ko response"));
-                                }
+                                return Mono.just(pdndServiceConfig.getEmptyResponseBody());
                             } else if(pdndServiceConfig.getTooManyRequestPredicate().test(e)){
                                 return Mono.error(new PdndServiceTooManyRequestException(pdndServiceConfig, e));
                             }
@@ -109,4 +149,5 @@ public abstract class BaseRestPdndServiceClient<T, R, S> extends BasePdndService
                 x -> "[" + getClass().getSimpleName() + "] "
         );
     }
+     */
 }

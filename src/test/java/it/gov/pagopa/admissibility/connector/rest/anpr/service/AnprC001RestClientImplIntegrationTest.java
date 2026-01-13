@@ -6,7 +6,12 @@ import com.google.common.cache.Cache;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndOkResponse;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseVisitor;
+import it.gov.pagopa.admissibility.enums.PdndResponseType;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.mongo.MongoTest;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
@@ -108,15 +113,19 @@ public class AnprC001RestClientImplIntegrationTest extends BaseWireMockTest {
     @Test
     void getResidenceAssessment(){
         // When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> result = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
 
         // Then
-        RispostaE002OKDTO expectedResponse = buildExpectedResponse();
-        expectedResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCodiceFiscale().setCodFiscale(FISCAL_CODE_OK);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(PdndResponseType.OK, result.getType());
+        RispostaE002OKDTO expectedOkResponse = buildExpectedResponse();
+        expectedOkResponse.getListaSoggetti().getDatiSoggetto().get(0).getGeneralita().getCodiceFiscale().setCodFiscale(FISCAL_CODE_OK);
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> expectedResponse = buildExpectedOkBaseResponse(expectedOkResponse);
         Assertions.assertEquals(expectedResponse, result);
 
+
         // accessToken cached for each pdndInitiativeConfig
-        RispostaE002OKDTO result2ndInvoke = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> result2ndInvoke = anprC001RestClient.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG).block();
         Assertions.assertEquals(expectedResponse, result2ndInvoke);
 
         Mockito.verify(pdndRestClient).createToken(Mockito.eq(PDND_INITIATIVE_CONFIG.getClientId()), Mockito.anyString());
@@ -127,7 +136,7 @@ public class AnprC001RestClientImplIntegrationTest extends BaseWireMockTest {
                 "KID",
                 "PURPOSEID"
         );
-        RispostaE002OKDTO resultNewClientId = anprC001RestClient.invoke(FISCAL_CODE_OK, pdndInitiativeConfig2).block();
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> resultNewClientId = anprC001RestClient.invoke(FISCAL_CODE_OK, pdndInitiativeConfig2).block();
         Assertions.assertEquals(expectedResponse, resultNewClientId);
 
         Mockito.verify(pdndRestClient, Mockito.times(2)).createToken(Mockito.anyString(), Mockito.anyString());
@@ -136,23 +145,34 @@ public class AnprC001RestClientImplIntegrationTest extends BaseWireMockTest {
     @Test
     void testNotFound(){
         //When
-        RispostaE002OKDTO result = anprC001RestClient.invoke(FISCAL_CODE_NOTFOUND, PDND_INITIATIVE_CONFIG).block();
+        PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> result = anprC001RestClient.invoke(FISCAL_CODE_NOTFOUND, PDND_INITIATIVE_CONFIG).block();
 
         // Then
         Assertions.assertNotNull(result);
-        Assertions.assertNull(result.getListaSoggetti());
+
+        result.accept(new PdndResponseVisitor<>() {
+            public Void onOk(RispostaE002OKDTO okResponse){
+                Assertions.fail();
+                return null;
+            }
+            public Void onKo(RispostaKODTO koResponse){
+                Assertions.assertNotNull(koResponse.getListaErrori());
+                return null;
+            }
+        });
+
     }
 
     @Test
     void testInvalidRequest(){
-        Mono<RispostaE002OKDTO> mono = anprC001RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG);
+        Mono<PdndResponseBase<RispostaE002OKDTO, RispostaKODTO>> mono = anprC001RestClient.invoke(FISCAL_CODE_INVALIDREQUEST, PDND_INITIATIVE_CONFIG);
         IllegalStateException exception = Assertions.assertThrows(IllegalStateException.class, mono::block);
         Assertions.assertTrue(exception.getMessage().startsWith("[PDND_SERVICE_INVOKE] Something went wrong when invoking PDND service https://modipa-val.anpr.interno.it/govway/rest/in/MinInternoPortaANPR/C001-servizioNotifica/v1: 400 Bad Request"));
     }
 
     @Test
     void testTooManyRequests(){
-        Mono<RispostaE002OKDTO> mono = anprC001RestClient.invoke(FISCAL_CODE_TOOMANYREQUESTS, PDND_INITIATIVE_CONFIG);
+        Mono<PdndResponseBase<RispostaE002OKDTO, RispostaKODTO>> mono = anprC001RestClient.invoke(FISCAL_CODE_TOOMANYREQUESTS, PDND_INITIATIVE_CONFIG);
         Assertions.assertThrows(PdndServiceTooManyRequestException.class, mono::block);
     }
 
@@ -240,6 +260,10 @@ public class AnprC001RestClientImplIntegrationTest extends BaseWireMockTest {
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Cannot read expected response", e);
         }
+    }
+
+    public static PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> buildExpectedOkBaseResponse(RispostaE002OKDTO response) {
+        return new PdndOkResponse<>(response);
     }
 
 }

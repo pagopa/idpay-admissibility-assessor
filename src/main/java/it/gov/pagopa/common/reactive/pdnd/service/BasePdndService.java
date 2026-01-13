@@ -91,8 +91,7 @@ public abstract class BasePdndService<R, S> {
         out.setHttpMethod(serviceConfig.getHttpMethod());
         out.setPath(serviceConfig.getPath());
 
-        out.setResponseBodyClass(responseBodyClass);
-        out.setResponseErrorBodyClass(responseErrorBodyClass);
+        out.setResponseBodyClass(responseBodyClass, responseErrorBodyClass);
 
         return out;
     }
