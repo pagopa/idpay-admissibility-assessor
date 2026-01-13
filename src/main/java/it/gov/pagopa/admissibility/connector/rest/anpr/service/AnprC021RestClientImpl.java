@@ -5,10 +5,7 @@ import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorR
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC021ServiceConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
 
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RichiestaE002DTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoCriteriRicercaE002DTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.TipoDatiRichiestaE002DTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.*;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
 import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import org.springframework.stereotype.Service;
@@ -16,7 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
 @Service
-public class AnprC021RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO> implements AnprC021RestClient{
+public class AnprC021RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO, RispostaKODTO> implements AnprC021RestClient{
 
     protected AnprC021RestClientImpl(
             ObjectMapper objectMapper,
@@ -28,7 +25,7 @@ public class AnprC021RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,
             CustomSequenceGeneratorRepository customSequenceGeneratorRepository) {
-        super(objectMapper, pdndConfig, anprConfig, anprC001ServiceConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient, customSequenceGeneratorRepository, RispostaE002OKDTO.class);
+        super(objectMapper, pdndConfig, anprConfig, anprC001ServiceConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient, customSequenceGeneratorRepository, RispostaE002OKDTO.class, RispostaKODTO.class);
     }
 
     @Override
