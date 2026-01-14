@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdnd.components.JwtSignAlgorithmRetrieverService;
@@ -19,7 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Slf4j
-public abstract class BaseAnprRestClientImpl<T, R> extends BaseRestPdndServiceClient<T, R> {
+public abstract class BaseAnprRestClientImpl<T, R, E> extends BaseRestPdndServiceClient<T, R, E> {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     private final CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
@@ -34,12 +35,13 @@ public abstract class BaseAnprRestClientImpl<T, R> extends BaseRestPdndServiceCl
             WebClient.Builder webClientBuilder,
             HttpClient httpClient,
             CustomSequenceGeneratorRepository customSequenceGeneratorRepository,
-            Class<R> responseType) {
-        super(buildDefaultPdndServiceConfig(anprConfig, serviceConfig, responseType), objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient);
+            Class<R> responseType,
+            Class<E> responseErrorType) {
+        super(buildDefaultPdndServiceConfig(anprConfig, serviceConfig, responseType, responseErrorType), objectMapper, pdndConfig, jwtSignAlgorithmRetrieverService, pdndRestClient, webClientBuilder, httpClient);
         this.customSequenceGeneratorRepository = customSequenceGeneratorRepository;
     }
 
-    public Mono<R> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
+    public Mono<PdndResponseBase<R,E>> invoke(String fiscalCode, PdndInitiativeConfig pdndInitiativeConfig) {
         return generateRequest(fiscalCode)
                 .flatMap(request -> invokePdndRestService(
                         h -> {},

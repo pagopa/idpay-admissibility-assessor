@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.pdnd;
 
 import it.gov.pagopa.admissibility.config.PagoPaAnprPdndConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClient;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndOkResponse;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
@@ -16,9 +17,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
@@ -39,16 +40,16 @@ import static org.mockito.ArgumentMatchers.eq;
 @ContextConfiguration(classes = { FamilyDataRetrieverServiceImpl.class })
 class FamilyDataRetrieverServiceTest {
 
-    @MockBean
+    @MockitoBean
     private AnprC021RestClient anprC021RestClientMock;
 
-    @MockBean
+    @MockitoBean
     private UserFiscalCodeService userFiscalCodeService;
 
-    @MockBean
+    @MockitoBean
     private PagoPaAnprPdndConfig pdndInitiativeConfigMock;
 
-    @MockBean
+    @MockitoBean
     private AuditUtilities auditUtilities;
 
     @Autowired
@@ -106,7 +107,8 @@ class FamilyDataRetrieverServiceTest {
 
     private void mockDependencies(String fiscalCode, String fiscalCodeHashed, RispostaE002OKDTO response) {
         Mockito.when(userFiscalCodeService.getUserFiscalCode(REQUEST.getUserId())).thenReturn(Mono.just(fiscalCode));
-        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode), any())).thenReturn(Mono.just(response));
+        PdndOkResponse<RispostaE002OKDTO, RispostaKODTO> responseOk = new PdndOkResponse<>(response);
+        Mockito.when(anprC021RestClientMock.invoke(eq(fiscalCode), any())).thenReturn(Mono.just(responseOk));
         Mockito.when(userFiscalCodeService.getUserId(fiscalCode)).thenReturn(Mono.just(fiscalCodeHashed));
     }
 
