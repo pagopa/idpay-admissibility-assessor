@@ -40,7 +40,7 @@
           "datiRichiesta": {
             "dataRiferimentoRichiesta": "${json-unit.regex}[0-9]{4}-[0-9]{2}-[0-9]{2}",
             "motivoRichiesta": "1",
-            "casoUso": "C001"
+            "casoUso": "C021"
           }
         }
       }

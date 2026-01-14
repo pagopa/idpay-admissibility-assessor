@@ -37,7 +37,7 @@ public class AgidUtils {
     /**
      * Algorithm could contain blocking logic, thus we are working with Mono
      */
-    public static Mono<PdndAuthData> preparePdndAuthData2invokePdnd(PdndServiceConfig<?> pdndServiceConfig, PdndConfig pdndConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm) {
+    public static Mono<PdndAuthData> preparePdndAuthData2invokePdnd(PdndServiceConfig<?, ?> pdndServiceConfig, PdndConfig pdndConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm) {
         PdndAuthData out = new PdndAuthData();
         out.setJwtSignAlgorithm(jwtSignAlgorithm);
 
@@ -54,7 +54,7 @@ public class AgidUtils {
     }
 
     /** To build AGID TrackingEvidence */
-    public static Mono<String> buildAgidJwtTrackingEvidence(PdndServiceConfig<?> pdndServiceConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm) {
+    public static Mono<String> buildAgidJwtTrackingEvidence(PdndServiceConfig<?, ?> pdndServiceConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm) {
         long nowSeconds = System.currentTimeMillis() / 1000L;
         long expireSeconds = nowSeconds + pdndServiceConfig.getAuthExpirationSeconds();
 
@@ -96,7 +96,7 @@ public class AgidUtils {
                         jwtSignAlgorithm));
     }
 
-    public static Mono<String> buildAgidJwtSignature(PdndServiceConfig<?> pdndServiceConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm, String digest) {
+    public static Mono<String> buildAgidJwtSignature(PdndServiceConfig<?, ?> pdndServiceConfig, PdndInitiativeConfig pdndInitiativeConfig, Algorithm jwtSignAlgorithm, String digest) {
         long nowSeconds = System.currentTimeMillis() / 1000L;
         long expireSeconds = nowSeconds + pdndServiceConfig.getAuthExpirationSeconds();
 

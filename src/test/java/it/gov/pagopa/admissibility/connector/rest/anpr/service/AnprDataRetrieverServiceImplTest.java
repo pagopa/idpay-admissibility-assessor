@@ -2,10 +2,13 @@ package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
 import it.gov.pagopa.admissibility.connector.pdnd.PdndServicesInvocation;
 import it.gov.pagopa.admissibility.connector.rest.anpr.mapper.TipoResidenzaDTO2ResidenceMapper;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndOkResponse;
+import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiSoggettiEnteDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoIndirizzoDTO;
@@ -43,7 +46,8 @@ class AnprDataRetrieverServiceImplTest {
 
     private final TipoResidenzaDTO2ResidenceMapper residenceMapper = new TipoResidenzaDTO2ResidenceMapper();
 
-    private RispostaE002OKDTO anprAnswer;
+    private RispostaE002OKDTO anprOkAnswer;
+    private PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> anprAnswer;
     private Residence expectedResidence;
     private BirthDate expectedBirthDate;
 
@@ -54,8 +58,8 @@ class AnprDataRetrieverServiceImplTest {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
         service = new AnprDataRetrieverServiceImpl(anprC001RestClientMock, criteriaCodeServiceMock, residenceMapper);
 
-        anprAnswer = AnprC001RestClientImplIntegrationTest.buildExpectedResponse();
-        TipoDatiSoggettiEnteDTO returnedSubject = anprAnswer.getListaSoggetti().getDatiSoggetto().get(0);
+        anprOkAnswer = AnprC001RestClientImplIntegrationTest.buildExpectedResponse();
+        TipoDatiSoggettiEnteDTO returnedSubject = anprOkAnswer.getListaSoggetti().getDatiSoggetto().get(0);
 
         TipoIndirizzoDTO returnedAddress = returnedSubject.getResidenza().get(0).getIndirizzo();
         expectedResidence = Residence.builder()
@@ -64,6 +68,8 @@ class AnprDataRetrieverServiceImplTest {
                 .province(returnedAddress.getComune().getSiglaProvinciaIstat())
                 .postalCode(returnedAddress.getCap())
                 .build();
+
+        anprAnswer = new PdndOkResponse<>(anprOkAnswer);
 
         String birthYear = returnedSubject.getGeneralita().getDataNascita().substring(0, 4);
         expectedBirthDate = BirthDate.builder().year(birthYear).age(LocalDate.now().getYear() - Integer.parseInt(birthYear)).build();
@@ -150,11 +156,11 @@ class AnprDataRetrieverServiceImplTest {
 
     @Test
     void testInvoke_noSubject() {
-        anprAnswer.setListaSoggetti(null);
+        anprOkAnswer.setListaSoggetti(null);
         testExtractWhenUnexpectedResponse(0);
 
         TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
-        anprAnswer.setListaSoggetti(listaSoggetti);
+        anprOkAnswer.setListaSoggetti(listaSoggetti);
         testExtractWhenUnexpectedResponse(1);
 
         listaSoggetti.setDatiSoggetto(Collections.emptyList());
