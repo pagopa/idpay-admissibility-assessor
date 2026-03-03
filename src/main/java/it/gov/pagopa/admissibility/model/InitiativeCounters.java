@@ -9,8 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Data
@@ -32,4 +31,6 @@ public class InitiativeCounters {
     private Long residualInitiativeBudgetCents=0L;
     @Builder.Default
     private Long spentInitiativeBudgetCents =0L;
+    private LocalDateTime createdAt;
+    private LocalDateTime updateDate;
 }

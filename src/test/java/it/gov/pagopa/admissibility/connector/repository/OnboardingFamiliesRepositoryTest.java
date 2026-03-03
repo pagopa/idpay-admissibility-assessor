@@ -84,7 +84,9 @@ class OnboardingFamiliesRepositoryTest{
         Assertions.assertNotNull(result.getCreateDate());
         Assertions.assertFalse(result.getCreateDate().isBefore(beforeCreate));
         result.setCreateDate(result.getCreateDate().truncatedTo(ChronoUnit.MILLIS));
+        result.setUpdateDate(result.getUpdateDate().truncatedTo(ChronoUnit.MILLIS));
         expectedResult.setCreateDate(result.getCreateDate());
+        expectedResult.setUpdateDate(result.getUpdateDate());
         Assertions.assertEquals(expectedResult, result);
 
         // When exists
@@ -118,8 +120,13 @@ class OnboardingFamiliesRepositoryTest{
 
         of1.setStatus(updatedStatus);
         of1.setOnboardingRejectionReasons(updatedOnboardingRejectionReasons);
-        Assertions.assertEquals(of1, repository.findById(of1.getId()).block());
-
-        Assertions.assertEquals(of2, repository.findById(of2.getId()).block());
+        OnboardingFamilies expected1 = repository.findById(of1.getId()).block();
+        OnboardingFamilies expected2 = repository.findById(of2.getId()).block();
+        assert expected1 != null;
+        of1.setUpdateDate(expected1.getUpdateDate());
+        assert expected2 != null;
+        of2.setUpdateDate(expected2.getUpdateDate());
+        Assertions.assertEquals(of1, expected1);
+        Assertions.assertEquals(of2, expected2);
     }
 }
