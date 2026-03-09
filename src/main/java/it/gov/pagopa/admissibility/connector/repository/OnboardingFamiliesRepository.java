@@ -24,6 +24,7 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
                 .status(OnboardingFamilyEvaluationStatus.IN_PROGRESS)
                 .createDate(LocalDateTime.now())
                 .createBy(userId)
+                .updateDate(LocalDateTime.now())
                 .build();
 
         return insert(onboardingInProgress)

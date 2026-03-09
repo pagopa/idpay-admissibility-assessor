@@ -10,12 +10,15 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @Repository
 @Slf4j
 public class InitiativeCountersReservationOpsRepositoryImpl implements InitiativeCountersReservationOpsRepository {
 
     public static final String FIELD_ID = InitiativeCounters.Fields.id;
     public static final String FIELD_RESIDUAL_BUDGET_CENTS = InitiativeCounters.Fields.residualInitiativeBudgetCents;
+    public static final String FIELD_UPDATE_DATE = InitiativeCounters.Fields.updateDate;
     public static final String FIELD_RESERVED_BUDGET_CENTS = InitiativeCounters.Fields.reservedInitiativeBudgetCents;
     public static final String FIELD_ONBOARDED = InitiativeCounters.Fields.onboarded;
 
@@ -36,7 +39,8 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                 new Update()
                         .inc(FIELD_ONBOARDED, 1L)
                         .inc(FIELD_RESERVED_BUDGET_CENTS,reservationCents)
-                        .inc(FIELD_RESIDUAL_BUDGET_CENTS,-reservationCents),
+                        .inc(FIELD_RESIDUAL_BUDGET_CENTS,-reservationCents)
+                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
         );
@@ -49,7 +53,9 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                 ),
                 new Update()
                         .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
-                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget),
+                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget)
+                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
+
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
         );
@@ -63,7 +69,8 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                 new Update()
                         .inc(FIELD_ONBOARDED, -1)
                         .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
-                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget),
+                        .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget)
+                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
         );

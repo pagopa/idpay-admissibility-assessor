@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRepositoryExt {
@@ -28,7 +29,8 @@ public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRe
                 new Query(Criteria.where(OnboardingFamilies.Fields.id).is(OnboardingFamilies.buildId(family, initiativeId))),
                 new Update()
                         .set(OnboardingFamilies.Fields.status, resultedStatus)
-                        .set(OnboardingFamilies.Fields.onboardingRejectionReasons, resultedOnboardingRejectionReasons),
+                        .set(OnboardingFamilies.Fields.onboardingRejectionReasons, resultedOnboardingRejectionReasons)
+                        .set(OnboardingFamilies.Fields.updateDate, LocalDateTime.now()),
                 OnboardingFamilies.class
         );
     }
