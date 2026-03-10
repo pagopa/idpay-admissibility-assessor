@@ -6,6 +6,8 @@ import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDateTime;
+
 @Service
 public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterService {
 
@@ -24,6 +26,7 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
 
                     counter2update.setInitiativeBudgetCents(initiativeBudgetCents);
                     counter2update.setResidualInitiativeBudgetCents(counter2update.getResidualInitiativeBudgetCents() + deltaBudget);
+                    counter2update.setUpdateDate(LocalDateTime.now());
                     return counter2update;
                 })
                 .flatMap(initiativeCountersRepository::save)
@@ -36,6 +39,8 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
                 .id(initiative.getInitiativeId())
                 .initiativeBudgetCents(initiative.getInitiativeBudgetCents())
                 .residualInitiativeBudgetCents(initiative.getInitiativeBudgetCents())
+                .createdAt(LocalDateTime.now())
+                .updateDate(LocalDateTime.now())
                 .build();
     }
 }
