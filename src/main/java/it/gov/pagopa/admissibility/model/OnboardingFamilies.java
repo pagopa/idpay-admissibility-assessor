@@ -32,6 +32,7 @@ public class OnboardingFamilies {
     private List<OnboardingRejectionReason> onboardingRejectionReasons;
     private LocalDateTime createDate;
     private String createBy;
+    private LocalDateTime updateDate;
 
     public OnboardingFamilies(@NonNull Family family, @NonNull String initiativeId){
         this.id=buildId(family, initiativeId);
