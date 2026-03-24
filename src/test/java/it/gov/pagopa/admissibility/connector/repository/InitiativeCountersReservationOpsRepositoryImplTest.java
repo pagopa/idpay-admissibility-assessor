@@ -1,10 +1,11 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
+import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,7 +15,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
-@MongoTest
+@DataMongoTest
+@TestPropertySource(properties = {
+        "de.flapdoodle.mongodb.embedded.version=4.2.24"
+})
 class InitiativeCountersReservationOpsRepositoryImplTest {
 
     @Autowired

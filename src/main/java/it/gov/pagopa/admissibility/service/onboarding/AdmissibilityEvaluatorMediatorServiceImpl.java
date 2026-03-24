@@ -2,8 +2,8 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.dto.onboarding.*;

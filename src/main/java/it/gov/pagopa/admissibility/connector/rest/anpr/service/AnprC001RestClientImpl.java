@@ -1,6 +1,5 @@
 package it.gov.pagopa.admissibility.connector.rest.anpr.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.connector.repository.CustomSequenceGeneratorRepository;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprC001ServiceConfig;
 import it.gov.pagopa.admissibility.connector.rest.anpr.config.AnprConfig;
@@ -10,6 +9,8 @@ import it.gov.pagopa.common.reactive.pdnd.service.PdndRestClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
+import tools.jackson.databind.ObjectMapper;
+
 @Service
 public class AnprC001RestClientImpl extends BaseAnprRestClientImpl<RichiestaE002DTO, RispostaE002OKDTO, RispostaKODTO> implements AnprC001RestClient{
 

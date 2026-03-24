@@ -141,7 +141,7 @@ class FamilyDataRetrieverServiceTest {
         mockDependencies(FISCAL_CODE, FISCAL_CODE_HASHED, response);
 
         StepVerifier.create(familyDataRetrieverService.retrieveFamily(REQUEST, null, INITIATIVE_CONFIG.getInitiativeName(), INITIATIVE_CONFIG.getOrganizationName()))
-                .expectError(IllegalArgumentException.class)
+                .expectError(IllegalStateException.class)
                 .verify();
     }
 

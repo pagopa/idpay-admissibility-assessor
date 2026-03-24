@@ -8,7 +8,6 @@ import lombok.NonNull;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.EnumerablePropertySource;
@@ -20,7 +19,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 @ExtendWith(JUnitExtensionContextHolder.class)
-@SpringBootTest
 @ContextConfiguration(
         initializers = {BaseWireMockTest.WireMockInitializer.class})
 @SuppressWarnings("squid:S2187")

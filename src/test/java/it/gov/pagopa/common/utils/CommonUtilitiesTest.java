@@ -1,6 +1,6 @@
 package it.gov.pagopa.common.utils;
 
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;

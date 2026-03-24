@@ -3,11 +3,12 @@ package it.gov.pagopa.admissibility.connector.repository.onboarding;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import it.gov.pagopa.admissibility.model.onboarding.OnboardingFamilyInfo;
-import it.gov.pagopa.common.mongo.MongoTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,7 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@MongoTest
+@DataMongoTest
+@TestPropertySource(properties = {
+        "de.flapdoodle.mongodb.embedded.version=4.2.24"
+})
 class OnboardingRepositoryTest {
     private static final String INITIATIVE = "INITIATIVE_ID";
 

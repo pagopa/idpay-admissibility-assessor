@@ -1,16 +1,20 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
-import it.gov.pagopa.common.mongo.MongoTest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
+import org.springframework.test.context.TestPropertySource;
 
 
 @Slf4j
-@MongoTest
+@DataMongoTest
+@TestPropertySource(properties = {
+        "de.flapdoodle.mongodb.embedded.version=4.2.24"
+})
 class CustomSequenceGeneratorOpsRepositoryImplTest {
     @Autowired
     protected CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
