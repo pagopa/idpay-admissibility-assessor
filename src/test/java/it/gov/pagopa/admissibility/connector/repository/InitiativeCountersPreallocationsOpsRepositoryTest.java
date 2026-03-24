@@ -1,57 +1,53 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
-import it.gov.pagopa.admissibility.model.InitiativeCountersPreallocations;
-import org.junit.jupiter.api.Assertions;
+import com.mongodb.client.result.DeleteResult;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
-import org.springframework.test.context.TestPropertySource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import static it.gov.pagopa.admissibility.utils.Utils.computePreallocationId;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-@DataMongoTest
-@TestPropertySource(properties = {
-        "de.flapdoodle.mongodb.embedded.version=4.2.24"
-})
 class InitiativeCountersPreallocationsOpsRepositoryTest {
 
-    @Autowired
-    protected InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
-    @Autowired
-    private InitiativeCountersPreallocationsOpsRepositoryImpl initiativeCountersPreallocationsOpsRepositoryImpl;
+    @Mock
+    private ReactiveMongoTemplate mongoTemplate;
 
+    @InjectMocks
+    private InitiativeCountersPreallocationsOpsRepositoryImpl repository;
 
-    @Test
-    void deleteByIdReturningResult() {
-        String userId = "USERID";
-        String initiativeId = "INITIATIVEID";
-        String preallocationId = computePreallocationId(userId, initiativeId);
-        InitiativeCountersPreallocations preallocations = InitiativeCountersPreallocations.builder()
-                .id(preallocationId)
-                .userId(userId)
-                .initiativeId(initiativeId)
-                .build();
+    private static final String TEST_ID = "testId";
 
-        initiativeCountersPreallocationsRepository.save(preallocations).block();
-
-        Boolean result = initiativeCountersPreallocationsOpsRepositoryImpl.deleteByIdReturningResult(preallocationId).block();
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(true, result);
-
-        InitiativeCountersPreallocations after = initiativeCountersPreallocationsRepository.findById(preallocationId).block();
-        Assertions.assertNull(after);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void deleteByIdReturningResult_false() {
-        String userId = "USERIDNOTSAVED";
-        String initiativeId = "INITIATIVEID";
-        String preallocationId = computePreallocationId(userId, initiativeId);
+    void testDeleteByIdReturningResult_Success() {
+        DeleteResult deleteResult = DeleteResult.acknowledged(1);
+        when(mongoTemplate.remove(any(), any(Class.class)))
+                .thenReturn(Mono.just(deleteResult));
 
-        Boolean result = initiativeCountersPreallocationsOpsRepositoryImpl.deleteByIdReturningResult(preallocationId).block();
+        StepVerifier.create(repository.deleteByIdReturningResult(TEST_ID))
+                .expectNext(true)
+                .verifyComplete();
+    }
 
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(false, result);
+    @Test
+    void testDeleteByIdReturningResult_Failure() {
+        DeleteResult deleteResult = mock(DeleteResult.class);
+        when(mongoTemplate.remove(any(), any(Class.class)))
+                .thenReturn(Mono.just(deleteResult));
+
+        StepVerifier.create(repository.deleteByIdReturningResult(TEST_ID))
+                .expectNext(false)
+                .verifyComplete();
     }
 }

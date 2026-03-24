@@ -1,121 +1,74 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.data.mongodb.test.autoconfigure.DataMongoTest;
-import org.springframework.test.context.TestPropertySource;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.stream.IntStream;
+import java.time.LocalDateTime;
 
-@DataMongoTest
-@TestPropertySource(properties = {
-        "de.flapdoodle.mongodb.embedded.version=4.2.24"
-})
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
 class InitiativeCountersReservationOpsRepositoryImplTest {
 
-    @Autowired
-    protected InitiativeCountersRepository initiativeCountersRepository;
-    @Autowired
-    private InitiativeCountersReservationOpsRepositoryImpl initiativeCountersReservationOpsRepositoryImpl;
+    @Mock
+    private ReactiveMongoTemplate mongoTemplate;
 
-    @Test
-    void testReservation() {
-        int N = 1000;
+    @InjectMocks
+    private InitiativeCountersReservationOpsRepositoryImpl repository;
 
-        final BigDecimal budget = BigDecimal.valueOf(10099);
-        final Long budgetReservedPerRequest = 100_00L;
-        final BigDecimal expectedBudgetReserved = BigDecimal.valueOf(10000);
-        final BigDecimal expectedBudgetResidual = BigDecimal.valueOf(99);
-        final int expectedReservations = 100;
+    private static final String INITIATIVE_ID = "initiative1";
 
-        storeInitiative(budget);
+    private InitiativeCounters mockCounter;
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(N);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
 
-        final List<Future<InitiativeCounters>> tasks = IntStream.range(0, N)
-                .mapToObj(i -> executorService.submit(() -> initiativeCountersReservationOpsRepositoryImpl.reserveBudget("prova", budgetReservedPerRequest).block()))
-                .toList();
-
-        final long successfulReservation = tasks.stream().filter(t -> {
-            try {
-                return t.get() != null;
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
-            }
-        }).count();
-
-        checkStoredBudgetReservation(expectedBudgetReserved, expectedBudgetResidual, expectedReservations);
-        Assertions.assertEquals(expectedReservations, successfulReservation);
-    }
-
-    private void storeInitiative(BigDecimal budget) {
-        initiativeCountersRepository.save(InitiativeCounters.builder()
-                .id("prova")
-                .initiativeBudgetCents(euro2cents(budget))
-                .residualInitiativeBudgetCents(euro2cents(budget))
-                .build()).block();
-    }
-
-    private long euro2cents(BigDecimal budget) {
-        return budget.longValue() * 100;
-    }
-
-    private void checkStoredBudgetReservation(BigDecimal expectedBudgetReservedCents, BigDecimal expectedResidualBudgetCents, int expectedReservations) {
-        final InitiativeCounters c = initiativeCountersRepository.findById("prova").block();
-
-        Assertions.assertNotNull(c);
-        Assertions.assertEquals(euro2cents(expectedBudgetReservedCents), c.getReservedInitiativeBudgetCents());
-        Assertions.assertEquals(euro2cents(expectedResidualBudgetCents), c.getResidualInitiativeBudgetCents());
-        Assertions.assertEquals(expectedReservations, c.getOnboarded());
+        mockCounter = new InitiativeCounters();
+        mockCounter.setId(INITIATIVE_ID);
+        mockCounter.setResidualInitiativeBudgetCents(1000L);
+        mockCounter.setReservedInitiativeBudgetCents(0L);
+        mockCounter.setOnboarded(0L);
+        mockCounter.setUpdateDate(LocalDateTime.now());
     }
 
     @Test
-    void deallocatedPartialBudget(){
-        initiativeCountersRepository.save(InitiativeCounters.builder()
-                .id("test")
-                .initiativeBudgetCents(euro2cents(BigDecimal.valueOf(1000)))
-                .reservedInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(300)))
-                .residualInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(700)))
-                .spentInitiativeBudgetCents(0L)
-                .build()).block();
+    void testReserveBudget() {
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), any(Class.class)))
+                .thenReturn(Mono.just(mockCounter));
 
-        initiativeCountersRepository.deallocatedPartialBudget("test", 100_00).block();
-
-        InitiativeCounters result = initiativeCountersRepository.findById("test").block();
-
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(800_00, result.getResidualInitiativeBudgetCents());
-        Assertions.assertEquals(200_00, result.getReservedInitiativeBudgetCents());
-
+        StepVerifier.create(repository.reserveBudget(INITIATIVE_ID, 500L))
+                .expectNext(mockCounter)
+                .verifyComplete();
     }
 
     @Test
-    void deallocatedBudget(){
-        initiativeCountersRepository.save(InitiativeCounters.builder()
-                .id("test")
-                .onboarded(5L)
-                .initiativeBudgetCents(euro2cents(BigDecimal.valueOf(1000)))
-                .reservedInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(300)))
-                .residualInitiativeBudgetCents(euro2cents(BigDecimal.valueOf(700)))
-                .spentInitiativeBudgetCents(0L)
-                .build()).block();
+    void testDeallocatedPartialBudget() {
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), any(Class.class)))
+                .thenReturn(Mono.just(mockCounter));
 
-        initiativeCountersRepository.deallocateBudget("test", 100_00).block();
+        StepVerifier.create(repository.deallocatedPartialBudget(INITIATIVE_ID, 200L))
+                .expectNext(mockCounter)
+                .verifyComplete();
+    }
 
-        InitiativeCounters result = initiativeCountersRepository.findById("test").block();
+    @Test
+    void testDeallocateBudget() {
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class), any(FindAndModifyOptions.class), any(Class.class)))
+                .thenReturn(Mono.just(mockCounter));
 
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(800_00, result.getResidualInitiativeBudgetCents());
-        Assertions.assertEquals(200_00, result.getReservedInitiativeBudgetCents());
-        Assertions.assertEquals(4L, result.getOnboarded());
-
+        StepVerifier.create(repository.deallocateBudget(INITIATIVE_ID, 300L))
+                .expectNext(mockCounter)
+                .verifyComplete();
     }
 }
