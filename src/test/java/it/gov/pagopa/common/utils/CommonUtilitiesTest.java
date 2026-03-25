@@ -1,6 +1,5 @@
 package it.gov.pagopa.common.utils;
 
-import tools.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.web.dto.ErrorDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
@@ -9,16 +8,50 @@ import org.mockito.Mockito;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.messaging.support.MessageBuilder;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @Slf4j
 class CommonUtilitiesTest {
 
     private final ObjectReader errorDtoObjectReader = TestUtils.objectMapper.readerFor(ErrorDTO.class);
+
+    @Test
+    void testConvertOk() {
+        byte[] payloadBytes = "valid-json".getBytes();
+        Message<byte[]> message = MessageBuilder.withPayload(payloadBytes).build();
+        ObjectMapper objectMapper = new ObjectMapper();
+        Object result = CommonUtilities.convertToJson(message, objectMapper);
+        assertNotNull(result);
+    }
+
+
+
+    @Test
+    void convertToJson_shouldThrowException() {
+        ObjectMapper objectMapper = Mockito.mock(ObjectMapper.class);
+
+        Object input = new Object();
+
+        Mockito.when(objectMapper.writeValueAsString(input))
+                .thenThrow(new JacksonException("error") {});
+
+        IllegalStateException ex = Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> CommonUtilities.convertToJson(input, objectMapper)
+        );
+
+        Assertions.assertEquals("Error converting request in JSON", ex.getMessage());
+        Assertions.assertNotNull(ex.getCause());
+    }
 
     @Test
     void testDeserializeStringMessageOnError(){
