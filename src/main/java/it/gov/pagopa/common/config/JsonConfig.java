@@ -20,7 +20,6 @@ public class JsonConfig {
         return JsonMapper.builder()
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
                 .changeDefaultVisibility(vc -> vc
                         .withVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.NONE)
                         .withVisibility(PropertyAccessor.GETTER, JsonAutoDetect.Visibility.PUBLIC_ONLY)
