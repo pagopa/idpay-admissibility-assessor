@@ -36,7 +36,7 @@ public class BaseWireMockTest {
         try {
             wiremockHttpBaseUrl = serverWireMockExtension.getRuntimeInfo().getHttpBaseUrl();
             wiremockHttpsBaseUrl = serverWireMockExtension.getRuntimeInfo().getHttpsBaseUrl();
-        } catch (Exception e) {
+        } catch (Exception _) {
             System.out.println("Cannot read wiremock urls");
         }
         System.out.printf("""
@@ -78,7 +78,7 @@ public class BaseWireMockTest {
                 // waiting server stop, releasing ports
                 TestUtils.wait(200, TimeUnit.MILLISECONDS);
                 start=true;
-            } catch (IllegalStateException e){
+            } catch (IllegalStateException _){
                 // Do Nothing: the wiremock server was not started
             }
         }

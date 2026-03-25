@@ -158,7 +158,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
                             try {
                                 KieBase newKieBase = org.apache.commons.lang3.SerializationUtils.deserialize(c);
                                 acceptNewKieBase(newKieBase);
-                            } catch (Exception e) {
+                            } catch (Exception _) {
                                 log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
                                 return null;
                             }

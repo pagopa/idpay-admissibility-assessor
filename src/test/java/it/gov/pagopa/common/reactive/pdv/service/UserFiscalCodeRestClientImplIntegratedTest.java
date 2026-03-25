@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class, ObjectMapper.class})
-class UserFiscalCodeRestClientImplTestIntegrated {
+class UserFiscalCodeRestClientImplIntegratedTest {
 
     private static WireMockServer wireMockServer;
 

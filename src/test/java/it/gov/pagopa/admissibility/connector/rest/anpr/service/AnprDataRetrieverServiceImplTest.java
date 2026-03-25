@@ -5,7 +5,6 @@ import it.gov.pagopa.admissibility.connector.rest.anpr.mapper.TipoResidenzaDTO2R
 import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;
 import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseVisitor;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import it.gov.pagopa.admissibility.enums.PdndResponseType;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
@@ -13,7 +12,6 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.c
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
-import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Mono;
