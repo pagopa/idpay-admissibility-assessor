@@ -150,6 +150,7 @@ public final class TestUtils {
     }
 
     /** It will check if the local port is available */
+    @SuppressWarnings("unused")
     public static boolean availableLocalPort(int port) {
         try (Socket ignored = new Socket("localhost", port)) {
             return false;
