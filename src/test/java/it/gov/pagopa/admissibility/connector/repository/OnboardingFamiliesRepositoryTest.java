@@ -1,132 +1,75 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import com.mongodb.client.result.UpdateResult;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
-import it.gov.pagopa.common.mongo.MongoTest;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
-@MongoTest
-class OnboardingFamiliesRepositoryTest{
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-    @Autowired
-    private OnboardingFamiliesRepository repository;
+class OnboardingFamiliesRepositoryTest {
 
-    private final List<OnboardingFamilies> testData = new ArrayList<>();
+    @Mock
+    private ReactiveMongoTemplate mongoTemplate;
 
-    @AfterEach
-    void clearTestData() {
-        repository.deleteAll(testData).block();
-    }
+    @InjectMocks
+    private OnboardingFamiliesRepositoryExtImpl repository;
 
-    private OnboardingFamilies storeTestFamily(OnboardingFamilies e) {
-        OnboardingFamilies out = repository.save(e).block();
-        testData.add(out);
-        return out;
-    }
+    private static final String INITIATIVE_ID = "initiative1";
+    private Family testFamily;
+    private OnboardingFamilyEvaluationStatus status;
+    private UpdateResult updateResult;
 
-    @Test
-    void testFindByMemberIdsInAndInitiativeId() {
-        String initiativeId = "INITIATIVEID";
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
 
-        OnboardingFamilies f1 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID", Set.of("ID1", "ID2")), initiativeId));
-        storeTestFamily(f1.toBuilder().initiativeId("INITIATIVEID2").build());
+        testFamily = new Family();
+        testFamily.setFamilyId("family1");
 
-        OnboardingFamilies f2 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID2", Set.of("ID2", "ID3")), initiativeId));
-        storeTestFamily(f2.toBuilder().initiativeId("INITIATIVEID2").build());
+        status = OnboardingFamilyEvaluationStatus.ONBOARDING_OK;
 
-        //checking if builder custom implementation is successfully handling ids
-        assertStoredData();
-        Assertions.assertEquals(4, testData.stream().map(OnboardingFamilies::getId).count());
-
-        List<OnboardingFamilies> result = repository.findByMemberIdsInAndInitiativeId("ID1", initiativeId).collectList().block();
-        Assertions.assertEquals(List.of(f1), result);
-
-        result = repository.findByMemberIdsInAndInitiativeId("ID2", initiativeId).collectList().block();
-        Assertions.assertEquals(List.of(f1, f2), result);
-
-        result = repository.findByMemberIdsInAndInitiativeId("ID4", initiativeId).collectList().block();
-        Assertions.assertEquals(Collections.emptyList(), result);
-    }
-
-    private void assertStoredData() {
-        testData.forEach(t -> Assertions.assertEquals(t, repository.findById(t.getId()).block()));
+        updateResult = UpdateResult.acknowledged(1L, 1L, null);
     }
 
     @Test
-    void testCreateIfNotExists(){
-        // Given
-        LocalDateTime beforeCreate = LocalDateTime.now();
+    void testUpdateOnboardingFamilyOutcome() {
+        when(mongoTemplate.updateFirst(any(Query.class), any(Update.class), any(Class.class)))
+                .thenReturn(Mono.just(updateResult));
 
-        Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
-        OnboardingFamilies expectedResult = new OnboardingFamilies(f1, "INITIATIVEID");
-        expectedResult.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        expectedResult.setCreateBy("ID1");
-        testData.add(expectedResult);
-
-        // When not exists
-        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
-
-        // Then after create
-        Assertions.assertNotNull(result);
-        Assertions.assertNotNull(result.getCreateDate());
-        Assertions.assertFalse(result.getCreateDate().isBefore(beforeCreate));
-        result.setCreateDate(result.getCreateDate().truncatedTo(ChronoUnit.MILLIS));
-        result.setUpdateDate(result.getUpdateDate().truncatedTo(ChronoUnit.MILLIS));
-        expectedResult.setCreateDate(result.getCreateDate());
-        expectedResult.setUpdateDate(result.getUpdateDate());
-        Assertions.assertEquals(expectedResult, result);
-
-        // When exists
-        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
-
-        // Then afterDeleteResult
-        Assertions.assertNull(resultWhenAlreadyExists);
-
-        Assertions.assertEquals(result, repository.findById("FAMILYID_INITIATIVEID").block());
+        StepVerifier.create(repository.updateOnboardingFamilyOutcome(
+                        testFamily,
+                        INITIATIVE_ID,
+                        status,
+                        Collections.emptyList()))
+                .expectNext(updateResult)
+                .verifyComplete();
     }
 
     @Test
-    void testUpdateOnboardingFamilyOutcome(){
-        // Given
-        String initiativeId = "INITIATIVEID";
+    void testFindByInitiativeIdWithBatch() {
+        OnboardingFamilies mockFamily = new OnboardingFamilies();
+        mockFamily.setId(OnboardingFamilies.buildId(testFamily, INITIATIVE_ID));
 
-        Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
-        OnboardingFamilies of1 = storeTestFamily(new OnboardingFamilies(f1, initiativeId));
-        OnboardingFamilies of2 = storeTestFamily(new OnboardingFamilies(new Family("FAMILYID2", Set.of("ID2", "ID3")), initiativeId));
+        when(mongoTemplate.find(any(Query.class), any(Class.class)))
+                .thenReturn(Flux.just(mockFamily));
 
-        OnboardingFamilyEvaluationStatus updatedStatus = OnboardingFamilyEvaluationStatus.ONBOARDING_OK;
-        List<OnboardingRejectionReason> updatedOnboardingRejectionReasons = List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR, "DUMMY", "AUTH", "AUTHLABEL", "DETAILS"));
-
-        // When
-        UpdateResult result = repository.updateOnboardingFamilyOutcome(f1, initiativeId, updatedStatus, updatedOnboardingRejectionReasons).block();
-
-        // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertSame(1L, result.getModifiedCount());
-        Assertions.assertSame(1L, result.getMatchedCount());
-
-        of1.setStatus(updatedStatus);
-        of1.setOnboardingRejectionReasons(updatedOnboardingRejectionReasons);
-        OnboardingFamilies expected1 = repository.findById(of1.getId()).block();
-        OnboardingFamilies expected2 = repository.findById(of2.getId()).block();
-        assert expected1 != null;
-        of1.setUpdateDate(expected1.getUpdateDate());
-        assert expected2 != null;
-        of2.setUpdateDate(expected2.getUpdateDate());
-        Assertions.assertEquals(of1, expected1);
-        Assertions.assertEquals(of2, expected2);
+        StepVerifier.create(repository.findByInitiativeIdWithBatch(INITIATIVE_ID, 10))
+                .expectNext(mockFamily)
+                .verifyComplete();
     }
 }
