@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
@@ -31,6 +32,7 @@ public class OnboardingDTO {
     private Family family;
 
     // Info filled during processing
+    @JsonProperty(defaultValue = "false")
     private boolean budgetReserved;
 
     //
