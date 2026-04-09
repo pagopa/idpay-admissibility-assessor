@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 class Onboarding2OnboardingDroolsMapperTest {
 
@@ -18,7 +18,7 @@ class Onboarding2OnboardingDroolsMapperTest {
     void onboarding2OnboardingDroolsFilledTest() {
 
         // GIVEN
-        LocalDateTime localDateTimeMock1 = LocalDateTime.now();
+        Instant InstantMock1 = Instant.now();
 
         OnboardingDTO objectMock1 = new OnboardingDTO(
                 "1",
@@ -26,8 +26,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 true,
                 "OK",
                 true,
-                localDateTimeMock1,
-                localDateTimeMock1,
+                InstantMock1,
+                InstantMock1,
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),
@@ -53,8 +53,8 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertTrue(result.isTc());
         Assertions.assertEquals("OK", result.getStatus());
         Assertions.assertEquals(true, result.getPdndAccept());
-        Assertions.assertEquals(localDateTimeMock1, result.getTcAcceptTimestamp());
-        Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
+        Assertions.assertEquals(InstantMock1, result.getTcAcceptTimestamp());
+        Assertions.assertEquals(InstantMock1, result.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());
         Assertions.assertNotNull(result.getOnboardingRejectionReasons());
         Assertions.assertSame(objectMock1.getResidence(), result.getResidence());

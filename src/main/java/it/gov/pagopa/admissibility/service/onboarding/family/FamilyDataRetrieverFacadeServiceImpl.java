@@ -18,6 +18,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -31,13 +32,15 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
     private final ExistentFamilyHandlerService existentFamilyHandlerService;
     private final CriteriaCodeService criteriaCodeService;
     private final Onboarding2EvaluationMapper evaluationMapper;
+    private final Clock clock;
 
-    public FamilyDataRetrieverFacadeServiceImpl(FamilyDataRetrieverService familyDataRetrieverService, OnboardingFamiliesRepository repository, ExistentFamilyHandlerService existentFamilyHandlerService, CriteriaCodeService criteriaCodeService, Onboarding2EvaluationMapper evaluationMapper) {
+    public FamilyDataRetrieverFacadeServiceImpl(FamilyDataRetrieverService familyDataRetrieverService, OnboardingFamiliesRepository repository, ExistentFamilyHandlerService existentFamilyHandlerService, CriteriaCodeService criteriaCodeService, Onboarding2EvaluationMapper evaluationMapper, Clock clock) {
         this.familyDataRetrieverService = familyDataRetrieverService;
         this.repository = repository;
         this.existentFamilyHandlerService = existentFamilyHandlerService;
         this.criteriaCodeService = criteriaCodeService;
         this.evaluationMapper = evaluationMapper;
+        this.clock = clock;
     }
 
     @Override
@@ -55,7 +58,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                         Family family = familyOpt.get();
                         onboardingRequest.setFamily(family);
 
-                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId())
+                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId(),clock)
                                 .map((Function<? super OnboardingFamilies, EvaluationDTO>) x -> {
                                     throw new FamilyOnboardingRequestCreated();
                                 })

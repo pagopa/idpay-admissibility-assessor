@@ -9,7 +9,8 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
 
 /**
  * it will handle the persistence of {@link OnboardingFamilies} entity*/
@@ -19,12 +20,12 @@ public interface OnboardingFamiliesRepository extends ReactiveMongoRepository<On
     Flux<OnboardingFamilies> findByMemberIdsInAndInitiativeId(String memberId, String initiativeId);
 
     /** it will create if not exists a new {@link it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus#IN_PROGRESS} if the provided id not exists. If it doesn't exist, it will return empty */
-    default Mono<OnboardingFamilies> createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(Family family, String initiativeId, String userId) {
+    default Mono<OnboardingFamilies> createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(Family family, String initiativeId, String userId, Clock clock) {
         OnboardingFamilies onboardingInProgress = OnboardingFamilies.builder(family, initiativeId)
                 .status(OnboardingFamilyEvaluationStatus.IN_PROGRESS)
-                .createDate(LocalDateTime.now())
+                .createDate(Instant.now(clock))
                 .createBy(userId)
-                .updateDate(LocalDateTime.now())
+                .updateDate(Instant.now(clock))
                 .build();
 
         return insert(onboardingInProgress)

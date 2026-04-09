@@ -28,7 +28,8 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -64,7 +65,7 @@ class ExistentFamilyHandlerServiceTest {
     void testInProgress(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        OffsetDateTime requestDateTime = OffsetDateTime.now();
+        Instant requestDateTime = Instant.now();
 
         // When
         Mono<EvaluationDTO> mono = service.handleExistentFamily(request, family, initiativeConfig, message);
@@ -74,7 +75,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
-                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
+                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plus(2, ChronoUnit.MINUTES))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
                 Mockito.same(message));
     }
@@ -162,7 +163,7 @@ class ExistentFamilyHandlerServiceTest {
     void handleExistentFamilyCreateTest_inProgressFamily(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        OffsetDateTime requestDateTime = OffsetDateTime.now();
+        Instant requestDateTime = Instant.now();
 
         // When
         Mono<EvaluationDTO> mono = service.handleExistentFamilyCreate(request, family, initiativeConfig, message);
@@ -172,7 +173,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
-                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
+                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plus(2,ChronoUnit.MINUTES))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
                 Mockito.same(message));
     }

@@ -10,7 +10,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
 
 @Repository
 @Slf4j
@@ -24,8 +25,11 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
 
     private final ReactiveMongoTemplate mongoTemplate;
 
-    public InitiativeCountersReservationOpsRepositoryImpl(ReactiveMongoTemplate mongoTemplate) {
+    private final Clock clock;
+
+    public InitiativeCountersReservationOpsRepositoryImpl(ReactiveMongoTemplate mongoTemplate, Clock clock) {
         this.mongoTemplate = mongoTemplate;
+        this.clock = clock;
     }
 
     public Mono<InitiativeCounters> reserveBudget(String initiativeId, Long reservationCents) {
@@ -40,7 +44,7 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                         .inc(FIELD_ONBOARDED, 1L)
                         .inc(FIELD_RESERVED_BUDGET_CENTS,reservationCents)
                         .inc(FIELD_RESIDUAL_BUDGET_CENTS,-reservationCents)
-                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
+                        .set(FIELD_UPDATE_DATE, Instant.now(clock)),
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
         );
@@ -54,7 +58,7 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                 new Update()
                         .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
                         .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget)
-                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
+                        .set(FIELD_UPDATE_DATE, Instant.now(clock)),
 
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
@@ -70,7 +74,7 @@ public class InitiativeCountersReservationOpsRepositoryImpl implements Initiativ
                         .inc(FIELD_ONBOARDED, -1)
                         .inc(FIELD_RESERVED_BUDGET_CENTS, -deallocatedBudget)
                         .inc(FIELD_RESIDUAL_BUDGET_CENTS, +deallocatedBudget)
-                        .set(FIELD_UPDATE_DATE, LocalDateTime.now()),
+                        .set(FIELD_UPDATE_DATE, Instant.now(clock)),
                 FindAndModifyOptions.options().returnNew(true),
                 InitiativeCounters.class
         );

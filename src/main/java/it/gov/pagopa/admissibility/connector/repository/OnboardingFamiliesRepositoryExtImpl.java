@@ -12,15 +12,17 @@ import org.springframework.data.mongodb.core.query.Update;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRepositoryExt {
 
     private final ReactiveMongoTemplate mongoTemplate;
-
-    public OnboardingFamiliesRepositoryExtImpl(ReactiveMongoTemplate mongoTemplate) {
+    private final Clock clock;
+    public OnboardingFamiliesRepositoryExtImpl(ReactiveMongoTemplate mongoTemplate, Clock clock) {
         this.mongoTemplate = mongoTemplate;
+        this.clock = clock;
     }
 
     @Override
@@ -30,7 +32,7 @@ public class OnboardingFamiliesRepositoryExtImpl implements OnboardingFamiliesRe
                 new Update()
                         .set(OnboardingFamilies.Fields.status, resultedStatus)
                         .set(OnboardingFamilies.Fields.onboardingRejectionReasons, resultedOnboardingRejectionReasons)
-                        .set(OnboardingFamilies.Fields.updateDate, LocalDateTime.now()),
+                        .set(OnboardingFamilies.Fields.updateDate, Instant.now(clock)),
                 OnboardingFamilies.class
         );
     }

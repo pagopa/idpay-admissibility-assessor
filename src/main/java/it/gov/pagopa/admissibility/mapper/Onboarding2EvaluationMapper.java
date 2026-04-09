@@ -8,7 +8,7 @@ import it.gov.pagopa.common.utils.CommonUtilities;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -32,7 +32,7 @@ public class Onboarding2EvaluationMapper {
         out.setFamilyId(getFamilyId(onboardingDTO));
         out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
-        out.setAdmissibilityCheckDate(LocalDateTime.now());
+        out.setAdmissibilityCheckDate(Instant.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
         //
@@ -71,7 +71,7 @@ public class Onboarding2EvaluationMapper {
         out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setOrganizationId(initiative.getOrganizationId());
-        out.setAdmissibilityCheckDate(LocalDateTime.now());
+        out.setAdmissibilityCheckDate(Instant.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
         setRankingValue(onboardingDTO, initiative, out);

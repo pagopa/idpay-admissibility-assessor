@@ -7,9 +7,11 @@ import lombok.ToString;
 import java.util.ArrayList;
 import java.util.List;
 
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-public class OnboardingDroolsDTO extends OnboardingDTO{
+public class OnboardingDroolsDTO extends OnboardingDTO {
+
     private List<OnboardingRejectionReason> onboardingRejectionReasons = new ArrayList<>();
 }

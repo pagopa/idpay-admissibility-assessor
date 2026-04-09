@@ -5,12 +5,14 @@ import com.github.javafaker.service.RandomService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Random;
 
 public final class OnboardingDTOFaker {
     private OnboardingDTOFaker(){}
 
+    private static ZoneId zone = ZoneId.of("Europe/Rome");
     private static final FakeValuesService fakeValuesServiceGlobal = new FakeValuesService(new Locale("it"), new RandomService());
 
     public static OnboardingDTO mockInstance(Integer bias,String initiativeId){
@@ -27,8 +29,8 @@ public final class OnboardingDTOFaker {
         out.tc(true);
         out.status(bias!=null? "status_%d".formatted(bias) : "?????");
         out.pdndAccept(true);
-        out.tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0));
-        out.criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0));
+        out.tcAcceptTimestamp(LocalDateTime.of(2022,10,2,10,0,0).atZone(zone).toInstant());
+        out.criteriaConsensusTimestamp(LocalDateTime.of(2022,10,2,10,0,0).atZone(zone).toInstant());
 
         return  out;
     }

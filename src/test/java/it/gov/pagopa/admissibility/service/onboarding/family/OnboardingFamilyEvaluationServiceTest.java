@@ -33,7 +33,8 @@ import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -92,11 +93,11 @@ class OnboardingFamilyEvaluationServiceTest {
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
         OnboardingFamilies f1 = OnboardingFamilies.builder(new Family("FAMILYID", Set.of("ID1", "ID2")), request.getInitiativeId())
-                .createDate(LocalDateTime.now())
+                .createDate(Instant.now())
                 .build();
 
         OnboardingFamilies f2 = OnboardingFamilies.builder(new Family("FAMILYID2", Set.of("ID2", "ID3")), request.getInitiativeId())
-                .createDate(LocalDateTime.now().plusMinutes(2))
+                .createDate(Instant.now().plus(2, ChronoUnit.MINUTES))
                 .build();
 
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId())).thenReturn(Flux.just(f1, f2));

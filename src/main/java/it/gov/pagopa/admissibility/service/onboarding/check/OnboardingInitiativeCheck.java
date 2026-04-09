@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.Map;
 
 @Service
@@ -18,12 +19,23 @@ import java.util.Map;
 @Order(1)
 public class OnboardingInitiativeCheck implements OnboardingCheck{
 
-    private String dateCheck (LocalDateTime dateToCheck, LocalDate startDate, LocalDate endDate,String rejectionReason){
-        if(dateToCheck.toLocalDate().isBefore(startDate) || (endDate!=null && dateToCheck.toLocalDate().isAfter(endDate))){
+
+    private String dateCheck(
+            Instant dateToCheck,
+            LocalDate startDate,
+            LocalDate endDate,
+            String rejectionReason
+    ) {
+        LocalDate date = dateToCheck
+                .atZone(ZoneId.of("Europe/Rome"))
+                .toLocalDate();
+
+        if (date.isBefore(startDate) || (endDate != null && date.isAfter(endDate))) {
             return rejectionReason;
         }
         return null;
     }
+
 
     @Override
     public OnboardingRejectionReason apply(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {

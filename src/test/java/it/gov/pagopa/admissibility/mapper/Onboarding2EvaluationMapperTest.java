@@ -17,8 +17,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +36,7 @@ class Onboarding2EvaluationMapperTest {
         onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
 
         //init onboarding
-        LocalDateTime acceptanceDateTime = LocalDateTime.now();
+        Instant acceptanceDateTime = Instant.now();
 
         onboardingRequest = new OnboardingDTO(
                 "USERID",

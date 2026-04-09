@@ -15,7 +15,8 @@ import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingRescheduleServiceTest {
@@ -36,7 +37,7 @@ class OnboardingRescheduleServiceTest {
     }
 
     private final OnboardingDTO request = new OnboardingDTO();
-    private final OffsetDateTime rescheduleDateTime = OffsetDateTime.now().plusMinutes(5);
+    private final Instant rescheduleDateTime = Instant.now().plus(5, ChronoUnit.MINUTES);
     private final Message<String> requestMessage = MessageBuilder.withPayload("").setHeader("HEADER1", "VALUE1").build();
 
     @Test

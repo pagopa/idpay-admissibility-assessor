@@ -40,9 +40,8 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -59,7 +58,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
             "PURPOSEID"
     );
     public static final List<IseeTypologyEnum> ISEE_TYPOLOGIES_REQUESTED = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
-    private final OffsetDateTime TEST_DATE_TIME = OffsetDateTime.now();
+    private final Instant TEST_DATE_TIME = Instant.now();
     @Mock
     private UserFiscalCodeService userFiscalCodeServiceMock;
     @Mock
@@ -79,6 +78,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private BigDecimal expectedIsee;
     private Residence expectedResidence;
     private BirthDate expectedBirthDate;
+    private ZoneId zone = ZoneId.of("Europe/Rome");
 
     //test class
     @Mock
@@ -95,8 +95,8 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .tc(true)
                 .status("STATUS")
                 .pdndAccept(true)
-                .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
-                .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0))
+                .tcAcceptTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0).atZone(zone).toInstant())
+                .criteriaConsensusTimestamp(LocalDateTime.of(2022, 10, 2, 10, 0, 0).atZone(zone).toInstant())
                 .verifyIsee(true)
                 .build();
 
@@ -306,7 +306,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         // Then
         verify(onboardingRescheduleServiceMock, never())
-                .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(OffsetDateTime.now().plusMinutes(60))), eq("Daily limit reached"), any());
+                .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(Instant.now().plus(60, ChronoUnit.MINUTES))), eq("Daily limit reached"), any());
     }
 
     @Test

@@ -30,6 +30,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,12 +47,12 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private CriteriaCodeService criteriaCodeServiceMock;
     private final Onboarding2EvaluationMapper evaluationMapper = new Onboarding2EvaluationMapper();
-
+    private final Clock clock = Clock.fixed(Instant.parse("2026-04-03T10:00:00Z"), ZoneOffset.UTC);
     private FamilyDataRetrieverFacadeService service;
 
     @BeforeEach
     void init(){
-        service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper);
+        service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper, clock);
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
     }
 
@@ -112,7 +115,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
     void testNewFamily() {
         // Given
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId(),clock))
                         .thenReturn(Mono.just(onboardingFamilies));
 
         // When
@@ -142,7 +145,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         // Given
         EvaluationCompletedDTO expectedEvaluationResult = new EvaluationCompletedDTO();
 
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId(),clock))
                 .thenReturn(Mono.empty());
         Mockito.when(repositoryMock.findById("FAMILYID_INITIATIVEID")).thenReturn(Mono.just(onboardingFamilies));
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamilyCreate(request, onboardingFamilies, initiativeConfig, message))

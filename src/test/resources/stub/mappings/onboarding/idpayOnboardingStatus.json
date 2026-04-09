@@ -7,8 +7,8 @@
     "status": 200,
     "jsonBody": {
       "status": "ONBOARDING_OK",
-      "statusDate": "2025-10-21T10:00:00",
-      "onboardingOkDate": "2025-10-21T10:05:00"
+      "statusDate": "2025-10-21T10:00:00Z",
+      "onboardingOkDate": "2025-10-21T10:05:00Z"
     },
     "headers": {
       "Content-Type": "application/json"

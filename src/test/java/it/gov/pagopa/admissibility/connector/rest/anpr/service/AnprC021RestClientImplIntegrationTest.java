@@ -12,6 +12,7 @@ import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseVisitor;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.common.config.TimeConfig;
 import it.gov.pagopa.common.mongo.MongoTest;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
@@ -49,7 +50,8 @@ import static org.mockito.Mockito.when;
                 AnprSignAlgorithmC021Retriever.class,
                 PdndRestClientImpl.class,
                 WebClientConfig.class,
-                CustomSequenceGeneratorRepository.class
+                CustomSequenceGeneratorRepository.class,
+                TimeConfig.class,
         })
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC021RestClientImpl=WARN",
