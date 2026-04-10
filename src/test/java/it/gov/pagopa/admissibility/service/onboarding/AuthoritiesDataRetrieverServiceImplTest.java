@@ -100,7 +100,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 .verifyIsee(true)
                 .build();
 
-        LocalDate now = LocalDate.now();
+        Instant now = Instant.now();
         initiativeConfig = InitiativeConfig.builder()
                 .initiativeId("INITIATIVEID")
                 .initiativeName("INITITIATIVE_NAME")

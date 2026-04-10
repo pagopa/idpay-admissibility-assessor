@@ -4,15 +4,12 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
-import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
@@ -61,14 +58,14 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
     @Mock private OnboardingRepository onboardingRepositoryMock;
 
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
-
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
     private AdmissibilityEvaluatorMediatorService admissibilityEvaluatorMediatorService;
 
     private static final int maxRetry = 2;
 
     @BeforeEach
     void init(){
-        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(maxRetry, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, admissibilityErrorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock, onboardingRepositoryMock);
+        admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(maxRetry, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, onboarding2OnboardingDroolsMapper, admissibilityErrorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock, onboardingRepositoryMock);
     }
 
     @AfterEach
@@ -310,6 +307,11 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         OnboardingDTO onboarding_familyOk = OnboardingDTO.builder().userId("USER2_FAMILY_OK").initiativeId(initiativeId).build();
         OnboardingDTO onboarding_familyKo = OnboardingDTO.builder().userId("USER3_FAMILY_KO").initiativeId(initiativeId).build();
 
+        OnboardingDroolsDTO onboarding_first_drools = OnboardingDroolsDTO.builder().userId("USER1_FIRST_FAMILY_MEMBER").initiativeId(initiativeId).build();
+        OnboardingDroolsDTO onboarding_waitingFirst_drools = OnboardingDroolsDTO.builder().userId("USER2_WAITING_FAMILY").initiativeId(initiativeId).build();
+        OnboardingDroolsDTO onboarding_familyOk_drools = OnboardingDroolsDTO.builder().userId("USER2_FAMILY_OK").initiativeId(initiativeId).build();
+        OnboardingDroolsDTO onboarding_familyKo_drools = OnboardingDroolsDTO.builder().userId("USER3_FAMILY_KO").initiativeId(initiativeId).build();
+
         Family family1 = new Family("FAMILY1", Set.of(onboarding_first.getUserId()));
         Family family2 = new Family("FAMILY2", Set.of(onboarding_waitingFirst.getUserId()));
         Family family3 = new Family("FAMILY3", Set.of(onboarding_familyOk.getUserId()));
@@ -338,9 +340,9 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         onboardingModelFamilyKo.setStatus(ON_EVALUATION);
         Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER3_FAMILY_KO"))).thenReturn(Mono.just(onboardingModelFamilyKo));
 
-        EvaluationDTO expectedEvaluationOnboardingFirst = onboarding2EvaluationMapper.apply(onboarding_first, initiativeConfig, Collections.emptyList());
-        EvaluationDTO expectedEvaluationOnboardingFamilyOk = onboarding2EvaluationMapper.apply(onboarding_familyOk, initiativeConfig, Collections.emptyList());
-        EvaluationDTO expectedEvaluationOnboardingFamilyKo = onboarding2EvaluationMapper.apply(onboarding_familyKo, initiativeConfig, new ArrayList<>(List.of(new OnboardingRejectionReason())));
+        EvaluationDTO expectedEvaluationOnboardingFirst = onboarding2EvaluationMapper.apply(onboarding_first_drools, initiativeConfig, Collections.emptyList());
+        EvaluationDTO expectedEvaluationOnboardingFamilyOk = onboarding2EvaluationMapper.apply(onboarding_familyOk_drools, initiativeConfig, Collections.emptyList());
+        EvaluationDTO expectedEvaluationOnboardingFamilyKo = onboarding2EvaluationMapper.apply(onboarding_familyKo_drools, initiativeConfig, new ArrayList<>(List.of(new OnboardingRejectionReason())));
 
         Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
 

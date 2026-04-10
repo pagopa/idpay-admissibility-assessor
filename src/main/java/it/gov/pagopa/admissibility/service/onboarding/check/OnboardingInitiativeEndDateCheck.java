@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
 
 @Service
@@ -30,13 +31,24 @@ public class OnboardingInitiativeEndDateCheck implements OnboardingCheck{
     }
 
     private String checkInitiativeError(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        if(initiativeConfig == null){
-            log.info("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] [INITIATIVE_CHECK] cannot find the initiative id {} to which the user {} is asking to onboard", onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
+        if (initiativeConfig == null) {
+            log.info("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] [INITIATIVE_CHECK] cannot find the initiative id {} to which the user {} is asking to onboard",
+                    onboardingRequest.getInitiativeId(), onboardingRequest.getUserId());
             return OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL;
         }
 
-        if(!LocalDate.now().isBefore(initiativeConfig.getEndDate())) return OnboardingConstants.REJECTION_REASON_INITIATIVE_ENDED;
+        ZoneId zone = ZoneId.of("Europe/Rome");
+
+        LocalDate today = LocalDate.now(zone);
+        LocalDate initiativeEnd = initiativeConfig.getEndDate()
+                .atZone(zone)
+                .toLocalDate();
+
+        if (!today.isBefore(initiativeEnd)) {
+            return OnboardingConstants.REJECTION_REASON_INITIATIVE_ENDED;
+        }
 
         return null;
     }
+
 }

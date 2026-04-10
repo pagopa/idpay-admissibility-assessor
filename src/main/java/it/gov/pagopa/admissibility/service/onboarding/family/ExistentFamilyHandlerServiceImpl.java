@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.service.onboarding.family;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
@@ -10,6 +11,7 @@ import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
@@ -29,16 +31,18 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
     private final Onboarding2EvaluationMapper mapper;
     private final OnboardingRescheduleService onboardingRescheduleService;
     private final Duration familyOnboardingInProgressDelayDuration;
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper;
 
     public ExistentFamilyHandlerServiceImpl(
             @Value("${app.onboarding-request.delay-family-in-progress.delay-minutes}") int familyOnboardingInProgressDelayMinutes,
 
             Onboarding2EvaluationMapper mapper,
-            OnboardingRescheduleService onboardingRescheduleService) {
+            OnboardingRescheduleService onboardingRescheduleService, Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper) {
         this.mapper = mapper;
         this.onboardingRescheduleService = onboardingRescheduleService;
 
         this.familyOnboardingInProgressDelayDuration=Duration.ofMinutes(familyOnboardingInProgressDelayMinutes);
+        this.onboarding2OnboardingDroolsMapper = onboarding2OnboardingDroolsMapper;
     }
 
     @Override
@@ -86,7 +90,8 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
         if(initiativeConfig.isRankingInitiative()){
             return Mono.error(SkipAlreadyRankingFamilyOnBoardingException::new);
         }
-        EvaluationDTO evaluation = mapper.apply(onboardingRequest, initiativeConfig, family.getOnboardingRejectionReasons());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+        EvaluationDTO evaluation = mapper.apply(onboardingDroolsDTO, initiativeConfig, family.getOnboardingRejectionReasons());
         if(evaluation instanceof EvaluationCompletedDTO evaluationCompletedDTO){
             if(OnboardingFamilyEvaluationStatus.ONBOARDING_OK.equals(family.getStatus())){
                 evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.JOINED);
@@ -101,7 +106,8 @@ public class ExistentFamilyHandlerServiceImpl implements ExistentFamilyHandlerSe
     public Mono<EvaluationDTO> mapFamilyMemberAlreadyOnboardingResult(OnboardingDTO onboardingRequest, String familyId, InitiativeConfig initiativeConfig) {
         Family family = new Family(familyId, Collections.emptySet());
         onboardingRequest.setFamily(family);
-        EvaluationDTO evaluation = mapper.apply(onboardingRequest, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+        EvaluationDTO evaluation = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         if(evaluation instanceof EvaluationCompletedDTO evaluationCompletedDTO){
             evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.JOINED);
         }

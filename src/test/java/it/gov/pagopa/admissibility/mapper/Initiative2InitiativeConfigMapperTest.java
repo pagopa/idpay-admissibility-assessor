@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.CONSENT_CRITERIA_CODE_ISEE;
@@ -178,8 +178,8 @@ class Initiative2InitiativeConfigMapperTest {
         initiative2BuildDTO.setInitiativeRewardType("REFUND");
 
         initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
-                .startDate(LocalDate.MIN)
-                .endDate(LocalDate.MAX)
+                .startDate(Instant.MIN)
+                .endDate(Instant.MAX)
                 .budgetCents(1000_00L)
                 .beneficiaryBudgetCents(1_00L)
                 .beneficiaryBudgetMaxCents(100_00L)

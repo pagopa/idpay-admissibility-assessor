@@ -7,7 +7,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import net.minidev.json.annotate.JsonIgnore;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 public class EvaluationCompletedDTO extends EvaluationDTO{
     private String initiativeName;
     private String organizationName;
-    private LocalDate initiativeEndDate;
+    private Instant initiativeEndDate;
     @NotEmpty
     private OnboardingEvaluationStatus status;
     @NotNull

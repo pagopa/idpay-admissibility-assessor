@@ -27,7 +27,7 @@ import org.springframework.util.SerializationUtils;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -134,7 +134,7 @@ class OnboardingContextHolderServiceImplTest {
                 .initiativeId(initiativeId)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                 .beneficiaryInitiativeBudgetCents(100_00L)
-                .endDate(LocalDate.MAX)
+                .endDate(Instant.MAX)
                 .initiativeName("NAME")
                 .initiativeBudgetCents(100_00L)
                 .status("STATUS")
@@ -142,7 +142,7 @@ class OnboardingContextHolderServiceImplTest {
                 .automatedCriteriaCodes(List.of("CODE1"))
                 .organizationId("ORGANIZATION-ID")
                 .organizationName("ORGANIZATIONNAME")
-                .startDate(LocalDate.MIN)
+                .startDate(Instant.MIN)
                 .rankingInitiative(Boolean.TRUE)
                 .rankingFields(List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))

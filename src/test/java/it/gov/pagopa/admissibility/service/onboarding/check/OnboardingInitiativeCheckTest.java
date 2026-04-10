@@ -58,8 +58,14 @@ class OnboardingInitiativeCheckTest {
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
-        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021, 1, 1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .toInstant()
+        );
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021, 12, 31)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
@@ -89,8 +95,14 @@ class OnboardingInitiativeCheckTest {
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
-        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021, 1, 1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .toInstant()
+        );
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021, 12, 31)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
@@ -117,7 +129,7 @@ class OnboardingInitiativeCheckTest {
         onboardingContext.put(null, null);
 
         final InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setStartDate(LocalDate.now());
+        initiativeConfig.setStartDate(Instant.now());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 

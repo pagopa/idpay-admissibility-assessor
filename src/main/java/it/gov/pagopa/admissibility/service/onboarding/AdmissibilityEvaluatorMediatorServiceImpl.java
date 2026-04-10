@@ -14,6 +14,7 @@ import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
@@ -40,7 +41,6 @@ import reactor.core.scheduler.Schedulers;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
 import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOARDING_OK;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATION;
@@ -59,6 +59,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private final AuthoritiesDataRetrieverService authoritiesDataRetrieverService;
     private final OnboardingRequestEvaluatorService onboardingRequestEvaluatorService;
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper;
     private final AdmissibilityErrorNotifierService admissibilityErrorNotifierService;
 
     private final ObjectReader objectReader;
@@ -77,7 +78,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             OnboardingFamilyEvaluationService onboardingFamilyEvaluationService, AuthoritiesDataRetrieverService authoritiesDataRetrieverService,
             OnboardingRequestEvaluatorService onboardingRequestEvaluatorService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
-            AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
+            Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper, AdmissibilityErrorNotifierService admissibilityErrorNotifierService,
             ObjectMapper objectMapper,
             OnboardingNotifierService onboardingNotifierService,
             RankingNotifierService rankingNotifierService, OnboardingRepository onboardingRepository) {
@@ -88,6 +89,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         this.authoritiesDataRetrieverService = authoritiesDataRetrieverService;
         this.onboardingRequestEvaluatorService = onboardingRequestEvaluatorService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
+        this.onboarding2OnboardingDroolsMapper = onboarding2OnboardingDroolsMapper;
         this.admissibilityErrorNotifierService = admissibilityErrorNotifierService;
 
         this.objectReader = objectMapper.readerFor(OnboardingDTO.class);
@@ -220,7 +222,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     }
 
     private Mono<EvaluationDTO> buildOnboardingGenericErrorKo(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig
+        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+        return Mono.just(onboarding2EvaluationMapper.apply(onboardingDroolsDTO, initiativeConfig
                 , List.of(new OnboardingRejectionReason(
                         OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
                         OnboardingConstants.REJECTION_REASON_GENERIC_ERROR,
@@ -262,9 +265,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private EvaluationDTO evaluateOnboardingChecks(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Map<String, Object> onboardingContext) {
         OnboardingRejectionReason rejectionReason = onboardingCheckService.check(onboardingRequest, initiativeConfig, onboardingContext);
+        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
         if (rejectionReason != null) {
             log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [ONBOARDING_CHECK] Onboarding request failed: {}", rejectionReason);
-            return onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.singletonList(rejectionReason));
+            return onboarding2EvaluationMapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.singletonList(rejectionReason));
         } else return null;
     }
 
@@ -285,7 +289,8 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig))
                 .onErrorResume(OnboardingException.class, e -> {
                     log.info(e.getMessage());
-                    return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
+                    OnboardingDroolsDTO onboardingDroolDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+                    return Mono.just(onboarding2EvaluationMapper.apply(onboardingDroolDTO, initiativeConfig, e.getRejectionReasons()));
                 })
 
                 .flatMap(ev -> {

@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -23,8 +23,8 @@ public class InitiativeConfig {
     private String organizationId;
     private String organizationName;
     private String status;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private Instant startDate;
+    private Instant endDate;
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private Long initiativeBudgetCents;

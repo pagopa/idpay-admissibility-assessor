@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 /**
  * InitiativeGeneralDTO
@@ -41,16 +41,16 @@ public class InitiativeGeneralDTO   {
   private Long beneficiaryBudgetMaxCents;
 
   @JsonProperty("startDate")
-  private LocalDate startDate;
+  private Instant startDate;
 
   @JsonProperty("endDate")
-  private LocalDate endDate;
+  private Instant endDate;
 
   @JsonProperty("rankingStartDate")
-  private LocalDate rankingStartDate;
+  private Instant rankingStartDate;
 
   @JsonProperty("rankingEndDate")
-  private LocalDate rankingEndDate;
+  private Instant rankingEndDate;
 
   @JsonProperty("rankingEnabled")
   private boolean rankingEnabled;

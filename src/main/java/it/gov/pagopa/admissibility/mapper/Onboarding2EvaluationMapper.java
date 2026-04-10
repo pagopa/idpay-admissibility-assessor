@@ -16,7 +16,7 @@ import java.util.Set;
 @Service
 public class Onboarding2EvaluationMapper {
 
-    public EvaluationDTO apply(OnboardingDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
+    public EvaluationDTO apply(OnboardingDroolsDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
         if(initiative==null
                 || !initiative.isRankingInitiative()
                 || (initiative.isRankingInitiative() && !rejectionReasons.isEmpty())){
@@ -26,14 +26,20 @@ public class Onboarding2EvaluationMapper {
         }
     }
 
-    private EvaluationCompletedDTO getEvaluationCompletedDTO(OnboardingDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
+    private EvaluationCompletedDTO getEvaluationCompletedDTO(OnboardingDroolsDTO onboardingDTO, InitiativeConfig initiative, List<OnboardingRejectionReason> rejectionReasons) {
         EvaluationCompletedDTO out = new EvaluationCompletedDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setFamilyId(getFamilyId(onboardingDTO));
         out.setMemberIds(getFamilyMembers(onboardingDTO));
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setAdmissibilityCheckDate(Instant.now());
-        out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
+
+        out.setCriteriaConsensusTimestamp(
+                onboardingDTO.getCriteriaConsensusTimestamp() != null
+                        ? onboardingDTO.getCriteriaConsensusTimestamp().toInstant()
+                        : null
+        );
+
 
         //
         out.setServiceId(onboardingDTO.getServiceId());
@@ -64,7 +70,7 @@ public class Onboarding2EvaluationMapper {
         return out;
     }
 
-    private RankingRequestDTO getRankingRequestDTO(OnboardingDTO onboardingDTO,InitiativeConfig initiative) {
+    private RankingRequestDTO getRankingRequestDTO(OnboardingDroolsDTO onboardingDTO,InitiativeConfig initiative) {
         RankingRequestDTO out = new RankingRequestDTO();
         out.setUserId(onboardingDTO.getUserId());
         out.setFamilyId(getFamilyId(onboardingDTO));
@@ -72,7 +78,12 @@ public class Onboarding2EvaluationMapper {
         out.setInitiativeId(onboardingDTO.getInitiativeId());
         out.setOrganizationId(initiative.getOrganizationId());
         out.setAdmissibilityCheckDate(Instant.now());
-        out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
+        out.setCriteriaConsensusTimestamp(
+                onboardingDTO.getCriteriaConsensusTimestamp() != null
+                        ? onboardingDTO.getCriteriaConsensusTimestamp().toInstant()
+                        : null
+        );
+
 
         setRankingValue(onboardingDTO, initiative, out);
 
@@ -89,15 +100,15 @@ public class Onboarding2EvaluationMapper {
         return out;
     }
 
-    private static String getFamilyId(OnboardingDTO onboardingDTO) {
+    private static String getFamilyId(OnboardingDroolsDTO onboardingDTO) {
         return onboardingDTO.getFamily() != null ? onboardingDTO.getFamily().getFamilyId() : null;
     }
 
-    private static Set<String> getFamilyMembers(OnboardingDTO onboardingDTO) {
+    private static Set<String> getFamilyMembers(OnboardingDroolsDTO onboardingDTO) {
         return onboardingDTO.getFamily() != null ? onboardingDTO.getFamily().getMemberIds() : null;
     }
 
-    private static void setRankingValue(OnboardingDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
+    private static void setRankingValue(OnboardingDroolsDTO onboardingDTO, InitiativeConfig initiative, EvaluationDTO out) {
         if(initiative.isRankingInitiative() && !initiative.getRankingFields().isEmpty()){
             long rankingValue = -1L;
             if(initiative.getRankingFields().get(0).getFieldCode().equals(OnboardingConstants.CRITERIA_CODE_ISEE) && onboardingDTO.getIsee() != null){

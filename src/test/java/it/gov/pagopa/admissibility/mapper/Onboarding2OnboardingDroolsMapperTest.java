@@ -18,7 +18,7 @@ class Onboarding2OnboardingDroolsMapperTest {
     void onboarding2OnboardingDroolsFilledTest() {
 
         // GIVEN
-        Instant InstantMock1 = Instant.now();
+        Instant instantMock1 = Instant.now();
 
         OnboardingDTO objectMock1 = new OnboardingDTO(
                 "1",
@@ -26,8 +26,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 true,
                 "OK",
                 true,
-                InstantMock1,
-                InstantMock1,
+                instantMock1,
+                instantMock1,
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),
@@ -53,8 +53,8 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertTrue(result.isTc());
         Assertions.assertEquals("OK", result.getStatus());
         Assertions.assertEquals(true, result.getPdndAccept());
-        Assertions.assertEquals(InstantMock1, result.getTcAcceptTimestamp());
-        Assertions.assertEquals(InstantMock1, result.getCriteriaConsensusTimestamp());
+        Assertions.assertEquals(instantMock1, result.getTcAcceptTimestamp().toInstant());
+        Assertions.assertEquals(instantMock1, result.getCriteriaConsensusTimestamp().toInstant());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());
         Assertions.assertNotNull(result.getOnboardingRejectionReasons());
         Assertions.assertSame(objectMock1.getResidence(), result.getResidence());

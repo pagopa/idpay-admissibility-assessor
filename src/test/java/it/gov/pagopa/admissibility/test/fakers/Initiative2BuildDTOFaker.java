@@ -9,6 +9,7 @@ import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.utils.TestUtils;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -56,8 +57,14 @@ public final class Initiative2BuildDTOFaker {
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
                         .beneficiaryBudgetCents(BENEFICIARY_BUDGET)
-                        .startDate(LocalDate.of(2021, 1, 1))
-                        .endDate(LocalDate.of(2025, 12, 1))
+                        .startDate(LocalDate.of(2021, 1, 1)
+                                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                                .toInstant()
+                        )
+                        .endDate(LocalDate.of(2025, 12, 11)
+                            .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                            .minusNanos(1)
+                            .toInstant())
                         .rankingEnabled(false)
                         .build());
 
