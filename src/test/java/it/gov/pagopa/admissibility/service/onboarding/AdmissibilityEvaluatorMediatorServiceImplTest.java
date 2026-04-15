@@ -308,7 +308,6 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         OnboardingDTO onboardingFamilyKo = OnboardingDTO.builder().userId("USER3FAMILY_KO").initiativeId(initiativeId).build();
 
         OnboardingDroolsDTO onboardingFirstDrools = OnboardingDroolsDTO.builder().userId("USER1FIRSTFAMILY_MEMBER").initiativeId(initiativeId).build();
-        //OnboardingDroolsDTO onboardingWaitingFirstDrools = OnboardingDroolsDTO.builder().userId("USER2_WAITINGFAMILY").initiativeId(initiativeId).build();
         OnboardingDroolsDTO onboardingFamilyOkDrools = OnboardingDroolsDTO.builder().userId("USER2FAMILY_OK").initiativeId(initiativeId).build();
         OnboardingDroolsDTO onboardingFamilyKoDrools = OnboardingDroolsDTO.builder().userId("USER3FAMILY_KO").initiativeId(initiativeId).build();
 
