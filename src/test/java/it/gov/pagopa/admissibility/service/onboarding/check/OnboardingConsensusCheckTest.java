@@ -7,7 +7,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -18,9 +18,9 @@ class OnboardingConsensusCheckTest {
     @Test
     void testTcConsensusFalse() {
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboardingTcFalseMock = buildOnboardingRequest(false, true, localDateTimeMock);
+        OnboardingDTO onboardingTcFalseMock = buildOnboardingRequest(false, true, timeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -40,9 +40,9 @@ class OnboardingConsensusCheckTest {
     void testPdndConsensusFalse() {
 
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboardingPdndFalseMock = buildOnboardingRequest(true, false, localDateTimeMock);
+        OnboardingDTO onboardingPdndFalseMock = buildOnboardingRequest(true, false, timeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -67,7 +67,7 @@ class OnboardingConsensusCheckTest {
         Map<String, Boolean> selfDeclarationListFalseMock = new HashMap<>();
         selfDeclarationListFalseMock.put("MAP", false);
 
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
         OnboardingDTO onboardingSelfDeclarationFalseMock = new OnboardingDTO(
                 "1",
@@ -76,8 +76,8 @@ class OnboardingConsensusCheckTest {
                 "OK",
                 true,
                 selfDeclarationListFalseMock,
-                localDateTimeMock,
-                localDateTimeMock,
+                timeMock,
+                timeMock,
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate()
@@ -102,9 +102,9 @@ class OnboardingConsensusCheckTest {
     void testSelfDeclarationConsensusNull() {
 
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboardingSelfDeclarationFalseMock = buildOnboardingRequest(true, true, localDateTimeMock);
+        OnboardingDTO onboardingSelfDeclarationFalseMock = buildOnboardingRequest(true, true, timeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -119,9 +119,9 @@ class OnboardingConsensusCheckTest {
     @Test
     void testConsensusTrue() {
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboardingMock = buildOnboardingRequest(true, true, localDateTimeMock);
+        OnboardingDTO onboardingMock = buildOnboardingRequest(true, true, timeMock);
 
         OnboardingConsensusCheck onboardingConsensusCheck = new OnboardingConsensusCheck();
 
@@ -132,15 +132,15 @@ class OnboardingConsensusCheckTest {
         assertNull(result);
     }
 
-    private OnboardingDTO buildOnboardingRequest(boolean tc, boolean pdndCheck, LocalDateTime localDateTimeMock) {
+    private OnboardingDTO buildOnboardingRequest(boolean tc, boolean pdndCheck, Instant timeMock) {
         return new OnboardingDTO(
                 "1",
                 "1",
                 tc,
                 "OK",
                 pdndCheck,
-                localDateTimeMock,
-                localDateTimeMock,
+                timeMock,
+                timeMock,
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),

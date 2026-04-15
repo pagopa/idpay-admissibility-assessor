@@ -1,9 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -12,6 +9,7 @@ import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.service.onboarding.notifier.OnboardingRescheduleService;
@@ -28,7 +26,8 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Set;
 
@@ -38,12 +37,13 @@ class ExistentFamilyHandlerServiceTest {
     @Mock private OnboardingRescheduleService onboardingRescheduleServiceMock;
 
     private final Onboarding2EvaluationMapper mapper = new Onboarding2EvaluationMapper();
-
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
     private ExistentFamilyHandlerService service;
 
     @BeforeEach
     void init(){
-        service = new ExistentFamilyHandlerServiceImpl(1, new Onboarding2EvaluationMapper(), onboardingRescheduleServiceMock);
+
+        service = new ExistentFamilyHandlerServiceImpl(1, new Onboarding2EvaluationMapper(), onboardingRescheduleServiceMock, onboarding2OnboardingDroolsMapper);
     }
 
     @AfterEach
@@ -64,7 +64,7 @@ class ExistentFamilyHandlerServiceTest {
     void testInProgress(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        OffsetDateTime requestDateTime = OffsetDateTime.now();
+        Instant requestDateTime = Instant.now();
 
         // When
         Mono<EvaluationDTO> mono = service.handleExistentFamily(request, family, initiativeConfig, message);
@@ -74,7 +74,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
-                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
+                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plus(2, ChronoUnit.MINUTES))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
                 Mockito.same(message));
     }
@@ -111,8 +111,9 @@ class ExistentFamilyHandlerServiceTest {
     }
 
     private void testCompletedFamilyOnboarding(OnboardingEvaluationStatus expectedStatus) {
+        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(request);
         //Given
-        EvaluationCompletedDTO expectedResult = (EvaluationCompletedDTO) mapper.apply(request, initiativeConfig, family.getOnboardingRejectionReasons());
+        EvaluationCompletedDTO expectedResult = (EvaluationCompletedDTO) mapper.apply(onboardingDroolsDTO, initiativeConfig, family.getOnboardingRejectionReasons());
 
         // When
         EvaluationDTO result = service.handleExistentFamily(request, family, initiativeConfig, message).block();
@@ -162,7 +163,7 @@ class ExistentFamilyHandlerServiceTest {
     void handleExistentFamilyCreateTest_inProgressFamily(){
         // Given
         family.setStatus(OnboardingFamilyEvaluationStatus.IN_PROGRESS);
-        OffsetDateTime requestDateTime = OffsetDateTime.now();
+        Instant requestDateTime = Instant.now();
 
         // When
         Mono<EvaluationDTO> mono = service.handleExistentFamilyCreate(request, family, initiativeConfig, message);
@@ -172,7 +173,7 @@ class ExistentFamilyHandlerServiceTest {
 
         Mockito.verify(onboardingRescheduleServiceMock, Mockito.never()).reschedule(
                 Mockito.same(request),
-                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plusMinutes(2))),
+                Mockito.argThat(dt -> dt.isAfter(requestDateTime) && dt.isBefore(requestDateTime.plus(2,ChronoUnit.MINUTES))),
                 Mockito.eq("Family FAMILYID onboarding IN_PROGRESS into initiative INITIATIVEID"),
                 Mockito.same(message));
     }

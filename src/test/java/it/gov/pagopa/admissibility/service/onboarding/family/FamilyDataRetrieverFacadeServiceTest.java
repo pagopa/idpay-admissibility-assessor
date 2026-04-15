@@ -1,14 +1,12 @@
 package it.gov.pagopa.admissibility.service.onboarding.family;
 
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
@@ -30,6 +28,9 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -44,12 +45,13 @@ class FamilyDataRetrieverFacadeServiceTest {
     @Mock private ExistentFamilyHandlerService existentFamilyHandlerServiceMock;
     @Mock private CriteriaCodeService criteriaCodeServiceMock;
     private final Onboarding2EvaluationMapper evaluationMapper = new Onboarding2EvaluationMapper();
-
+    private final Onboarding2OnboardingDroolsMapper onboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
+    private final Clock clock = Clock.fixed(Instant.parse("2026-04-03T10:00:00Z"), ZoneOffset.UTC);
     private FamilyDataRetrieverFacadeService service;
 
     @BeforeEach
     void init(){
-        service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper);
+        service = new FamilyDataRetrieverFacadeServiceImpl(familyDataRetrieverServiceMock, repositoryMock, existentFamilyHandlerServiceMock, criteriaCodeServiceMock, evaluationMapper, onboardingDroolsMapper, clock);
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
     }
 
@@ -81,7 +83,8 @@ class FamilyDataRetrieverFacadeServiceTest {
     private void testNoFamily(Mono<Optional<Family>> noFamilyResult) {
         // Given
         Mockito.when(familyDataRetrieverServiceMock.retrieveFamily(request, message,initiativeConfig.getInitiativeName(),initiativeConfig.getOrganizationName())).thenReturn(noFamilyResult);
-        EvaluationDTO expectedResult = evaluationMapper.apply(request, initiativeConfig, List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO, OnboardingConstants.REJECTION_REASON_FAMILY_KO, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH_LABEL, "Nucleo familiare non disponibile")));
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = evaluationMapper.apply(onboardingDroolsDTO, initiativeConfig, List.of(new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO, OnboardingConstants.REJECTION_REASON_FAMILY_KO, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH, CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY_AUTH_LABEL, "Nucleo familiare non disponibile")));
 
         // When
         EvaluationDTO result = service.retrieveFamily(request, initiativeConfig, message).block();
@@ -112,7 +115,7 @@ class FamilyDataRetrieverFacadeServiceTest {
 
     void testNewFamily() {
         // Given
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId(),clock))
                         .thenReturn(Mono.just(onboardingFamilies));
 
         // When
@@ -142,7 +145,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         // Given
         EvaluationCompletedDTO expectedEvaluationResult = new EvaluationCompletedDTO();
 
-        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId()))
+        Mockito.when(repositoryMock.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, request.getInitiativeId(), request.getUserId(),clock))
                 .thenReturn(Mono.empty());
         Mockito.when(repositoryMock.findById("FAMILYID_INITIATIVEID")).thenReturn(Mono.just(onboardingFamilies));
         Mockito.when(existentFamilyHandlerServiceMock.handleExistentFamilyCreate(request, onboardingFamilies, initiativeConfig, message))

@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
@@ -76,28 +77,82 @@ public class Filter2DroolsTransformer implements ExtraFilter2DroolsTransformer<F
         }
     }
 
-    private String buildOperatorApplication(Filter filter, Class<?> fieldType, String op, String[] value, String fullPathNoCast) {
+    private String buildOperatorApplication(
+            Filter filter,
+            Class<?> fieldType,
+            String op,
+            String[] value,
+            String fullPathNoCast
+    ) {
         final String value1 = value[0];
-        final String value2 = value.length>1 ? value[1] : value[0];
+        final String value2 = value.length > 1 ? value[1] : value[0];
 
-        if (fieldType.isAssignableFrom(OffsetDateTime.class) || ChronoZonedDateTime.class.isAssignableFrom(fieldType)) {
+        // Instant
+        // Skip isBefore/isAfter/isEqual
+        if (fieldType.equals(Instant.class)) {
             return switch (filter.getFilterOperator()) {
-                case NOT_EQ -> String.format("!%s.isEqual(%s)", fullPathNoCast, value1);
-                case EQ -> String.format("%s.isEqual(%s)", fullPathNoCast, value1);
-                case LT -> String.format("%s.isBefore(%s)", fullPathNoCast, value1);
-                case LE -> String.format("!%s.isAfter(%s)", fullPathNoCast, value1);
-                case GT -> String.format("%s.isAfter(%s)", fullPathNoCast, value1);
-                case GE -> String.format("!%s.isBefore(%s)", fullPathNoCast, value1);
-                case BTW_OPEN -> String.format("(%s.isAfter(%s) && %s.isBefore(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
-                case BTW_CLOSED -> String.format("(!%s.isBefore(%s) && !%s.isAfter(%s))", fullPathNoCast, value1, fullPathNoCast, value2);
-                default -> throw new IllegalStateException("Operator not allowed for Date fields: %s".formatted(filter.getFilterOperator()));
+                case EQ ->
+                        String.format("%s == %s", fullPathNoCast, value1);
+                case NOT_EQ ->
+                        String.format("%s != %s", fullPathNoCast, value1);
+                case GT ->
+                        String.format("%s > %s", fullPathNoCast, value1);
+                case GE ->
+                        String.format("%s >= %s", fullPathNoCast, value1);
+                case LT ->
+                        String.format("%s < %s", fullPathNoCast, value1);
+                case LE ->
+                        String.format("%s <= %s", fullPathNoCast, value1);
+                case BTW_OPEN ->
+                        String.format("%s > %s && %s < %s", fullPathNoCast, value1, fullPathNoCast, value2);
+                case BTW_CLOSED ->
+                        String.format("%s >= %s && %s <= %s", fullPathNoCast, value1, fullPathNoCast, value2);
+                default ->
+                        throw new IllegalStateException(
+                                "Operator temporarily not supported for Instant: %s"
+                                        .formatted(filter.getFilterOperator())
+                        );
             };
         }
 
-        return switch (filter.getFilterOperator()){
-            case BTW_OPEN -> String.format("%s > %s && %s < %s", fullPathNoCast, value1, fullPathNoCast, value2);
-            case BTW_CLOSED -> String.format("%s >= %s && %s <= %s", fullPathNoCast, value1, fullPathNoCast, value2);
-            default -> String.format("%s %s %s", fullPathNoCast, op, value1);
+        // OffsetDateTime e ZonedDateTime
+        if (fieldType.isAssignableFrom(OffsetDateTime.class)
+                || ChronoZonedDateTime.class.isAssignableFrom(fieldType)) {
+
+            return switch (filter.getFilterOperator()) {
+                case NOT_EQ ->
+                        String.format("!%s.isEqual(%s)", fullPathNoCast, value1);
+                case EQ ->
+                        String.format("%s.isEqual(%s)", fullPathNoCast, value1);
+                case LT ->
+                        String.format("%s.isBefore(%s)", fullPathNoCast, value1);
+                case LE ->
+                        String.format("!%s.isAfter(%s)", fullPathNoCast, value1);
+                case GT ->
+                        String.format("%s.isAfter(%s)", fullPathNoCast, value1);
+                case GE ->
+                        String.format("!%s.isBefore(%s)", fullPathNoCast, value1);
+                case BTW_OPEN ->
+                        String.format("(%s.isAfter(%s) && %s.isBefore(%s))",
+                                fullPathNoCast, value1, fullPathNoCast, value2);
+                case BTW_CLOSED ->
+                        String.format("(!%s.isBefore(%s) && !%s.isAfter(%s))",
+                                fullPathNoCast, value1, fullPathNoCast, value2);
+                default ->
+                        throw new IllegalStateException(
+                                "Operator not allowed for Date fields: %s"
+                                        .formatted(filter.getFilterOperator())
+                        );
+            };
+        }
+
+        return switch (filter.getFilterOperator()) {
+            case BTW_OPEN ->
+                    String.format("%s > %s && %s < %s", fullPathNoCast, value1, fullPathNoCast, value2);
+            case BTW_CLOSED ->
+                    String.format("%s >= %s && %s <= %s", fullPathNoCast, value1, fullPathNoCast, value2);
+            default ->
+                    String.format("%s %s %s", fullPathNoCast, op, value1);
         };
     }
 

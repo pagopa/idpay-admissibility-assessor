@@ -18,7 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,13 +34,16 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
     private final ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade;
     private final KieContainerBuilderService builderService;
 
-    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper, CriteriaCodeService criteriaCodeService, AutomatedCriteria2ExtraFilterMapper automatedCriteria2ExtraFilterMapper, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService) {
+    private final Clock clock;
+
+    public BeneficiaryRule2DroolsRuleImpl(@Value("${app.beneficiary-rule.online-syntax-check}") boolean onlineSyntaxCheck, Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper, CriteriaCodeService criteriaCodeService, AutomatedCriteria2ExtraFilterMapper automatedCriteria2ExtraFilterMapper, ExtraFilter2DroolsTransformerFacade extraFilter2DroolsTransformerFacade, KieContainerBuilderService builderService, Clock clock) {
         this.onlineSyntaxCheck = onlineSyntaxCheck;
         this.initiative2InitiativeConfigMapper = initiative2InitiativeConfigMapper;
         this.criteriaCodeService = criteriaCodeService;
         this.automatedCriteria2ExtraFilterMapper = automatedCriteria2ExtraFilterMapper;
         this.extraFilter2DroolsTransformerFacade = extraFilter2DroolsTransformerFacade;
         this.builderService = builderService;
+        this.clock = clock;
     }
 
     @Override
@@ -50,7 +54,7 @@ public class BeneficiaryRule2DroolsRuleImpl implements BeneficiaryRule2DroolsRul
         out.setId(initiative.getInitiativeId());
         out.setName(initiative.getInitiativeName());
         out.setRuleVersion("20230404");
-        out.setUpdateDate(LocalDateTime.now());
+        out.setUpdateDate(Instant.now(clock));
 
         out.setRule("""
                 package %s;

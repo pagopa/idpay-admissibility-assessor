@@ -32,7 +32,7 @@ import org.springframework.data.domain.Sort;
 import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
+import java.time.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -47,6 +47,8 @@ class BeneficiaryRule2DroolsRuleImplTest {
     private final BeneficiaryRule2DroolsRule beneficiaryRule2DroolsRule;
     private final CriteriaCodeService criteriaCodeServiceMock;
 
+    private final Clock clock = Clock.fixed(Instant.parse("2026-04-03T10:00:00Z"), ZoneOffset.UTC);
+
     private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper;
 
     public BeneficiaryRule2DroolsRuleImplTest() {
@@ -56,7 +58,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
     }
 
     private BeneficiaryRule2DroolsRuleImpl buildBeneficiaryRule2DroolsRule(boolean executeOnlineBuildCheck) {
-        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, initiative2InitiativeConfigMapper, criteriaCodeServiceMock, new AutomatedCriteria2ExtraFilterMapper(), ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)));
+        return new BeneficiaryRule2DroolsRuleImpl(executeOnlineBuildCheck, initiative2InitiativeConfigMapper, criteriaCodeServiceMock, new AutomatedCriteria2ExtraFilterMapper(), ExtraFilter2DroolsTransformerFacadeImplTest.extraFilter2DroolsTransformerFacade, new KieContainerBuilderServiceImpl(Mockito.mock(DroolsRuleRepository.class)), clock);
     }
 
     @BeforeEach
@@ -127,8 +129,15 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .initiativeId("ID")
                 .initiativeName("NAME")
                 .organizationId("ORGANIZATIONID")
-                .startDate(LocalDate.of(2021, 1, 1))
-                .endDate(LocalDate.of(2025, 12, 1))
+                .startDate(LocalDate.of(2021, 1, 1)
+                                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                                .toInstant()
+                )
+                .endDate(LocalDate.of(2025, 12, 1)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant()
+                )
                 .automatedCriteria(dto.getBeneficiaryRule().getAutomatedCriteria())
                 .automatedCriteriaCodes(List.of("ISEE", "BIRTHDATE"))
                 .initiativeBudgetCents(100000_00L)
@@ -196,7 +205,11 @@ class BeneficiaryRule2DroolsRuleImplTest {
         expectedEvaluationResult.setInitiativeName("NAME");
         expectedEvaluationResult.setOrganizationId("ORGANIZATIONID");
         expectedEvaluationResult.setAdmissibilityCheckDate(evaluationResult.getAdmissibilityCheckDate());
-        expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1));
+        expectedEvaluationResult.setInitiativeEndDate(LocalDate.of(2025, 12, 1)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant()
+        );
         expectedEvaluationResult.setBeneficiaryBudgetCents(1000_00L);
         expectedEvaluationResult.setIsLogoPresent(Boolean.TRUE);
         if (expectedIseeFail) {
@@ -246,8 +259,15 @@ class BeneficiaryRule2DroolsRuleImplTest {
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
                         .beneficiaryBudgetCents(1_000_00L)
-                        .startDate(LocalDate.of(2021, 1, 1))
-                        .endDate(LocalDate.of(2025, 12, 1))
+                        .startDate(LocalDate.of(2021, 1, 1)
+                                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                                .toInstant()
+                        )
+                        .endDate(LocalDate.of(2025, 12, 1)
+                                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                                .minusNanos(1)
+                                .toInstant()
+                        )
                         .build()
     );
 

@@ -2,7 +2,7 @@ package it.gov.pagopa.admissibility.dto.onboarding;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -23,8 +23,8 @@ public abstract class EvaluationDTO {
     @NotEmpty
     private String organizationId;
     @NotNull
-    private LocalDateTime admissibilityCheckDate;
-    private LocalDateTime criteriaConsensusTimestamp;
+    private Instant admissibilityCheckDate;
+    private Instant criteriaConsensusTimestamp;
 
     public abstract Long getRankingValue();
     public abstract void setRankingValue(Long rankingValue);

@@ -24,8 +24,9 @@ import reactor.core.scheduler.Schedulers;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Clock;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
@@ -43,16 +44,19 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
     private final List<String> anprErrorCodeForExclude;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    private final Clock clock;
+
     public FamilyDataRetrieverServiceImpl(AnprC021RestClient anprC021RestClient,
                                           PagoPaAnprPdndConfig pagoPaAnprPdndConfig,
                                           UserFiscalCodeService userFiscalCodeService,
                                           AuditUtilities auditUtilities,
-                                          @Value("${app.anpr.c021-servizio-accertamento-stato-famiglia.ko-anomaly-code-list}")List<String> anprErrorCodeForExclude) {
+                                          @Value("${app.anpr.c021-servizio-accertamento-stato-famiglia.ko-anomaly-code-list}")List<String> anprErrorCodeForExclude, Clock clock) {
         this.anprC021RestClient = anprC021RestClient;
         this.pagoPaAnprPdndConfig = pagoPaAnprPdndConfig;
         this.userFiscalCodeService = userFiscalCodeService;
         this.auditUtilities = auditUtilities;
         this.anprErrorCodeForExclude = anprErrorCodeForExclude;
+        this.clock = clock;
     }
 
     @Override
@@ -76,7 +80,7 @@ public class FamilyDataRetrieverServiceImpl implements FamilyDataRetrieverServic
                             return responseKo.getIdOperazioneANPR();
                         }
                     });
-                    auditUtilities.logAnprFamilies(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), idResponse, LocalDateTime.now().toString());
+                    auditUtilities.logAnprFamilies(onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), idResponse, Instant.now(clock).toString());
 
                 })
                 .flatMap(this::processAnprResponse);

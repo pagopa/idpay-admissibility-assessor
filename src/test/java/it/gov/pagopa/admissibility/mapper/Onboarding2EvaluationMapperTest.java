@@ -18,7 +18,8 @@ import org.springframework.util.CollectionUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +29,8 @@ class Onboarding2EvaluationMapperTest {
 
     private Onboarding2EvaluationMapper onboarding2EvaluationMapper;
 
-    private OnboardingDTO onboardingRequest;
+    private OnboardingDroolsDTO onboardingRequest;
+    private OnboardingDTO onboardingDtoRequest;
     private InitiativeConfig initiativeConfig;
 
     @BeforeEach
@@ -36,9 +38,10 @@ class Onboarding2EvaluationMapperTest {
         onboarding2EvaluationMapper = new Onboarding2EvaluationMapper();
 
         //init onboarding
-        LocalDateTime acceptanceDateTime = LocalDateTime.now();
+        OffsetDateTime acceptanceDateTime = OffsetDateTime.now();
 
-        onboardingRequest = new OnboardingDTO(
+        onboardingRequest = new OnboardingDroolsDTO(
+                null,
                 "USERID",
                 "INITIATIVEID",
                 true,
@@ -62,6 +65,29 @@ class Onboarding2EvaluationMapperTest {
                 Boolean.TRUE
         );
 
+        onboardingDtoRequest = new OnboardingDTO(
+                "USERID",
+                "INITIATIVEID",
+                true,
+                "OK",
+                true,
+                acceptanceDateTime.toInstant(),
+                acceptanceDateTime.toInstant(),
+                new BigDecimal(100),
+                new Residence(),
+                new BirthDate(),
+                Family.builder()
+                        .familyId("FAMILYID")
+                        .memberIds(Set.of("USERID")).build(),
+                false,
+                "SERVICE",
+                Boolean.TRUE,
+                "USERMAIL",
+                "CHANNEL",
+                "NAME",
+                "SURNAME",
+                Boolean.TRUE
+        );
         //init initiativeConfig
         initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId("INITIATIVEID");
@@ -71,7 +97,10 @@ class Onboarding2EvaluationMapperTest {
         initiativeConfig.setBeneficiaryInitiativeBudgetCents(10_00L);
         initiativeConfig.setInitiativeRewardType("REFUND");
         initiativeConfig.setIsLogoPresent(Boolean.FALSE);
-        initiativeConfig.setEndDate(LocalDate.now());
+        initiativeConfig.setEndDate(LocalDate.now().plusDays(1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
     }
 
     @Test
@@ -110,7 +139,7 @@ class Onboarding2EvaluationMapperTest {
                 .build());
 
         onboardingRequest.setFamily(null);
-
+        onboardingDtoRequest.setFamily(null);
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, null, rejectReasons);
 
@@ -172,7 +201,10 @@ class Onboarding2EvaluationMapperTest {
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_RESIDENCE).direction(Sort.Direction.DESC).build(),
                 Order.builder().fieldCode(OnboardingConstants.CRITERIA_CODE_ISEE).direction(Sort.Direction.ASC).build()));
 
-        initiativeConfig.setEndDate(LocalDate.now());
+        initiativeConfig.setEndDate(LocalDate.now().plusDays(1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
 
         // WHEN
@@ -190,7 +222,10 @@ class Onboarding2EvaluationMapperTest {
                 .code("InitiativeId NULL")
                 .build());
         configureRankingInitiative();
-        initiativeConfig.setEndDate(LocalDate.now());
+        initiativeConfig.setEndDate(LocalDate.now().plusDays(1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, rejectReasons);
@@ -217,7 +252,10 @@ class Onboarding2EvaluationMapperTest {
     void onboarding2EvaluationOnboardingOkRankingEmptyRejectionReasonTest() {
         // GIVEN
         configureRankingInitiative();
-        initiativeConfig.setEndDate(LocalDate.now());
+        initiativeConfig.setEndDate(LocalDate.now().plusDays(1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         // WHEN
         EvaluationDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, Collections.emptyList());
@@ -237,10 +275,10 @@ class Onboarding2EvaluationMapperTest {
         Assertions.assertTrue(result instanceof RankingRequestDTO);
 
         RankingRequestDTO resultRankingRequest = (RankingRequestDTO) result;
-        Assertions.assertEquals(onboardingRequest.getUserId(), resultRankingRequest.getUserId());
-        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultRankingRequest.getInitiativeId());
+        Assertions.assertEquals(onboardingDtoRequest.getUserId(), resultRankingRequest.getUserId());
+        Assertions.assertEquals(onboardingDtoRequest.getInitiativeId(), resultRankingRequest.getInitiativeId());
         Assertions.assertEquals(initiativeConfig.getOrganizationId(), resultRankingRequest.getOrganizationId());
-        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
+        Assertions.assertEquals(onboardingDtoRequest.getCriteriaConsensusTimestamp(), resultRankingRequest.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(expectedRankingValue, resultRankingRequest.getRankingValue());
 
         TestUtils.checkNotNullFields(resultRankingRequest, "rewardBeneficiaryBudgetCents");
@@ -259,10 +297,10 @@ class Onboarding2EvaluationMapperTest {
     }
 
     private void commonAssertionsOnboarding2EvaluationCompleted(EvaluationCompletedDTO resultCompleted) {
-        Assertions.assertEquals(onboardingRequest.getUserId(), resultCompleted.getUserId());
-        Assertions.assertEquals(onboardingRequest.getFamily()!=null?onboardingRequest.getFamily().getFamilyId() : null, resultCompleted.getFamilyId());
-        Assertions.assertEquals(onboardingRequest.getInitiativeId(), resultCompleted.getInitiativeId());
-        Assertions.assertEquals(onboardingRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
+        Assertions.assertEquals(onboardingDtoRequest.getUserId(), resultCompleted.getUserId());
+        Assertions.assertEquals(onboardingDtoRequest.getFamily()!=null?onboardingDtoRequest.getFamily().getFamilyId() : null, resultCompleted.getFamilyId());
+        Assertions.assertEquals(onboardingDtoRequest.getInitiativeId(), resultCompleted.getInitiativeId());
+        Assertions.assertEquals(onboardingDtoRequest.getCriteriaConsensusTimestamp(), resultCompleted.getCriteriaConsensusTimestamp());
     }
 
     @Test
@@ -287,7 +325,8 @@ class Onboarding2EvaluationMapperTest {
             evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_OK);
         }
 
-        RankingRequestDTO result = onboarding2EvaluationMapper.apply(onboardingRequest, evaluationCompletedDTO);
+
+        RankingRequestDTO result = onboarding2EvaluationMapper.apply(onboardingDtoRequest, evaluationCompletedDTO);
         Assertions.assertNotNull(result);
 
         Assertions.assertEquals(evaluationCompletedDTO.getUserId(), result.getUserId());

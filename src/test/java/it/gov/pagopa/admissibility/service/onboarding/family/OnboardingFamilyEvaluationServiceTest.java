@@ -3,16 +3,14 @@ package it.gov.pagopa.admissibility.service.onboarding.family;
 import com.mongodb.client.result.UpdateResult;
 import it.gov.pagopa.admissibility.connector.repository.OnboardingFamiliesRepository;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.RankingRequestDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.enums.OnboardingFamilyEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.FamilyAlreadyOnBoardingException;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
@@ -33,7 +31,8 @@ import org.springframework.messaging.Message;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -49,7 +48,7 @@ class OnboardingFamilyEvaluationServiceTest {
     @Mock private OnboardingRepository onboardingRepositoryMock;
 
     private OnboardingFamilyEvaluationService service;
-
+    private Onboarding2OnboardingDroolsMapper onboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
     private final Onboarding2EvaluationMapper mapper = new Onboarding2EvaluationMapper();
 
     @BeforeEach
@@ -66,9 +65,10 @@ class OnboardingFamilyEvaluationServiceTest {
     void testNewFamily(){
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
         InitiativeConfig initiativeConfig = new InitiativeConfig();
 
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId())).thenReturn(Flux.empty());
@@ -88,15 +88,16 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
         OnboardingFamilies f1 = OnboardingFamilies.builder(new Family("FAMILYID", Set.of("ID1", "ID2")), request.getInitiativeId())
-                .createDate(LocalDateTime.now())
+                .createDate(Instant.now())
                 .build();
 
         OnboardingFamilies f2 = OnboardingFamilies.builder(new Family("FAMILYID2", Set.of("ID2", "ID3")), request.getInitiativeId())
-                .createDate(LocalDateTime.now().plusMinutes(2))
+                .createDate(Instant.now().plus(2, ChronoUnit.MINUTES))
                 .build();
 
         Mockito.when(onboardingFamiliesRepositoryMock.findByMemberIdsInAndInitiativeId(request.getUserId(), request.getInitiativeId())).thenReturn(Flux.just(f1, f2));
@@ -176,8 +177,8 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_1"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
@@ -205,8 +206,8 @@ class OnboardingFamilyEvaluationServiceTest {
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(request.getInitiativeId());
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_1"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
@@ -248,8 +249,8 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
@@ -278,8 +279,8 @@ class OnboardingFamilyEvaluationServiceTest {
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId("INITIATIVEID");
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
@@ -315,8 +316,8 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("FAMILY_1");
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);
 
@@ -350,8 +351,8 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("NEW_FAMILY");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_2"));
 
@@ -391,8 +392,8 @@ class OnboardingFamilyEvaluationServiceTest {
         // Given
         OnboardingDTO request = OnboardingDTOFaker.mockInstance(0, "INITIATIVEID");
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-
-        EvaluationDTO expectedResult = mapper.apply(request, initiativeConfig, Collections.emptyList());
+        OnboardingDroolsDTO onboardingDroolsDTO = onboardingDroolsMapper.apply(request);
+        EvaluationDTO expectedResult = mapper.apply(onboardingDroolsDTO, initiativeConfig, Collections.emptyList());
         expectedResult.setFamilyId("NEW_FAMILY");
         expectedResult.setMemberIds(Set.of(request.getUserId(), "ANOTHER_USER_1", "ANOTHER_USER_2"));
         @SuppressWarnings("unchecked") Message<String> expectedMessage = Mockito.mock(Message.class);

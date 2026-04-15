@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneId;
 import java.util.function.Function;
 
 @Service
@@ -19,8 +20,23 @@ public class Onboarding2OnboardingDroolsMapper implements Function<OnboardingDTO
         out.setTc(onboardingDTO.isTc());
         out.setStatus(onboardingDTO.getStatus());
         out.setPdndAccept(onboardingDTO.getPdndAccept());
-        out.setTcAcceptTimestamp(onboardingDTO.getTcAcceptTimestamp());
-        out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
+
+        out.setTcAcceptTimestamp(
+                onboardingDTO.getTcAcceptTimestamp() != null
+                        ? onboardingDTO.getTcAcceptTimestamp()
+                        .atZone(ZoneId.of("Europe/Rome"))
+                        .toOffsetDateTime()
+                        : null
+        );
+
+        out.setCriteriaConsensusTimestamp(
+                onboardingDTO.getCriteriaConsensusTimestamp() != null
+                        ? onboardingDTO.getCriteriaConsensusTimestamp()
+                        .atZone(ZoneId.of("Europe/Rome"))
+                        .toOffsetDateTime()
+                        : null
+        );
+
 
         out.setIsee(onboardingDTO.getIsee());
         out.setResidence(onboardingDTO.getResidence());

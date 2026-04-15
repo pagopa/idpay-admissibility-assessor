@@ -11,6 +11,7 @@ import it.gov.pagopa.admissibility.generated.openapi.pdnd.family.status.assessme
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.test.fakers.OnboardingDTOFaker;
 import it.gov.pagopa.admissibility.utils.AuditUtilities;
+import it.gov.pagopa.common.config.TimeConfig;
 import it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -37,7 +38,7 @@ import static org.mockito.ArgumentMatchers.eq;
 @TestPropertySource(properties = {
         "app.anpr.c021-servizio-accertamento-stato-famiglia.ko-anomaly-code-list=EN122"
 })
-@ContextConfiguration(classes = { FamilyDataRetrieverServiceImpl.class })
+@ContextConfiguration(classes = { FamilyDataRetrieverServiceImpl.class, TimeConfig.class })
 class FamilyDataRetrieverServiceTest {
 
     @MockitoBean

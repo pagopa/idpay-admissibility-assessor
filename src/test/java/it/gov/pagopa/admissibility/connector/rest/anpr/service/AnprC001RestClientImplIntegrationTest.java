@@ -13,6 +13,7 @@ import it.gov.pagopa.admissibility.enums.PdndResponseType;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
+import it.gov.pagopa.common.config.TimeConfig;
 import it.gov.pagopa.common.mongo.MongoTest;
 import it.gov.pagopa.common.reactive.pdnd.config.PdndConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
@@ -47,7 +48,8 @@ import static it.gov.pagopa.common.reactive.wireMock.BaseWireMockTest.WIREMOCK_T
                 AnprSignAlgorithmC001Retriever.class,
                 PdndRestClientImpl.class,
                 WebClientConfig.class,
-                CustomSequenceGeneratorRepository.class
+                CustomSequenceGeneratorRepository.class,
+                TimeConfig.class
         })
 @TestPropertySource(properties = {
         "logging.level.it.gov.pagopa.admissibility.connector.rest.anpr.service.AnprC001RestClientImpl=WARN",

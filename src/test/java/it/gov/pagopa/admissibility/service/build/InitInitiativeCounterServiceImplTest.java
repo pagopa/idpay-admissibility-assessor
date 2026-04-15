@@ -13,11 +13,18 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
+import java.time.Instant;
+
+
 @ExtendWith(MockitoExtension.class)
 class InitInitiativeCounterServiceImplTest {
 
     @Mock
     private InitiativeCountersRepository initiativeCountersRepositoryMock;
+    @Mock
+    private Clock clock;
+
     @InjectMocks
     private InitInitiativeCounterServiceImpl initInitiativeCounterService;
 
@@ -32,10 +39,14 @@ class InitInitiativeCounterServiceImplTest {
     }
 
     @BeforeEach
-    void initMocks(){
+    void initMocks() {
+        Mockito.when(clock.instant()).thenReturn(Instant.parse("2024-01-01T00:00:00Z"));
         Mockito.when(initiativeCountersRepositoryMock.findById("ID")).thenReturn(Mono.empty());
-        Mockito.when(initiativeCountersRepositoryMock.save(Mockito.any())).thenAnswer(i->Mono.just(i.getArgument(0)));
+        Mockito.when(initiativeCountersRepositoryMock.save(Mockito.any()))
+                .thenAnswer(i -> Mono.just(i.getArgument(0)));
     }
+
+
 
     @Test
     void testNotExistent(){

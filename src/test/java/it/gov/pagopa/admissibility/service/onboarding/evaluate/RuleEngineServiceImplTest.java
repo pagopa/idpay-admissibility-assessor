@@ -23,7 +23,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Flux;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -84,8 +85,8 @@ class RuleEngineServiceImplTest {
         // Then
         Assertions.assertInstanceOf(EvaluationCompletedDTO.class, result);
         Assertions.assertNotNull(result.getAdmissibilityCheckDate());
-        Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now()));
-        Assertions.assertTrue(result.getAdmissibilityCheckDate().isAfter(LocalDateTime.now().minusMinutes(2)));
+        Assertions.assertFalse(result.getAdmissibilityCheckDate().isAfter(Instant.now()));
+        Assertions.assertTrue(result.getAdmissibilityCheckDate().isAfter(Instant.now().minus(2, ChronoUnit.MINUTES)));
 
         EvaluationCompletedDTO expected = new EvaluationCompletedDTO();
         expected.setInitiativeId(onboardingDTO.getInitiativeId());

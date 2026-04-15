@@ -9,7 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -21,8 +21,8 @@ public class OnboardingDTO {
     private boolean tc;
     private String status;
     private Boolean pdndAccept;
-    private LocalDateTime tcAcceptTimestamp;
-    private LocalDateTime criteriaConsensusTimestamp;
+    private Instant tcAcceptTimestamp;
+    private Instant criteriaConsensusTimestamp;
 
     // Authorities data fetched if the initiative requires them
     private BigDecimal isee;

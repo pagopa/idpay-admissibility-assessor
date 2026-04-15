@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +25,7 @@ class OnboardingFamiliesRepositoryTest{
 
     @Autowired
     private OnboardingFamiliesRepository repository;
+    private final Clock clock = Clock.fixed(Instant.parse("2026-04-03T10:00:00Z"), ZoneOffset.UTC);
 
     private final List<OnboardingFamilies> testData = new ArrayList<>();
 
@@ -68,7 +71,7 @@ class OnboardingFamiliesRepositoryTest{
     @Test
     void testCreateIfNotExists(){
         // Given
-        LocalDateTime beforeCreate = LocalDateTime.now();
+        Instant beforeCreate = Instant.now(clock);
 
         Family f1 = new Family("FAMILYID", Set.of("ID1", "ID2"));
         OnboardingFamilies expectedResult = new OnboardingFamilies(f1, "INITIATIVEID");
@@ -77,7 +80,7 @@ class OnboardingFamiliesRepositoryTest{
         testData.add(expectedResult);
 
         // When not exists
-        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
+        OnboardingFamilies result = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy(),clock).block();
 
         // Then after create
         Assertions.assertNotNull(result);
@@ -90,7 +93,7 @@ class OnboardingFamiliesRepositoryTest{
         Assertions.assertEquals(expectedResult, result);
 
         // When exists
-        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy()).block();
+        OnboardingFamilies resultWhenAlreadyExists = repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(f1, expectedResult.getInitiativeId(), expectedResult.getCreateBy(),clock).block();
 
         // Then afterDeleteResult
         Assertions.assertNull(resultWhenAlreadyExists);

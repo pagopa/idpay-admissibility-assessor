@@ -8,7 +8,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.time.LocalDate;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ class OnboardingInitiativeEndDateCheckTest {
         Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative2");
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setEndDate(LocalDate.now().plusDays(5));
+        initiativeConfig.setEndDate(Instant.now().plus(5,ChronoUnit.DAYS));
 
         // when
         OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());
@@ -64,7 +65,7 @@ class OnboardingInitiativeEndDateCheckTest {
         Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative3");
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setEndDate(LocalDate.now());
+        initiativeConfig.setEndDate(Instant.now());
 
         // when
         OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());
@@ -83,7 +84,7 @@ class OnboardingInitiativeEndDateCheckTest {
         Mockito.when(onboardingDTO.getInitiativeId()).thenReturn("initiative4");
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setEndDate(LocalDate.now().minusDays(1));
+        initiativeConfig.setEndDate(Instant.now().minus(1, ChronoUnit.DAYS));
 
         // when
         OnboardingRejectionReason result = check.apply(onboardingDTO, initiativeConfig, Map.of());

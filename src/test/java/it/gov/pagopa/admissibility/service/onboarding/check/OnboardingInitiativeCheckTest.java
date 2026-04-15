@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.*;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,13 +19,15 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 
 class OnboardingInitiativeCheckTest {
 
+    private ZoneId zone = ZoneId.of("Europe/Rome");
+
     @Test
     void testInitiativeNotFound() {
 
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboardingMock = buildOnboardingRequest(null, localDateTimeMock);
+        OnboardingDTO onboardingMock = buildOnboardingRequest(null, timeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
@@ -47,17 +49,23 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeTcDateFail() {
 
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.of(2022,1,1,0,0);
+        Instant timeMock = LocalDateTime.of(2022,1,1,0,0).atZone(zone).toInstant();
 
-        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock);
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", timeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
-        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021, 1, 1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .toInstant()
+        );
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021, 12, 31)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
@@ -76,19 +84,25 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCriteriaConsensusDateFail() {
 
         // Given
-        LocalDateTime localDateTimeMock1 = LocalDateTime.of(2021,7,14,0,0);
-        LocalDateTime localDateTimeMock2 = LocalDateTime.of(2022,1,1,0,0);
+        Instant timeMock1 = LocalDateTime.of(2021,7,14,0,0).atZone(zone).toInstant();
+        Instant timeMock2 = LocalDateTime.of(2022,1,1,0,0).atZone(zone).toInstant();
 
-        OnboardingDTO onboardingMock = buildOnboardingRequest("1", localDateTimeMock1);
-        onboardingMock.setCriteriaConsensusTimestamp(localDateTimeMock2);
+        OnboardingDTO onboardingMock = buildOnboardingRequest("1", timeMock1);
+        onboardingMock.setCriteriaConsensusTimestamp(timeMock2);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
 
-        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021,1,1));
-        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021,12,31));
+        Mockito.when(initiativeConfig.getStartDate()).thenReturn(LocalDate.of(2021, 1, 1)
+                .atStartOfDay(ZoneId.of("Europe/Rome"))
+                .toInstant()
+        );
+        Mockito.when(initiativeConfig.getEndDate()).thenReturn(LocalDate.of(2021, 12, 31)
+                .plusDays(1).atStartOfDay(ZoneId.of("Europe/Rome"))
+                .minusNanos(1)
+                .toInstant());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
@@ -107,15 +121,15 @@ class OnboardingInitiativeCheckTest {
     void testInitiativeCheckOk() {
 
         // Given
-        LocalDateTime localDateTimeMock = LocalDateTime.now();
+        Instant timeMock = Instant.now();
 
-        OnboardingDTO onboarding = buildOnboardingRequest("1", localDateTimeMock);
+        OnboardingDTO onboarding = buildOnboardingRequest("1", timeMock);
 
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(null, null);
 
         final InitiativeConfig initiativeConfig = new InitiativeConfig();
-        initiativeConfig.setStartDate(LocalDate.now());
+        initiativeConfig.setStartDate(Instant.now());
 
         OnboardingInitiativeCheck onboardingInitiativeCheck = new OnboardingInitiativeCheck();
 
@@ -126,15 +140,15 @@ class OnboardingInitiativeCheckTest {
         assertNull(result);
     }
 
-    private OnboardingDTO buildOnboardingRequest(String initiativeId, LocalDateTime localDateTimeMock) {
+    private OnboardingDTO buildOnboardingRequest(String initiativeId, Instant timeMock) {
         return new OnboardingDTO(
                 "1",
                 initiativeId,
                 true,
                 "OK",
                 true,
-                localDateTimeMock,
-                localDateTimeMock,
+                timeMock,
+                timeMock,
                 new BigDecimal(100),
                 new Residence(),
                 new BirthDate(),

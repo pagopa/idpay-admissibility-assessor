@@ -2,10 +2,12 @@ package it.gov.pagopa.admissibility.service.onboarding.family;
 
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.exception.AnprAnomalyErrorCodeException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
+import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.OnboardingFamilies;
@@ -18,6 +20,7 @@ import org.springframework.messaging.Message;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -31,13 +34,17 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
     private final ExistentFamilyHandlerService existentFamilyHandlerService;
     private final CriteriaCodeService criteriaCodeService;
     private final Onboarding2EvaluationMapper evaluationMapper;
+    private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper;
+    private final Clock clock;
 
-    public FamilyDataRetrieverFacadeServiceImpl(FamilyDataRetrieverService familyDataRetrieverService, OnboardingFamiliesRepository repository, ExistentFamilyHandlerService existentFamilyHandlerService, CriteriaCodeService criteriaCodeService, Onboarding2EvaluationMapper evaluationMapper) {
+    public FamilyDataRetrieverFacadeServiceImpl(FamilyDataRetrieverService familyDataRetrieverService, OnboardingFamiliesRepository repository, ExistentFamilyHandlerService existentFamilyHandlerService, CriteriaCodeService criteriaCodeService, Onboarding2EvaluationMapper evaluationMapper, Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper, Clock clock) {
         this.familyDataRetrieverService = familyDataRetrieverService;
         this.repository = repository;
         this.existentFamilyHandlerService = existentFamilyHandlerService;
         this.criteriaCodeService = criteriaCodeService;
         this.evaluationMapper = evaluationMapper;
+        this.onboarding2OnboardingDroolsMapper = onboarding2OnboardingDroolsMapper;
+        this.clock = clock;
     }
 
     @Override
@@ -55,7 +62,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                         Family family = familyOpt.get();
                         onboardingRequest.setFamily(family);
 
-                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId())
+                        return repository.createIfNotExistsInProgressFamilyOnboardingOrReturnEmpty(family, onboardingRequest.getInitiativeId(), onboardingRequest.getUserId(),clock)
                                 .map((Function<? super OnboardingFamilies, EvaluationDTO>) x -> {
                                     throw new FamilyOnboardingRequestCreated();
                                 })
@@ -68,13 +75,15 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
                                     return Mono.empty();
                                 });
                     } else {
-                        EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingRequest, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
+                        OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+                        EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingDroolsDTO, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
                         return Mono.just(evaluationKo);
                     }
                 })
 
                 .onErrorResume(AnprAnomalyErrorCodeException.class, e -> {
-                    EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingRequest, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
+                    OnboardingDroolsDTO onboardingDroolsDTO = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+                    EvaluationDTO evaluationKo = evaluationMapper.apply(onboardingDroolsDTO, initiativeConfig, List.of(buildFamilyNotAvailableRejectionReason()));
                     return Mono.just(evaluationKo);
                 });
     }

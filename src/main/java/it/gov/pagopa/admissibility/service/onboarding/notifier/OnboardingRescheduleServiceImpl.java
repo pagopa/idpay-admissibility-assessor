@@ -13,7 +13,7 @@ import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.util.function.Supplier;
 
 @Slf4j
@@ -38,7 +38,7 @@ public class OnboardingRescheduleServiceImpl implements OnboardingRescheduleServ
     }
 
     @Override
-    public void reschedule(OnboardingDTO request, OffsetDateTime rescheduleDateTime, String cause, Message<String> message) {
+    public void reschedule(OnboardingDTO request, Instant rescheduleDateTime, String cause, Message<String> message) {
         log.info("[ONBOARDING_REQUEST] [RESCHEDULE] Rescheduling onboarding request of user {} into initiative {}: {}", request.getUserId(), request.getInitiativeId(), cause);
         Message<OnboardingDTO> delayedMessage = MessageBuilder.withPayload(request)
                 .setHeaders(new MessageHeaderAccessor(message))

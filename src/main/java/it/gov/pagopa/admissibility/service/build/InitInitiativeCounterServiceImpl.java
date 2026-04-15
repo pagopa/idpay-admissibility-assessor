@@ -6,15 +6,18 @@ import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDateTime;
+import java.time.Clock;
+import java.time.Instant;
 
 @Service
 public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterService {
 
     private final InitiativeCountersRepository initiativeCountersRepository;
+    private final Clock clock;
 
-    public InitInitiativeCounterServiceImpl(InitiativeCountersRepository initiativeCountersRepository) {
+    public InitInitiativeCounterServiceImpl(InitiativeCountersRepository initiativeCountersRepository, Clock clock) {
         this.initiativeCountersRepository = initiativeCountersRepository;
+        this.clock = clock;
     }
 
     @Override
@@ -26,7 +29,7 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
 
                     counter2update.setInitiativeBudgetCents(initiativeBudgetCents);
                     counter2update.setResidualInitiativeBudgetCents(counter2update.getResidualInitiativeBudgetCents() + deltaBudget);
-                    counter2update.setUpdateDate(LocalDateTime.now());
+                    counter2update.setUpdateDate(Instant.now(clock));
                     return counter2update;
                 })
                 .flatMap(initiativeCountersRepository::save)
@@ -39,8 +42,8 @@ public class InitInitiativeCounterServiceImpl implements InitInitiativeCounterSe
                 .id(initiative.getInitiativeId())
                 .initiativeBudgetCents(initiative.getInitiativeBudgetCents())
                 .residualInitiativeBudgetCents(initiative.getInitiativeBudgetCents())
-                .createdAt(LocalDateTime.now())
-                .updateDate(LocalDateTime.now())
+                .createdAt(Instant.now(clock))
+                .updateDate(Instant.now(clock))
                 .build();
     }
 }

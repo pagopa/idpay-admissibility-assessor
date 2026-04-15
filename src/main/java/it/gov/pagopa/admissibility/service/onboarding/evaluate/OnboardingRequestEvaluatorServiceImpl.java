@@ -34,6 +34,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
 
     @Override
     public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
+
         final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
         if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
             if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
