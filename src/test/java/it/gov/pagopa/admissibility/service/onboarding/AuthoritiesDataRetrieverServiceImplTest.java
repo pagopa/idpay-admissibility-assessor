@@ -58,7 +58,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
             "PURPOSEID"
     );
     public static final List<IseeTypologyEnum> ISEE_TYPOLOGIES_REQUESTED = List.of(IseeTypologyEnum.UNIVERSITARIO, IseeTypologyEnum.ORDINARIO);
-    private final Instant TEST_DATE_TIME = Instant.now();
+    private final Instant testDateTime = Instant.now();
     @Mock
     private UserFiscalCodeService userFiscalCodeServiceMock;
     @Mock
@@ -78,7 +78,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     private BigDecimal expectedIsee;
     private Residence expectedResidence;
     private BirthDate expectedBirthDate;
-    private ZoneId zone = ZoneId.of("Europe/Rome");
+    private final ZoneId zone = ZoneId.of("Europe/Rome");
 
     //test class
     @Mock
@@ -306,7 +306,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         // Then
         verify(onboardingRescheduleServiceMock, never())
-                .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(TEST_DATE_TIME) && schedule.isBefore(Instant.now().plus(60, ChronoUnit.MINUTES))), eq("Daily limit reached"), any());
+                .reschedule(eq(onboardingRequest), argThat(schedule -> schedule.isAfter(testDateTime) && schedule.isBefore(Instant.now().plus(60, ChronoUnit.MINUTES))), eq("Daily limit reached"), any());
     }
 
     @Test
