@@ -21,22 +21,26 @@ public class OnboardingInitiativeCheck implements OnboardingCheck{
 
 
     private String dateCheck(
-            Instant dateToCheck,
-            Instant startDate,
-            Instant endDate,
-            String rejectionReason
-    ) {
-        ZoneId zone = ZoneId.of("Europe/Rome");
-
-        LocalDate check = dateToCheck.atZone(zone).toLocalDate();
-        LocalDate start = startDate.atZone(zone).toLocalDate();
-        LocalDate end   = endDate != null ? endDate.atZone(zone).toLocalDate() : null;
-
-        if (check.isBefore(start) || (end != null && check.isAfter(end))) {
-            return rejectionReason;
+                Instant dateToCheck,
+                Instant startDate,
+                Instant endDate,
+                String rejectionReason
+        ) {
+            ZoneId zone = ZoneId.of("Europe/Rome");
+        
+            LocalDate check = toLocalDate(dateToCheck, zone);
+            LocalDate start = toLocalDate(startDate, zone);
+            LocalDate end   = endDate != null ? toLocalDate(endDate, zone) : null;
+        
+            boolean outOfRange =
+                    check.isBefore(start) ||
+                    (end != null && check.isAfter(end));
+        
+            return outOfRange ? rejectionReason : null;
         }
-
-        return null;
+        
+        private LocalDate toLocalDate(Instant instant, ZoneId zone) {
+            return instant.atZone(zone).toLocalDate();
     }
 
 
