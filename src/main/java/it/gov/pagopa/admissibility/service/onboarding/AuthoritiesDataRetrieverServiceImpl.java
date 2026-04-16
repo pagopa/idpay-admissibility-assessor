@@ -7,6 +7,7 @@ import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsDataRetriever
 import it.gov.pagopa.admissibility.connector.soap.inps.service.InpsThresholdRetrieverService;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.VerifyDTO;
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.exception.OnboardingException;
 import it.gov.pagopa.admissibility.exception.PdndException;
@@ -81,39 +82,51 @@ public Mono<OnboardingDTO> retrieve(OnboardingDTO onboardingRequest, InitiativeC
                     .flatMap(Collection::stream)
                     .toList();
         }
+        for (VerifyDTO verify : onboardingRequest.getVerifies()){
 
-        PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes);
-        log.debug("[ONBOARDING_REQUEST] Requesting pdnd data {} for userId {} and initiativeId {}", pdndServicesInvocation, onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
+            PdndServicesInvocation pdndServicesInvocation = configurePdndServicesInvocation(onboardingRequest, initiativeConfig, iseeTypes, verify);
+            log.debug("[ONBOARDING_REQUEST] Requesting pdnd data {} for userId {} and initiativeId {}", pdndServicesInvocation, onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
 
-        if (pdndServicesInvocation.requirePdndInvocation()) {
-            return  userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
-                    .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message));
+            if (pdndServicesInvocation.requirePdndInvocation()) {
+                return  userFiscalCodeService.getUserFiscalCode(onboardingRequest.getUserId())
+                        .flatMap(fiscalCode -> invokePdndServices(onboardingRequest, fiscalCode, pdndServicesInvocation, message));
+            }
         }
+
+
 
         return Mono.just(onboardingRequest);
     }
 
     @NonNull
-    private PdndServicesInvocation configurePdndServicesInvocation(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, List<IseeTypologyEnum> iseeTypes) {
+    private PdndServicesInvocation configurePdndServicesInvocation(OnboardingDTO onboardingRequest,
+                                                                   InitiativeConfig initiativeConfig,
+                                                                   List<IseeTypologyEnum> iseeTypes,
+                                                                   VerifyDTO verify) {
         return new PdndServicesInvocation(
                 onboardingRequest.getIsee() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_ISEE),
                 iseeTypes,
                 onboardingRequest.getResidence() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_RESIDENCE),
                 onboardingRequest.getBirthDate() == null && is2retrieve(initiativeConfig, OnboardingConstants.CRITERIA_CODE_BIRTHDATE),
-                onboardingRequest.getVerifyIsee() && initiativeConfig.getIseeThresholdCode() != null,
-                initiativeConfig.getIseeThresholdCode()
+                verify.isVerify(),
+                verify.getThersoldCode(),
+                verify.getCode()
         );
     }
 
     private Mono<OnboardingDTO> invokePdndServices(OnboardingDTO onboardingRequest, String fiscalCode, PdndServicesInvocation pdndServicesInvocation, Message<String> message) {
 
 
-        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation =
-                pdndServicesInvocation.getIseeThresholdCode() == null ?
-                inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest)
-                : inpsThresholdRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest);
+        Mono<Optional<List<OnboardingRejectionReason>>> inpsInvocation = null;
 
+        if(OnboardingConstants.CRITERIA_CODE_ISEE.equalsIgnoreCase(pdndServicesInvocation.getCode())){
+            inpsInvocation =
+                    pdndServicesInvocation.getThresholdCode() == null
+                    ? inpsDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest)
+                    : inpsThresholdRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001") , pdndServicesInvocation, onboardingRequest);
+
+        }
         Mono<Optional<List<OnboardingRejectionReason>>> anprInvocationSingle =
                 anprDataRetrieverService.invoke(fiscalCode, pagoPaAnprPdndConfig.getPagopaPdndConfiguration().get("c001")  , pdndServicesInvocation, onboardingRequest);
 

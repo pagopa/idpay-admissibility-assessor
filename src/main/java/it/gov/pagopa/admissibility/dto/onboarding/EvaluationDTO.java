@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.dto.onboarding;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 import lombok.AllArgsConstructor;
@@ -33,7 +34,7 @@ public abstract class EvaluationDTO {
     //
     private String serviceId;
 
-    private Boolean verifyIsee;
+    private List<VerifyDTO> verifies;
     private String userMail;
     private String channel;
     private String name;

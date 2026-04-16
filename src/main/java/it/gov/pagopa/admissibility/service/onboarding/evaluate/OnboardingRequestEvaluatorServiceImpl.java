@@ -2,10 +2,7 @@ package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersPreallocationsRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
@@ -39,8 +36,18 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
             if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
                 log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
                 calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, evaluationCompletedDTO);
-                long deallocatedBudget = Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) ?
-                        initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() - evaluationCompletedDTO.getBeneficiaryBudgetCents() : 0;
+
+                Long deallocatedBudget = null;
+                for(VerifyDTO verify : onboardingRequest.getVerifies()){
+                    if(verify.getBeneficiaryBudgetCentsMax() != null){
+                        deallocatedBudget = verify.getBeneficiaryBudgetCentsMax() - evaluationCompletedDTO.getBeneficiaryBudgetCents();
+                    }
+                }
+                if(deallocatedBudget == null){
+                    deallocatedBudget = initiativeConfig.getBeneficiaryBudgetFixedCents() - evaluationCompletedDTO.getBeneficiaryBudgetCents();
+                }
+                //long deallocatedBudget = Boolean.TRUE.equals(onboardingRequest.getVerifies().isVerify()) ?
+                //        onboardingRequest.getVerifies().getBeneficiaryBudgetCents() - evaluationCompletedDTO.getBeneficiaryBudgetCents() : 0;
 
                 Mono<EvaluationDTO> budgetMono = (deallocatedBudget > 0)
                         ? initiativeCountersRepository.deallocatedPartialBudget(evaluationCompletedDTO.getInitiativeId(), deallocatedBudget)
@@ -73,19 +80,40 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
     }
 
     private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, EvaluationCompletedDTO result) {
-        if(initiativeConfig.getIseeThresholdCode() != null && initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() != null
-            && Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) && Boolean.TRUE.equals(onboardingRequest.getUnderThreshold())){
-                result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents());
-        } else {
-            result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetCents());
+
+        if((initiativeConfig.getBeneficiaryBudgetFixedCents() !=null){
+            result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryBudgetFixedCents());
+            return;
         }
+        for(VerifyDTO verify : onboardingRequest.getVerifies()){
+            if(verify.getBeneficiaryBudgetCentsMax() != null){
+                if(!verify.isVerify()){
+                    result.setBeneficiaryBudgetCents(verify.getBeneficiaryBudgetCentsMax());
+                    return;
+                }else {
+                    for(ResultVerifyDTO resultVerify : onboardingRequest.getResultsVerifies()){
+                        if(verify.getCode().equals(resultVerify.getCode())){
+                            if(resultVerify.isResultVerify()){
+                                result.setBeneficiaryBudgetCents(verify.getBeneficiaryBudgetCentsMax());
+                                return;
+                            } else {
+                                result.setBeneficiaryBudgetCents(verify.getBeneficiaryBudgetCentsMin());
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+
     }
 
     @Override
     public Mono<EvaluationDTO> updateInitiativeBudget(EvaluationDTO evaluationDTO, InitiativeConfig initiativeConfig) {
         if(evaluationDTO instanceof EvaluationCompletedDTO completedDTO
                 && (OnboardingEvaluationStatus.ONBOARDING_KO.equals(completedDTO.getStatus()) || OnboardingEvaluationStatus.JOINED.equals(completedDTO.getStatus()))) {
-            long deallocateBudget = Boolean.TRUE.equals(completedDTO.getVerifyIsee()) ? initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() : initiativeConfig.getBeneficiaryInitiativeBudgetCents();
+            long deallocateBudget = Boolean.TRUE.equals(completedDTO.getVerifies().isVerify()) ? completedDTO.getVerify().getBeneficiaryBudgetCents() : initiativeConfig.getBeneficiaryInitiativeBudgetCents();
 
             TransactionalOperator transactionalOperator = TransactionalOperator.create(transactionManager);
 

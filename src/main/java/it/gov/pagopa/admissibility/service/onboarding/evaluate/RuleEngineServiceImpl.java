@@ -1,9 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -42,6 +39,19 @@ public class RuleEngineServiceImpl implements RuleEngineService {
         log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] evaluating rules of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
 
         OnboardingDroolsDTO req = onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
+
+        for(VerifyDTO verify : onboardingRequest.getVerifies()){
+            if(verify.isBlocingVerify()){
+                for(ResultVerifyDTO resultVerify : onboardingRequest.getResultsVerifies()){
+                    if(verify.getCode().equals(resultVerify.getCode())
+                            && !resultVerify.isResultVerify() ){
+                        req.getOnboardingRejectionReasons().add(rejectionReasonService.rejectionFor(verify.getCode()));
+                        return;
+
+                    }
+                }
+            }
+        }
 
         if(checkIfKieBaseShouldBeInvolved(initiative)) {
             if (checkIfKieBaseContainerIsReady(initiative)) {
