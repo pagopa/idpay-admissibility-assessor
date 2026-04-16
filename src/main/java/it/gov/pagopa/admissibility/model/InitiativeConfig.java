@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.model;
 
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
-import it.gov.pagopa.admissibility.enums.InitiativeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

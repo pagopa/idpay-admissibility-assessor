@@ -183,7 +183,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                         ? Collections.emptySet()
                         : Set.of(initiative.getInitiativeId()));
 
-        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), criteriaCodeServiceMock, new Onboarding2OnboardingDroolsMapper());
+        RuleEngineService ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderService, new Onboarding2EvaluationMapper(), criteriaCodeServiceMock, new Onboarding2OnboardingDroolsMapper(), rejectionReasonService);
 
         // when
         EvaluationDTO evaluationResult = ruleEngineService.applyRules(onboardingDTO, initiative2InitiativeConfigMapper.apply(initiative));

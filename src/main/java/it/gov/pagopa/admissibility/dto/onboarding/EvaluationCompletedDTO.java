@@ -25,7 +25,7 @@ public class EvaluationCompletedDTO extends EvaluationDTO{
     private OnboardingEvaluationStatus status;
     @NotNull
     private List<OnboardingRejectionReason> onboardingRejectionReasons = new ArrayList<>();
-    private Long beneficiaryBudgetCents;
+    private Long beneficiaryBudgetFixedCents;
     @JsonIgnore
     private Long rankingValue;
     private String initiativeRewardType;

@@ -29,8 +29,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .automatedCriteria(automatedCriteriaList)
                 .automatedCriteriaCodes(automatedCriteriaList != null ? automatedCriteriaList.stream().map(AutomatedCriteriaDTO::getCode).toList() : null)
                 .initiativeBudgetCents(initiative.getGeneral().getBudgetCents())
-                .beneficiaryInitiativeBudgetCents(initiative.getGeneral().getBeneficiaryBudgetCents())
-                .beneficiaryInitiativeBudgetMaxCents(initiative.getGeneral().getBeneficiaryBudgetMaxCents())
+                .beneficiaryBudgetFixedCents(initiative.getGeneral().getBeneficiaryBudgetFixedCents())
                 .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
                 .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
@@ -38,7 +37,6 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .initiativeRewardType(initiative.getInitiativeRewardType())
                 .isLogoPresent(additionalInfo != null && !StringUtils.isEmpty(additionalInfo.getLogoFileName()))
                 .beneficiaryType(initiative.getGeneral().getBeneficiaryType())
-                .iseeThresholdCode(retrieveThresholdCodeIseeInfo(initiative))
                 .build();
     }
 

@@ -48,7 +48,7 @@ class RuleEngineServiceImplTest {
 
     @BeforeEach
     void init(){
-        ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderServiceMock, onboarding2EvaluationMapper, criteriaCodeServiceMock, onboarding2OnboardingDroolsMapper);
+        ruleEngineService = new RuleEngineServiceImpl(onboardingContextHolderServiceMock, onboarding2EvaluationMapper, criteriaCodeServiceMock, onboarding2OnboardingDroolsMapper, rejectionReasonService);
     }
 
     @AfterEach

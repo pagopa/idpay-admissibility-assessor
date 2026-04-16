@@ -16,6 +16,7 @@ import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Unmarshaller;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
@@ -33,120 +34,160 @@ import java.util.Optional;
 @Service
 public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
-    private static final XMLInputFactory xmlFactory = XMLInputFactory.newFactory();
-    private static final JAXBContext jaxbContext;
+    private static final XMLInputFactory XML_FACTORY = XMLInputFactory.newFactory();
+    private static final JAXBContext JAXB_CONTEXT;
+
+    static {
+        try {
+            JAXB_CONTEXT = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
+        } catch (JAXBException e) {
+            throw new IllegalStateException(
+                    "Error configuring JAXB serializer for INPS response", e
+            );
+        }
+    }
 
     private final CriteriaCodeService criteriaCodeService;
     private final IseeConsultationSoapClient iseeConsultationSoapClient;
 
-    private final List<OnboardingRejectionReason> iseeNotFoundRejectionReason;
-    private final Mono<List<OnboardingRejectionReason>> iseeNotFoundRejectionReasonMono;
+    /**
+     * Tipologia ISEE tecnica richiesta da INPS.
+     */
+    private final IseeTypologyEnum defaultIseeType;
 
-    static {
-        try {
-            jaxbContext = JAXBContext.newInstance(TypeEsitoConsultazioneIndicatore.class);
-        } catch (JAXBException e) {
-            throw new IllegalStateException("Something gone wrong while configuring JAXB serializer", e);
-        }
-    }
+    public InpsDataRetrieverServiceImpl(
+            CriteriaCodeService criteriaCodeService,
+            IseeConsultationSoapClient iseeConsultationSoapClient,
+            @Value("${inps.isee.default-typology:ORDINARIO}") IseeTypologyEnum defaultIseeType) {
 
-    public InpsDataRetrieverServiceImpl(CriteriaCodeService criteriaCodeService, IseeConsultationSoapClient iseeConsultationSoapClient) {
         this.criteriaCodeService = criteriaCodeService;
         this.iseeConsultationSoapClient = iseeConsultationSoapClient;
-
-        this.iseeNotFoundRejectionReason = buildMissingIseeRejectionReasons();
-        this.iseeNotFoundRejectionReasonMono = Mono.just(iseeNotFoundRejectionReason);
-    }
-
-    private boolean accept(PdndServicesInvocation pdndServicesInvocation) {
-        return pdndServicesInvocation.isGetIsee();
+        this.defaultIseeType = defaultIseeType;
     }
 
     @Override
     public Mono<Optional<List<OnboardingRejectionReason>>> invoke(
             String fiscalCode,
             PdndInitiativeConfig pdndInitiativeConfig,
-            PdndServicesInvocation pdndServicesInvocation,
+            PdndServicesInvocation invocation,
             OnboardingDTO onboardingRequest) {
-        if (!accept(pdndServicesInvocation)) {
+
+        // INPS gestisce SOLO il criterio ISEE
+        if (!invocation.requirePdndInvocation()
+                || !OnboardingConstants.CRITERIA_CODE_ISEE.equals(invocation.getCode())) {
             return MONO_OPTIONAL_EMPTY_LIST;
         }
-        return combineIseeTypologies(fiscalCode, pdndServicesInvocation, onboardingRequest)
-                .map(Optional::of)
-                .switchIfEmpty(MONO_EMPTY_RESPONSE)
 
+        return iseeConsultationSoapClient
+                .getIsee(fiscalCode, defaultIseeType)
+                .map(response ->
+                        Optional.of(
+                                extractData(response, onboardingRequest)
+                        )
+                )
                 .onErrorResume(InpsDailyRequestLimitException.class, e -> {
-                    log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] Daily limit occurred when calling ANPR service", e);
+                    log.debug(
+                            "[ONBOARDING_REQUEST][INPS] Daily limit occurred when calling INPS service",
+                            e
+                    );
                     return MONO_EMPTY_RESPONSE;
                 });
     }
 
-    private Mono<List<OnboardingRejectionReason>> combineIseeTypologies(String fiscalCode, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
-        Mono<List<OnboardingRejectionReason>> inpsInvoke = iseeNotFoundRejectionReasonMono;
-        for (IseeTypologyEnum iseeType : pdndServicesInvocation.getIseeTypes()) {
-            inpsInvoke = inpsInvoke
-                    .flatMap(previousResult -> previousResult.isEmpty()
-                            ? Mono.just(previousResult)
-                            : iseeConsultationSoapClient.getIsee(fiscalCode, iseeType)
-                            .map(inpsResponse -> extractData(inpsResponse, onboardingRequest))
-                    );
-        }
+    /**
+     * Estrae ISEE e costruisce eventuali rejection reason.
+     */
+    private List<OnboardingRejectionReason> extractData(
+            ConsultazioneIndicatoreResponseType inpsResponse,
+            OnboardingDTO onboardingRequest) {
 
-        return inpsInvoke;
-    }
-
-    private List<OnboardingRejectionReason> extractData(ConsultazioneIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
         if (inpsResponse != null) {
             onboardingRequest.setIsee(getIseeFromResponse(inpsResponse));
-            // TODO TBD auditlog userId and ISEE obtained from INPS
+            // TODO audit log userId and ISEE obtained from INPS
         }
 
         if (onboardingRequest.getIsee() == null) {
-            log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] User having id {} has not compatible ISEE type for initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-            return iseeNotFoundRejectionReason;
+            log.debug(
+                    "[ONBOARDING_REQUEST][INPS] ISEE not available for user {}",
+                    onboardingRequest.getUserId()
+            );
+            return buildMissingIseeRejectionReasons();
         }
 
+        // verifica superata
         return Collections.emptyList();
     }
 
     private List<OnboardingRejectionReason> buildMissingIseeRejectionReasons() {
-        CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
-        return List.of(new OnboardingRejectionReason(
+        CriteriaCodeConfig cfg =
+                criteriaCodeService.getCriteriaCodeConfig(
+                        OnboardingConstants.CRITERIA_CODE_ISEE
+                );
+
+        return List.of(
+                new OnboardingRejectionReason(
                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                         OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
-                        criteriaCodeConfig.getAuthority(),
-                        criteriaCodeConfig.getAuthorityLabel(),
+                        cfg.getAuthority(),
+                        cfg.getAuthorityLabel(),
                         "ISEE non disponibile"
                 )
         );
     }
 
-    private BigDecimal getIseeFromResponse(ConsultazioneIndicatoreResponseType inpsResponse) {
-        if (inpsResponse.getXmlEsitoIndicatore() != null && inpsResponse.getXmlEsitoIndicatore().length > 0) {
-            try {
-                String inpsResultString = new String(inpsResponse.getXmlEsitoIndicatore(), StandardCharsets.UTF_8);
+    private BigDecimal getIseeFromResponse(
+            ConsultazioneIndicatoreResponseType inpsResponse) {
 
-                TypeEsitoConsultazioneIndicatore inpsResult = readResultFromXmlString(inpsResultString);
-                return inpsResult.getISEE();
-            } catch (Exception e) {
-                log.error("Cannot read ISEE from INPS response", e);
-                return null;
-            }
-        } else {
+        if (inpsResponse.getXmlEsitoIndicatore() == null
+                || inpsResponse.getXmlEsitoIndicatore().length == 0) {
+            return null;
+        }
+
+        try {
+            String xml =
+                    new String(
+                            inpsResponse.getXmlEsitoIndicatore(),
+                            StandardCharsets.UTF_8
+                    );
+
+            TypeEsitoConsultazioneIndicatore esito =
+                    readResultFromXmlString(xml);
+
+            return esito.getISEE();
+
+        } catch (Exception e) {
+            log.error(
+                    "[ONBOARDING_REQUEST][INPS] Cannot parse ISEE from INPS response",
+                    e
+            );
             return null;
         }
     }
 
-    public static TypeEsitoConsultazioneIndicatore readResultFromXmlString(String inpsResultString) {
-        try (StringReader sr = new StringReader(inpsResultString)) {
-            XMLStreamReader xsr = xmlFactory.createXMLStreamReader(sr);
+    private static TypeEsitoConsultazioneIndicatore readResultFromXmlString(
+            String xml) {
 
-            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+        try (StringReader sr = new StringReader(xml)) {
 
-            JAXBElement<TypeEsitoConsultazioneIndicatore> je = unmarshaller.unmarshal(xsr, TypeEsitoConsultazioneIndicatore.class);
+            XMLStreamReader xsr =
+                    XML_FACTORY.createXMLStreamReader(sr);
+
+            Unmarshaller unmarshaller =
+                    JAXB_CONTEXT.createUnmarshaller();
+
+            JAXBElement<TypeEsitoConsultazioneIndicatore> je =
+                    unmarshaller.unmarshal(
+                            xsr,
+                            TypeEsitoConsultazioneIndicatore.class
+                    );
+
             return je.getValue();
+
         } catch (JAXBException | XMLStreamException e) {
-            throw new IllegalStateException("[ONBOARDING_REQUEST][INPS_INVOCATION] Cannot read XmlEsitoIndicatore to get ISEE from INPS response", e);
+            throw new IllegalStateException(
+                    "[ONBOARDING_REQUEST][INPS] Error reading XmlEsitoIndicatore",
+                    e
+            );
         }
     }
 }

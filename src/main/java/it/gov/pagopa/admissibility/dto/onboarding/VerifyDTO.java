@@ -1,28 +1,32 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
 public class VerifyDTO {
 
+    /** Codice della verifica (ISEE, RESIDENCE, ecc.) */
     private String code;
+
+    /** Indica se la verifica deve essere eseguita */
     private boolean verify;
-    private String thersoldCode;
+
+    /** Indica se il fallimento della verifica blocca l’onboarding */
+    private boolean blockingVerify;
+
+    /** Codice soglia (es. BELET25), opzionale */
+    private String thresholdCode;
+
+    /** Budget minimo assegnabile */
     private Long beneficiaryBudgetCentsMin;
+
+    /** Budget massimo assegnabile */
     private Long beneficiaryBudgetCentsMax;
+
+    /** Esito della verifica (true = OK, false = KO) */
     private boolean resultVerify;
-
-
 }

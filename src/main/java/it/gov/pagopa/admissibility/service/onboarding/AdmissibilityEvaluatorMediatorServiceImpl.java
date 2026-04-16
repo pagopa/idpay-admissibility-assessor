@@ -200,7 +200,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 return Mono.error(e);
                             } else {
                                 if(e instanceof InpsGenericException){
-                                    onboardingRequest.setUnderThreshold(false);
                                     return onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig)
                                             .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
                                             .onErrorResume( exception ->
