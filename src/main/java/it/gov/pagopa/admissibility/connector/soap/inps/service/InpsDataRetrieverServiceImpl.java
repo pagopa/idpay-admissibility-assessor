@@ -50,7 +50,6 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
     /**
      * Tipologia ISEE TECNICA richiesta da INPS.
-     * NON è una decisione di dominio (DR).
      */
     private final IseeTypologyEnum defaultIseeType;
 

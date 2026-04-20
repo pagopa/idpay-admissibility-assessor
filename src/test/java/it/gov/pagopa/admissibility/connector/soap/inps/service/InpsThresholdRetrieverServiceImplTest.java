@@ -87,10 +87,6 @@ class InpsThresholdRetrieverServiceImplTest {
         return onboarding;
     }
 
-    /* =========================
-       Tests
-       ========================= */
-
     @Test
     void testInvoke_skipVerification() {
         VerifyDTO verify = buildThresholdVerify();

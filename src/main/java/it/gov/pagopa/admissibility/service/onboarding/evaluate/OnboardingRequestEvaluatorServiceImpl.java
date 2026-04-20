@@ -78,8 +78,8 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
     }
 
     /**
-     * DR: se esiste un VerifyDTO con beneficiaryBudgetCentsMax != null => iniziativa a budget variabile
-     * altrimenti budget fisso (initiativeConfig.beneficiaryBudgetFixedCents). 【1-e826cc】
+     * Se esiste un VerifyDTO con beneficiaryBudgetCentsMax != null => iniziativa a budget variabile
+     * altrimenti budget fisso (initiativeConfig.beneficiaryBudgetFixedCents).
      */
     private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest,
                                             InitiativeConfig initiativeConfig,

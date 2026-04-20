@@ -78,7 +78,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
     }
 
     /**
-     * DR: una sola estrazione guidata dal code.
+     * Una sola estrazione guidata dal code.
      */
     private List<OnboardingRejectionReason> extractData(
             PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> response,
