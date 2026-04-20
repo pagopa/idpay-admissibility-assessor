@@ -16,17 +16,13 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.OngoingStubbing;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -34,147 +30,129 @@ import java.util.Optional;
 @ExtendWith(MockitoExtension.class)
 class InpsDataRetrieverServiceImplTest {
 
-    public static final String FISCAL_CODE = "fiscalCode";
-    public static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG = new PdndInitiativeConfig(
-            "CLIENTID",
-            "KID",
-            "PURPOSEID"
-    );
-    public static final IseeTypologyEnum ISEE_TYPOLOGY1 = IseeTypologyEnum.UNIVERSITARIO;
-    public static final IseeTypologyEnum ISEE_TYPOLOGY2 = IseeTypologyEnum.CORRENTE;
+    private static final String FISCAL_CODE = "FISCAL_CODE";
+
+    private static final PdndInitiativeConfig PDND_INITIATIVE_CONFIG =
+            new PdndInitiativeConfig("CLIENTID", "KID", "PURPOSEID");
 
     @Mock
     private IseeConsultationSoapClient iseeConsultationSoapClientMock;
+
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
 
-    private InpsDataRetrieverService inpsDataRetrieverService;
+    private InpsDataRetrieverService service;
 
-    private ConsultazioneIndicatoreResponseType inpsResponse;
+    private ConsultazioneIndicatoreResponseType inpsOkResponse;
     private BigDecimal expectedIsee;
 
     @BeforeEach
     void setup() {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
-        inpsDataRetrieverService = new InpsDataRetrieverServiceImpl(criteriaCodeServiceMock, iseeConsultationSoapClientMock);
+        service = new InpsDataRetrieverServiceImpl(
+                criteriaCodeServiceMock,
+                iseeConsultationSoapClientMock,
+                IseeTypologyEnum.ORDINARIO
+        );
 
-        inpsResponse = InpsInvokeTestUtils.buildInpsResponse(EsitoEnum.OK);
+        inpsOkResponse = InpsInvokeTestUtils.buildInpsResponse(EsitoEnum.OK);
         expectedIsee = BigDecimal.valueOf(10000);
     }
 
-    private PdndServicesInvocation buildPdndServicesInvocation(boolean getIsee) {
-        return new PdndServicesInvocation(getIsee, List.of(ISEE_TYPOLOGY1, ISEE_TYPOLOGY2), false, false,false, null);
+
+    private PdndServicesInvocation buildIseeInvocation(boolean verify) {
+        return new PdndServicesInvocation(
+                OnboardingConstants.CRITERIA_CODE_ISEE,
+                verify,
+                null
+        );
     }
+
 
     @Test
-    void testInvokeOk_requireData() {
-        testInvokeOk(true);
-    }
-
-    @Test
-    void testInvokeOk_NorequireData() {
-        testInvokeOk(false);
-    }
-
-    private void testInvokeOk(boolean getIsee) {
-        // Given
+    void testInvokeOk_requireIsee() {
         OnboardingDTO onboardingRequest = new OnboardingDTO();
-        if (getIsee) {
-            Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.just(inpsResponse));
-        }
 
-        // When
-        Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(getIsee), onboardingRequest).block();
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(Mockito.eq(FISCAL_CODE), Mockito.any()))
+                .thenReturn(Mono.just(inpsOkResponse));
 
-        // Then
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildIseeInvocation(true),
+                        onboardingRequest
+                ).block();
+
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
         Assertions.assertEquals(Collections.emptyList(), result.get());
-
-        if (getIsee) {
-            TestUtils.assertBigDecimalEquals(expectedIsee, onboardingRequest.getIsee());
-        } else {
-            Assertions.assertNull(onboardingRequest.getIsee());
-        }
-    }
-
-    @Test
-    void testInvokeOk_RetryEsitoResult() {
-        // Given
-        inpsResponse.setEsito(EsitoEnum.DATABASE_OFFLINE);
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
-
-        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.empty());
-
-        // When
-        Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true), onboardingRequest).block();
-
-        // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isEmpty());
-    }
-
-    @ParameterizedTest
-    @EnumSource(IseeTypologyEnum.class)
-    void testInvokeOk_MultipleIsee(IseeTypologyEnum iseeTypeOk) {
-        // Given
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
-
-        List<IseeTypologyEnum> iseeTypes = Arrays.asList(IseeTypologyEnum.values());
-
-        ConsultazioneIndicatoreResponseType koResult = new ConsultazioneIndicatoreResponseType();
-        koResult.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
-        koResult.setXmlEsitoIndicatore(null);
-
-        for (IseeTypologyEnum i : iseeTypes) {
-            OngoingStubbing<Mono<ConsultazioneIndicatoreResponseType>> stub = Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, i));
-            if (!i.equals(iseeTypeOk)) {
-                stub.thenReturn(Mono.just(koResult));
-            } else {
-                stub.thenReturn(Mono.just(inpsResponse));
-                break; // next typologies will not be invoked, thus we will not configure the stub
-            }
-        }
-
-        PdndServicesInvocation pdndServicesInvocation = new PdndServicesInvocation(true, iseeTypes, false, false, false, null);
-
-        // When
-        Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();
-
-        // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(Collections.emptyList(), result.get());
-
         TestUtils.assertBigDecimalEquals(expectedIsee, onboardingRequest.getIsee());
     }
 
     @Test
-    void testInvokeOk_KoEsitoResult() {
-        inpsResponse.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
-        inpsResponse.setXmlEsitoIndicatore(null);
-        testExtractWhenNoIsee();
-
-        inpsResponse.setXmlEsitoIndicatore("".getBytes(StandardCharsets.UTF_8));
-        testExtractWhenNoIsee();
-
-        inpsResponse.setXmlEsitoIndicatore(InpsInvokeTestUtils.buildXmlResult(null));
-        testExtractWhenNoIsee();
-    }
-
-    private void testExtractWhenNoIsee() {
-        // Given
-        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY1)).thenReturn(Mono.just(inpsResponse));
-        Mockito.when(iseeConsultationSoapClientMock.getIsee(FISCAL_CODE, ISEE_TYPOLOGY2)).thenReturn(Mono.just(inpsResponse));
+    void testInvokeOk_noRequireIsee() {
         OnboardingDTO onboardingRequest = new OnboardingDTO();
 
-        // When
-        Optional<List<OnboardingRejectionReason>> result = inpsDataRetrieverService.invoke(FISCAL_CODE, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true), onboardingRequest).block();
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildIseeInvocation(false),
+                        onboardingRequest
+                ).block();
 
-        // Then
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(List.of(buildExpectedIseeKoRejectionReason()), result.get());
+        Assertions.assertEquals(Collections.emptyList(), result.get());
+        Assertions.assertNull(onboardingRequest.getIsee());
+
+        Mockito.verifyNoInteractions(iseeConsultationSoapClientMock);
+    }
+
+    @Test
+    void testInvokeRetryableError() {
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(Mockito.eq(FISCAL_CODE), Mockito.any()))
+                .thenReturn(Mono.empty());
+
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildIseeInvocation(true),
+                        onboardingRequest
+                ).block();
+
+        Assertions.assertNull(result);
+        Assertions.assertNull(onboardingRequest.getIsee());
+    }
+
+    @Test
+    void testInvokeKoIsee() {
+        inpsOkResponse.setEsito(EsitoEnum.RICHIESTA_INVALIDA);
+        inpsOkResponse.setXmlEsitoIndicatore("".getBytes(StandardCharsets.UTF_8));
+
+        Mockito.when(iseeConsultationSoapClientMock.getIsee(Mockito.eq(FISCAL_CODE), Mockito.any()))
+                .thenReturn(Mono.just(inpsOkResponse));
+
+        OnboardingDTO onboardingRequest = new OnboardingDTO();
+
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildIseeInvocation(true),
+                        onboardingRequest
+                ).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertEquals(
+                List.of(buildExpectedIseeKoRejectionReason()),
+                result.get()
+        );
         Assertions.assertNull(onboardingRequest.getIsee());
     }
 

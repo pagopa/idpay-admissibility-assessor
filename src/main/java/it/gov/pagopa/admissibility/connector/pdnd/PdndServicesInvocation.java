@@ -1,27 +1,21 @@
 package it.gov.pagopa.admissibility.connector.pdnd;
 
-import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-
-import java.util.List;
 
 @AllArgsConstructor
 @Getter
 @EqualsAndHashCode
 @ToString
 public class PdndServicesInvocation {
-    boolean getIsee;
-    List<IseeTypologyEnum> iseeTypes;
-    boolean getResidence;
-    boolean getBirthDate;
-    boolean verifyThreshold;
-    String thresholdCode;
-    String code;
+
+    private final String code;          // es. ISEE, RESIDENCE, BIRTHDATE, ...
+    private final boolean verify;       // se la verifica va eseguita
+    private final String thresholdCode; // può essere null
 
     public boolean requirePdndInvocation() {
-        return getIsee || getResidence || getBirthDate || verifyThreshold;
+        return verify;
     }
 }

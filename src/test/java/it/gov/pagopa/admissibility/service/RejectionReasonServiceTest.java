@@ -1,8 +1,8 @@
-package it.gov.pagopa.admissibility.service.onboarding.evaluate;
+package it.gov.pagopa.admissibility.service;
+
 
 import it.gov.pagopa.admissibility.config.CriteriaCodeConfigs;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
-import it.gov.pagopa.admissibility.service.RejectionReasonService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,6 @@ class RejectionReasonServiceTest {
 
         rejectionReasonService = new RejectionReasonService(criteriaCodeConfigs);
     }
-
 
     @Test
     void rejectionFor_Isee() {

@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -42,6 +43,7 @@ public class OnboardingDTO {
     private String channel;
     private String name;
     private String surname;
-    // data fetched if the initiative requires them underThreshold or deformed
-    private List<ResultVerifyDTO> resultsVerifies;
+
+
+
 }

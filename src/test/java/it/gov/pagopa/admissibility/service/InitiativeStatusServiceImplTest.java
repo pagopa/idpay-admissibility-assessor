@@ -187,7 +187,7 @@ class InitiativeStatusServiceImplTest {
         OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
         InitiativeConfig initiativeConfig = getInitiativeConfigForContextMock();
-        initiativeConfig.setBeneficiaryInitiativeBudgetCents(null);
+        initiativeConfig.setBeneficiaryBudgetFixedCents(null);
         Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
                 .thenReturn(Mono.just(initiativeConfig));
 
@@ -222,7 +222,7 @@ class InitiativeStatusServiceImplTest {
         return InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
                 .initiativeBudgetCents(1_000_000L)
-                .beneficiaryInitiativeBudgetCents(100_000L)
+                .beneficiaryBudgetFixedCents(100_000L)
                 .status("STATUS1")
                 .build();
     }

@@ -2,6 +2,7 @@ package it.gov.pagopa.admissibility.mapper;
 
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDroolsDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.VerifyDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 class Onboarding2OnboardingDroolsMapperTest {
 
@@ -18,49 +20,67 @@ class Onboarding2OnboardingDroolsMapperTest {
     void onboarding2OnboardingDroolsFilledTest() {
 
         // GIVEN
-        LocalDateTime localDateTimeMock1 = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
 
-        OnboardingDTO objectMock1 = new OnboardingDTO(
-                "1",
-                "1",
-                true,
-                "OK",
-                true,
-                localDateTimeMock1,
-                localDateTimeMock1,
-                new BigDecimal(100),
-                new Residence(),
-                new BirthDate(),
-                new Family(),
-                false,
-                "SERVICE",
-                Boolean.TRUE,
-                "USERMAIL",
-                "CHANNEL",
-                "NAME",
-                "SURNAME",
-                Boolean.TRUE
-        );
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("1")
+                .initiativeId("1")
+                .tc(true)
+                .status("OK")
+                .pdndAccept(true)
+                .tcAcceptTimestamp(now)
+                .criteriaConsensusTimestamp(now)
+                .isee(new BigDecimal(100))
+                .residence(new Residence())
+                .birthDate(new BirthDate())
+                .family(new Family())
+                .serviceId("SERVICE")
+                .userMail("USERMAIL")
+                .channel("CHANNEL")
+                .name("NAME")
+                .surname("SURNAME")
+                .verifies(List.of(
+                        new VerifyDTO(
+                                "ISEE",
+                                true,
+                                true,
+                                null,
+                                null,
+                                null,
+                                Boolean.TRUE
+                        )
+                ))
+                .build();
 
-        Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper = new Onboarding2OnboardingDroolsMapper();
+        Onboarding2OnboardingDroolsMapper mapper =
+                new Onboarding2OnboardingDroolsMapper();
 
         // WHEN
-        OnboardingDroolsDTO result = onboarding2OnboardingDroolsMapper.apply(objectMock1);
+        OnboardingDroolsDTO result = mapper.apply(onboarding);
 
         // THEN
         Assertions.assertEquals("1", result.getUserId());
         Assertions.assertEquals("1", result.getInitiativeId());
         Assertions.assertTrue(result.isTc());
         Assertions.assertEquals("OK", result.getStatus());
-        Assertions.assertEquals(true, result.getPdndAccept());
-        Assertions.assertEquals(localDateTimeMock1, result.getTcAcceptTimestamp());
-        Assertions.assertEquals(localDateTimeMock1, result.getCriteriaConsensusTimestamp());
+        Assertions.assertTrue(result.getPdndAccept());
+        Assertions.assertEquals(now, result.getTcAcceptTimestamp());
+        Assertions.assertEquals(now, result.getCriteriaConsensusTimestamp());
         Assertions.assertEquals(new BigDecimal(100), result.getIsee());
-        Assertions.assertNotNull(result.getOnboardingRejectionReasons());
-        Assertions.assertSame(objectMock1.getResidence(), result.getResidence());
-        Assertions.assertSame(objectMock1.getBirthDate(), result.getBirthDate());
-        Assertions.assertSame(objectMock1.getChannel(), result.getChannel());
 
-        TestUtils.checkNotNullFields(result,"serviceId", "verifyIsee", "underThreshold", "userMail");
+        Assertions.assertSame(onboarding.getResidence(), result.getResidence());
+        Assertions.assertSame(onboarding.getBirthDate(), result.getBirthDate());
+        Assertions.assertSame(onboarding.getFamily(), result.getFamily());
+        Assertions.assertSame(onboarding.getChannel(), result.getChannel());
+        Assertions.assertSame(onboarding.getVerifies(), result.getVerifies());
+
+        Assertions.assertNotNull(result.getOnboardingRejectionReasons());
+
+        TestUtils.checkNotNullFields(
+                result,
+                "serviceId",
+                "userMail",
+                "verifies"
+        );
     }
 }

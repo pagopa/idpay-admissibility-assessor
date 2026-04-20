@@ -35,7 +35,6 @@ public class Onboarding2EvaluationMapper {
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
-        //
         out.setServiceId(onboardingDTO.getServiceId());
         out.setVerifies(onboardingDTO.getVerifies());
         out.setUserMail(onboardingDTO.getUserMail());
@@ -55,7 +54,7 @@ public class Onboarding2EvaluationMapper {
             out.setInitiativeEndDate(initiative.getEndDate());
             out.setOrganizationId(initiative.getOrganizationId());
             out.setOrganizationName(initiative.getOrganizationName());
-            out.setBeneficiaryBudgetFixedCents(initiative.getBeneficiaryBudgetFixedCents());
+            out.setBeneficiaryBudgetCents(initiative.getBeneficiaryBudgetFixedCents());
             out.setInitiativeRewardType(initiative.getInitiativeRewardType());
             out.setIsLogoPresent(initiative.getIsLogoPresent());
             setRankingValue(onboardingDTO, initiative, out);
@@ -78,7 +77,6 @@ public class Onboarding2EvaluationMapper {
 
         out.setOnboardingKo(false);
 
-        //
         out.setServiceId(onboardingDTO.getServiceId());
         out.setVerifies(onboardingDTO.getVerifies());
         out.setUserMail(onboardingDTO.getUserMail());
@@ -126,7 +124,6 @@ public class Onboarding2EvaluationMapper {
             out.setMemberIds(request.getFamily().getMemberIds());
         }
 
-        //
         out.setServiceId(request.getServiceId());
         out.setVerifies(request.getVerifies());
         out.setUserMail(request.getUserMail());

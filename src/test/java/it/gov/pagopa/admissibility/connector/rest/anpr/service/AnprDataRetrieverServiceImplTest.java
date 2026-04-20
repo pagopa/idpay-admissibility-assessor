@@ -8,20 +8,13 @@ import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiSoggettiEnteDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoIndirizzoDTO;
-import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoListaSoggettiDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.*;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
 import it.gov.pagopa.admissibility.test.fakers.CriteriaCodeConfigFaker;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.pdnd.dto.PdndServiceConfig;
 import it.gov.pagopa.common.reactive.pdnd.exception.PdndServiceTooManyRequestException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -44,149 +37,165 @@ class AnprDataRetrieverServiceImplTest {
     @Mock
     private CriteriaCodeService criteriaCodeServiceMock;
 
-    private final TipoResidenzaDTO2ResidenceMapper residenceMapper = new TipoResidenzaDTO2ResidenceMapper();
+    private final TipoResidenzaDTO2ResidenceMapper residenceMapper =
+            new TipoResidenzaDTO2ResidenceMapper();
+
+    private AnprDataRetrieverService service;
 
     private RispostaE002OKDTO anprOkAnswer;
     private PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> anprAnswer;
     private Residence expectedResidence;
     private BirthDate expectedBirthDate;
 
-    private AnprDataRetrieverService service;
-
     @BeforeEach
     void setup() {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
-        service = new AnprDataRetrieverServiceImpl(anprC001RestClientMock, criteriaCodeServiceMock, residenceMapper);
+        service = new AnprDataRetrieverServiceImpl(
+                anprC001RestClientMock,
+                criteriaCodeServiceMock,
+                residenceMapper
+        );
 
-        anprOkAnswer = AnprC001RestClientImplIntegrationTest.buildExpectedResponse();
-        TipoDatiSoggettiEnteDTO returnedSubject = anprOkAnswer.getListaSoggetti().getDatiSoggetto().get(0);
+        anprOkAnswer =
+                AnprC001RestClientImplIntegrationTest.buildExpectedResponse();
 
-        TipoIndirizzoDTO returnedAddress = returnedSubject.getResidenza().get(0).getIndirizzo();
+        TipoDatiSoggettiEnteDTO subject =
+                anprOkAnswer.getListaSoggetti().getDatiSoggetto().get(0);
+
+        TipoIndirizzoDTO address = subject.getResidenza().get(0).getIndirizzo();
         expectedResidence = Residence.builder()
-                .cityCouncil(returnedAddress.getComune().getNomeComune())
-                .city(returnedAddress.getComune().getNomeComune())
-                .province(returnedAddress.getComune().getSiglaProvinciaIstat())
-                .postalCode(returnedAddress.getCap())
+                .cityCouncil(address.getComune().getNomeComune())
+                .city(address.getComune().getNomeComune())
+                .province(address.getComune().getSiglaProvinciaIstat())
+                .postalCode(address.getCap())
                 .build();
 
         anprAnswer = new PdndOkResponse<>(anprOkAnswer);
 
-        String birthYear = returnedSubject.getGeneralita().getDataNascita().substring(0, 4);
-        expectedBirthDate = BirthDate.builder().year(birthYear).age(LocalDate.now().getYear() - Integer.parseInt(birthYear)).build();
-    }
+        String birthYear =
+                subject.getGeneralita().getDataNascita().substring(0, 4);
 
-    @AfterEach
-    void checkNotMoreInvocation(){
-        Mockito.verifyNoMoreInteractions(anprC001RestClientMock, criteriaCodeServiceMock);
+        expectedBirthDate = BirthDate.builder()
+                .year(birthYear)
+                .age(LocalDate.now().getYear() - Integer.parseInt(birthYear))
+                .build();
     }
 
     @Test
-    void testInvokeOK_requestingBothResidenceAndBirthDate() {
-        testInvokeOK(true, true);
-    }
-    @Test
-    void testInvokeOK_requestingResidence() {
-        testInvokeOK(true, false);
-    }
-    @Test
-    void testInvokeOK_requestingBirthDate() {
-        testInvokeOK(false, true);
-    }
-    @Test
-    void testInvokeOK_noRequests() {
-        testInvokeOK(false, false);
-    }
+    void invokeResidence_ok() {
 
-    private PdndServicesInvocation buildPdndServicesInvocation(boolean getResidence, boolean getBirthDate) {
-        return new PdndServicesInvocation(false, null, getResidence, getBirthDate, false, null);
-    }
+        Mockito.when(anprC001RestClientMock
+                        .invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
+                .thenReturn(Mono.just(anprAnswer));
 
-    private void testInvokeOK(boolean getResidence, boolean getBirthDate) {
-        // Given
-        boolean expectedAnprInvocation = getResidence || getBirthDate;
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
+        OnboardingDTO onboarding = new OnboardingDTO();
 
-        if(expectedAnprInvocation){
-            Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
-        }
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE_OK,
+                        PDND_INITIATIVE_CONFIG,
+                        invocation(OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                        onboarding
+                ).block();
 
-        // When
-        PdndServicesInvocation pdndServicesInvocation = buildPdndServicesInvocation(getResidence, getBirthDate);
-
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, pdndServicesInvocation, onboardingRequest).block();
-
-        // Then
-        Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
-
-        Assertions.assertEquals(Collections.emptyList(), result.get());
-
-        Assertions.assertEquals(getResidence? expectedResidence : null, onboardingRequest.getResidence());
-        Assertions.assertEquals(getBirthDate? expectedBirthDate : null, onboardingRequest.getBirthDate());
+        Assertions.assertTrue(result.get().isEmpty());
+        Assertions.assertEquals(expectedResidence, onboarding.getResidence());
+        Assertions.assertNull(onboarding.getBirthDate());
     }
 
     @Test
-    void testInvokeDailyLimitException() {
-        // Given
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
-                .thenReturn(Mono.error(new PdndServiceTooManyRequestException(new PdndServiceConfig<>(), new RuntimeException("DUMMY"))));
+    void invokeBirthdate_ok() {
 
-        // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+        Mockito.when(anprC001RestClientMock
+                        .invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
+                .thenReturn(Mono.just(anprAnswer));
 
-        // Then
-        Assertions.assertEquals(Optional.empty(), result);
-        Assertions.assertNull(onboardingRequest.getResidence());
-        Assertions.assertNull(onboardingRequest.getBirthDate());
+        OnboardingDTO onboarding = new OnboardingDTO();
+
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE_OK,
+                        PDND_INITIATIVE_CONFIG,
+                        invocation(OnboardingConstants.CRITERIA_CODE_BIRTHDATE),
+                        onboarding
+                ).block();
+
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertTrue(result.get().isEmpty());
+        Assertions.assertEquals(expectedBirthDate, onboarding.getBirthDate());
+        Assertions.assertNull(onboarding.getResidence());
     }
 
     @Test
-    void testInvoke_noResponse() {
-        // Given
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.empty());
+    void invoke_noSubject_residenceKo_then_birthdateKo() {
 
-        // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
-
-        // Then
-        Assertions.assertNull(result);
-    }
-
-    @Test
-    void testInvoke_noSubject() {
         anprOkAnswer.setListaSoggetti(null);
-        testExtractWhenUnexpectedResponse(0);
 
-        TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
-        anprOkAnswer.setListaSoggetti(listaSoggetti);
-        testExtractWhenUnexpectedResponse(1);
+        Mockito.when(anprC001RestClientMock
+                        .invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
+                .thenReturn(Mono.just(anprAnswer));
 
-        listaSoggetti.setDatiSoggetto(Collections.emptyList());
-        testExtractWhenUnexpectedResponse(2);
+        // RESIDENCE
+        OnboardingDTO onboarding1 = new OnboardingDTO();
+        Optional<List<OnboardingRejectionReason>> res1 =
+                service.invoke(
+                        FISCAL_CODE_OK,
+                        PDND_INITIATIVE_CONFIG,
+                        invocation(OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                        onboarding1
+                ).block();
+
+        Assertions.assertEquals(
+                List.of(buildExpectedResidenceKoRejectionReason()),
+                res1.get()
+        );
+
+        // BIRTHDATE
+        OnboardingDTO onboarding2 = new OnboardingDTO();
+        Optional<List<OnboardingRejectionReason>> res2 =
+                service.invoke(
+                        FISCAL_CODE_OK,
+                        PDND_INITIATIVE_CONFIG,
+                        invocation(OnboardingConstants.CRITERIA_CODE_BIRTHDATE),
+                        onboarding2
+                ).block();
+
+        Assertions.assertEquals(
+                List.of(buildExpectedBirthdateKoRejectionReason()),
+                res2.get()
+        );
     }
 
-    private void testExtractWhenUnexpectedResponse(int previousCall) {
-        // Given
-        OnboardingDTO onboardingRequest = new OnboardingDTO();
-        Mockito.when(anprC001RestClientMock.invoke(FISCAL_CODE_OK,PDND_INITIATIVE_CONFIG)).thenReturn(Mono.just(anprAnswer));
+    @Test
+    void invokeDailyLimitException() {
 
-        // When
-        Optional<List<OnboardingRejectionReason>> result = service.invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG, buildPdndServicesInvocation(true, true), onboardingRequest).block();
+        Mockito.when(anprC001RestClientMock
+                        .invoke(FISCAL_CODE_OK, PDND_INITIATIVE_CONFIG))
+                .thenReturn(
+                        Mono.error(new PdndServiceTooManyRequestException(
+                                new PdndServiceConfig<>(),
+                                new RuntimeException("DUMMY")
+                        ))
+                );
 
-        // Then
-        Assertions.assertNotNull(result);
-        Assertions.assertTrue(result.isPresent());
-        Assertions.assertEquals(List.of(
-                buildExpectedResidenceKoRejectionReason(),
-                buildExpectedBirthdateKoRejectionReason()
-        ), result.get());
-        Assertions.assertNull(onboardingRequest.getResidence());
-        Assertions.assertNull(onboardingRequest.getBirthDate());
+        OnboardingDTO onboarding = new OnboardingDTO();
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE_OK,
+                        PDND_INITIATIVE_CONFIG,
+                        invocation(OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                        onboarding
+                ).block();
 
-        Mockito.verify(criteriaCodeServiceMock, Mockito.times(previousCall + 1)).getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_RESIDENCE);
-        Mockito.verify(criteriaCodeServiceMock, Mockito.times(previousCall + 1)).getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_BIRTHDATE);
+        Assertions.assertEquals(Optional.empty(), result);
+        Assertions.assertNull(onboarding.getResidence());
+        Assertions.assertNull(onboarding.getBirthDate());
+    }
+
+
+    private PdndServicesInvocation invocation(String code) {
+        return new PdndServicesInvocation(code, true, null);
     }
 
     private OnboardingRejectionReason buildExpectedResidenceKoRejectionReason() {

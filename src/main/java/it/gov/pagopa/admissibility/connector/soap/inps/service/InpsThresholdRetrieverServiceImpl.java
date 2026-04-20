@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-
 @Slf4j
 @Service
 public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetrieverService {
@@ -27,81 +26,96 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
     private final CriteriaCodeService criteriaCodeService;
     private final IseeThresholdConsultationSoapClient iseeThresholdConsultationSoapClient;
 
-    private final List<OnboardingRejectionReason> iseeNotFoundRejectionReason;
-    private final Mono<List<OnboardingRejectionReason>> iseeNotFoundRejectionReasonMono;
+    public InpsThresholdRetrieverServiceImpl(
+            CriteriaCodeService criteriaCodeService,
+            IseeThresholdConsultationSoapClient iseeThresholdConsultationSoapClient) {
 
-
-    public InpsThresholdRetrieverServiceImpl(CriteriaCodeService criteriaCodeService, IseeThresholdConsultationSoapClient iseeConsultationSoapClient) {
         this.criteriaCodeService = criteriaCodeService;
-        this.iseeThresholdConsultationSoapClient = iseeConsultationSoapClient;
-
-        this.iseeNotFoundRejectionReason = buildMissingIseeRejectionReasons();
-        this.iseeNotFoundRejectionReasonMono = Mono.just(iseeNotFoundRejectionReason);
-    }
-
-    private boolean accept(PdndServicesInvocation pdndServicesInvocation) {
-        return pdndServicesInvocation.isVerifyIseeThreshold();
+        this.iseeThresholdConsultationSoapClient = iseeThresholdConsultationSoapClient;
     }
 
     @Override
     public Mono<Optional<List<OnboardingRejectionReason>>> invoke(
             String fiscalCode,
             PdndInitiativeConfig pdndInitiativeConfig,
-            PdndServicesInvocation pdndServicesInvocation,
+            PdndServicesInvocation invocation,
             OnboardingDTO onboardingRequest) {
-        if (!accept(pdndServicesInvocation)) {
+
+        //  soglia INPS solo se:
+        // - verify == true
+        // - code == ISEE
+        // - thresholdCode != null
+        if (!invocation.requirePdndInvocation()
+                || !OnboardingConstants.CRITERIA_CODE_ISEE.equals(invocation.getCode())
+                || invocation.getThresholdCode() == null) {
+
             return MONO_OPTIONAL_EMPTY_LIST;
         }
-        return processResponse(fiscalCode, pdndServicesInvocation, onboardingRequest)
-                .map(Optional::of)
-                .switchIfEmpty(MONO_EMPTY_RESPONSE)
 
+        return iseeThresholdConsultationSoapClient
+                .verifyThresholdIsee(fiscalCode, invocation.getThresholdCode())
+                .map(response ->
+                        Optional.of(
+                                extractData(response)
+                        )
+                )
+                .switchIfEmpty(MONO_EMPTY_RESPONSE)
                 .onErrorResume(InpsDailyRequestLimitException.class, e -> {
-                    log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] Daily limit occurred when calling ANPR service", e);
+                    log.debug(
+                            "[ONBOARDING_REQUEST][INPS_THRESHOLD] Daily limit occurred when calling INPS threshold service",
+                            e
+                    );
                     return MONO_EMPTY_RESPONSE;
                 });
     }
 
-    private Mono<List<OnboardingRejectionReason>> processResponse(String fiscalCode, PdndServicesInvocation pdndServicesInvocation, OnboardingDTO onboardingRequest) {
-        return iseeThresholdConsultationSoapClient
-                .verifyThresholdIsee(fiscalCode, pdndServicesInvocation.getIseeThresholdCode())
-                .map(inpsResponse -> extractData(inpsResponse, onboardingRequest))
-                .switchIfEmpty(iseeNotFoundRejectionReasonMono);
-    }
+    /**
+     * - emptyList -> verifica OK
+     * - lista con KO -> verifica KO
+     */
+    private List<OnboardingRejectionReason> extractData(
+            ConsultazioneSogliaIndicatoreResponseType response) {
 
-    private List<OnboardingRejectionReason> extractData(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
-        if (inpsResponse != null) {
-            verifyThresholdIseeFromResponse(inpsResponse, onboardingRequest);
+        // chiamata KO o risposta non valida
+        if (response == null || !EsitoEnum.OK.equals(response.getEsito())) {
+            return buildThresholdKoRejection();
         }
 
-        if(onboardingRequest.getUnderThreshold() == null) {
-            log.debug("[ONBOARDING_REQUEST][INPS_INVOCATION] ISEE threshold info not compatible");
-            return iseeNotFoundRejectionReason;
+        if (response.getDatiIndicatore() == null
+                || response.getDatiIndicatore().getSottoSoglia() == null) {
+            return buildThresholdKoRejection();
         }
-        return Collections.emptyList();
+
+        boolean sottoSoglia =
+                SiNoEnum.SI.equals(response.getDatiIndicatore().getSottoSoglia());
+
+        boolean difformita =
+                SiNoEnum.SI.equals(response.getDatiIndicatore().getPresenzaDifformita());
+
+        // se sotto soglia e NON difforme
+        if (sottoSoglia && !difformita) {
+            return Collections.emptyList();
+        }
+
+        // soglia non rispettata
+        return buildThresholdKoRejection();
     }
 
-    private List<OnboardingRejectionReason> buildMissingIseeRejectionReasons() {
-        CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_ISEE);
-        return List.of(new OnboardingRejectionReason(
+    private List<OnboardingRejectionReason> buildThresholdKoRejection() {
+
+        CriteriaCodeConfig cfg =
+                criteriaCodeService.getCriteriaCodeConfig(
+                        OnboardingConstants.CRITERIA_CODE_ISEE
+                );
+
+        return List.of(
+                new OnboardingRejectionReason(
                         OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
                         OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO,
-                        criteriaCodeConfig.getAuthority(),
-                        criteriaCodeConfig.getAuthorityLabel(),
-                        "Soglia ISEE non disponibile"
+                        cfg.getAuthority(),
+                        cfg.getAuthorityLabel(),
+                        "Soglia ISEE non superata"
                 )
         );
-    }
-
-    private void verifyThresholdIseeFromResponse(ConsultazioneSogliaIndicatoreResponseType inpsResponse, OnboardingDTO onboardingRequest) {
-        if (!EsitoEnum.OK.equals(inpsResponse.getEsito())){
-            onboardingRequest.setUnderThreshold(false);
-        }
-
-        if(inpsResponse.getDatiIndicatore() != null && inpsResponse.getDatiIndicatore().getSottoSoglia() != null) {
-            Boolean isUnderThreshold = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getSottoSoglia()) ? Boolean.TRUE : Boolean.FALSE;
-            Boolean isDeformed = SiNoEnum.SI.equals(inpsResponse.getDatiIndicatore().getPresenzaDifformita()) ? Boolean.TRUE : Boolean.FALSE;
-            onboardingRequest.setUnderThreshold(isUnderThreshold && !isDeformed);
-        }
     }
 }

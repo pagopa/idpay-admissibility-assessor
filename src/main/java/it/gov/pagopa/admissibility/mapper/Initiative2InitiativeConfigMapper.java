@@ -9,17 +9,32 @@ import org.springframework.stereotype.Service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
-
-import static it.gov.pagopa.admissibility.utils.OnboardingConstants.CONSENT_CRITERIA_CODE_ISEE;
 
 @Service
 public class Initiative2InitiativeConfigMapper implements Function<Initiative2BuildDTO, InitiativeConfig> {
 
     @Override
     public InitiativeConfig apply(Initiative2BuildDTO initiative) {
-        List<AutomatedCriteriaDTO> automatedCriteriaList = initiative.getBeneficiaryRule().getAutomatedCriteria();
+
+        List<AutomatedCriteriaDTO> automatedCriteriaList =
+                initiative.getBeneficiaryRule().getAutomatedCriteria();
+
         InitiativeAdditionalInfoDTO additionalInfo = initiative.getAdditionalInfo();
+
+        Long beneficiaryBudgetMaxCents =
+                initiative.getGeneral().getBeneficiaryBudgetFixedCents() != null
+                        ? null
+                        : initiative.getBeneficiaryRule().getSelfDeclarationCriteria().stream()
+                        .filter(SelfCriteriaMultiConsentDTO.class::isInstance)
+                        .map(SelfCriteriaMultiConsentDTO.class::cast)
+                        .flatMap(s -> s.getValue().stream())
+                        .map(SelfCriteriaMultiConsentDTO.ConsentValue::getBeneficiaryBudgetMaxCents)
+                        .filter(Objects::nonNull)
+                        .min(Long::compareTo)
+                        .orElse(null);
+
         return InitiativeConfig.builder()
                 .initiativeId(initiative.getInitiativeId())
                 .initiativeName(initiative.getInitiativeName())
@@ -27,33 +42,41 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 .organizationName(initiative.getOrganizationName())
                 .status(initiative.getStatus())
                 .automatedCriteria(automatedCriteriaList)
-                .automatedCriteriaCodes(automatedCriteriaList != null ? automatedCriteriaList.stream().map(AutomatedCriteriaDTO::getCode).toList() : null)
+                .automatedCriteriaCodes(
+                        automatedCriteriaList != null
+                                ? automatedCriteriaList.stream()
+                                .map(AutomatedCriteriaDTO::getCode)
+                                .toList()
+                                : null
+                )
                 .initiativeBudgetCents(initiative.getGeneral().getBudgetCents())
-                .beneficiaryInitiativeBudgetCents(initiative.getGeneral().getBeneficiaryBudgetCents())
-                .beneficiaryInitiativeBudgetMaxCents(initiative.getGeneral().getBeneficiaryBudgetMaxCents())
-                .startDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingStartDate(), initiative.getGeneral().getStartDate()))
-                .endDate(ObjectUtils.firstNonNull(initiative.getGeneral().getRankingEndDate(), initiative.getGeneral().getEndDate()))
+                .beneficiaryBudgetFixedCents(
+                        initiative.getGeneral().getBeneficiaryBudgetFixedCents()
+                )
+
+                .beneficiaryBudgetMaxCents(beneficiaryBudgetMaxCents)
+
+                .startDate(ObjectUtils.firstNonNull(
+                        initiative.getGeneral().getRankingStartDate(),
+                        initiative.getGeneral().getStartDate()
+                ))
+                .endDate(ObjectUtils.firstNonNull(
+                        initiative.getGeneral().getRankingEndDate(),
+                        initiative.getGeneral().getEndDate()
+                ))
                 .rankingInitiative(initiative.getGeneral().isRankingEnabled())
-                .rankingFields(Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled()) ? retrieveRankingFieldCodes(automatedCriteriaList) : null)
+                .rankingFields(
+                        Boolean.TRUE.equals(initiative.getGeneral().isRankingEnabled())
+                                ? retrieveRankingFieldCodes(automatedCriteriaList)
+                                : null
+                )
                 .initiativeRewardType(initiative.getInitiativeRewardType())
-                .isLogoPresent(additionalInfo != null && !StringUtils.isEmpty(additionalInfo.getLogoFileName()))
+                .isLogoPresent(
+                        additionalInfo != null &&
+                                !StringUtils.isEmpty(additionalInfo.getLogoFileName())
+                )
                 .beneficiaryType(initiative.getGeneral().getBeneficiaryType())
-                .iseeThresholdCode(retrieveThresholdCodeIseeInfo(initiative))
                 .build();
-    }
-
-    private String retrieveThresholdCodeIseeInfo(Initiative2BuildDTO initiative) {
-        if(initiative.getBeneficiaryRule().getSelfDeclarationCriteria() != null) {
-            List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria = initiative.getBeneficiaryRule().getSelfDeclarationCriteria();
-
-            for (AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems selfDeclaration : selfDeclarationCriteria) {
-                if (selfDeclaration instanceof SelfCriteriaMultiConsentDTO multiConsentDTO && CONSENT_CRITERIA_CODE_ISEE.equals(multiConsentDTO.getCode())) {
-                    return multiConsentDTO.getThresholdCode();
-                }
-            }
-        }
-
-        return null;
     }
 
     private List<Order> retrieveRankingFieldCodes(List<AutomatedCriteriaDTO> automatedCriteriaList) {

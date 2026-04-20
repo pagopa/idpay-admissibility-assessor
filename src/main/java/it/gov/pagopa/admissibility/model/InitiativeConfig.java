@@ -2,7 +2,6 @@ package it.gov.pagopa.admissibility.model;
 
 import it.gov.pagopa.admissibility.dto.rule.AutomatedCriteriaDTO;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
-import it.gov.pagopa.admissibility.enums.InitiativeType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,7 +28,10 @@ public class InitiativeConfig {
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private Long initiativeBudgetCents;
+    /* */
     private Long beneficiaryBudgetFixedCents;
+    /* */
+    private Long beneficiaryBudgetMaxCents;
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;

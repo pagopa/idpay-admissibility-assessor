@@ -1,28 +1,40 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
-import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
-import it.gov.pagopa.admissibility.dto.onboarding.extra.Residence;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
+@Builder
 public class VerifyDTO {
 
+    @JsonProperty("code")
     private String code;
-    private boolean verify;
-    private String thersoldCode;
-    private Long beneficiaryBudgetCentsMin;
-    private Long beneficiaryBudgetCentsMax;
-    private boolean resultVerify;
 
+    /** indica se la verifica va eseguita */
+    @JsonProperty("verify")
+    private boolean verify;
+
+    /** indica se il fallimento blocca l’onboarding */
+    @JsonProperty("blockingVerify")
+    private boolean blockingVerify;
+
+    /** codice soglia (es. BELET25), può essere null */
+    @JsonProperty("thresholdCode")
+    private String thresholdCode;
+
+    @JsonProperty("beneficiaryBudgetCentsMin")
+    private Long beneficiaryBudgetCentsMin;
+
+    @JsonProperty("beneficiaryBudgetCentsMax")
+    private Long beneficiaryBudgetCentsMax;
+
+    /** null = non ancora eseguita */
+    @JsonProperty("result")
+    private Boolean result;
 
 }
