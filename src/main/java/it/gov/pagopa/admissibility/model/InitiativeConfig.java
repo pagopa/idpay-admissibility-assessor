@@ -28,10 +28,15 @@ public class InitiativeConfig {
     private List<AutomatedCriteriaDTO> automatedCriteria;
     private List<String> automatedCriteriaCodes;
     private Long initiativeBudgetCents;
-    /* */
+    
+    /*   
+     * Se  iniziativa a budget variabile => beneficiaryBudgetMaxCents != null
+     *  altrimenti budget fisso  => beneficiaryBudgetMaxCents == null & beneficiaryBudgetFixedCents != null
+     */ 
+
     private Long beneficiaryBudgetFixedCents;
-    /* */
     private Long beneficiaryBudgetMaxCents;
+    
     private boolean rankingInitiative;
     private List<Order> rankingFields;
     private String initiativeRewardType;
