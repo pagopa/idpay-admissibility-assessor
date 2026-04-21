@@ -31,7 +31,6 @@ public abstract class EvaluationDTO {
     public abstract void setRankingValue(Long rankingValue);
     private Set<String> memberIds;
 
-    //
     private String serviceId;
 
     private List<VerifyDTO> verifies;

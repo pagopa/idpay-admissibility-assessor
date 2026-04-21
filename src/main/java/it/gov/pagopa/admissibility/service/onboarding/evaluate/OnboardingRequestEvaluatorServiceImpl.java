@@ -54,10 +54,10 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                 onboardingRequest.getUserId(),
                 onboardingRequest.getInitiativeId());
 
-        // 1) calcolo budget finale (DR: max/min o fixed)
+        // calcolo budget finale
         calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, completed);
 
-        // 2) calcolo deallocazione: preallocated - finalBudget
+        // calcolo deallocazione: preallocated - finalBudget
         long preallocated = calculatePreallocatedAmount(onboardingRequest, initiativeConfig);
         long finalBudget = Optional.ofNullable(completed.getBeneficiaryBudgetCents()).orElse(0L);
         long deallocatedBudget = preallocated - finalBudget;
@@ -100,7 +100,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                 continue;
             }
 
-            // verify=false -> OK implicito -> MAX (DR-consistente)
+            // verify=false -> OK implicito -> MAX
             if (!verify.isVerify()) {
                 result.setBeneficiaryBudgetCents(
                         verify.getBeneficiaryBudgetCentsMax()
@@ -111,7 +111,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
             // verify=true -> guardo direttamente l'esito
             Boolean verifyResult = verify.getResult();
 
-            // risultato mancante o KO -> MIN (scelta conservativa)
+            // risultato mancante o KO -> MIN
             if (!Boolean.TRUE.equals(verifyResult)) {
                 result.setBeneficiaryBudgetCents(
                         verify.getBeneficiaryBudgetCentsMin()
@@ -126,13 +126,12 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
             return;
         }
 
-        // 3️Fallback: configurazione incoerente
+        // Fallback: configurazione incoerente
         throw new IllegalStateException(
                 "Unable to calculate beneficiary budget: no fixed budget and no variable verify with max"
         );
     }
     /**
-     * Preallocazione attesa:
      * - se budget fisso => fixed
      * - se variabile => MAX dell'unico verify con max != null
      */

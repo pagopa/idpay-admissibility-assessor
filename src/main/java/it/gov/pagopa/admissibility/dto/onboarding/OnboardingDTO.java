@@ -35,7 +35,6 @@ public class OnboardingDTO {
     // Info filled during processing
     private boolean budgetReserved;
 
-    //
     private String serviceId;
 
     private List<VerifyDTO> verifies;

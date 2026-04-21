@@ -54,8 +54,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
     /** Mappa mutabile per configurazioni criteri */
     private final Map<String, CriteriaCodeConfigs.CriteriaConfig> criteriaMap = new HashMap<>();
 
-    // ========================= SETUP =========================
-
     @BeforeEach
     void setUp() {
 
@@ -81,8 +79,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         criteriaMap.clear();
     }
-
-    // ========================= TESTS =========================
 
     @Test
     void retrieveAllAuthorities_ok() {
@@ -272,8 +268,6 @@ class AuthoritiesDataRetrieverServiceImplTest {
         verifyNoInteractions(inpsDataRetrieverServiceMock);
         verifyNoInteractions(inpsThresholdRetrieverServiceMock);
     }
-
-    // ========================= HELPERS =========================
 
     private void stubCommonPdnd() {
         when(userFiscalCodeServiceMock.getUserFiscalCode(USER_ID))
