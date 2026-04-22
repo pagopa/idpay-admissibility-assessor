@@ -265,27 +265,27 @@ app:
     # Pre load container
     pre-load: ${BENEFICIARY_RULE_CONTAINER_PRE_LOAD_ENABLED:true}
   criteria-code-configs: # TODO using Spring cloud kubernetes?
-    ISEE:
+    isee:
       authority: "INPS"
       authorityLabel: "Istituto Nazionale Previdenza Sociale"
       onboardingField: "isee"
       pdndClient: "c021"
-    ISEE_THRESHOLD:
+    isee_threshold:
       authority: "INPS"
       authorityLabel: "Istituto Nazionale Previdenza Sociale"
       onboardingField: "isee"
       pdndClient: "c021"
-    BIRTHDATE:
+    birthdate:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "birthDate"
       pdndClient: "c001"
-    RESIDENCE:
+    residance:
       authority: "AGID"
       authorityLabel: "Agenzia per l'Italia Digitale"
       onboardingField: "residence"
       pdndClient: "c001"
-    FAMILY:
+    family:
       authority: "ANPR"
       authorityLabel: "Anagrafe Nazionale della Popolazione Residente"
       onboardingField: "family"
