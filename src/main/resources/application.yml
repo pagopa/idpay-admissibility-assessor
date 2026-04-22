@@ -264,32 +264,33 @@ app:
     cache.refresh-ms-rate: ${CACHE_REFRESH_MS_RATE:10000}
     # Pre load container
     pre-load: ${BENEFICIARY_RULE_CONTAINER_PRE_LOAD_ENABLED:true}
-  criteria-code-configs: # TODO using Spring cloud kubernetes?
-    isee:
-      authority: "INPS"
-      authorityLabel: "Istituto Nazionale Previdenza Sociale"
-      onboardingField: "isee"
-      pdndClient: "c021"
-    isee_threshold:
-      authority: "INPS"
-      authorityLabel: "Istituto Nazionale Previdenza Sociale"
-      onboardingField: "isee"
-      pdndClient: "c021"
-    birthdate:
-      authority: "AGID"
-      authorityLabel: "Agenzia per l'Italia Digitale"
-      onboardingField: "birthDate"
-      pdndClient: "c001"
-    residance:
-      authority: "AGID"
-      authorityLabel: "Agenzia per l'Italia Digitale"
-      onboardingField: "residence"
-      pdndClient: "c001"
-    family:
-      authority: "ANPR"
-      authorityLabel: "Anagrafe Nazionale della Popolazione Residente"
-      onboardingField: "family"
-      pdndClient: "c001"
+  criteria-code:
+    configs: # TODO using Spring cloud kubernetes?
+      isee:
+        authority: "INPS"
+        authorityLabel: "Istituto Nazionale Previdenza Sociale"
+        onboardingField: "isee"
+        pdndClient: "c021"
+      isee_threshold:
+        authority: "INPS"
+        authorityLabel: "Istituto Nazionale Previdenza Sociale"
+        onboardingField: "isee"
+        pdndClient: "c021"
+      birthdate:
+        authority: "AGID"
+        authorityLabel: "Agenzia per l'Italia Digitale"
+        onboardingField: "birthDate"
+        pdndClient: "c001"
+      residance:
+        authority: "AGID"
+        authorityLabel: "Agenzia per l'Italia Digitale"
+        onboardingField: "residence"
+        pdndClient: "c001"
+      family:
+        authority: "ANPR"
+        authorityLabel: "Anagrafe Nazionale della Popolazione Residente"
+        onboardingField: "family"
+        pdndClient: "c001"
   pdv:
     base-url: ${PDV_BASE_URL:https://api.uat.tokenizer.pdv.pagopa.it/tokenizer/v1}
     headers:
