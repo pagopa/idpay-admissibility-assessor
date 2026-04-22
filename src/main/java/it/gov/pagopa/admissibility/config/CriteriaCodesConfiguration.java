@@ -2,20 +2,21 @@ package it.gov.pagopa.admissibility.config;
 
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import jakarta.annotation.PostConstruct;
+
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-@Configuration
-@ConfigurationProperties(prefix = "app")
+@ConfigurationProperties(prefix = "app.criteria-code")
 @Data
 public class CriteriaCodesConfiguration {
-    /** mocked criteria codes */
-    private Map<String, CriteriaCodeConfig> criteriaCodeConfigs;
+
+    private Map<String, CriteriaCodeConfig> configs = new HashMap<>();
 
     @PostConstruct
-    public void alignKeys(){
-        criteriaCodeConfigs.forEach((key, value) -> value.setCode(key));
+    public void alignKeys() {
+        configs.forEach((key, value) -> value.setCode(key));
     }
 }
