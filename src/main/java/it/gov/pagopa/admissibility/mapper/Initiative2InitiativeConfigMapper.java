@@ -32,7 +32,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                         .flatMap(s -> s.getValue().stream())
                         .map(SelfCriteriaMultiConsentDTO.ConsentValue::getBeneficiaryBudgetMaxCents)
                         .filter(Objects::nonNull)
-                        .min(Long::compareTo)
+                        .findFirst()
                         .orElse(null);
 
         return InitiativeConfig.builder()
