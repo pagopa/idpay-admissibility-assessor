@@ -40,5 +40,6 @@ public class CriteriaCodeConfigs {
          * (e.g. c001, c021)
          */
         private String pdndClient;
+
     }
 }
