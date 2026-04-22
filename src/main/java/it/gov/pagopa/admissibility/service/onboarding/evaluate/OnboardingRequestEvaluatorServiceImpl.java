@@ -50,7 +50,7 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                 return budgetMono
                         .map(c -> {
                             log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
-                            onboardingRequest.setBudgetReserved(true);
+                            onboardingRequest.setBudgetReserved(Boolean.TRUE);
 
                             return evaluationCompletedDTO;
                         })

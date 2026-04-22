@@ -32,7 +32,7 @@ class Onboarding2OnboardingDroolsMapperTest {
                 new Residence(),
                 new BirthDate(),
                 new Family(),
-                false,
+                Boolean.FALSE,
                 "SERVICE",
                 Boolean.TRUE,
                 "USERMAIL",
@@ -61,6 +61,6 @@ class Onboarding2OnboardingDroolsMapperTest {
         Assertions.assertSame(objectMock1.getBirthDate(), result.getBirthDate());
         Assertions.assertSame(objectMock1.getChannel(), result.getChannel());
 
-        TestUtils.checkNotNullFields(result,"serviceId", "verifyIsee", "underThreshold", "userMail");
+        TestUtils.checkNotNullFields(result,"budgetReserved","serviceId", "verifyIsee", "underThreshold", "userMail");
     }
 }
