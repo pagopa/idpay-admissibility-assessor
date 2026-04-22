@@ -3,7 +3,6 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
-import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.common.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -15,202 +14,254 @@ import java.util.List;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.CONSENT_CRITERIA_CODE_ISEE;
 
 class Initiative2InitiativeConfigMapperTest {
-    private final Initiative2InitiativeConfigMapper initiative2InitiativeConfigMapper = new Initiative2InitiativeConfigMapper();
+
+    private final Initiative2InitiativeConfigMapper mapper =
+            new Initiative2InitiativeConfigMapper();
 
     @Test
-    void testAllField() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
+    void testAllField_fixedBudget() {
 
-        setAdditionalInfo(initiative2BuildDTO);
+        Initiative2BuildDTO dto = initDto();
+        dto.getGeneral().setRankingEnabled(true);
+        setAdditionalInfo(dto);
 
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+        InitiativeConfig result = mapper.apply(dto);
 
         Assertions.assertNotNull(result);
+        commonAssertions(dto, result);
 
-        commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertEquals(List.of(
+        Assertions.assertEquals(
+                List.of("CODE1", "CODE2", "CODE3"),
+                result.getAutomatedCriteriaCodes()
+        );
+        Assertions.assertTrue(result.isRankingInitiative());
+
+        Assertions.assertEquals(
+                List.of(
                         Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
-                        Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
-                result.getRankingFields());
+                        Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()
+                ),
+                result.getRankingFields()
+        );
+
         Assertions.assertTrue(result.getIsLogoPresent());
 
-        TestUtils.checkNotNullFields(result);
+        // budget fixed ⇒ max null
+        Assertions.assertNull(result.getBeneficiaryBudgetMaxCents());
+
+        TestUtils.checkNotNullFields(
+                result,
+                "beneficiaryBudgetMaxCents"
+        );
     }
 
     @Test
     void testAdditionalInfoNull() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
 
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+        Initiative2BuildDTO dto = initDto();
+        dto.getGeneral().setRankingEnabled(true);
+
+        InitiativeConfig result = mapper.apply(dto);
 
         Assertions.assertNotNull(result);
-        commonAssertions(initiative2BuildDTO, result);
-        Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertEquals(
-                List.of(
-                        Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build(),
-                        Order.builder().fieldCode("CODE2").direction(Sort.Direction.DESC).build()),
-                result.getRankingFields());
-        Assertions.assertFalse(result.getIsLogoPresent());
+        commonAssertions(dto, result);
 
-        TestUtils.checkNotNullFields(result,"serviceId");
+        Assertions.assertFalse(result.getIsLogoPresent());
+        Assertions.assertNull(result.getBeneficiaryBudgetMaxCents());
+
+        TestUtils.checkNotNullFields(
+                result,
+                "beneficiaryBudgetMaxCents"
+        );
     }
 
     @Test
     void testRankingFalse() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.FALSE);
 
-        setAdditionalInfo(initiative2BuildDTO);
-        initiative2BuildDTO.getAdditionalInfo().setLogoFileName("");
+        Initiative2BuildDTO dto = initDto();
+        dto.getGeneral().setRankingEnabled(false);
+        setAdditionalInfo(dto);
+        dto.getAdditionalInfo().setLogoFileName("");
 
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+        InitiativeConfig result = mapper.apply(dto);
 
         Assertions.assertNotNull(result);
+        commonAssertions(dto, result);
 
-        commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertEquals(List.of("CODE1", "CODE2", "CODE3"), result.getAutomatedCriteriaCodes());
-        Assertions.assertEquals(Boolean.FALSE, result.isRankingInitiative());
+        Assertions.assertFalse(result.isRankingInitiative());
         Assertions.assertFalse(result.getIsLogoPresent());
 
-        TestUtils.checkNotNullFields(result, "rankingFields" );
+        TestUtils.checkNotNullFields(
+                result,
+                "rankingFields",
+                "beneficiaryBudgetMaxCents"
+        );
     }
 
     @Test
-    void testAutomatedCriteriaNull() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
+    void testAutomatedCriteriaNull_variableBudget_takeMinimumMax() {
 
-        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
-                        .selfDeclarationCriteria(List.of(
-                                SelfCriteriaBoolDTO.builder().code("CODE1").build()
-                        ))
-                .build());
+        Initiative2BuildDTO dto = initDto();
+        dto.getGeneral().setBeneficiaryBudgetFixedCents(null);
+        dto.getGeneral().setRankingEnabled(true);
 
-        setAdditionalInfo(initiative2BuildDTO);
+        dto.setBeneficiaryRule(
+                InitiativeBeneficiaryRuleDTO.builder()
+                        .selfDeclarationCriteria(
+                                List.of(
+                                        buildSelfCriteriaMultiConsent("CODE1", "TH1", 10_00L),
+                                        buildSelfCriteriaMultiConsent("CODE2", "TH2", 5_00L),
+                                        buildSelfCriteriaMultiConsent("CODE3", "TH3", 20_00L)
+                                )
+                        )
+                        .build()
+        );
 
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+        setAdditionalInfo(dto);
+
+        InitiativeConfig result = mapper.apply(dto);
 
         Assertions.assertNotNull(result);
 
-        commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertTrue(result.getRankingFields().isEmpty());
-        Assertions.assertTrue(result.getIsLogoPresent());
+        // ✅ nuova regola: minimo dei beneficiaryBudgetMaxCents
+        Assertions.assertEquals(5_00L, result.getBeneficiaryBudgetMaxCents());
 
-        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion", "iseeThresholdCode");
+        TestUtils.checkNotNullFields(
+                result,
+                "beneficiaryBudgetFixedCents",
+                "automatedCriteria",
+                "automatedCriteriaCodes"
+        );
     }
 
     @Test
-    void testSelftDeclarationConsent_iseeType() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
-        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
-                .selfDeclarationCriteria(List.of(
-                        SelfCriteriaMultiConsentDTO.builder().code(CONSENT_CRITERIA_CODE_ISEE).thresholdCode("THRESHOLD_CODE").build()
-                ))
-                .build());
+    void testVariableBudgetWithoutAnyThreshold() {
 
-        setAdditionalInfo(initiative2BuildDTO);
+        Initiative2BuildDTO dto = initDto();
+        dto.getGeneral().setBeneficiaryBudgetFixedCents(null);
 
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
+        dto.setBeneficiaryRule(
+                InitiativeBeneficiaryRuleDTO.builder()
+                        .selfDeclarationCriteria(
+                                List.of(
+                                        SelfCriteriaMultiConsentDTO.builder()
+                                                .value(
+                                                        List.of(
+                                                                SelfCriteriaMultiConsentDTO.ConsentValue.builder()
+                                                                        .code(CONSENT_CRITERIA_CODE_ISEE)
+                                                                        .beneficiaryBudgetMaxCents(null)
+                                                                        .build()
+                                                        )
+                                                )
+                                                .build()
+                                )
+                        )
+                        .build()
+        );
 
-        Assertions.assertNotNull(result);
+        InitiativeConfig result = mapper.apply(dto);
 
-        commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertTrue(result.getRankingFields().isEmpty());
-        Assertions.assertTrue(result.getIsLogoPresent());
-
-        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion");
+        Assertions.assertNull(result.getBeneficiaryBudgetMaxCents());
     }
 
-    @Test
-    void testSelftDeclarationConsent_notIseeType() {
-        Initiative2BuildDTO initiative2BuildDTO = initDto();
-        initiative2BuildDTO.getGeneral().setRankingEnabled(Boolean.TRUE);
-        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
-                .selfDeclarationCriteria(List.of(
-                        SelfCriteriaMultiConsentDTO.builder().code("CODE").thresholdCode("THRESHOLD_CODE").build()
-                ))
-                .build());
-
-        setAdditionalInfo(initiative2BuildDTO);
-
-        final InitiativeConfig result = initiative2InitiativeConfigMapper.apply(initiative2BuildDTO);
-
-        Assertions.assertNotNull(result);
-
-        commonAssertions(initiative2BuildDTO,result);
-        Assertions.assertEquals(Boolean.TRUE, result.isRankingInitiative());
-        Assertions.assertTrue(result.getRankingFields().isEmpty());
-        Assertions.assertTrue(result.getIsLogoPresent());
-
-        TestUtils.checkNotNullFields(result, "automatedCriteria", "automatedCriteriaCodes", "apiKeyClientId", "apiKeyClientAssertion", "iseeThresholdCode");
-    }
-
-
-
-    private void setAdditionalInfo(Initiative2BuildDTO initiative2BuildDTO) {
-        initiative2BuildDTO.setAdditionalInfo(InitiativeAdditionalInfoDTO.builder()
-                .serviceName("SERVICENAME")
-                .argument("ARGUMENT")
-                .description("DESCRIPTION")
-                .channels(List.of(
-                        ChannelsDTO.builder().type("web").contact("contact").build()
-                ))
-                .logoFileName("test.png")
-                .build());
-    }
+    // ===================== HELPERS =====================
 
     private Initiative2BuildDTO initDto() {
-        Initiative2BuildDTO initiative2BuildDTO = new Initiative2BuildDTO();
-        initiative2BuildDTO.setInitiativeId("INITIATIVEID");
-        initiative2BuildDTO.setInitiativeName("INITIATIVENAME");
-        initiative2BuildDTO.setOrganizationId("ORGANIZATIONID");
-        initiative2BuildDTO.setOrganizationName("ORGANIZATIONNAME");
-        initiative2BuildDTO.setStatus("STATUS");
-        initiative2BuildDTO.setInitiativeRewardType("REFUND");
 
-        initiative2BuildDTO.setGeneral(InitiativeGeneralDTO.builder()
-                .startDate(LocalDate.MIN)
-                .endDate(LocalDate.MAX)
-                .budgetCents(1000_00L)
-                .beneficiaryBudgetCents(1_00L)
-                .beneficiaryBudgetMaxCents(100_00L)
-                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
-                .build());
+        Initiative2BuildDTO dto = new Initiative2BuildDTO();
+        dto.setInitiativeId("INITIATIVEID");
+        dto.setInitiativeName("INITIATIVENAME");
+        dto.setOrganizationId("ORGANIZATIONID");
+        dto.setOrganizationName("ORGANIZATIONNAME");
+        dto.setStatus("STATUS");
+        dto.setInitiativeRewardType("REFUND");
 
-        initiative2BuildDTO.setBeneficiaryRule(InitiativeBeneficiaryRuleDTO.builder()
-                .automatedCriteria(List.of(
-                        AutomatedCriteriaDTO.builder().code("CODE1").orderDirection(Sort.Direction.ASC).pdndConfig(new PdndInitiativeConfig("CLIENTID1", "KID1", "PURPOSEID1")).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE2").orderDirection(Sort.Direction.DESC).pdndConfig(new PdndInitiativeConfig("CLIENTID2", "KID2", "PURPOSEID2")).build(),
-                        AutomatedCriteriaDTO.builder().code("CODE3").pdndConfig(new PdndInitiativeConfig("CLIENTID3", "KID3", "PURPOSEID3")).build()
-                ))
-                        .selfDeclarationCriteria(List.of(SelfCriteriaMultiConsentDTO.builder().description("MULTI_CONSENT_ISEE").subDescription("MULTI_CONSENT_ISEE").code("isee").thresholdCode("THRESHOLD_CODE").build()))
-                .build());
+        dto.setGeneral(
+                InitiativeGeneralDTO.builder()
+                        .startDate(LocalDate.MIN)
+                        .endDate(LocalDate.MAX)
+                        .budgetCents(1000_00L)
+                        .beneficiaryBudgetFixedCents(1_00L)
+                        .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                        .build()
+        );
 
-        return initiative2BuildDTO;
+        dto.setBeneficiaryRule(
+                InitiativeBeneficiaryRuleDTO.builder()
+                        .automatedCriteria(
+                                List.of(
+                                        AutomatedCriteriaDTO.builder()
+                                                .code("CODE1")
+                                                .orderDirection(Sort.Direction.ASC)
+                                                .build(),
+                                        AutomatedCriteriaDTO.builder()
+                                                .code("CODE2")
+                                                .orderDirection(Sort.Direction.DESC)
+                                                .build(),
+                                        AutomatedCriteriaDTO.builder()
+                                                .code("CODE3")
+                                                .build()
+                                )
+                        )
+                        .selfDeclarationCriteria(
+                                List.of(
+                                        buildSelfCriteriaMultiConsent(
+                                                CONSENT_CRITERIA_CODE_ISEE,
+                                                "THRESHOLD",
+                                                10_00L
+                                        )
+                                )
+                        )
+                        .build()
+        );
 
+        return dto;
     }
 
-    private void commonAssertions(Initiative2BuildDTO initiative2BuildDTO, InitiativeConfig result) {
-        Assertions.assertSame(initiative2BuildDTO.getInitiativeId(), result.getInitiativeId());
-        Assertions.assertSame(initiative2BuildDTO.getInitiativeName(), result.getInitiativeName());
-        Assertions.assertSame(initiative2BuildDTO.getOrganizationId(), result.getOrganizationId());
-        Assertions.assertSame(initiative2BuildDTO.getOrganizationName(), result.getOrganizationName());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getStartDate(), result.getStartDate());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getEndDate(), result.getEndDate());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBudgetCents(), result.getInitiativeBudgetCents());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryBudgetCents(), result.getBeneficiaryInitiativeBudgetCents());
-        Assertions.assertSame(initiative2BuildDTO.getGeneral().getBeneficiaryType(), result.getBeneficiaryType());
-        Assertions.assertSame(initiative2BuildDTO.getStatus(), result.getStatus());
-        Assertions.assertSame(initiative2BuildDTO.getBeneficiaryRule().getAutomatedCriteria(), result.getAutomatedCriteria());
-        Assertions.assertSame(initiative2BuildDTO.getInitiativeRewardType(), result.getInitiativeRewardType());
+    private void setAdditionalInfo(Initiative2BuildDTO dto) {
+        dto.setAdditionalInfo(
+                InitiativeAdditionalInfoDTO.builder()
+                        .serviceName("SERVICE")
+                        .logoFileName("logo.png")
+                        .build()
+        );
+    }
+
+    private void commonAssertions(Initiative2BuildDTO dto, InitiativeConfig result) {
+        Assertions.assertEquals(dto.getInitiativeId(), result.getInitiativeId());
+        Assertions.assertEquals(dto.getInitiativeName(), result.getInitiativeName());
+        Assertions.assertEquals(dto.getOrganizationId(), result.getOrganizationId());
+        Assertions.assertEquals(dto.getOrganizationName(), result.getOrganizationName());
+        Assertions.assertEquals(dto.getStatus(), result.getStatus());
+        Assertions.assertEquals(
+                dto.getGeneral().getBudgetCents(),
+                result.getInitiativeBudgetCents()
+        );
+        Assertions.assertEquals(
+                dto.getGeneral().getBeneficiaryBudgetFixedCents(),
+                result.getBeneficiaryBudgetFixedCents()
+        );
+        Assertions.assertEquals(
+                dto.getGeneral().getBeneficiaryType(),
+                result.getBeneficiaryType()
+        );
+    }
+
+    private SelfCriteriaMultiConsentDTO buildSelfCriteriaMultiConsent(
+            String consentCode,
+            String thresholdCode,
+            Long beneficiaryBudgetMaxCents
+    ) {
+        return SelfCriteriaMultiConsentDTO.builder()
+                .value(
+                        List.of(
+                                SelfCriteriaMultiConsentDTO.ConsentValue.builder()
+                                        .code(consentCode)
+                                        .thresholdCode(thresholdCode)
+                                        .beneficiaryBudgetMaxCents(beneficiaryBudgetMaxCents)
+                                        .build()
+                        )
+                )
+                .build();
     }
 }

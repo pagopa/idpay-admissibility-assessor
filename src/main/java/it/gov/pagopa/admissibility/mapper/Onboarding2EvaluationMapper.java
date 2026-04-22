@@ -35,9 +35,8 @@ public class Onboarding2EvaluationMapper {
         out.setAdmissibilityCheckDate(LocalDateTime.now());
         out.setCriteriaConsensusTimestamp(onboardingDTO.getCriteriaConsensusTimestamp());
 
-        //
         out.setServiceId(onboardingDTO.getServiceId());
-        out.setVerifyIsee(onboardingDTO.getVerifyIsee());
+        out.setVerifies(onboardingDTO.getVerifies());
         out.setUserMail(onboardingDTO.getUserMail());
         out.setChannel(onboardingDTO.getChannel());
         out.setName(onboardingDTO.getName());
@@ -55,7 +54,7 @@ public class Onboarding2EvaluationMapper {
             out.setInitiativeEndDate(initiative.getEndDate());
             out.setOrganizationId(initiative.getOrganizationId());
             out.setOrganizationName(initiative.getOrganizationName());
-            out.setBeneficiaryBudgetCents(initiative.getBeneficiaryInitiativeBudgetCents());
+            out.setBeneficiaryBudgetCents(initiative.getBeneficiaryBudgetFixedCents());
             out.setInitiativeRewardType(initiative.getInitiativeRewardType());
             out.setIsLogoPresent(initiative.getIsLogoPresent());
             setRankingValue(onboardingDTO, initiative, out);
@@ -78,9 +77,8 @@ public class Onboarding2EvaluationMapper {
 
         out.setOnboardingKo(false);
 
-        //
         out.setServiceId(onboardingDTO.getServiceId());
-        out.setVerifyIsee(onboardingDTO.getVerifyIsee());
+        out.setVerifies(onboardingDTO.getVerifies());
         out.setUserMail(onboardingDTO.getUserMail());
         out.setChannel(onboardingDTO.getChannel());
         out.setName(onboardingDTO.getName());
@@ -126,9 +124,8 @@ public class Onboarding2EvaluationMapper {
             out.setMemberIds(request.getFamily().getMemberIds());
         }
 
-        //
         out.setServiceId(request.getServiceId());
-        out.setVerifyIsee(request.getVerifyIsee());
+        out.setVerifies(request.getVerifies());
         out.setUserMail(request.getUserMail());
         out.setChannel(request.getChannel());
         out.setName(request.getName());

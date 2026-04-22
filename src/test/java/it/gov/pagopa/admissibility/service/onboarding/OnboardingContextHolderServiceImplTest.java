@@ -28,57 +28,84 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingContextHolderServiceImplTest {
 
-    @Mock private ApplicationAvailability applicationAvailabilityMock;
-    @Mock private GenericApplicationContext applicationContextMock;
-    @Mock private KieContainerBuilderService kieContainerBuilderServiceMock;
-    @Mock private DroolsRuleRepository droolsRuleRepositoryMock;
-    @Mock private ApplicationEventPublisher applicationEventPublisherMock;
-    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplateMock;
+    @Mock
+    private ApplicationAvailability applicationAvailabilityMock;
+    @Mock
+    private GenericApplicationContext applicationContextMock;
+    @Mock
+    private KieContainerBuilderService kieContainerBuilderServiceMock;
+    @Mock
+    private DroolsRuleRepository droolsRuleRepositoryMock;
+    @Mock
+    private ApplicationEventPublisher applicationEventPublisherMock;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS)
+    private ReactiveRedisTemplate<String, byte[]> reactiveRedisTemplateMock;
+
     private OnboardingContextHolderService onboardingContextHolderService;
 
-    private final KieBase expectedKieBase = new KieContainerBuilderServiceImpl(droolsRuleRepositoryMock).build(Flux.empty()).block();
+    private final KieBase expectedKieBase =
+            new KieContainerBuilderServiceImpl(droolsRuleRepositoryMock)
+                    .build(Flux.empty())
+                    .block();
 
-    void init(boolean isRedisCacheEnabled){
+    private void init(boolean isRedisCacheEnabled) {
         configureMocks(isRedisCacheEnabled);
-        buildService(isRedisCacheEnabled);
+        onboardingContextHolderService =
+                new OnboardingContextHolderServiceImpl(
+                        applicationAvailabilityMock,
+                        applicationContextMock,
+                        kieContainerBuilderServiceMock,
+                        droolsRuleRepositoryMock,
+                        applicationEventPublisherMock,
+                        reactiveRedisTemplateMock,
+                        isRedisCacheEnabled,
+                        true
+                );
     }
 
     private void configureMocks(boolean isRedisCacheEnabled) {
+
         Assertions.assertNotNull(expectedKieBase);
 
-        Mockito.when(droolsRuleRepositoryMock.findAll()).thenReturn(Flux.empty());
-        Mockito.when(kieContainerBuilderServiceMock.build(Mockito.any())).thenReturn(Mono.just(expectedKieBase));
+        Mockito.when(droolsRuleRepositoryMock.findAll())
+                .thenReturn(Flux.empty());
+
+        Mockito.when(kieContainerBuilderServiceMock.build(Mockito.any()))
+                .thenReturn(Mono.just(expectedKieBase));
 
         if (isRedisCacheEnabled) {
-            byte[] expectedKieBaseSerialized = SerializationUtils.serialize(expectedKieBase);
-            Assertions.assertNotNull(expectedKieBaseSerialized);
-            Mockito.when(reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString())).thenReturn(Mono.just(expectedKieBaseSerialized));
+            byte[] serialized = SerializationUtils.serialize(expectedKieBase);
+            Assertions.assertNotNull(serialized);
+            Mockito.when(
+                            reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString()))
+                    .thenReturn(Mono.just(serialized));
         }
     }
 
-    private void buildService(boolean isRedisCacheEnabled) {
-        onboardingContextHolderService = new OnboardingContextHolderServiceImpl(applicationAvailabilityMock, applicationContextMock, kieContainerBuilderServiceMock, droolsRuleRepositoryMock, applicationEventPublisherMock, reactiveRedisTemplateMock, isRedisCacheEnabled, true);
-    }
+    /* ==========================================================
+       KIE BASE
+       ========================================================== */
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
     void getKieContainer(boolean isRedisCacheEnabled) {
-        // Given
+
         init(isRedisCacheEnabled);
 
-        // When
         KieBase result = onboardingContextHolderService.getBeneficiaryRulesKieBase();
 
-        //Then
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(Collections.emptySet(), onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds());
+        Assertions.assertEquals(
+                Collections.emptySet(),
+                onboardingContextHolderService.getBeneficiaryRulesKieInitiativeIds()
+        );
+
         if (!isRedisCacheEnabled) {
             Assertions.assertSame(expectedKieBase, result);
         }
@@ -86,114 +113,142 @@ class OnboardingContextHolderServiceImplTest {
         checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
+    /* ==========================================================
+       GET INITIATIVE CONFIG
+       ========================================================== */
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testNotRetrieveInitiativeConfig(boolean isRedisCacheEnabled){
+    void testNotRetrieveInitiativeConfig(boolean isRedisCacheEnabled) {
+
         init(isRedisCacheEnabled);
 
-        String initiativeId="INITIATIVE-ID";
-        Mockito.when(droolsRuleRepositoryMock.findById(Mockito.same(initiativeId))).thenReturn(Mono.empty());
+        Mockito.when(droolsRuleRepositoryMock.findById("INITIATIVE-ID"))
+                .thenReturn(Mono.empty());
 
-        // When
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
+        InitiativeConfig result =
+                onboardingContextHolderService.getInitiativeConfig("INITIATIVE-ID").block();
 
-        //Then
         Assertions.assertNull(result);
-        Mockito.verify(droolsRuleRepositoryMock).findById(Mockito.same(initiativeId));
+        Mockito.verify(droolsRuleRepositoryMock).findById("INITIATIVE-ID");
 
         checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testRetrieveInitiativeConfig(boolean isRedisCacheEnabled){
+    void testRetrieveInitiativeConfig(boolean isRedisCacheEnabled) {
+
         init(isRedisCacheEnabled);
 
-        String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = Mockito.mock(InitiativeConfig.class);
-        DroolsRule droolsRule = DroolsRule.builder().initiativeConfig(initiativeConfig).build();
-        Mockito.when(droolsRuleRepositoryMock.findById(Mockito.same(initiativeId))).thenReturn(Mono.just(droolsRule));
+        DroolsRule droolsRule =
+                DroolsRule.builder().initiativeConfig(initiativeConfig).build();
 
-        // When
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
+        Mockito.when(droolsRuleRepositoryMock.findById("INITIATIVE-ID"))
+                .thenReturn(Mono.just(droolsRule));
 
-        //Then
-        Assertions.assertNotNull(result);
-        Mockito.verify(droolsRuleRepositoryMock).findById(Mockito.same(initiativeId));
+        InitiativeConfig result =
+                onboardingContextHolderService.getInitiativeConfig("INITIATIVE-ID").block();
 
+        Assertions.assertSame(initiativeConfig, result);
         checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
+    /* ==========================================================
+       SET INITIATIVE CONFIG
+       ========================================================== */
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testSetInitiativeConfig(boolean isRedisCacheEnabled){
+    void testSetInitiativeConfig(boolean isRedisCacheEnabled) {
+
         init(isRedisCacheEnabled);
 
-        String initiativeId="INITIATIVE-ID";
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
-                .initiativeId(initiativeId)
-                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
-                .beneficiaryInitiativeBudgetCents(100_00L)
-                .endDate(LocalDate.MAX)
+                .initiativeId("INITIATIVE-ID")
                 .initiativeName("NAME")
-                .initiativeBudgetCents(100_00L)
+                .organizationId("ORG-ID")
+                .organizationName("ORG-NAME")
                 .status("STATUS")
-                .automatedCriteria(new ArrayList<>())
-                .automatedCriteriaCodes(List.of("CODE1"))
-                .organizationId("ORGANIZATION-ID")
-                .organizationName("ORGANIZATIONNAME")
                 .startDate(LocalDate.MIN)
-                .rankingInitiative(Boolean.TRUE)
+                .endDate(LocalDate.MAX)
+                .initiativeBudgetCents(100_00L)
+                .beneficiaryBudgetFixedCents(50_00L)
+                .beneficiaryBudgetMaxCents(20_00L)
+                .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                .rankingInitiative(true)
                 .rankingFields(List.of(
-                        Order.builder().fieldCode("CODE1").direction(Sort.Direction.ASC).build()))
+                        Order.builder()
+                                .fieldCode("CODE1")
+                                .direction(Sort.Direction.ASC)
+                                .build()))
+                .automatedCriteria(Collections.emptyList())
+                .automatedCriteriaCodes(List.of("CODE1"))
                 .initiativeRewardType("REFUND")
                 .isLogoPresent(Boolean.FALSE)
                 .build();
 
-
-        // When
         onboardingContextHolderService.setInitiativeConfig(initiativeConfig);
-        InitiativeConfig result = onboardingContextHolderService.getInitiativeConfig(initiativeId).block();
 
-        //Then
+        InitiativeConfig result =
+                onboardingContextHolderService.getInitiativeConfig("INITIATIVE-ID").block();
+
         Assertions.assertSame(initiativeConfig, result);
-
         checkReadiness(ReadinessState.ACCEPTING_TRAFFIC);
     }
 
+    /* ==========================================================
+       FAILING STARTUP
+       ========================================================== */
+
     @ParameterizedTest
     @ValueSource(booleans = {false, true})
-    void testFailingContextStart(boolean isRedisCacheEnabled){
+    void testFailingContextStart(boolean isRedisCacheEnabled) {
+
         int[] counter = {0};
-        Mono<?> monoError = Mono.defer(() -> {
+
+        Mono<?> failingMono = Mono.defer(() -> {
             counter[0]++;
-            return Mono.error(new IllegalStateException("DUMMYEXCEPTION"));
+            return Mono.error(new IllegalStateException("DUMMY"));
         });
 
         configureMocks(isRedisCacheEnabled);
-        if(isRedisCacheEnabled){
-            //noinspection unchecked
-            Mockito.when(reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString())).thenReturn((Mono<byte[]>) monoError);
+
+        if (isRedisCacheEnabled) {
+            Mockito.when(
+                            reactiveRedisTemplateMock.opsForValue().get(Mockito.anyString()))
+                    .thenReturn((Mono<byte[]>) failingMono);
         } else {
-            //noinspection unchecked
-            Mockito.when(kieContainerBuilderServiceMock.build(Mockito.notNull())).thenReturn((Mono<KieBase>) monoError);
+            Mockito.when(kieContainerBuilderServiceMock.build(Mockito.any()))
+                    .thenReturn((Mono<KieBase>) failingMono);
         }
 
-        buildService(isRedisCacheEnabled);
+        onboardingContextHolderService =
+                new OnboardingContextHolderServiceImpl(
+                        applicationAvailabilityMock,
+                        applicationContextMock,
+                        kieContainerBuilderServiceMock,
+                        droolsRuleRepositoryMock,
+                        applicationEventPublisherMock,
+                        reactiveRedisTemplateMock,
+                        isRedisCacheEnabled,
+                        true
+                );
 
-        TestUtils.waitFor(()-> {
+        TestUtils.waitFor(() -> {
             Mockito.verify(applicationContextMock).close();
             Assertions.assertEquals(4, counter[0]);
             checkReadiness(ReadinessState.REFUSING_TRAFFIC);
             return true;
-        }, () -> "Context not closed!", 10, 100);
+        }, () -> "Context not closed", 10, 100);
     }
 
-    private void checkReadiness(ReadinessState expectedState) {
+    private void checkReadiness(ReadinessState expected) {
         Assertions.assertEquals(
-                expectedState,
-                ((OnboardingContextHolderServiceImpl)onboardingContextHolderService).getState(null)
+                expected,
+                ((OnboardingContextHolderServiceImpl) onboardingContextHolderService)
+                        .getState(null)
         );
     }
-
 }

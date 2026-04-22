@@ -4,13 +4,9 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
-import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
@@ -480,7 +476,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
     void mediatorTestMaxRetryOnboarding(){
         String initiativeId = "INITIATIVEID";
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
-
+        onboarding1.setVerifies(List.of(
+                VerifyDTO.builder()
+                        .code(OnboardingConstants.CRITERIA_CODE_ISEE) // oppure "ISEE"
+                        .thresholdCode("DUMMY_THRESHOLD")              // deve essere NON null
+                        .verify(true)                                  // valore iniziale irrilevante
+                        .build()
+        ));
         InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
 
         Onboarding onboarding = new Onboarding(initiativeId, "USER1");
@@ -535,7 +537,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         String initiativeId = "INITIATIVEID";
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
-
+        onboarding1.setVerifies(List.of(
+                VerifyDTO.builder()
+                        .code(OnboardingConstants.CRITERIA_CODE_ISEE) // oppure "ISEE"
+                        .thresholdCode("DUMMY_THRESHOLD")              // deve essere NON null
+                        .verify(true)                                  // valore iniziale irrilevante
+                        .build()
+        ));
         Onboarding onboarding = new Onboarding(initiativeId, "USER1");
         onboarding.setStatus(ON_EVALUATION);
         Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER1"))).thenReturn(Mono.just(onboarding));

@@ -22,24 +22,30 @@ public class SelfCriteriaMultiConsentDTO implements AnyOfInitiativeBeneficiaryRu
     @JsonProperty("subDescription")
     private String subDescription;
 
-    @JsonProperty("thresholdCode")
-    private String thresholdCode;
-
     @JsonProperty("value")
     private List<ConsentValue> value;
-
-    @JsonProperty("code")
-    private String code;
 
 
     @Data
     @Builder
-    static class ConsentValue {
+    public static class ConsentValue {
         @JsonProperty("description")
         private String description;
 
         @JsonProperty("subDescription")
         private String subDescription;
+
+        @JsonProperty("code")
+        private String code;
+
+        @JsonProperty("beneficiaryBudgetMinCents")
+        private Long beneficiaryBudgetMinCents;
+
+        @JsonProperty("beneficiaryBudgetMaxCents")
+        private Long beneficiaryBudgetMaxCents;
+
+        @JsonProperty("thresholdCode")
+        private String thresholdCode;
     }
 }
 

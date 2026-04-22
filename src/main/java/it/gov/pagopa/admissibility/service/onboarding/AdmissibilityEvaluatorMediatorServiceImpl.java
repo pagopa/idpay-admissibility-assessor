@@ -48,7 +48,7 @@ import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATIO
 @Service
 @Slf4j
 public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityEvaluatorMediatorService {
-    private static final String REJECTION_REASON_ALREADY_ONBOARDED = "USER_ALREADY_ONBOARDED";
+
     private static final List<String> REJECTION_REASON_CHECK_DATE_FAIL = List.of(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL, OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL);
 
     private final int maxOnboardingRequestRetry;
@@ -173,21 +173,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(ONBOARDING_CONTEXT_INITIATIVE_KEY, initiativeConfig);
         if (onboardingRequest != null) {
-            EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, initiativeConfig, onboardingContext);
+            EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, initiativeConfig, onboardingContext); // termini e condizioni , pdnd e  iniziativa valida
             if (rejectedRequest != null) {
                 return checkRejectionType(message, onboardingRequest, initiativeConfig, rejectedRequest);
             } else {
                 log.debug("[ONBOARDING_REQUEST] [ONBOARDING_CHECK] onboarding of user {} into initiative {} resulted into successful preliminary checks", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                return checkAlreadyUserOnboarded(onboardingRequest)
-                        .switchIfEmpty(Mono.defer(() -> checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true)))
-                        .switchIfEmpty(Mono.defer( () -> retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message)))
+                return checkAlreadyUserOnboarded(onboardingRequest) // già onboardato
+                        .switchIfEmpty(Mono.defer(() -> checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true))) // familiare già Onbordato [check family-initiative-only]
+                        .switchIfEmpty(Mono.defer( () -> retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))) // chiamate verso l'esterno es INPS
                         .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
 
-//                        .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
+//                       .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 
                         .onErrorResume(AlreadyOnboardingException.class, e -> Mono.empty())
                         .onErrorResume(SkipAlreadyRankingFamilyOnBoardingException.class, e -> Mono.empty())
-
                         .onErrorResume(e -> {
                             log.error("[ONBOARDING_REQUEST] Something gone wrong while handling onboarding request{} of userId {} into initiativeId {}",
                                     onboardingRequest.isBudgetReserved() ? " (BUDGET_RESERVED)" : "",
@@ -200,7 +199,10 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 return Mono.error(e);
                             } else {
                                 if(e instanceof InpsGenericException){
-                                    onboardingRequest.setUnderThreshold(false);
+                                    onboardingRequest.getVerifies().stream()
+                                            .filter(v -> "ISEE".equals(v.getCode()) && v.getThresholdCode() != null)
+                                            .findFirst()
+                                            .ifPresent(v -> v.setVerify(false));
                                     return onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig)
                                             .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
                                             .onErrorResume( exception ->
@@ -287,7 +289,6 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                     log.info(e.getMessage());
                     return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
                 })
-
                 .flatMap(ev -> {
                     if(isFamilyInitiative(initiativeConfig)){
                         return onboardingFamilyEvaluationService.updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
