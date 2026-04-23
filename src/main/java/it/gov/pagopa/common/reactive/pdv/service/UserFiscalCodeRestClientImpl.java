@@ -1,6 +1,6 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
 import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;

@@ -6,16 +6,19 @@ import it.gov.pagopa.admissibility.service.InitiativeStatusService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockUser;
+
 @WebFluxTest(controllers = {AdmissibilityControllerImpl.class})
 class AdmissibilityControllerImplTest {
 
-    @MockBean
+    @MockitoBean
     InitiativeStatusService initiativeStatusService;
 
     @Autowired
@@ -31,7 +34,7 @@ class AdmissibilityControllerImplTest {
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable(initiativeId))
                 .thenReturn(Mono.just(is));
 
-        webClient.get()
+        webClient.mutateWith(mockUser()).mutateWith(csrf()).get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
                         .build(initiativeId))
                 .exchange()
@@ -47,7 +50,7 @@ class AdmissibilityControllerImplTest {
         Mockito.when(initiativeStatusService.getInitiativeStatusAndBudgetAvailable("INITIATIVE1"))
                 .thenReturn(Mono.error(new ClientExceptionNoBody(HttpStatus.NOT_FOUND, "NOTFOUND")));
 
-        webClient.get()
+        webClient.mutateWith(mockUser()).mutateWith(csrf()).get()
                 .uri(uriBuilder -> uriBuilder.path("/idpay/admissibility/initiative/{initiativeId}")
                         .build("INITIATIVE1"))
                 .exchange()
