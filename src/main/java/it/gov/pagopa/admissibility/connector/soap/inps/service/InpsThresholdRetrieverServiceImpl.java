@@ -46,7 +46,7 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
         // - code == ISEE
         // - thresholdCode != null
         if (!invocation.requirePdndInvocation()
-                || !OnboardingConstants.CRITERIA_CODE_ISEE.equals(invocation.getCode())
+                || !OnboardingConstants.CRITERIA_CODE_ISEE.equalsIgnoreCase(invocation.getCode())
                 || invocation.getThresholdCode() == null) {
 
             return MONO_OPTIONAL_EMPTY_LIST;
