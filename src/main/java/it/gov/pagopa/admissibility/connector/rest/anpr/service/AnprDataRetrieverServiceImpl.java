@@ -55,8 +55,8 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
 
         //  ANPR rilevante solo per alcuni code
         if (!invocation.requirePdndInvocation()
-                || !(OnboardingConstants.CRITERIA_CODE_RESIDENCE.equals(invocation.getCode())
-                || OnboardingConstants.CRITERIA_CODE_BIRTHDATE.equals(invocation.getCode()))) {
+                || !(OnboardingConstants.CRITERIA_CODE_RESIDENCE.equalsIgnoreCase(invocation.getCode())
+                || OnboardingConstants.CRITERIA_CODE_BIRTHDATE.equalsIgnoreCase(invocation.getCode()))) {
 
             return MONO_OPTIONAL_EMPTY_LIST;
         }

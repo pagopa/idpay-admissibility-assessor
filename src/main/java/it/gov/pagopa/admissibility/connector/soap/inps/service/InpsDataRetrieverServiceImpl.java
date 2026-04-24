@@ -72,7 +72,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
 
         // INPS base gestisce SOLO ISEE senza soglia
         if (!invocation.requirePdndInvocation()
-                || !OnboardingConstants.CRITERIA_CODE_ISEE.equals(invocation.getCode())
+                || !OnboardingConstants.CRITERIA_CODE_ISEE.equalsIgnoreCase(invocation.getCode())
                 || invocation.getThresholdCode() != null) {
 
             return MONO_OPTIONAL_EMPTY_LIST;
