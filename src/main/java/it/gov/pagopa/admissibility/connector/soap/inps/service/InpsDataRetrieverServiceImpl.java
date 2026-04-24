@@ -111,7 +111,7 @@ public class InpsDataRetrieverServiceImpl implements InpsDataRetrieverService {
         if (onboardingRequest.getIsee() == null) {
             CriteriaCodeConfig cfg =
                     criteriaCodeService.getCriteriaCodeConfig(
-                            OnboardingConstants.CRITERIA_CODE_ISEE
+                            OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase()
                     );
 
             return List.of(

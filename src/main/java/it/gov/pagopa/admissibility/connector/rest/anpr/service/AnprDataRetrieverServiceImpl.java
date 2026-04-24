@@ -136,7 +136,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
         if (onboardingRequest.getResidence() == null) {
             CriteriaCodeConfig cfg =
                     criteriaCodeService.getCriteriaCodeConfig(
-                            OnboardingConstants.CRITERIA_CODE_RESIDENCE
+                            OnboardingConstants.CRITERIA_CODE_RESIDENCE.toLowerCase()
                     );
 
             rejectionReasons.add(
@@ -201,7 +201,7 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
         if (onboardingRequest.getBirthDate() == null) {
             CriteriaCodeConfig cfg =
                     criteriaCodeService.getCriteriaCodeConfig(
-                            OnboardingConstants.CRITERIA_CODE_BIRTHDATE
+                            OnboardingConstants.CRITERIA_CODE_BIRTHDATE.toLowerCase()
                     );
 
             rejectionReasons.add(

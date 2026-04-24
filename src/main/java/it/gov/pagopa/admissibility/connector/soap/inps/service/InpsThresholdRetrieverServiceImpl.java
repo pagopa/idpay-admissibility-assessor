@@ -105,7 +105,7 @@ public class InpsThresholdRetrieverServiceImpl implements InpsThresholdRetriever
 
         CriteriaCodeConfig cfg =
                 criteriaCodeService.getCriteriaCodeConfig(
-                        OnboardingConstants.CRITERIA_CODE_ISEE
+                        OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase()
                 );
 
         return List.of(
