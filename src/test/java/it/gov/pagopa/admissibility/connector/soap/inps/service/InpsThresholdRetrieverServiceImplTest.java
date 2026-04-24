@@ -63,7 +63,7 @@ class InpsThresholdRetrieverServiceImplTest {
 
     private VerifyDTO buildThresholdVerify() {
         return new VerifyDTO(
-                OnboardingConstants.CRITERIA_CODE_ISEE,
+                OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase(),
                 true,
                 true,
                 THRESHOLD_CODE,
@@ -75,7 +75,7 @@ class InpsThresholdRetrieverServiceImplTest {
 
     private PdndServicesInvocation buildInvocation(boolean verify) {
         return new PdndServicesInvocation(
-                OnboardingConstants.CRITERIA_CODE_ISEE,
+                OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase(),
                 verify,
                 THRESHOLD_CODE
         );
@@ -103,7 +103,7 @@ class InpsThresholdRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
         Assertions.assertTrue(result.get().isEmpty());
-        Assertions.assertNull(verify.getResult());
+        Assertions.assertNull(verify.getReasonList());
 
         Mockito.verifyNoInteractions(iseeThresholdConsultationSoapClientMock);
     }
@@ -129,7 +129,7 @@ class InpsThresholdRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
         Assertions.assertTrue(result.get().isEmpty());
-        Assertions.assertNull(verify.getResult());
+        Assertions.assertNull(verify.getReasonList());
     }
 
     @Test
@@ -158,7 +158,7 @@ class InpsThresholdRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
         Assertions.assertFalse(result.get().isEmpty());
-        Assertions.assertNull(verify.getResult());
+        Assertions.assertNull(verify.getReasonList());
     }
 
     @Test
@@ -184,7 +184,7 @@ class InpsThresholdRetrieverServiceImplTest {
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isPresent());
         Assertions.assertFalse(result.get().isEmpty());
-        Assertions.assertNull(verify.getResult());
+        Assertions.assertNull(verify.getReasonList());
     }
 
     @Test
@@ -207,6 +207,6 @@ class InpsThresholdRetrieverServiceImplTest {
 
         Assertions.assertNotNull(result);
         Assertions.assertTrue(result.isEmpty());
-        Assertions.assertNull(verify.getResult());
+        Assertions.assertNull(verify.getReasonList());
     }
 }

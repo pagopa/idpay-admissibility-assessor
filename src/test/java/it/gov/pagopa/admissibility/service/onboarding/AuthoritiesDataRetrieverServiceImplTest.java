@@ -119,9 +119,9 @@ class AuthoritiesDataRetrieverServiceImplTest {
         assertEquals(expectedResidence, result.getResidence());
         assertEquals(expectedBirthDate, result.getBirthDate());
 
-        assertTrue(findVerify("ISEE").getResult());
-        assertTrue(findVerify("RESIDENCE").getResult());
-        assertTrue(findVerify("BIRTHDATE").getResult());
+        assertTrue(findVerify("ISEE").getReasonList().isEmpty());
+        assertTrue(findVerify("RESIDENCE").getReasonList().isEmpty());
+        assertTrue(findVerify("BIRTHDATE").getReasonList().isEmpty());
     }
 
     @Test
@@ -141,7 +141,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         service.retrieve(onboardingRequest, null, message).block();
 
-        assertFalse(findVerify("ISEE").getResult());
+        assertFalse(findVerify("ISEE").getReasonList().isEmpty());
     }
 
     @Test
@@ -156,7 +156,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
                 service.retrieve(onboardingRequest, null, message).block();
 
         assertNotNull(result);
-        assertTrue(findVerify("ISEE").getResult());
+        assertTrue(findVerify("ISEE").getReasonList().isEmpty());
 
         verifyNoInteractions(inpsDataRetrieverServiceMock);
         verifyNoInteractions(anprDataRetrieverServiceMock);
@@ -186,7 +186,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
     void retrieveAuthorities_allResultsAlreadyPresent_shortCircuit() {
 
         addVerify("ISEE", true, null);
-        findVerify("ISEE").setResult(true);
+        findVerify("ISEE").setReasonList(Collections.emptyList());
 
         service.retrieve(onboardingRequest, null, message).block();
 
@@ -208,7 +208,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
 
         service.retrieve(onboardingRequest, null, message).block();
 
-        assertTrue(findVerify("ISEE").getResult());
+        assertTrue(findVerify("ISEE").getReasonList().isEmpty());
 
         verify(inpsThresholdRetrieverServiceMock).invoke(any(), any(), any(), any());
         verifyNoInteractions(inpsDataRetrieverServiceMock);
@@ -235,7 +235,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         service.retrieve(onboardingRequest, null, message).block();
 
         assertEquals(expectedResidence, onboardingRequest.getResidence());
-        assertTrue(findVerify("RESIDENCE").getResult());
+        assertTrue(findVerify("RESIDENCE").getReasonList().isEmpty());
 
         verify(anprDataRetrieverServiceMock).invoke(any(), any(), any(), any());
         verifyNoInteractions(inpsDataRetrieverServiceMock);
@@ -262,7 +262,7 @@ class AuthoritiesDataRetrieverServiceImplTest {
         service.retrieve(onboardingRequest, null, message).block();
 
         assertEquals(expectedBirthDate, onboardingRequest.getBirthDate());
-        assertTrue(findVerify("BIRTHDATE").getResult());
+        assertTrue(findVerify("BIRTHDATE").getReasonList().isEmpty());
 
         verify(anprDataRetrieverServiceMock).invoke(any(), any(), any(), any());
         verifyNoInteractions(inpsDataRetrieverServiceMock);

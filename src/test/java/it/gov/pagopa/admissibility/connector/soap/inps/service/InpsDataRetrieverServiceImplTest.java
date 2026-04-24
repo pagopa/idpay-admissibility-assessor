@@ -62,7 +62,7 @@ class InpsDataRetrieverServiceImplTest {
 
     private PdndServicesInvocation buildIseeInvocation(boolean verify) {
         return new PdndServicesInvocation(
-                OnboardingConstants.CRITERIA_CODE_ISEE,
+                OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase(),
                 verify,
                 null
         );

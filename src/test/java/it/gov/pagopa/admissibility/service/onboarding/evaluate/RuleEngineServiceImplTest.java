@@ -16,27 +16,27 @@ class RejectionReasonServiceTest {
     void setUp() {
         CriteriaCodeConfigs criteriaCodeConfigs = new CriteriaCodeConfigs();
 
-        // ISEE
+        // isee
         CriteriaCodeConfigs.CriteriaConfig iseeConfig =
                 new CriteriaCodeConfigs.CriteriaConfig();
         iseeConfig.setAuthority("INPS");
         iseeConfig.setAuthorityLabel("Istituto Nazionale Previdenza Sociale");
 
-        // RESIDENCE
+        // residence
         CriteriaCodeConfigs.CriteriaConfig residenceConfig =
                 new CriteriaCodeConfigs.CriteriaConfig();
         residenceConfig.setAuthority("AGID");
         residenceConfig.setAuthorityLabel("Agenzia per l'Italia Digitale");
 
-        // BIRTHDATE
+        // birthdate
         CriteriaCodeConfigs.CriteriaConfig birthdateConfig =
                 new CriteriaCodeConfigs.CriteriaConfig();
         birthdateConfig.setAuthority("AGID");
         birthdateConfig.setAuthorityLabel("Agenzia per l'Italia Digitale");
 
-        criteriaCodeConfigs.getConfigs().put("ISEE", iseeConfig);
-        criteriaCodeConfigs.getConfigs().put("RESIDENCE", residenceConfig);
-        criteriaCodeConfigs.getConfigs().put("BIRTHDATE", birthdateConfig);
+        criteriaCodeConfigs.getConfigs().put("isee", iseeConfig);
+        criteriaCodeConfigs.getConfigs().put("residence", residenceConfig);
+        criteriaCodeConfigs.getConfigs().put("birthdate", birthdateConfig);
 
         rejectionReasonService = new RejectionReasonService(criteriaCodeConfigs);
     }
@@ -46,7 +46,7 @@ class RejectionReasonServiceTest {
     void rejectionFor_Isee() {
 
         OnboardingRejectionReason rejection =
-                rejectionReasonService.rejectionFor("ISEE");
+                rejectionReasonService.rejectionFor("isee");
 
         Assertions.assertEquals(
                 OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO,
@@ -67,7 +67,7 @@ class RejectionReasonServiceTest {
     void rejectionFor_Residence() {
 
         OnboardingRejectionReason rejection =
-                rejectionReasonService.rejectionFor("RESIDENCE");
+                rejectionReasonService.rejectionFor("residence");
 
         Assertions.assertEquals(
                 OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO,
@@ -84,7 +84,7 @@ class RejectionReasonServiceTest {
     void rejectionFor_Birthdate() {
 
         OnboardingRejectionReason rejection =
-                rejectionReasonService.rejectionFor("BIRTHDATE");
+                rejectionReasonService.rejectionFor("birthdate");
 
         Assertions.assertEquals(
                 OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO,

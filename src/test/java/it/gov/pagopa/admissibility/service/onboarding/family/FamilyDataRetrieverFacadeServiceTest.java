@@ -95,7 +95,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         result.setAdmissibilityCheckDate(null);
         assertEquals(expectedResult, result);
 
-        Mockito.verify(criteriaCodeServiceMock).getCriteriaCodeConfig(CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY);
+        Mockito.verify(criteriaCodeServiceMock).getCriteriaCodeConfig(CriteriaCodeConfigFaker.CRITERIA_CODE_FAMILY.toLowerCase());
     }
 
     @Test
@@ -170,7 +170,7 @@ class FamilyDataRetrieverFacadeServiceTest {
         Mockito.when(mock.getAuthority()).thenReturn("AUTH");
         Mockito.when(mock.getAuthorityLabel()).thenReturn("AUTHORITY_LABEL");
 
-        Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_FAMILY))
+        Mockito.when(criteriaCodeServiceMock.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_FAMILY.toLowerCase()))
                         .thenReturn(mock);
 
         StepVerifier.create(service.retrieveFamily(request, initiativeConfig, message))

@@ -87,17 +87,10 @@ public class AnprDataRetrieverServiceImpl implements AnprDataRetrieverService {
 
         List<OnboardingRejectionReason> rejectionReasons = new ArrayList<>(1);
 
-        switch (code) {
-
-            case OnboardingConstants.CRITERIA_CODE_RESIDENCE ->
-                    extractResidenceData(response, onboardingRequest, rejectionReasons);
-
-            case OnboardingConstants.CRITERIA_CODE_BIRTHDATE ->
-                    extractBirthdateData(response, onboardingRequest, rejectionReasons);
-
-            default -> {
-                // ANPR non rilevante
-            }
+        if (OnboardingConstants.CRITERIA_CODE_RESIDENCE.equalsIgnoreCase(code)) {
+            extractResidenceData(response, onboardingRequest, rejectionReasons);
+        } else if (OnboardingConstants.CRITERIA_CODE_BIRTHDATE.equalsIgnoreCase(code)) {
+            extractBirthdateData(response, onboardingRequest, rejectionReasons);
         }
 
         return rejectionReasons;

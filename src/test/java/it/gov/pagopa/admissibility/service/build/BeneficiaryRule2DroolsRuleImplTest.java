@@ -6,7 +6,6 @@ import it.gov.pagopa.admissibility.drools.transformer.extra_filter.ExtraFilter2D
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.BirthDate;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -15,7 +14,6 @@ import it.gov.pagopa.admissibility.mapper.Initiative2InitiativeConfigMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.DroolsRule;
-import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.IseeTypologyEnum;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -33,7 +31,10 @@ import reactor.core.publisher.Flux;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /*
  ******************
@@ -83,17 +84,17 @@ class BeneficiaryRule2DroolsRuleImplTest {
     @Test
     void testExecution_allCases() {
         testExecution(Collections.emptyList());
-        testExecution(List.of("ISEE"));
-        testExecution(List.of("BIRTHDATE"));
-        testExecution(List.of("ISEE", "BIRTHDATE"));
-        testExecution(List.of("NOTREADY"));
+        testExecution(List.of("isee"));
+        testExecution(List.of("birthdate"));
+        testExecution(List.of("isee", "birthdate"));
+        testExecution(List.of("notready"));
     }
 
     private void testExecution(List<String> failingCodes) {
 
-        boolean expectedIseeFail = failingCodes.contains("ISEE");
-        boolean expectedBirthDateFail = failingCodes.contains("BIRTHDATE");
-        boolean expectedNotReady = failingCodes.equals(List.of("NOTREADY"));
+        boolean expectedIseeFail = failingCodes.contains("isee");
+        boolean expectedBirthDateFail = failingCodes.contains("birthdate");
+        boolean expectedNotReady = failingCodes.equals(List.of("notready"));
 
         Initiative2BuildDTO initiative = buildInitiative();
         DroolsRule rule = beneficiaryRule2DroolsRule.apply(initiative);
@@ -102,7 +103,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                 .userId("USERID")
                 .initiativeId(initiative.getInitiativeId())
                 .birthDate(new BirthDate())
-                .verifies(new ArrayList<>())   // ✅ OBBLIGATORIO
+                .verifies(new ArrayList<>())
                 .build();
 
         onboardingDTO.setIsee(expectedIseeFail ? BigDecimal.TEN : BigDecimal.ONE);
@@ -125,8 +126,7 @@ class BeneficiaryRule2DroolsRuleImplTest {
                         contextHolderService,
                         new Onboarding2EvaluationMapper(),
                         criteriaCodeServiceMock,
-                        new Onboarding2OnboardingDroolsMapper(),
-                        Mockito.mock(it.gov.pagopa.admissibility.service.RejectionReasonService.class)
+                        new Onboarding2OnboardingDroolsMapper()
                 );
 
         EvaluationDTO evaluation =
@@ -165,14 +165,14 @@ class BeneficiaryRule2DroolsRuleImplTest {
 
         List<AutomatedCriteriaDTO> automatedCriteria = List.of(
                 new AutomatedCriteriaDTO(
-                        "AUTH1", "ISEE", null,
+                        "AUTH1", "isee", null,
                         FilterOperator.EQ, "1",
                         null, Sort.Direction.ASC,
                         typologies,
                         new PdndInitiativeConfig("CLIENTID", "KID", "PURPOSEID_ISEE")
                 ),
                 new AutomatedCriteriaDTO(
-                        "AUTH2", "BIRTHDATE", "year",
+                        "AUTH2", "birthdate", "year",
                         FilterOperator.GT, "2000",
                         null, null,
                         typologies,

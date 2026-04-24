@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -72,7 +73,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
             Message<String> message) {
 
         if (onboardingRequest.getVerifies().stream()
-                .allMatch(v -> v.getResult() != null)) {
+                .allMatch(v -> v.getReasonList() != null)) {
             return Mono.just(onboardingRequest);
         }
 
@@ -82,7 +83,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                 .concatMap(verify -> {
 
                                     if (!verify.isVerify()) {
-                                        verify.setResult(true);
+                                        verify.setReasonList(Collections.emptyList());
                                         return Mono.empty();
                                     }
 
@@ -94,7 +95,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
                                             invocation,
                                             onboardingRequest,
                                             message)
-                                            .doOnNext(verify::setResult)
+                                            .doOnNext(verify::setReasonList)
                                             .then();
                                 })
                                 .then(Mono.just(onboardingRequest))
@@ -111,7 +112,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
         );
     }
 
-    private Mono<Boolean> invokePdndServices(
+    private Mono<List<OnboardingRejectionReason>> invokePdndServices(
             String fiscalCode,
             PdndServicesInvocation invocation,
             OnboardingDTO onboardingRequest,
@@ -178,7 +179,7 @@ public class AuthoritiesDataRetrieverServiceImpl implements AuthoritiesDataRetri
 
             // lista vuota = verify OK
             // lista valorizzata = verify KO
-            return optional.get().isEmpty();
+            return optional.get();
         });
     }
 

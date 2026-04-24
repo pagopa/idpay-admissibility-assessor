@@ -25,6 +25,7 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import static org.mockito.Mockito.*;
 
@@ -121,7 +122,7 @@ class OnboardingRequestEvaluatorServiceTest {
                         "TH_CODE",
                         1_000L,
                         2_000L,
-                        true // esito OK → MAX
+                        Collections.emptyList() // esito OK → MAX
                 )
         );
 
@@ -152,7 +153,7 @@ class OnboardingRequestEvaluatorServiceTest {
                         "TH_CODE",
                         1_000L,
                         2_000L,
-                        false // esito KO → MIN
+                        List.of(OnboardingRejectionReason.builder().build()) // esito KO → MIN
                 )
         );
 

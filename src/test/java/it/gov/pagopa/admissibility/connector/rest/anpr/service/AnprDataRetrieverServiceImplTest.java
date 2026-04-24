@@ -22,7 +22,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -50,6 +49,7 @@ class AnprDataRetrieverServiceImplTest {
     @BeforeEach
     void setup() {
         CriteriaCodeConfigFaker.configCriteriaCodeServiceMock(criteriaCodeServiceMock);
+
         service = new AnprDataRetrieverServiceImpl(
                 anprC001RestClientMock,
                 criteriaCodeServiceMock,
@@ -142,7 +142,7 @@ class AnprDataRetrieverServiceImplTest {
                 service.invoke(
                         FISCAL_CODE_OK,
                         PDND_INITIATIVE_CONFIG,
-                        invocation(OnboardingConstants.CRITERIA_CODE_RESIDENCE),
+                        invocation(OnboardingConstants.CRITERIA_CODE_RESIDENCE.toLowerCase()),
                         onboarding1
                 ).block();
 
@@ -157,7 +157,7 @@ class AnprDataRetrieverServiceImplTest {
                 service.invoke(
                         FISCAL_CODE_OK,
                         PDND_INITIATIVE_CONFIG,
-                        invocation(OnboardingConstants.CRITERIA_CODE_BIRTHDATE),
+                        invocation(OnboardingConstants.CRITERIA_CODE_BIRTHDATE.toLowerCase()),
                         onboarding2
                 ).block();
 

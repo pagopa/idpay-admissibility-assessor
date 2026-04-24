@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
@@ -34,7 +36,6 @@ public class VerifyDTO {
     private Long beneficiaryBudgetCentsMax;
 
     /** null = non ancora eseguita */
-    @JsonProperty("result")
-    private Boolean result;
+    private List<OnboardingRejectionReason> reasonList;
 
 }

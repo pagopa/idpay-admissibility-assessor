@@ -165,15 +165,15 @@ class Onboarding2EvaluationMapperTest {
 
 
 
-    private VerifyDTO blockingVerify(boolean result) {
+    private VerifyDTO blockingVerify(Boolean result) {
         return new VerifyDTO(
                 OnboardingConstants.CRITERIA_CODE_ISEE,
                 true,
-                true, // bloccante
+                result,
                 null,
                 null,
                 null,
-                result
+                Collections.emptyList()
         );
     }
 

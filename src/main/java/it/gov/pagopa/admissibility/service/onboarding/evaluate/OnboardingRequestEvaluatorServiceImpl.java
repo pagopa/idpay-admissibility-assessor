@@ -4,7 +4,6 @@ import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersReposi
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
@@ -108,11 +107,8 @@ public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestE
                 return;
             }
 
-            // verify=true -> guardo direttamente l'esito
-            Boolean verifyResult = verify.getResult();
-
             // risultato mancante o KO -> MIN
-            if (!Boolean.TRUE.equals(verifyResult)) {
+            if (!verify.getReasonList().isEmpty()) {
                 result.setBeneficiaryBudgetCents(
                         verify.getBeneficiaryBudgetCentsMin()
                 );

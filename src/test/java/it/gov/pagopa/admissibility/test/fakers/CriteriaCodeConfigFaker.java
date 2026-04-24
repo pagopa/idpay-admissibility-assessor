@@ -28,10 +28,10 @@ public final class CriteriaCodeConfigFaker {
 
     /** mocked criteria codes */
     public static List<CriteriaCodeConfig> mockedCriteriaCodes = List.of(
-            new CriteriaCodeConfig(CRITERIA_CODE_ISEE, CRITERIA_CODE_ISEE_AUTH, CRITERIA_CODE_ISEE_AUTH_LABEL, "isee"),
-            new CriteriaCodeConfig(CRITERIA_CODE_BIRTHDATE, CRITERIA_CODE_BIRTHDATE_AUTH, CRITERIA_CODE_BIRTHDATE_AUTH_LABEL, "birthDate"),
-            new CriteriaCodeConfig(CRITERIA_CODE_RESIDENCE, CRITERIA_CODE_RESIDENCE_AUTH, CRITERIA_CODE_RESIDENCE_AUTH_LABEL, "residence"),
-            new CriteriaCodeConfig(CRITERIA_CODE_FAMILY, CRITERIA_CODE_FAMILY_AUTH, CRITERIA_CODE_FAMILY_AUTH_LABEL, "residence")
+            new CriteriaCodeConfig(CRITERIA_CODE_ISEE.toLowerCase(), CRITERIA_CODE_ISEE_AUTH, CRITERIA_CODE_ISEE_AUTH_LABEL, "isee"),
+            new CriteriaCodeConfig(CRITERIA_CODE_BIRTHDATE.toLowerCase(), CRITERIA_CODE_BIRTHDATE_AUTH, CRITERIA_CODE_BIRTHDATE_AUTH_LABEL, "birthDate"),
+            new CriteriaCodeConfig(CRITERIA_CODE_RESIDENCE.toLowerCase(), CRITERIA_CODE_RESIDENCE_AUTH, CRITERIA_CODE_RESIDENCE_AUTH_LABEL, "residence"),
+            new CriteriaCodeConfig(CRITERIA_CODE_FAMILY.toLowerCase(), CRITERIA_CODE_FAMILY_AUTH, CRITERIA_CODE_FAMILY_AUTH_LABEL, "residence")
     );
 
     public static void configCriteriaCodeServiceMock(CriteriaCodeService criteriaCodeServiceMock){

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 class Onboarding2OnboardingDroolsMapperTest {
@@ -47,7 +48,7 @@ class Onboarding2OnboardingDroolsMapperTest {
                                 null,
                                 null,
                                 null,
-                                Boolean.TRUE
+                                Collections.emptyList()
                         )
                 ))
                 .build();

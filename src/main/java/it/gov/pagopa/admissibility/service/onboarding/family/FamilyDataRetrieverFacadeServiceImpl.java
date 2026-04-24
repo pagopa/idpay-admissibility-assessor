@@ -80,7 +80,7 @@ public class FamilyDataRetrieverFacadeServiceImpl implements FamilyDataRetriever
     }
 
     private OnboardingRejectionReason buildFamilyNotAvailableRejectionReason() {
-        CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_FAMILY);
+        CriteriaCodeConfig criteriaCodeConfig = criteriaCodeService.getCriteriaCodeConfig(OnboardingConstants.CRITERIA_CODE_FAMILY.toLowerCase());
         return new OnboardingRejectionReason(OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO, OnboardingConstants.REJECTION_REASON_FAMILY_KO, criteriaCodeConfig.getAuthority(), criteriaCodeConfig.getAuthorityLabel(), "Nucleo familiare non disponibile");
     }
 

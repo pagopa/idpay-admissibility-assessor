@@ -21,18 +21,18 @@ public class RejectionReasonService {
         criteriaConfigs.getConfigs().forEach((code, cfg) -> {
             OnboardingRejectionReason.OnboardingRejectionReasonType type =
                     switch (code) {
-                        case "ISEE" -> OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO;
-                        case "RESIDENCE" -> OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO;
-                        case "BIRTHDATE" -> OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO;
-                        case "FAMILY" -> OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO;
+                        case "isee" -> OnboardingRejectionReason.OnboardingRejectionReasonType.ISEE_TYPE_KO;
+                        case "residence" -> OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO;
+                        case "birthdate" -> OnboardingRejectionReason.OnboardingRejectionReasonType.BIRTHDATE_KO;
+                        case "family" -> OnboardingRejectionReason.OnboardingRejectionReasonType.FAMILY_KO;
                         default -> OnboardingRejectionReason.OnboardingRejectionReasonType.AUTOMATED_CRITERIA_FAIL;
                     };
             String rejectionCode =
                     switch (code) {
-                        case "ISEE" -> OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO;
-                        case "RESIDENCE" -> OnboardingConstants.REJECTION_REASON_RESIDENCE_KO;
-                        case "BIRTHDATE" -> OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO;
-                        case "FAMILY" -> OnboardingConstants.REJECTION_REASON_FAMILY_KO;
+                        case "isee" -> OnboardingConstants.REJECTION_REASON_ISEE_TYPE_KO;
+                        case "residence" -> OnboardingConstants.REJECTION_REASON_RESIDENCE_KO;
+                        case "birthdate" -> OnboardingConstants.REJECTION_REASON_BIRTHDATE_KO;
+                        case "family" -> OnboardingConstants.REJECTION_REASON_FAMILY_KO;
                         default -> OnboardingConstants.REJECTION_REASON_AUTOMATED_CRITERIA_FAIL_FORMAT.formatted(code);
                     };
             map.put(code, new OnboardingRejectionReason(
@@ -40,7 +40,7 @@ public class RejectionReasonService {
                     rejectionCode,
                     cfg.getAuthority(),
                     cfg.getAuthorityLabel(),
-                    null // detail opzionale
+                    null
             ));
         });
         return map;

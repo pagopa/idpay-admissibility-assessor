@@ -5,7 +5,6 @@ import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.mapper.Onboarding2OnboardingDroolsMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
-import it.gov.pagopa.admissibility.service.RejectionReasonService;
 import it.gov.pagopa.admissibility.service.onboarding.OnboardingContextHolderService;
 import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
@@ -28,20 +27,17 @@ public class RuleEngineServiceImpl implements RuleEngineService {
     private final Onboarding2EvaluationMapper onboarding2EvaluationMapper;
     private final CriteriaCodeService criteriaCodeService;
     private final Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper;
-    private final RejectionReasonService rejectionReasonService;
 
     public RuleEngineServiceImpl(
             OnboardingContextHolderService onboardingContextHolderService,
             Onboarding2EvaluationMapper onboarding2EvaluationMapper,
             CriteriaCodeService criteriaCodeService,
-            Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper,
-            RejectionReasonService rejectionReasonService) {
+            Onboarding2OnboardingDroolsMapper onboarding2OnboardingDroolsMapper) {
 
         this.onboardingContextHolderService = onboardingContextHolderService;
         this.onboarding2EvaluationMapper = onboarding2EvaluationMapper;
         this.criteriaCodeService = criteriaCodeService;
         this.onboarding2OnboardingDroolsMapper = onboarding2OnboardingDroolsMapper;
-        this.rejectionReasonService = rejectionReasonService;
     }
 
     @Override
@@ -58,6 +54,7 @@ public class RuleEngineServiceImpl implements RuleEngineService {
                 onboarding2OnboardingDroolsMapper.apply(onboardingRequest);
 
 
+        List<OnboardingRejectionReason> result = new ArrayList<>();
         for (VerifyDTO verify : onboardingRequest.getVerifies()) {
 
             // considero solo le verify bloccanti
@@ -66,24 +63,22 @@ public class RuleEngineServiceImpl implements RuleEngineService {
             }
 
             // KO bloccante: risultato mancante o false
-            if (!Boolean.TRUE.equals(verify.getResult())) {
+            if (!verify.getReasonList().isEmpty()) {
 
                 log.debug(
                         "[ONBOARDING_REQUEST][BLOCKING_VERIFY_KO] code={}",
                         verify.getCode()
                 );
-
-                req.getOnboardingRejectionReasons()
-                        .add(rejectionReasonService.rejectionFor(verify.getCode()));
-
-                return onboarding2EvaluationMapper.apply(
-                        req,
-                        initiative,
-                        req.getOnboardingRejectionReasons()
-                );
+                result.addAll(verify.getReasonList());
             }
         }
 
+        if(!result.isEmpty())
+            return onboarding2EvaluationMapper.apply(
+                    req,
+                    initiative,
+                    result
+            );
 
         if (checkIfKieBaseShouldBeInvolved(initiative)) {
 

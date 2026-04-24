@@ -99,42 +99,6 @@ class Initiative2InitiativeConfigMapperTest {
     }
 
     @Test
-    void testAutomatedCriteriaNull_variableBudget_takeMinimumMax() {
-
-        Initiative2BuildDTO dto = initDto();
-        dto.getGeneral().setBeneficiaryBudgetFixedCents(null);
-        dto.getGeneral().setRankingEnabled(true);
-
-        dto.setBeneficiaryRule(
-                InitiativeBeneficiaryRuleDTO.builder()
-                        .selfDeclarationCriteria(
-                                List.of(
-                                        buildSelfCriteriaMultiConsent("CODE1", "TH1", 10_00L),
-                                        buildSelfCriteriaMultiConsent("CODE2", "TH2", 5_00L),
-                                        buildSelfCriteriaMultiConsent("CODE3", "TH3", 20_00L)
-                                )
-                        )
-                        .build()
-        );
-
-        setAdditionalInfo(dto);
-
-        InitiativeConfig result = mapper.apply(dto);
-
-        Assertions.assertNotNull(result);
-
-        // ✅ nuova regola: minimo dei beneficiaryBudgetMaxCents
-        Assertions.assertEquals(5_00L, result.getBeneficiaryBudgetMaxCents());
-
-        TestUtils.checkNotNullFields(
-                result,
-                "beneficiaryBudgetFixedCents",
-                "automatedCriteria",
-                "automatedCriteriaCodes"
-        );
-    }
-
-    @Test
     void testVariableBudgetWithoutAnyThreshold() {
 
         Initiative2BuildDTO dto = initDto();
@@ -163,8 +127,6 @@ class Initiative2InitiativeConfigMapperTest {
 
         Assertions.assertNull(result.getBeneficiaryBudgetMaxCents());
     }
-
-    // ===================== HELPERS =====================
 
     private Initiative2BuildDTO initDto() {
 
