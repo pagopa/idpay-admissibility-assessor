@@ -124,7 +124,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -277,7 +277,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding2), Mockito.any(), Mockito.eq(msgs.get(1)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding2), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO2));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO1))).thenReturn(false);
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO2))).thenThrow(new RuntimeException());
@@ -386,7 +386,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding_first), Mockito.any())).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
         Mockito.when(onboardingFamilyEvaluationServiceMock.updateOnboardingFamilyOutcome(Mockito.same(family1), Mockito.eq(initiativeConfig), Mockito.same(expectedEvaluationOnboardingFirst))).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -517,7 +517,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .thenAnswer(i -> Mono.error(new InpsGenericException("DUMMY_EXCEPTION", new RuntimeException())))
                 .thenReturn(Mono.just(evaluationDTO1));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -578,7 +578,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .thenReturn(Mono.error(new RuntimeException("SECOND_ERROR")));
 
         EvaluationDTO evaluationKoMock = Mockito.mock(EvaluationDTO.class);
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any()))
                 .thenReturn(Mono.just(evaluationKoMock));
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 

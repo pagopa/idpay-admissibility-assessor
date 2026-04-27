@@ -9,14 +9,12 @@ import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.InitiativeCounters;
 import it.gov.pagopa.admissibility.model.InitiativeCountersPreallocations;
 import it.gov.pagopa.admissibility.utils.Utils;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
 import org.springframework.transaction.reactive.TransactionalOperator;
@@ -25,30 +23,35 @@ import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OnboardingRequestEvaluatorServiceTest {
 
     @Mock
-    private RuleEngineService ruleEngineService;
+    RuleEngineService ruleEngineService;
+
     @Mock
-    private InitiativeCountersRepository initiativeCountersRepository;
+    InitiativeCountersRepository initiativeCountersRepository;
+
     @Mock
-    private InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
+    InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
+
     @Mock
-    private ReactiveMongoTransactionManager transactionManager;
+    ReactiveMongoTransactionManager transactionManager;
 
     @InjectMocks
-    private OnboardingRequestEvaluatorServiceImpl service;
+    OnboardingRequestEvaluatorServiceImpl service;
 
     private OnboardingDTO onboardingRequest;
     private InitiativeConfig initiativeConfig;
 
     @BeforeEach
-    void setUp() {
+    void setup() {
         onboardingRequest = OnboardingDTO.builder()
                 .userId("USERID")
                 .initiativeId("INITIATIVE")
@@ -57,23 +60,20 @@ class OnboardingRequestEvaluatorServiceTest {
 
         initiativeConfig = InitiativeConfig.builder()
                 .initiativeId("INITIATIVE")
-                .initiativeBudgetCents(10_000L)
                 .beneficiaryBudgetFixedCents(1_000L)
                 .build();
     }
 
+
     @Test
-    void rejectedFromRuleEngine() {
+    void evaluate_onboardingKo_fromRuleEngine() {
 
         EvaluationCompletedDTO engineResult =
                 EvaluationCompletedDTO.builder()
+                        .userId("USERID")
                         .initiativeId("INITIATIVE")
                         .status(OnboardingEvaluationStatus.ONBOARDING_KO)
-                        .onboardingRejectionReasons(List.of(
-                                new OnboardingRejectionReason(
-                                        OnboardingRejectionReason.OnboardingRejectionReasonType.TECHNICAL_ERROR,
-                                        "DUMMY",
-                                        null, null, null)))
+                        .onboardingRejectionReasons(List.of(OnboardingRejectionReason.builder().build()))
                         .build();
 
         when(ruleEngineService.applyRules(onboardingRequest, initiativeConfig))
@@ -82,165 +82,154 @@ class OnboardingRequestEvaluatorServiceTest {
         EvaluationDTO result =
                 service.evaluate(onboardingRequest, initiativeConfig).block();
 
-        Assertions.assertEquals(engineResult, result);
+        assertEquals(engineResult, result);
+
         verifyNoInteractions(initiativeCountersRepository);
+        verifyNoInteractions(initiativeCountersPreallocationsRepository);
     }
 
     @Test
-    void onboardingOk_fixedBudget() {
+    void evaluate_onboardingOk_hasNoSideEffect() {
 
-        mockRuleEngineOk();
+        when(ruleEngineService.applyRules(onboardingRequest, initiativeConfig))
+                .thenReturn(okEvaluation());
 
-        when(initiativeCountersRepository
-                .deallocatedPartialBudget(any(), anyLong()))
-                .thenReturn(Mono.just(new InitiativeCounters()));
+        EvaluationDTO result =
+                service.evaluate(onboardingRequest, initiativeConfig).block();
 
-        EvaluationCompletedDTO result =
-                (EvaluationCompletedDTO) service
-                        .evaluate(onboardingRequest, initiativeConfig)
-                        .block();
+        assertEquals(OnboardingEvaluationStatus.ONBOARDING_OK,
+                ((EvaluationCompletedDTO) result).getStatus());
 
-        Assertions.assertEquals(
-                initiativeConfig.getBeneficiaryBudgetFixedCents(),
-                result.getBeneficiaryBudgetCents()
-        );
-
-        verify(initiativeCountersRepository)
-                .deallocatedPartialBudget("INITIATIVE", 0L);
+        verifyNoInteractions(initiativeCountersRepository);
+        verifyNoInteractions(initiativeCountersPreallocationsRepository);
     }
 
-    @Test
-    void onboardingOk_variableBudget_max() {
-
-        initiativeConfig.setBeneficiaryBudgetFixedCents(null);
-
-        onboardingRequest.getVerifies().add(
-                new VerifyDTO(
-                        "ISEE_THRESHOLD",
-                        true,
-                        true,
-                        "TH_CODE",
-                        1_000L,
-                        2_000L,
-                        Collections.emptyList() // esito OK → MAX
-                )
-        );
-
-        mockRuleEngineOk();
-
-        when(initiativeCountersRepository
-                .deallocatedPartialBudget(any(), anyLong()))
-                .thenReturn(Mono.just(new InitiativeCounters()));
-
-        EvaluationCompletedDTO result =
-                (EvaluationCompletedDTO) service
-                        .evaluate(onboardingRequest, initiativeConfig)
-                        .block();
-
-        Assertions.assertEquals(2_000L, result.getBeneficiaryBudgetCents());
-    }
 
     @Test
-    void onboardingOk_variableBudget_min() {
-
-        initiativeConfig.setBeneficiaryBudgetFixedCents(null);
-
-        onboardingRequest.getVerifies().add(
-                new VerifyDTO(
-                        "ISEE_THRESHOLD",
-                        true,
-                        true,
-                        "TH_CODE",
-                        1_000L,
-                        2_000L,
-                        List.of(OnboardingRejectionReason.builder().build()) // esito KO → MIN
-                )
-        );
-
-        mockRuleEngineOk();
-
-        when(initiativeCountersRepository
-                .deallocatedPartialBudget(any(), anyLong()))
-                .thenReturn(Mono.just(new InitiativeCounters()));
-
-        EvaluationCompletedDTO result =
-                (EvaluationCompletedDTO) service
-                        .evaluate(onboardingRequest, initiativeConfig)
-                        .block();
-
-        Assertions.assertEquals(1_000L, result.getBeneficiaryBudgetCents());
-    }
-
-    @Test
-    void updateInitiativeBudget_onboardingKo() {
-
-        EvaluationCompletedDTO completed =
-                EvaluationCompletedDTO.builder()
-                        .userId("USERID")
-                        .initiativeId("INITIATIVE")
-                        .status(OnboardingEvaluationStatus.ONBOARDING_KO)
-                        .build();
-
-        InitiativeCounters counters = new InitiativeCounters();
-
-        InitiativeCountersPreallocations preallocation =
-                InitiativeCountersPreallocations.builder()
-                        .id("USERID_INITIATIVE")
-                        .userId("USERID")
-                        .initiativeId("INITIATIVE")
-                        .preallocatedAmountCents(1_000L)
-                        .status(PreallocationStatus.PREALLOCATED)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-        Mockito.when(
-                        initiativeCountersPreallocationsRepository
-                                .findById(anyString()))
-                .thenReturn(Mono.just(preallocation));
-
-        Mockito.when(
-                        initiativeCountersPreallocationsRepository
-                                .deleteByIdReturningResult(anyString()))
-                .thenReturn(Mono.just(true));
-
-        Mockito.when(
-                        initiativeCountersRepository
-                                .deallocatedPartialBudget(any(), anyLong()))
-                .thenReturn(Mono.just(counters));
+    void updateInitiativeBudget_onboardingKo_rollbackTotal() {
 
         try (MockedStatic<TransactionalOperator> tx =
-                     Mockito.mockStatic(TransactionalOperator.class);
+                     mockStatic(TransactionalOperator.class);
              MockedStatic<Utils> utils =
-                     Mockito.mockStatic(Utils.class)) {
+                     mockStatic(Utils.class)) {
+
+            EvaluationCompletedDTO evaluation =
+                    EvaluationCompletedDTO.builder()
+                            .userId("USERID")
+                            .initiativeId("INITIATIVE")
+                            .status(OnboardingEvaluationStatus.ONBOARDING_KO)
+                            .build();
 
             utils.when(() ->
                             Utils.computePreallocationId("USERID", "INITIATIVE"))
                     .thenReturn("USERID_INITIATIVE");
+
+            InitiativeCountersPreallocations preallocation =
+                    preallocation(2_000L);
+
+            when(initiativeCountersPreallocationsRepository
+                    .findById("USERID_INITIATIVE"))
+                    .thenReturn(Mono.just(preallocation));
+
+            when(initiativeCountersPreallocationsRepository
+                    .deleteByIdReturningResult("USERID_INITIATIVE"))
+                    .thenReturn(Mono.just(true));
+
+            when(initiativeCountersRepository
+                    .deallocatedPartialBudget("INITIATIVE", 2_000L))
+                    .thenReturn(Mono.just(new InitiativeCounters()));
 
             TransactionalOperator op = mock(TransactionalOperator.class);
             tx.when(() -> TransactionalOperator.create(transactionManager))
                     .thenReturn(op);
 
             when(op.transactional(any(Mono.class)))
-                    .thenAnswer(i -> i.getArgument(0));
+                    .thenAnswer(inv -> inv.getArgument(0));
 
             StepVerifier.create(
-                            service.updateInitiativeBudget(completed, initiativeConfig))
-                    .expectNext(completed)
+                            service.updateInitiativeBudget(
+                                    evaluation, initiativeConfig, onboardingRequest))
+                    .expectNext(evaluation)
                     .verifyComplete();
         }
     }
 
-    private void mockRuleEngineOk() {
-        when(ruleEngineService.applyRules(onboardingRequest, initiativeConfig))
-                .thenReturn(
-                        EvaluationCompletedDTO.builder()
-                                .initiativeId("INITIATIVE")
-                                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
-                                .onboardingRejectionReasons(new ArrayList<>())
-                                .build()
-                );
+    @Test
+    void updateInitiativeBudget_onboardingOk_min_budgetRollbackPartial() {
+
+        initiativeConfig.setBeneficiaryBudgetFixedCents(null);
+
+        onboardingRequest.getVerifies().add(
+                new VerifyDTO(
+                        "TEST",
+                        true,
+                        true,
+                        "TH",
+                        1_000L,
+                        2_000L,
+                        List.of(OnboardingRejectionReason.builder().build())
+                )
+        );
+
+        EvaluationCompletedDTO evaluation = okEvaluation();
+
+        try (MockedStatic<TransactionalOperator> tx =
+                     mockStatic(TransactionalOperator.class);
+             MockedStatic<Utils> utils =
+                     mockStatic(Utils.class)) {
+
+            utils.when(() ->
+                            Utils.computePreallocationId("USERID", "INITIATIVE"))
+                    .thenReturn("USERID_INITIATIVE");
+
+            InitiativeCountersPreallocations preallocation =
+                    preallocation(2_000L);
+
+            when(initiativeCountersPreallocationsRepository
+                    .findById("USERID_INITIATIVE"))
+                    .thenReturn(Mono.just(preallocation));
+
+            when(initiativeCountersPreallocationsRepository
+                    .updatePreallocatedAmount("USERID_INITIATIVE", 1_000L))
+                    .thenReturn(Mono.just(true));
+
+            when(initiativeCountersRepository
+                    .deallocatedPartialBudget("INITIATIVE", 1_000L))
+                    .thenReturn(Mono.just(new InitiativeCounters()));
+
+            TransactionalOperator op = mock(TransactionalOperator.class);
+            tx.when(() -> TransactionalOperator.create(transactionManager))
+                    .thenReturn(op);
+
+            when(op.transactional(any(Mono.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            StepVerifier.create(
+                            service.updateInitiativeBudget(
+                                    evaluation, initiativeConfig, onboardingRequest))
+                    .expectNext(evaluation)
+                    .verifyComplete();
+        }
+    }
+
+
+    private EvaluationCompletedDTO okEvaluation() {
+        return EvaluationCompletedDTO.builder()
+                .userId("USERID")
+                .initiativeId("INITIATIVE")
+                .status(OnboardingEvaluationStatus.ONBOARDING_OK)
+                .onboardingRejectionReasons(new ArrayList<>())
+                .build();
+    }
+
+    private InitiativeCountersPreallocations preallocation(long amount) {
+        return InitiativeCountersPreallocations.builder()
+                .id("USERID_INITIATIVE")
+                .userId("USERID")
+                .initiativeId("INITIATIVE")
+                .status(PreallocationStatus.PREALLOCATED)
+                .preallocatedAmountCents(amount)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 }
-
-

@@ -40,7 +40,6 @@ import reactor.core.scheduler.Schedulers;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
 import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOARDING_OK;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATION;
@@ -181,7 +180,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                 return checkAlreadyUserOnboarded(onboardingRequest) // già onboardato
                         .switchIfEmpty(Mono.defer(() -> checkOnboardingFamily(onboardingRequest, initiativeConfig, message, true))) // familiare già Onbordato [check family-initiative-only]
                         .switchIfEmpty(Mono.defer( () -> retrieveAuthoritiesDataAndEvaluateRequest(onboardingRequest, initiativeConfig, message))) // chiamate verso l'esterno es INPS
-                        .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+                        .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig,onboardingRequest))
 
 //                       .onErrorResume(WaitingFamilyOnBoardingException.class, e -> Mono.empty())
 
@@ -204,15 +203,15 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                             .findFirst()
                                             .ifPresent(v -> v.setVerify(false));
                                     return onboardingRequestEvaluatorService.evaluate(onboardingRequest, initiativeConfig)
-                                            .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig))
+                                            .flatMap(evaluationDTO -> onboardingRequestEvaluatorService.updateInitiativeBudget(evaluationDTO, initiativeConfig, onboardingRequest))
                                             .onErrorResume( exception ->
                                                     buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
-                                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig))
+                                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig, onboardingRequest))
                                             );
 
                                 }
                                 return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
-                                        .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig));
+                                        .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig, onboardingRequest));
                             }
                         });
             }
