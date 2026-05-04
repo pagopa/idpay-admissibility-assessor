@@ -7,10 +7,7 @@ import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericExce
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
-import it.gov.pagopa.admissibility.exception.AlreadyOnboardingException;
-import it.gov.pagopa.admissibility.exception.OnboardingException;
-import it.gov.pagopa.admissibility.exception.SkipAlreadyRankingFamilyOnBoardingException;
-import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
+import it.gov.pagopa.admissibility.exception.*;
 import it.gov.pagopa.admissibility.mapper.Onboarding2EvaluationMapper;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.onboarding.Onboarding;
@@ -193,8 +190,20 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
                             String retryHeaderValue = readRetryHeader(message);
+                            int currentRetry = (retryHeaderValue == null) ? 0 : Integer.parseInt(retryHeaderValue);
 
-                            if (retryHeaderValue == null || Integer.parseInt(retryHeaderValue) < maxOnboardingRequestRetry) {
+                            if (e instanceof OnboardingRequestRetryException) {
+                                if (currentRetry < maxOnboardingRequestRetry) {
+                                    log.info("[ONBOARDING_REQUEST] Onboarding record not found, letting the error-topic-handler to resubmit the request. Current retry: {}", currentRetry);
+                                    return Mono.error(e);
+                                } else {
+                                    log.warn("[ONBOARDING_REQUEST] Max retry reached for record not found. Generating KO for userId {}", onboardingRequest.getUserId());
+                                    return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
+                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig));
+                                }
+                            }
+
+                            if (retryHeaderValue == null || currentRetry < maxOnboardingRequestRetry) {
                                 log.info("[ONBOARDING_REQUEST] letting the error-topic-handler to resubmit the request");
                                 return Mono.error(e);
                             } else {
@@ -354,7 +363,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
     private Mono<EvaluationDTO> checkAlreadyUserOnboarded(OnboardingDTO request){
         return onboardingRepository.findById(Onboarding.buildId(request.getInitiativeId(), request.getUserId()))
-                .switchIfEmpty(Mono.error(new AlreadyOnboardingException()))
+                .switchIfEmpty(Mono.defer(() -> Mono.error(new OnboardingRequestRetryException("Onboarding record not found for userId " + request.getUserId()))))
                 .flatMap(o -> {
                     if (ON_EVALUATION.equals(o.getStatus())){
                         return Mono.empty();
