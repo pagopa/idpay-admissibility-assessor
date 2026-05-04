@@ -2,8 +2,6 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
@@ -36,11 +34,12 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-import static it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST;
 import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOARDING_OK;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ONBOARDING_CONTEXT_INITIATIVE_KEY;
 import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATION;
@@ -190,7 +189,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
 
                         .onErrorResume(e -> {
                             log.error("[ONBOARDING_REQUEST] Something gone wrong while handling onboarding request{} of userId {} into initiativeId {}",
-                                    onboardingRequest.isBudgetReserved() ? " (BUDGET_RESERVED)" : "",
+                                    Boolean.TRUE.equals(onboardingRequest.getBudgetReserved()) ? " (BUDGET_RESERVED)" : "",
                                     onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
 
                             String retryHeaderValue = readRetryHeader(message);

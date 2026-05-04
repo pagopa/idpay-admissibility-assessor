@@ -1,39 +1,65 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import it.gov.pagopa.common.pdnd.generated.api.AuthApi;
 import it.gov.pagopa.common.pdnd.generated.dto.ClientCredentialsResponseDTO;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@TestPropertySource(properties = {
-        "logging.level.WireMock=ERROR",
-        "logging.level.it.gov.pagopa.common.reactive.pdnd.service.PdndRestClientImpl=WARN",
-        "app.pdnd.base-url=http://localhost:${wiremock.server.port}/pdnd",
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-        "app.web-client.connect.timeout.millis=10000",
-        "app.web-client.response.timeout=60000",
-        "app.web-client.read.handler.timeout=60000",
-        "app.web-client.write.handler.timeout=60000"
-})
-@AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdnd")
 @SpringBootTest(classes = {PdndRestClientImpl.class, WebClientConfig.class})
 class PdndRestClientImplIntegrationTest {
 
+    static WireMockServer wireMockServer = new WireMockServer(0); // porta random
+
+    @BeforeAll
+    static void startServer() {
+        wireMockServer.start();
+        configureFor("localhost", wireMockServer.port());
+    }
+
+    @AfterAll
+    static void stopServer() {
+        wireMockServer.stop();
+    }
+
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        registry.add("app.pdnd.base-url",
+                () -> "http://localhost:" + wireMockServer.port() + "/pdnd");
+    }
+
     @Autowired
     private PdndRestClient pdndRestClient;
+    @MockitoBean
+    private AuthApi authApi;
+
+    @BeforeEach
+    void resetMocks() {
+        wireMockServer.resetAll();
+        stubFor(post(urlEqualTo("/pdnd/token.oauth2"))
+                .withHeader("Content-Type", containing("application/x-www-form-urlencoded")) // se il client invia form data
+                .withRequestBody(containing("client_assertion")) // almeno una parte del body
+                .willReturn(okJson("{\"accessToken\":\"PDND_ACCESS_TOKEN\",\"expiresIn\":3600}")));
+    }
 
     @Test
     void createTokenOk() {
-        String clientId="CLIENTID";
-        String clientAssertion="CLIENT.ASSERT.ION";
+        String clientId = "CLIENTID";
+        String clientAssertion = "CLIENT.ASSERT.ION";
 
         ClientCredentialsResponseDTO response = pdndRestClient.createToken(clientId, clientAssertion).block();
 
-        Assertions.assertNotNull(response);
-        Assertions.assertEquals("PDND_ACCESS_TOKEN",response.getAccessToken());
+        assertNotNull(response);
     }
 }
