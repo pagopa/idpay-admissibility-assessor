@@ -291,16 +291,11 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
     private Mono<EvaluationDTO> retrieveAuthoritiesDataAndEvaluateRequest(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, Message<String> message) {
         return authoritiesDataRetrieverService.retrieve(onboardingRequest, initiativeConfig, message)
                 .flatMap(r -> onboardingRequestEvaluatorService.evaluate(r, initiativeConfig))
-                .onErrorResume(OnboardingRequestRetryException.class, e -> {
-                    log.error("[ADMISSIBILITY][RETRY_LOG] Found retry exception for userId{}: {}",
-                            onboardingRequest.getUserId(), e.getMessage());
-                    return Mono.error(e);
-                })
                 .onErrorResume(OnboardingException.class, e -> {
-                    log.info("[ADMISSIBILITY][KO_LOG] OnboardingException (KO) for userId {}: {}",
-                            onboardingRequest.getUserId(), e.getMessage());
+                    log.info(e.getMessage());
                     return Mono.just(onboarding2EvaluationMapper.apply(onboardingRequest, initiativeConfig, e.getRejectionReasons()));
                 })
+
                 .flatMap(ev -> {
                     if(isFamilyInitiative(initiativeConfig)){
                         return onboardingFamilyEvaluationService.updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
