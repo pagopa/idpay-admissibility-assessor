@@ -584,6 +584,73 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         checkCommits(checkpointers);
     }
 
+    @Test
+    void testOnboardingRequestRetryException_BelowMaxRetry() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder().userId("USER_RETRY").initiativeId(initiativeId).build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER_RETRY"))).thenReturn(Mono.empty());
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+
+        Message<String> msg = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, 0)
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(msg));
+
+        Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibility(
+                Mockito.any(Message.class),
+                Mockito.anyString(),
+                Mockito.anyBoolean(),
+                Mockito.any(Throwable.class)
+        );
+
+        Mockito.verify(onboardingRepositoryMock).findById(Mockito.anyString());
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.any(), Mockito.any(), Mockito.any());
+
+        Mockito.verifyNoInteractions(onboardingNotifierServiceMock);
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void testOnboardingRequestRetryException_MaxRetryReached() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder().userId("USER_MAX_RETRY").initiativeId(initiativeId).build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER_MAX_RETRY"))).thenReturn(Mono.empty());
+
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+                .thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+
+        Message<String> msg = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, String.valueOf(maxRetry))
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(msg));
+
+        Mockito.verify(onboardingRepositoryMock).findById(Mockito.anyString());
+        Mockito.verify(onboardingCheckServiceMock).check(Mockito.any(), Mockito.any(), Mockito.any());
+        Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
+
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
+        checkCommits(List.of(checkpointer));
+    }
+
     private static void checkCommits(List<Checkpointer> checkpointers) {
         TestUtils.wait(100, TimeUnit.MILLISECONDS);
         checkpointers.forEach(c -> Mockito.verify(c).success());
