@@ -409,6 +409,9 @@
 								<dateLibrary>java25</dateLibrary>
 								<useSpringBoot3>true</useSpringBoot3>
 								<useJakartaEe>true</useJakartaEe>
+                                <additionalModelTypeAnnotations>
+                                    @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+                                </additionalModelTypeAnnotations>
 							</configOptions>
 							<modelNameSuffix>DTO</modelNameSuffix>
 						</configuration>
