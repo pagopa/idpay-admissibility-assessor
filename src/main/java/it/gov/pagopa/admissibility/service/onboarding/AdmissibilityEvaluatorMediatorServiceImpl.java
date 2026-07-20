@@ -198,7 +198,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
                                 } else {
                                     log.warn("[ONBOARDING_REQUEST] Max retry reached for record not found. Generating KO for userId {}", onboardingRequest.getUserId());
                                     return buildOnboardingGenericErrorKo(onboardingRequest, initiativeConfig)
-                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig));
+                                            .doOnNext(ev -> onboardingRequestEvaluatorService.updateInitiativeBudget(ev, initiativeConfig, onboardingRequest));
                                 }
                             }
 

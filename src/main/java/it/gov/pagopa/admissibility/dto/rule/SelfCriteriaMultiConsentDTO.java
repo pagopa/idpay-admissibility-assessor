@@ -30,7 +30,7 @@ public class SelfCriteriaMultiConsentDTO implements AnyOfInitiativeBeneficiaryRu
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
-    static class ConsentValue {
+    public static class ConsentValue {
         @JsonProperty("description")
         private String description;
 

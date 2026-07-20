@@ -47,8 +47,7 @@ class AnprDataRetrieverServiceImplTest {
         PdndInitiativeConfig config = new PdndInitiativeConfig();
         OnboardingDTO onboarding = new OnboardingDTO();
 
-        PdndServicesInvocation invocation1 = new PdndServicesInvocation(true, List.of(),true, true, true, "isse");
-
+        PdndServicesInvocation invocation1 = new PdndServicesInvocation("isee", true, "threshold");
         when(anprC001RestClient.invoke(fiscalCode, config))
                 .thenReturn(Mono.just(new PdndResponseBase<RispostaE002OKDTO, RispostaKODTO>(PdndResponseType.OK) {
                     @Override
@@ -73,7 +72,7 @@ class AnprDataRetrieverServiceImplTest {
         PdndInitiativeConfig config = new PdndInitiativeConfig();
         OnboardingDTO onboarding = new OnboardingDTO();
 
-        PdndServicesInvocation invocation1 = new PdndServicesInvocation(true, List.of(),false, false, true, "isse");
+        PdndServicesInvocation invocation1 = new PdndServicesInvocation( "isse", false, "threshold");
 
         when(anprC001RestClient.invoke(fiscalCode, config))
                 .thenReturn(Mono.just(new PdndResponseBase<RispostaE002OKDTO, RispostaKODTO>(PdndResponseType.OK) {

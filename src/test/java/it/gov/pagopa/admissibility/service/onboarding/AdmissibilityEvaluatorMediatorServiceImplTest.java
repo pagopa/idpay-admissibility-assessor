@@ -638,7 +638,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER_MAX_RETRY"))).thenReturn(Mono.empty());
 
         Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any()))
                 .thenAnswer(a -> Mono.just(a.getArguments()[0]));
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 

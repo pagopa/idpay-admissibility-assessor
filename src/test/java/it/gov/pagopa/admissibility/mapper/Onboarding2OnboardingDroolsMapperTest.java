@@ -81,7 +81,8 @@ class Onboarding2OnboardingDroolsMapperTest {
                 result,
                 "serviceId",
                 "userMail",
-                "verifies"
+                "verifies",
+                "budgetReserved"
         );
     }
 }
