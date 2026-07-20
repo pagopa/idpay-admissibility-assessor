@@ -1,11 +1,11 @@
 package it.gov.pagopa.admissibility.dto.onboarding;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import net.minidev.json.annotate.JsonIgnore;
 
 import java.time.LocalDate;
 import java.util.ArrayList;

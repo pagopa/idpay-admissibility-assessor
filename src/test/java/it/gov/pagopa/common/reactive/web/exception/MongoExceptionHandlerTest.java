@@ -1,6 +1,8 @@
 package it.gov.pagopa.common.reactive.web.exception;
 
 import static org.mockito.Mockito.doThrow;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.csrf;
+import static org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers.mockUser;
 
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoWriteException;
@@ -15,8 +17,8 @@ import org.bson.BsonDocument;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.mongodb.UncategorizedMongoDbException;
 import org.springframework.http.HttpHeaders;
@@ -39,7 +41,7 @@ class MongoExceptionHandlerTest {
     @Autowired
     private WebTestClient webTestClient;
 
-    @SpyBean
+    @MockitoSpyBean
     private TestController testControllerSpy;
 
 
@@ -70,7 +72,7 @@ class MongoExceptionHandlerTest {
                 new UncategorizedMongoDbException(mongoQueryException.getMessage(), mongoQueryException))
                 .when(testControllerSpy).testEndpoint();
 
-        webTestClient.get()
+        webTestClient.mutateWith(mockUser()).mutateWith(csrf()).get()
                 .uri(uriBuilder -> uriBuilder.path("/test").build())
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.TOO_MANY_REQUESTS)
@@ -97,7 +99,7 @@ class MongoExceptionHandlerTest {
             new DataIntegrityViolationException(mongoWriteException.getMessage(), mongoWriteException))
             .when(testControllerSpy).testEndpoint();
 
-        webTestClient.get()
+        webTestClient.mutateWith(mockUser()).mutateWith(csrf()).get()
             .uri(uriBuilder -> uriBuilder.path("/test").build())
             .exchange()
             .expectStatus().isEqualTo(HttpStatus.TOO_MANY_REQUESTS)
@@ -113,7 +115,7 @@ class MongoExceptionHandlerTest {
         doThrow(new UncategorizedMongoDbException("DUMMY", new Exception()))
                 .when(testControllerSpy).testEndpoint();
 
-        webTestClient.get()
+        webTestClient.mutateWith(mockUser()).mutateWith(csrf()).get()
                 .uri(uriBuilder -> uriBuilder.path("/test").build())
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -125,7 +127,7 @@ class MongoExceptionHandlerTest {
         doThrow(new MongoRequestRateTooLargeRetryExpiredException("FLOWNAME",3,3,0,100,34L,new Exception()))
                 .when(testControllerSpy).testEndpoint();
 
-        webTestClient.get()
+        webTestClient.mutateWith(mockUser()).mutateWith(csrf()).get()
                 .uri(uriBuilder -> uriBuilder.path("/test").build())
                 .exchange()
                 .expectStatus().isEqualTo(HttpStatus.TOO_MANY_REQUESTS)

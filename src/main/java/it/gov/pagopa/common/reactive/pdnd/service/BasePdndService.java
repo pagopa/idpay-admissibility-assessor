@@ -1,7 +1,7 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
 import com.auth0.jwt.algorithms.Algorithm;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;

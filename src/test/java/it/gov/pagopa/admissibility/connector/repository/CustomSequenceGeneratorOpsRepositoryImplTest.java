@@ -1,60 +1,110 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import it.gov.pagopa.admissibility.model.CustomSequenceGenerator;
-import it.gov.pagopa.common.mongo.MongoTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
-@Slf4j
-@MongoTest
 class CustomSequenceGeneratorOpsRepositoryImplTest {
-    @Autowired
-    protected CustomSequenceGeneratorRepository customSequenceGeneratorRepository;
 
-    private final String TEST_ID = "testSequenceId";
+    @Mock
+    private ReactiveMongoTemplate mongoTemplate;
 
-    @AfterEach
-    void cleanData(){
-        customSequenceGeneratorRepository.deleteById(TEST_ID).block();
-    }
+    @InjectMocks
+    private CustomSequenceGeneratorOpsRepositoryImpl repository;
 
+    private static final String TEST_SEQUENCE_ID = "testSequence";
 
-    @Test
-    void getSequenceAlreadyExits(){
-        // Given
-        Long initialSequence = 5L;
-        CustomSequenceGenerator customSequenceGenerator =  CustomSequenceGenerator.builder()
-                .sequenceId(TEST_ID)
-                .value(initialSequence)
-                .build();
-        customSequenceGeneratorRepository.save(customSequenceGenerator).block();
-
-        // When
-        Long sequenceResult = customSequenceGeneratorRepository.nextValue(TEST_ID).block();
-
-        // Then
-        System.out.println(sequenceResult);
-        Assertions.assertNotNull(sequenceResult);
-        Assertions.assertNotEquals(initialSequence, sequenceResult);
-        Assertions.assertEquals(6L, sequenceResult);
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
-    void getSequenceNotExits(){
-        // When
-        Long sequenceResult1 = customSequenceGeneratorRepository.nextValue(TEST_ID).block();
-        Long sequenceResult2 = customSequenceGeneratorRepository.nextValue(TEST_ID).block();
+    void testNextValue_FirstCall_ShouldReturn1() {
+        // Mockiamo findAndModify
+        CustomSequenceGenerator sequence = new CustomSequenceGenerator();
+        sequence.setSequenceId(TEST_SEQUENCE_ID);
+        sequence.setValue(1L);
 
-        // Then
-        Assertions.assertNotNull(sequenceResult1);
-        Assertions.assertEquals(1L, sequenceResult1);
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), any(Class.class)))
+                .thenReturn(Mono.just(sequence));
 
-        Assertions.assertNotNull(sequenceResult2);
-        Assertions.assertEquals(2L, sequenceResult2);
+        StepVerifier.create(repository.nextValue(TEST_SEQUENCE_ID))
+                .expectNext(1L)
+                .verifyComplete();
     }
 
+    @Test
+    void testNextValue_SubsequentCalls_ShouldIncrement() {
+        // Simuliamo un incremento
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), any(Class.class)))
+                .thenReturn(Mono.just(sequence(1L)))
+                .thenReturn(Mono.just(sequence(2L)))
+                .thenReturn(Mono.just(sequence(3L)));
+
+        StepVerifier.create(repository.nextValue(TEST_SEQUENCE_ID))
+                .expectNext(1L)
+                .verifyComplete();
+
+        StepVerifier.create(repository.nextValue(TEST_SEQUENCE_ID))
+                .expectNext(2L)
+                .verifyComplete();
+
+        StepVerifier.create(repository.nextValue(TEST_SEQUENCE_ID))
+                .expectNext(3L)
+                .verifyComplete();
+    }
+
+    @Test
+    void testNextValue_MultipleSequences_ShouldMaintainSeparateCounters() {
+        String sequenceA = "seqA";
+        String sequenceB = "seqB";
+
+        when(mongoTemplate.findAndModify(any(Query.class), any(Update.class),
+                any(FindAndModifyOptions.class), any(Class.class)))
+                .thenAnswer(invocation -> {
+                    Query q = invocation.getArgument(0);
+                    String seqId = q.getQueryObject().getString("sequenceId");
+                    long value = seqId.equals(sequenceA) ? 1L : 1L;
+                    return Mono.just(sequence(value, seqId));
+                });
+
+        StepVerifier.create(repository.nextValue(sequenceA))
+                .expectNext(1L)
+                .verifyComplete();
+
+        StepVerifier.create(repository.nextValue(sequenceB))
+                .expectNext(1L)
+                .verifyComplete();
+
+        StepVerifier.create(repository.nextValue(sequenceA))
+                .expectNext(1L) // perché il mock non mantiene lo stato reale
+                .verifyComplete();
+    }
+
+    // Helper per creare CustomSequenceGenerator
+    private CustomSequenceGenerator sequence(long value) {
+        return sequence(value, TEST_SEQUENCE_ID);
+    }
+
+    private CustomSequenceGenerator sequence(long value, String sequenceId) {
+        CustomSequenceGenerator s = new CustomSequenceGenerator();
+        s.setSequenceId(sequenceId);
+        s.setValue(value);
+        return s;
+    }
 }

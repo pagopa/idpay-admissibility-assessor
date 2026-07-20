@@ -1,6 +1,6 @@
 package it.gov.pagopa.common.reactive.kafka.consumer;
 
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectReader;
 import it.gov.pagopa.common.kafka.utils.KafkaConstants;
 import it.gov.pagopa.common.reactive.kafka.exception.UncommittableError;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;

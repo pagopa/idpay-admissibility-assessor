@@ -33,7 +33,7 @@ public class OnboardingDTO {
     private Family family;
 
     // Info filled during processing
-    private boolean budgetReserved;
+    private Boolean budgetReserved;
 
     private String serviceId;
 

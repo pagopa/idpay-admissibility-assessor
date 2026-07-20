@@ -1,7 +1,7 @@
 package it.gov.pagopa.admissibility.service.commands;
 
 import ch.qos.logback.classic.LoggerContext;
-import com.fasterxml.jackson.databind.ObjectReader;
+import tools.jackson.databind.ObjectReader;
 import it.gov.pagopa.admissibility.dto.commands.QueueCommandOperationDTO;
 import it.gov.pagopa.admissibility.service.AdmissibilityErrorNotifierService;
 import it.gov.pagopa.admissibility.service.commands.operations.DeleteInitiativeService;

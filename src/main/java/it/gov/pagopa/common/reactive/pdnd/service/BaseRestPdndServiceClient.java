@@ -1,6 +1,6 @@
 package it.gov.pagopa.common.reactive.pdnd.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import it.gov.pagopa.admissibility.dto.anpr.response.PdndKoResponse;
 import it.gov.pagopa.admissibility.dto.anpr.response.PdndOkResponse;
 import it.gov.pagopa.admissibility.dto.anpr.response.PdndResponseBase;

@@ -10,10 +10,10 @@ import org.kie.api.KieBase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.actuate.availability.ReadinessStateHealthIndicator;
 import org.springframework.boot.availability.ApplicationAvailability;
 import org.springframework.boot.availability.AvailabilityState;
 import org.springframework.boot.availability.ReadinessState;
+import org.springframework.boot.health.application.ReadinessStateHealthIndicator;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -158,7 +158,7 @@ public class OnboardingContextHolderServiceImpl extends ReadinessStateHealthIndi
                             try {
                                 KieBase newKieBase = org.apache.commons.lang3.SerializationUtils.deserialize(c);
                                 acceptNewKieBase(newKieBase);
-                            } catch (Exception e) {
+                            } catch (Exception _) {
                                 log.warn("[BENEFICIARY_RULE_BUILDER] Cached KieContainer cannot be executed! refreshing it!");
                                 return null;
                             }

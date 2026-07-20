@@ -1,9 +1,9 @@
 package it.gov.pagopa.common.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.springframework.messaging.Message;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectReader;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -28,7 +28,7 @@ public class CommonUtilities {
         try {
             String payload = readMessagePayload(message);
             return objectReader.readValue(payload);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             onError.accept(e);
             return null;
         }
@@ -75,7 +75,7 @@ public class CommonUtilities {
     public static <T> String convertToJson(T object, ObjectMapper objectMapper) {
         try {
             return objectMapper.writeValueAsString(object);
-        } catch (JsonProcessingException e) {
+        } catch (JacksonException e) {
             throw new IllegalStateException("Error converting request in JSON",e);
         }
     }

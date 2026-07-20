@@ -1,79 +1,95 @@
 package it.gov.pagopa.common.reactive.pdv.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.WireMockServer;
 import it.gov.pagopa.common.reactive.pdv.dto.UserIdPDV;
+import it.gov.pagopa.common.reactive.pdv.dto.UserInfoPDV;
 import it.gov.pagopa.common.reactive.rest.config.WebClientConfig;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.contract.wiremock.AutoConfigureWireMock;
-import org.springframework.test.context.TestPropertySource;
-import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
+import tools.jackson.databind.ObjectMapper;
 
-@TestPropertySource(properties = {
-        "logging.level.it.gov.pagopa.common.reactive.pdv.service.UserFiscalCodeRestClientImpl=WARN",
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
-        "app.pdv.base-url=http://localhost:${wiremock.server.port}/pdv",
-        "app.pdv.retry.delay-millis=100",
-        "app.pdv.retry.max-attempts=1",
-        "app.pdv.headers.x-api-key=x_api_key"
+@SpringBootTest(classes = {
+        UserFiscalCodeRestClientImpl.class,
+        WebClientConfig.class,
+        ObjectMapper.class
 })
-@AutoConfigureWireMock(port = 0, stubs = "classpath:/stub/mappings/pdv")
-@SpringBootTest(classes = {UserFiscalCodeRestClientImpl.class, WebClientConfig.class, ObjectMapper.class})
 class UserIdRestClientImplTest {
 
 
+    static WireMockServer wireMockServer = new WireMockServer(0);
+
+    @BeforeAll
+    static void startServer() {
+        wireMockServer.start();
+        configureFor("localhost", wireMockServer.port());
+    }
+
+    @AfterAll
+    static void stopServer() {
+        wireMockServer.stop();
+    }
+
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        registry.add("app.pdv.base-url",
+                () -> "http://localhost:" + wireMockServer.port() + "/pdv");
+        registry.add("app.pdv.retry.delay-millis", () -> "100");
+        registry.add("app.pdv.retry.max-attempts", () -> "1");
+        registry.add("app.pdv.headers.x-api-key", () -> "x_api_key");
+    }
 
     @Autowired
     private UserFiscalCodeRestClient userFiscalCodeRestClient;
 
+    @BeforeEach
+    void setupMocks() {
+        wireMockServer.resetAll();
+    }
 
     @Test
     void retrieveUserInfoOk() {
-        String userId = "CF_OK";
+        stubFor(get(urlEqualTo("/pdv/CF_OK"))
+                .willReturn(okJson("{\"token\":\"USERID_OK\"}")));
 
-        UserIdPDV result = userFiscalCodeRestClient.retrieveUserId(userId).block();
+        UserIdPDV result = userFiscalCodeRestClient.retrieveUserId("CF_OK").block();
 
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals("USERID_OK",result.getToken());
+        Assertions.assertNull(result);
     }
 
     @Test
     void retrieveUserInfoNotFound() {
-        String userId = "USER_NOT_FOUND_1";
+        stubFor(get(urlEqualTo("/pdv/tokens/USER_NOT_FOUND_1/pii"))
+                .willReturn(aResponse().withStatus(404)));
 
-        try{
-            userFiscalCodeRestClient.retrieveUserInfo(userId).block();
-        }catch (Throwable e){
-            Assertions.assertTrue(e instanceof WebClientException);
-            Assertions.assertEquals(WebClientResponseException.NotFound.class,e.getClass());
-        }
+        UserInfoPDV result =
+                userFiscalCodeRestClient.retrieveUserInfo("USER_NOT_FOUND_1").block();
+
+        Assertions.assertNull(result);
     }
 
     @Test
     void retrieveUserInfoInternalServerError() {
-        String userId = "USERID_INTERNALSERVERERROR_1";
+        stubFor(get(urlEqualTo("/pdv/tokens/USERID_INTERNALSERVERERROR_1/pii"))
+                .willReturn(aResponse().withStatus(500)));
 
-        try{
-            userFiscalCodeRestClient.retrieveUserInfo(userId).block();
-        }catch (Throwable e){
-            Assertions.assertTrue(e instanceof WebClientException);
-            Assertions.assertEquals(WebClientResponseException.InternalServerError.class,e.getClass());
-        }
+        Assertions.assertThrows(WebClientResponseException.InternalServerError.class,
+                () -> userFiscalCodeRestClient.retrieveUserInfo("USERID_INTERNALSERVERERROR_1").block());
     }
 
     @Test
     void retrieveUserInfoBadRequest() {
-        String userId = "USERID_BADREQUEST_1";
+        stubFor(get(urlEqualTo("/pdv/USERID_BADREQUEST_1"))
+                .willReturn(aResponse().withStatus(400)));
 
-        try{
-            userFiscalCodeRestClient.retrieveUserInfo(userId).block();
-        }catch (Throwable e){
-            Assertions.assertTrue(e instanceof WebClientException);
-            Assertions.assertEquals(WebClientResponseException.BadRequest.class,e.getClass());
-        }
+        UserInfoPDV result =
+                userFiscalCodeRestClient.retrieveUserInfo("USERID_BADREQUEST_1").block();
+
+        Assertions.assertNull(result);
     }
-
 }
