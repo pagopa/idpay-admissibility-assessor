@@ -30,7 +30,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                         .filter(SelfCriteriaMultiConsentDTO.class::isInstance)
                         .map(SelfCriteriaMultiConsentDTO.class::cast)
                         .flatMap(s -> s.getValue().stream())
-                        .map(SelfCriteriaMultiConsentDTO.ConsentValue::getBeneficiaryBudgetMaxCents)
+                        .map(SelfCriteriaMultiConsentDTO.ConsentValue::getBeneficiaryBudgetCentsMax)
                         .filter(Objects::nonNull)
                         .findFirst()
                         .orElse(null);

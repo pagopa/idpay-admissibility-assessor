@@ -113,7 +113,7 @@ class Initiative2InitiativeConfigMapperTest {
                                                         List.of(
                                                                 SelfCriteriaMultiConsentDTO.ConsentValue.builder()
                                                                         .code(CONSENT_CRITERIA_CODE_ISEE)
-                                                                        .beneficiaryBudgetMaxCents(null)
+                                                                        .beneficiaryBudgetCentsMax(null)
                                                                         .build()
                                                         )
                                                 )
@@ -220,7 +220,7 @@ class Initiative2InitiativeConfigMapperTest {
                                 SelfCriteriaMultiConsentDTO.ConsentValue.builder()
                                         .code(consentCode)
                                         .thresholdCode(thresholdCode)
-                                        .beneficiaryBudgetMaxCents(beneficiaryBudgetMaxCents)
+                                        .beneficiaryBudgetCentsMax(beneficiaryBudgetMaxCents)
                                         .build()
                         )
                 )

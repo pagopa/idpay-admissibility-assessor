@@ -41,10 +41,10 @@ public class SelfCriteriaMultiConsentDTO implements AnyOfInitiativeBeneficiaryRu
         private String code;
 
         @JsonProperty("beneficiaryBudgetMinCents")
-        private Long beneficiaryBudgetMinCents;
+        private Long beneficiaryBudgetCentsMin;
 
         @JsonProperty("beneficiaryBudgetMaxCents")
-        private Long beneficiaryBudgetMaxCents;
+        private Long beneficiaryBudgetCentsMax;
 
         @JsonProperty("thresholdCode")
         private String thresholdCode;
