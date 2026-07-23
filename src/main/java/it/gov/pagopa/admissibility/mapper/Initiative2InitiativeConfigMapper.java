@@ -3,6 +3,7 @@ package it.gov.pagopa.admissibility.mapper;
 import it.gov.pagopa.admissibility.dto.rule.*;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
 import it.gov.pagopa.admissibility.model.Order;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+@Slf4j
 @Service
 public class Initiative2InitiativeConfigMapper implements Function<Initiative2BuildDTO, InitiativeConfig> {
 
@@ -21,12 +23,17 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
         List<AutomatedCriteriaDTO> automatedCriteriaList =
                 initiative.getBeneficiaryRule().getAutomatedCriteria();
 
+        List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria = initiative.getBeneficiaryRule()
+                .getSelfDeclarationCriteria();
+
+        log.info("[RULE BUILD] self declaration criteria: {}", selfDeclarationCriteria); //TODO remove
+
         InitiativeAdditionalInfoDTO additionalInfo = initiative.getAdditionalInfo();
 
         Long beneficiaryBudgetMaxCents =
                 initiative.getGeneral().getBeneficiaryBudgetFixedCents() != null
                         ? null
-                        : initiative.getBeneficiaryRule().getSelfDeclarationCriteria().stream()
+                        : selfDeclarationCriteria.stream()
                         .filter(SelfCriteriaMultiConsentDTO.class::isInstance)
                         .map(SelfCriteriaMultiConsentDTO.class::cast)
                         .flatMap(s -> s.getValue().stream())
