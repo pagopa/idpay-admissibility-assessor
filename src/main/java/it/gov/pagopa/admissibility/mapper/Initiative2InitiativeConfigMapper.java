@@ -23,23 +23,19 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
         List<AutomatedCriteriaDTO> automatedCriteriaList =
                 initiative.getBeneficiaryRule().getAutomatedCriteria();
 
-        List<AnyOfInitiativeBeneficiaryRuleDTOSelfDeclarationCriteriaItems> selfDeclarationCriteria = initiative.getBeneficiaryRule()
-                .getSelfDeclarationCriteria();
-
-        log.info("[RULE BUILD] self declaration criteria: {}", selfDeclarationCriteria); //TODO remove
-
         InitiativeAdditionalInfoDTO additionalInfo = initiative.getAdditionalInfo();
 
         Long beneficiaryBudgetMaxCents =
                 initiative.getGeneral().getBeneficiaryBudgetFixedCents() != null
                         ? null
-                        : selfDeclarationCriteria.stream()
+                        : initiative.getBeneficiaryRule()
+                        .getSelfDeclarationCriteria().stream()
                         .filter(SelfCriteriaMultiConsentDTO.class::isInstance)
                         .map(SelfCriteriaMultiConsentDTO.class::cast)
                         .flatMap(s -> s.getValue().stream())
                         .map(SelfCriteriaMultiConsentDTO.ConsentValue::getBeneficiaryBudgetCentsMax)
                         .filter(Objects::nonNull)
-                        .findFirst()
+                        .max(Long::compareTo)
                         .orElse(null);
 
         return InitiativeConfig.builder()

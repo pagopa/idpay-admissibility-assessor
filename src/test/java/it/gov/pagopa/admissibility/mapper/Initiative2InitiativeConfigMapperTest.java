@@ -109,10 +109,10 @@ class Initiative2InitiativeConfigMapperTest {
                         .selfDeclarationCriteria(
                                 List.of(
                                         SelfCriteriaMultiConsentDTO.builder()
+                                                .code(CONSENT_CRITERIA_CODE_ISEE)
                                                 .value(
                                                         List.of(
                                                                 SelfCriteriaMultiConsentDTO.ConsentValue.builder()
-                                                                        .code(CONSENT_CRITERIA_CODE_ISEE)
                                                                         .beneficiaryBudgetCentsMax(null)
                                                                         .build()
                                                         )
@@ -215,10 +215,10 @@ class Initiative2InitiativeConfigMapperTest {
             Long beneficiaryBudgetMaxCents
     ) {
         return SelfCriteriaMultiConsentDTO.builder()
+                .code(consentCode)
                 .value(
                         List.of(
                                 SelfCriteriaMultiConsentDTO.ConsentValue.builder()
-                                        .code(consentCode)
                                         .thresholdCode(thresholdCode)
                                         .beneficiaryBudgetCentsMax(beneficiaryBudgetMaxCents)
                                         .build()
