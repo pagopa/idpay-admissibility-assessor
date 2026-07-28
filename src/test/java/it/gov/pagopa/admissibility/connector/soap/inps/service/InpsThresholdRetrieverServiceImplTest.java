@@ -88,6 +88,64 @@ class InpsThresholdRetrieverServiceImplTest {
     }
 
     @Test
+    void testInvoke_skipVerificationNoThreshod() {
+        VerifyDTO verify = new VerifyDTO(
+                OnboardingConstants.CRITERIA_CODE_ISEE.toLowerCase(),
+                true,
+                true,
+                null,
+                null,
+                null,
+                null
+        );
+        OnboardingDTO onboarding = onboardingWithVerify(verify);
+
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildInvocation(false),
+                        onboarding
+                ).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertTrue(result.get().isEmpty());
+        Assertions.assertNull(verify.getReasonList());
+
+        Mockito.verifyNoInteractions(iseeThresholdConsultationSoapClientMock);
+    }
+
+    @Test
+    void testInvoke_skipVerificationNoIsee() {
+        VerifyDTO verify = new VerifyDTO(
+                OnboardingConstants.CRITERIA_CODE_FAMILY.toLowerCase(),
+                true,
+                true,
+                null,
+                null,
+                null,
+                null
+        );
+        OnboardingDTO onboarding = onboardingWithVerify(verify);
+
+        Optional<List<OnboardingRejectionReason>> result =
+                service.invoke(
+                        FISCAL_CODE,
+                        PDND_INITIATIVE_CONFIG,
+                        buildInvocation(false),
+                        onboarding
+                ).block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isPresent());
+        Assertions.assertTrue(result.get().isEmpty());
+        Assertions.assertNull(verify.getReasonList());
+
+        Mockito.verifyNoInteractions(iseeThresholdConsultationSoapClientMock);
+    }
+
+    @Test
     void testInvoke_skipVerification() {
         VerifyDTO verify = buildThresholdVerify();
         OnboardingDTO onboarding = onboardingWithVerify(verify);
