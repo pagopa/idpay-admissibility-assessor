@@ -35,14 +35,14 @@ public final class IseeUtils {
         }
     }
 
-    public static <T> Mono<T> handleError(Throwable e) {
+    public static <T> Mono<T> handleError(Throwable e, String flow) {
         if (e instanceof ExecutionException
                 && e.getCause() instanceof ClientTransportException clientTransportException
                 && clientTransportException.getMessage().contains("Too Many Requests")) {
             return Mono.error(new InpsDailyRequestLimitException(e));
         } else {
             return Mono.error(new InpsGenericException(
-                    "[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", e));
+                    "[ONBOARDING_REQUEST][INPS_INVOCATION][%s] Something went wrong when invoking INPS service".formatted(flow), e));
         }
     }
 

@@ -2,13 +2,9 @@ package it.gov.pagopa.admissibility.service.onboarding.evaluate;
 
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersPreallocationsRepository;
 import it.gov.pagopa.admissibility.connector.repository.InitiativeCountersRepository;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
 import it.gov.pagopa.admissibility.model.InitiativeConfig;
-import it.gov.pagopa.admissibility.utils.OnboardingConstants;
 import it.gov.pagopa.admissibility.utils.Utils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.ReactiveMongoTransactionManager;
@@ -16,87 +12,218 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 @Service
 @Slf4j
-public class OnboardingRequestEvaluatorServiceImpl implements OnboardingRequestEvaluatorService {
+public class OnboardingRequestEvaluatorServiceImpl
+        implements OnboardingRequestEvaluatorService {
 
     private final RuleEngineService ruleEngineService;
     private final InitiativeCountersRepository initiativeCountersRepository;
     private final InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository;
     private final ReactiveMongoTransactionManager transactionManager;
 
-    public OnboardingRequestEvaluatorServiceImpl(RuleEngineService ruleEngineService, InitiativeCountersRepository initiativeCountersRepository, InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository, ReactiveMongoTransactionManager transactionManager) {
+    public OnboardingRequestEvaluatorServiceImpl(
+            RuleEngineService ruleEngineService,
+            InitiativeCountersRepository initiativeCountersRepository,
+            InitiativeCountersPreallocationsRepository initiativeCountersPreallocationsRepository,
+            ReactiveMongoTransactionManager transactionManager) {
+
         this.ruleEngineService = ruleEngineService;
         this.initiativeCountersRepository = initiativeCountersRepository;
         this.initiativeCountersPreallocationsRepository = initiativeCountersPreallocationsRepository;
         this.transactionManager = transactionManager;
     }
 
+    /**
+     * Valuta la richiesta di onboarding:
+     * - applica il rule engine
+     * - determina SOLO l’esito (OK / KO / JOINED / etc.)
+     * - NON gestisce il budget
+     */
     @Override
-    public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
-        final EvaluationDTO result = ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
-        if (result instanceof EvaluationCompletedDTO evaluationCompletedDTO) {
-            if (OnboardingEvaluationStatus.ONBOARDING_OK.equals((evaluationCompletedDTO.getStatus()))) {
-                log.trace("[ONBOARDING_REQUEST] [RULE_ENGINE] rule engine meet automated criteria of user {} into initiative {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId());
-                calculateBeneficiaryBudget(onboardingRequest, initiativeConfig, evaluationCompletedDTO);
-                long deallocatedBudget = Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) ?
-                        initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() - evaluationCompletedDTO.getBeneficiaryBudgetCents() : 0;
+    public Mono<EvaluationDTO> evaluate(OnboardingDTO onboardingRequest,
+                                        InitiativeConfig initiativeConfig) {
 
-                Mono<EvaluationDTO> budgetMono = (deallocatedBudget > 0)
-                        ? initiativeCountersRepository.deallocatedPartialBudget(evaluationCompletedDTO.getInitiativeId(), deallocatedBudget)
-                        .thenReturn(evaluationCompletedDTO)
-                        : Mono.just(evaluationCompletedDTO);
+        EvaluationDTO result =
+                ruleEngineService.applyRules(onboardingRequest, initiativeConfig);
 
-                return budgetMono
-                        .map(c -> {
-                            log.info("[ONBOARDING_REQUEST] [ONBOARDING_OK] [BUDGET_RESERVATION] user {} reserved budget on initiative {}", onboardingRequest.getUserId(), initiativeConfig.getInitiativeId());
-                            onboardingRequest.setBudgetReserved(Boolean.TRUE);
-
-                            return evaluationCompletedDTO;
-                        })
-                        .switchIfEmpty(Mono.defer(() -> {
-                            log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [BUDGET_RESERVATION] initiative {} exhausted", initiativeConfig.getInitiativeId());
-
-                            evaluationCompletedDTO.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
-                                    .type(OnboardingRejectionReason.OnboardingRejectionReasonType.BUDGET_EXHAUSTED)
-                                    .code(OnboardingConstants.REJECTION_REASON_INITIATIVE_BUDGET_EXHAUSTED)
-                                    .build());
-                            evaluationCompletedDTO.setStatus(OnboardingEvaluationStatus.ONBOARDING_KO);
-                            return Mono.just(evaluationCompletedDTO);
-                        }))
-                        .map(EvaluationDTO.class::cast);
+        if (result instanceof EvaluationCompletedDTO completed) {
+            if (!OnboardingEvaluationStatus.ONBOARDING_OK.equals(completed.getStatus())) {
+                log.info(
+                        "[ONBOARDING_REQUEST][RULE_ENGINE_KO] user={} initiative={} reasons={}",
+                        onboardingRequest.getUserId(),
+                        onboardingRequest.getInitiativeId(),
+                        completed.getOnboardingRejectionReasons()
+                );
             } else {
-                log.info("[ONBOARDING_REQUEST] [ONBOARDING_KO] [RULE_ENGINE] Onboarding request of user {} into initiative {} failed: {}", onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), evaluationCompletedDTO.getOnboardingRejectionReasons());
+                log.trace(
+                        "[ONBOARDING_REQUEST][RULE_ENGINE_OK] user={} initiative={}",
+                        onboardingRequest.getUserId(),
+                        onboardingRequest.getInitiativeId()
+                );
             }
         }
+
         return Mono.just(result);
     }
 
-    private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, EvaluationCompletedDTO result) {
-        if(initiativeConfig.getIseeThresholdCode() != null && initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() != null
-            && Boolean.TRUE.equals(onboardingRequest.getVerifyIsee()) && Boolean.TRUE.equals(onboardingRequest.getUnderThreshold())){
-                result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents());
-        } else {
-            result.setBeneficiaryBudgetCents(initiativeConfig.getBeneficiaryInitiativeBudgetCents());
+    /**
+     * Gestisce l’allineamento del budget iniziativa a valle della evaluate.
+     * Regole:
+     * - KO / JOINED  -> rollback totale della preallocazione
+     * - OK          -> rollback parziale se finalBudget < preallocated
+     * - Nessuna differenza -> nessuna operazione
+     */
+    @Override
+    public Mono<EvaluationDTO> updateInitiativeBudget(EvaluationDTO evaluationDTO,
+                                                      InitiativeConfig initiativeConfig,
+                                                      OnboardingDTO onboardingRequest) {
+
+        if (!(evaluationDTO instanceof EvaluationCompletedDTO completedDTO)) {
+            return Mono.just(evaluationDTO);
         }
+
+        TransactionalOperator tx =
+                TransactionalOperator.create(transactionManager);
+
+        String preallocationId = Utils.computePreallocationId(
+                completedDTO.getUserId(),
+                completedDTO.getInitiativeId()
+        );
+
+        return tx.transactional(
+                initiativeCountersPreallocationsRepository
+                        .findById(preallocationId)
+                        .switchIfEmpty(Mono.error(
+                                new IllegalStateException(
+                                        "Missing preallocation for id " + preallocationId)))
+                        .flatMap(preallocation -> {
+
+                            long preallocated =
+                                    preallocation.getPreallocatedAmountCents();
+
+                            if (OnboardingEvaluationStatus.ONBOARDING_KO.equals(completedDTO.getStatus())
+                                    || OnboardingEvaluationStatus.JOINED.equals(completedDTO.getStatus())) {
+
+                                log.info(
+                                        "[ONBOARDING][ROLLBACK_TOTAL] user={} initiative={} amount={}",
+                                        completedDTO.getUserId(),
+                                        completedDTO.getInitiativeId(),
+                                        preallocated
+                                );
+
+                                return initiativeCountersPreallocationsRepository
+                                        .deleteByIdReturningResult(preallocationId)
+                                        .filter(Boolean::booleanValue)
+                                        .flatMap(deleted ->
+                                                initiativeCountersRepository
+                                                        .deallocatedPartialBudget(
+                                                                completedDTO.getInitiativeId(),
+                                                                preallocated
+                                                        ))
+                                        .thenReturn(evaluationDTO);
+                            }
+
+                            calculateBeneficiaryBudget(
+                                    onboardingRequest,
+                                    initiativeConfig,
+                                    completedDTO
+                            );
+
+                            long finalBudget = Optional.ofNullable(
+                                    completedDTO.getBeneficiaryBudgetCents()
+                            ).orElse(0L);
+
+                            long toDeallocate = preallocated - finalBudget;
+
+                            if (toDeallocate > 0) {
+                                log.info(
+                                        "[ONBOARDING][DEALLOCATE_PARTIAL] user={} initiative={} preallocated={} final={} deallocated={}",
+                                        completedDTO.getUserId(),
+                                        completedDTO.getInitiativeId(),
+                                        preallocated,
+                                        finalBudget,
+                                        toDeallocate
+                                );
+
+
+                                return initiativeCountersPreallocationsRepository
+                                        .updatePreallocatedAmount(
+                                                preallocationId,
+                                                finalBudget
+                                        )
+                                        .then(
+                                                initiativeCountersRepository.deallocatedPartialBudget(
+                                                        completedDTO.getInitiativeId(),
+                                                        toDeallocate
+                                                )
+                                        )
+                                        .thenReturn(evaluationDTO);
+
+                            }
+
+                            log.debug(
+                                    "[ONBOARDING][NO_BUDGET_ADJUSTMENT] user={} initiative={} finalBudget={}",
+                                    completedDTO.getUserId(),
+                                    completedDTO.getInitiativeId(),
+                                    finalBudget
+                            );
+
+                            return Mono.just(evaluationDTO);
+                        })
+        );
     }
 
-    @Override
-    public Mono<EvaluationDTO> updateInitiativeBudget(EvaluationDTO evaluationDTO, InitiativeConfig initiativeConfig) {
-        if(evaluationDTO instanceof EvaluationCompletedDTO completedDTO
-                && (OnboardingEvaluationStatus.ONBOARDING_KO.equals(completedDTO.getStatus()) || OnboardingEvaluationStatus.JOINED.equals(completedDTO.getStatus()))) {
-            long deallocateBudget = Boolean.TRUE.equals(completedDTO.getVerifyIsee()) ? initiativeConfig.getBeneficiaryInitiativeBudgetMaxCents() : initiativeConfig.getBeneficiaryInitiativeBudgetCents();
+    /**
+     * Calcola il budget finale spettante all’utente.
+     * Il valore NON viene mai preallocato da questo servizio.
+     */
+    private void calculateBeneficiaryBudget(OnboardingDTO onboardingRequest,
+                                            InitiativeConfig initiativeConfig,
+                                            EvaluationCompletedDTO result) {
 
-            TransactionalOperator transactionalOperator = TransactionalOperator.create(transactionManager);
-
-            return transactionalOperator.transactional(
-                    initiativeCountersPreallocationsRepository.deleteByIdReturningResult(Utils.computePreallocationId(evaluationDTO.getUserId(), evaluationDTO.getInitiativeId()))
-                            .filter(Boolean::booleanValue)
-                            .flatMap(deleted -> initiativeCountersRepository
-                                    .deallocatedPartialBudget(completedDTO.getInitiativeId(), deallocateBudget))
-                            .then(Mono.just(evaluationDTO)));
-
+        // Budget fisso
+        if (initiativeConfig.getBeneficiaryBudgetFixedCents() != null) {
+            result.setBeneficiaryBudgetCents(
+                    initiativeConfig.getBeneficiaryBudgetFixedCents()
+            );
+            return;
         }
-        return Mono.just(evaluationDTO);
+
+        // Budget variabile (unico Verify con MAX)
+        for (VerifyDTO verify : onboardingRequest.getVerifies()) {
+
+            if (verify.getBeneficiaryBudgetCentsMax() == null) {
+                continue;
+            }
+
+            // verify = false → OK implicito → MAX
+            if (!verify.isVerify()) {
+                result.setBeneficiaryBudgetCents(
+                        verify.getBeneficiaryBudgetCentsMax()
+                );
+                return;
+            }
+
+            // KO parziale → MIN
+            if (!verify.getReasonList().isEmpty()) {
+                result.setBeneficiaryBudgetCents(
+                        verify.getBeneficiaryBudgetCentsMin()
+                );
+                return;
+            }
+
+            // OK pieno → MAX
+            result.setBeneficiaryBudgetCents(
+                    verify.getBeneficiaryBudgetCentsMax()
+            );
+            return;
+        }
+
+        throw new IllegalStateException(
+                "Unable to calculate beneficiary budget: no fixed budget and no variable verify with max"
+        );
     }
 }

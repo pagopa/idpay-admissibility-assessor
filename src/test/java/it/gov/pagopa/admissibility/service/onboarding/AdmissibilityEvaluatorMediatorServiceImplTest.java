@@ -4,10 +4,7 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
-import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
+import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.exception.WaitingFamilyOnBoardingException;
@@ -127,7 +124,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding1), Mockito.any(), Mockito.eq(msgs.get(0)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding1), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO1));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -280,7 +277,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(authoritiesDataRetrieverServiceMock.retrieve(Mockito.eq(onboarding2), Mockito.any(), Mockito.eq(msgs.get(1)))).thenAnswer(i -> Mono.just(i.getArgument(0)));
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding2), Mockito.any())).thenAnswer(i -> Mono.just(evaluationDTO2));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO1))).thenReturn(false);
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.same(evaluationDTO2))).thenThrow(new RuntimeException());
@@ -389,7 +386,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingRequestEvaluatorServiceMock.evaluate(Mockito.eq(onboarding_first), Mockito.any())).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
         Mockito.when(onboardingFamilyEvaluationServiceMock.updateOnboardingFamilyOutcome(Mockito.same(family1), Mockito.eq(initiativeConfig), Mockito.same(expectedEvaluationOnboardingFirst))).thenAnswer(i -> Mono.just(expectedEvaluationOnboardingFirst));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -479,7 +476,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
     void mediatorTestMaxRetryOnboarding(){
         String initiativeId = "INITIATIVEID";
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
-
+        onboarding1.setVerifies(List.of(
+                VerifyDTO.builder()
+                        .code(OnboardingConstants.CRITERIA_CODE_ISEE) // oppure "ISEE"
+                        .thresholdCode("DUMMY_THRESHOLD")              // deve essere NON null
+                        .verify(true)                                  // valore iniziale irrilevante
+                        .build()
+        ));
         InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
 
         Onboarding onboarding = new Onboarding(initiativeId, "USER1");
@@ -514,7 +517,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .thenAnswer(i -> Mono.error(new InpsGenericException("DUMMY_EXCEPTION", new RuntimeException())))
                 .thenReturn(Mono.just(evaluationDTO1));
 
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig))).thenAnswer(a -> Mono.just(a.getArguments()[0]));
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any())).thenAnswer(a -> Mono.just(a.getArguments()[0]));
 
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -534,7 +537,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         String initiativeId = "INITIATIVEID";
         OnboardingDTO onboarding1 = OnboardingDTO.builder().userId("USER1").initiativeId(initiativeId).build();
-
+        onboarding1.setVerifies(List.of(
+                VerifyDTO.builder()
+                        .code(OnboardingConstants.CRITERIA_CODE_ISEE) // oppure "ISEE"
+                        .thresholdCode("DUMMY_THRESHOLD")              // deve essere NON null
+                        .verify(true)                                  // valore iniziale irrilevante
+                        .build()
+        ));
         Onboarding onboarding = new Onboarding(initiativeId, "USER1");
         onboarding.setStatus(ON_EVALUATION);
         Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER1"))).thenReturn(Mono.just(onboarding));
@@ -569,7 +578,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
                 .thenReturn(Mono.error(new RuntimeException("SECOND_ERROR")));
 
         EvaluationDTO evaluationKoMock = Mockito.mock(EvaluationDTO.class);
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig),Mockito.any()))
                 .thenReturn(Mono.just(evaluationKoMock));
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 
@@ -629,7 +638,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.when(onboardingRepositoryMock.findById(Onboarding.buildId(initiativeId, "USER_MAX_RETRY"))).thenReturn(Mono.empty());
 
         Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(null);
-        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig)))
+        Mockito.when(onboardingRequestEvaluatorServiceMock.updateInitiativeBudget(Mockito.any(), Mockito.eq(initiativeConfig), Mockito.any()))
                 .thenAnswer(a -> Mono.just(a.getArguments()[0]));
         Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
 

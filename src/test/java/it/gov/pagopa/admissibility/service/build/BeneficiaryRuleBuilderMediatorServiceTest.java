@@ -61,7 +61,7 @@ class BeneficiaryRuleBuilderMediatorServiceTest {
                             .endDate(i.getGeneral().getEndDate())
                             .automatedCriteriaCodes(List.of("CODE"))
                             .initiativeBudgetCents(i.getGeneral().getBudgetCents())
-                            .beneficiaryInitiativeBudgetCents(i.getGeneral().getBeneficiaryBudgetCents())
+                            .beneficiaryBudgetFixedCents(i.getGeneral().getBeneficiaryBudgetFixedCents())
                             .build(),
                     LocalDateTime.now());
         });

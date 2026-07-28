@@ -15,6 +15,6 @@ public class CriteriaCodeServiceImpl implements CriteriaCodeService {
 
     @Override
     public CriteriaCodeConfig getCriteriaCodeConfig(String criteriaCode) {
-        return criteriaCodesConfiguration.getCriteriaCodeConfigs().get(criteriaCode);
+        return criteriaCodesConfiguration.getConfigs().get(criteriaCode);
     }
 }
