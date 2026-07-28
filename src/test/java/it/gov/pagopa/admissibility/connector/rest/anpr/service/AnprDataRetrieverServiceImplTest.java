@@ -12,6 +12,9 @@ import it.gov.pagopa.admissibility.enums.PdndResponseType;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaE002OKDTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.RispostaKODTO;
 import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoGeneralitaDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoDatiSoggettiEnteDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoListaSoggettiDTO;
+import it.gov.pagopa.admissibility.generated.openapi.pdnd.residence.assessment.client.dto.TipoResidenzaDTO;
 import it.gov.pagopa.admissibility.model.CriteriaCodeConfig;
 import it.gov.pagopa.admissibility.model.PdndInitiativeConfig;
 import it.gov.pagopa.admissibility.service.CriteriaCodeService;
@@ -199,6 +202,78 @@ class AnprDataRetrieverServiceImplTest {
                 .verifyComplete();
     }
 
+    @Test
+    void testInvokeResidence_WithValidResidence_PopulatesResidenceAndNoRejections() {
+        String fiscalCode = "RSSMRA85M01H501Z";
+        PdndInitiativeConfig config = new PdndInitiativeConfig();
+        OnboardingDTO onboarding = new OnboardingDTO();
+        PdndServicesInvocation invocation = new PdndServicesInvocation("RESIDENCE", true, "threshold");
+
+        TipoResidenzaDTO residenceDto = new TipoResidenzaDTO();
+        Residence mappedResidence = new Residence();
+
+        when(residenceMapper.apply(eq(residenceDto))).thenReturn(mappedResidence);
+        when(anprC001RestClient.invoke(fiscalCode, config)).thenReturn(Mono.just(okResponse(okResidenceResponse(residenceDto))));
+
+        StepVerifier.create(service.invoke(fiscalCode, config, invocation, onboarding))
+                .expectNext(Optional.of(Collections.emptyList()))
+                .verifyComplete();
+
+        org.junit.jupiter.api.Assertions.assertSame(mappedResidence, onboarding.getResidence());
+        verify(residenceMapper).apply(eq(residenceDto));
+        verify(criteriaCodeService, never()).getCriteriaCodeConfig(any());
+    }
+
+    @Test
+    void testInvokeResidence_WhenResidenceMissing_AddsResidenceKoRejectionReason() {
+        String fiscalCode = "RSSMRA85M01H501Z";
+        PdndInitiativeConfig config = new PdndInitiativeConfig();
+        OnboardingDTO onboarding = new OnboardingDTO();
+        PdndServicesInvocation invocation = new PdndServicesInvocation("RESIDENCE", true, "threshold");
+
+        CriteriaCodeConfig criteriaCodeConfig = new CriteriaCodeConfig("residence", "ANPR", "Anagrafe", "residence");
+        when(criteriaCodeService.getCriteriaCodeConfig(eq(OnboardingConstants.CRITERIA_CODE_RESIDENCE.toLowerCase())))
+                .thenReturn(criteriaCodeConfig);
+        when(anprC001RestClient.invoke(fiscalCode, config)).thenReturn(Mono.just(okResponse(new RispostaE002OKDTO())));
+
+        StepVerifier.create(service.invoke(fiscalCode, config, invocation, onboarding))
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertTrue(result.isPresent());
+                    List<OnboardingRejectionReason> reasons = result.get();
+                    org.junit.jupiter.api.Assertions.assertEquals(1, reasons.size());
+                    org.junit.jupiter.api.Assertions.assertEquals(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO, reasons.get(0).getType());
+                    org.junit.jupiter.api.Assertions.assertEquals("ANPR", reasons.get(0).getAuthority());
+                    org.junit.jupiter.api.Assertions.assertEquals("Anagrafe", reasons.get(0).getAuthorityLabel());
+                })
+                .verifyComplete();
+
+        verify(residenceMapper, never()).apply(any());
+    }
+
+    @Test
+    void testInvokeResidence_WhenKoResponse_AddsResidenceKoRejectionReason() {
+        String fiscalCode = "RSSMRA85M01H501Z";
+        PdndInitiativeConfig config = new PdndInitiativeConfig();
+        OnboardingDTO onboarding = new OnboardingDTO();
+        PdndServicesInvocation invocation = new PdndServicesInvocation("RESIDENCE", true, "threshold");
+
+        CriteriaCodeConfig criteriaCodeConfig = new CriteriaCodeConfig("residence", "ANPR", "Anagrafe", "residence");
+        when(criteriaCodeService.getCriteriaCodeConfig(eq(OnboardingConstants.CRITERIA_CODE_RESIDENCE.toLowerCase())))
+                .thenReturn(criteriaCodeConfig);
+        when(anprC001RestClient.invoke(fiscalCode, config)).thenReturn(Mono.just(koResponse(new RispostaKODTO())));
+
+        StepVerifier.create(service.invoke(fiscalCode, config, invocation, onboarding))
+                .assertNext(result -> {
+                    org.junit.jupiter.api.Assertions.assertTrue(result.isPresent());
+                    List<OnboardingRejectionReason> reasons = result.get();
+                    org.junit.jupiter.api.Assertions.assertEquals(1, reasons.size());
+                    org.junit.jupiter.api.Assertions.assertEquals(OnboardingRejectionReason.OnboardingRejectionReasonType.RESIDENCE_KO, reasons.get(0).getType());
+                })
+                .verifyComplete();
+
+        verify(residenceMapper, never()).apply(any());
+    }
+
     private PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> okResponse(RispostaE002OKDTO okdto) {
         return new PdndResponseBase<>(PdndResponseType.OK) {
             @Override
@@ -206,6 +281,27 @@ class AnprDataRetrieverServiceImplTest {
                 return visitor.onOk(okdto);
             }
         };
+    }
+
+    private PdndResponseBase<RispostaE002OKDTO, RispostaKODTO> koResponse(RispostaKODTO kodto) {
+        return new PdndResponseBase<>(PdndResponseType.KO) {
+            @Override
+            public <R> R accept(PdndResponseVisitor<RispostaE002OKDTO, RispostaKODTO, R> visitor) {
+                return visitor.onKo(kodto);
+            }
+        };
+    }
+
+    private RispostaE002OKDTO okResidenceResponse(TipoResidenzaDTO residenceDto) {
+        TipoDatiSoggettiEnteDTO datiSoggetto = new TipoDatiSoggettiEnteDTO();
+        datiSoggetto.setResidenza(List.of(residenceDto));
+
+        TipoListaSoggettiDTO listaSoggetti = new TipoListaSoggettiDTO();
+        listaSoggetti.addDatiSoggettoItem(datiSoggetto);
+
+        RispostaE002OKDTO response = new RispostaE002OKDTO();
+        response.setListaSoggetti(listaSoggetti);
+        return response;
     }
 
 }
