@@ -34,10 +34,13 @@ public class InitiativeStatusServiceImpl implements InitiativeStatusService {
                                             initiativeCounters.getSpentInitiativeBudgetCents())
                                     );
 
+
                                     initiativeStatus.setResidualBudgetAvailable(
                                             hasResidualAvailableBudget(
                                                     initiativeCounters.getResidualInitiativeBudgetCents(),
-                                                    initiativeConfig.getBeneficiaryInitiativeBudgetCents()
+                                                    (initiativeConfig.getBeneficiaryBudgetMaxCents() != null ?
+                                                            initiativeConfig.getBeneficiaryBudgetMaxCents() :
+                                                            initiativeConfig.getBeneficiaryBudgetFixedCents())
                                             )
                                     );
 

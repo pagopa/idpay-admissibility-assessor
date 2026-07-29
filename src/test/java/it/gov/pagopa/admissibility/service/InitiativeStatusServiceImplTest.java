@@ -187,7 +187,7 @@ class InitiativeStatusServiceImplTest {
         OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
 
         InitiativeConfig initiativeConfig = getInitiativeConfigForContextMock();
-        initiativeConfig.setBeneficiaryInitiativeBudgetCents(null);
+        initiativeConfig.setBeneficiaryBudgetFixedCents(null);
         Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
                 .thenReturn(Mono.just(initiativeConfig));
 
@@ -218,11 +218,136 @@ class InitiativeStatusServiceImplTest {
         Assertions.assertNull(result);
     }
 
+    @Test
+    void testBudgetAvailable_WhenResidualIsExactlyThreshold() {
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
+
+        InitiativeCounters countersMock = InitiativeCounters.builder()
+                .id("INITIATIVE1")
+                .spentInitiativeBudgetCents(990_000L)
+                .residualInitiativeBudgetCents(100_000L)
+                .build();
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
+
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isBudgetAvailable());
+        Assertions.assertEquals("STATUS1", result.getStatus());
+    }
+
+    @Test
+    void testResidualBudgetAvailable_UsesBeneficiaryBudgetMaxWhenPresent() {
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        InitiativeConfig initiativeConfig = getInitiativeConfigForContextMock();
+        initiativeConfig.setBeneficiaryBudgetFixedCents(100_000L);
+        initiativeConfig.setBeneficiaryBudgetMaxCents(50_000L);
+
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(initiativeConfig));
+
+        InitiativeCounters countersMock = InitiativeCounters.builder()
+                .id("INITIATIVE1")
+                .spentInitiativeBudgetCents(100_000L)
+                .residualInitiativeBudgetCents(60_000L)
+                .build();
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
+
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isResidualBudgetAvailable());
+    }
+
+    @Test
+    void testResidualBudgetAvailable_WhenResidualEqualsBeneficiaryBudget_ReturnsTrue() {
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
+
+        InitiativeCounters countersMock = InitiativeCounters.builder()
+                .id("INITIATIVE1")
+                .spentInitiativeBudgetCents(200_000L)
+                .residualInitiativeBudgetCents(100_000L)
+                .build();
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.just(countersMock));
+
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        InitiativeStatusDTO result = service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block();
+
+        Assertions.assertNotNull(result);
+        Assertions.assertTrue(result.isResidualBudgetAvailable());
+    }
+
+    @Test
+    void testGetInitiativeStatusAndBudgetAvailable_WhenContextFails_PropagatesError() {
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        RuntimeException expected = new RuntimeException("context error");
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.error(expected));
+
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
+                () -> service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block());
+
+        Assertions.assertSame(expected, thrown);
+        Mockito.verifyNoInteractions(repoMock);
+    }
+
+    @Test
+    void testGetInitiativeStatusAndBudgetAvailable_WhenRepositoryFails_PropagatesError() {
+        InitiativeCountersRepository repoMock = Mockito.mock(InitiativeCountersRepository.class);
+        OnboardingContextHolderService contextMock = Mockito.mock(OnboardingContextHolderService.class);
+
+        Mockito.when(contextMock.getInitiativeConfig(Mockito.anyString()))
+                .thenReturn(Mono.just(getInitiativeConfigForContextMock()));
+
+        RuntimeException expected = new RuntimeException("repository error");
+        Mockito.when(repoMock.findById(Mockito.anyString()))
+                .thenReturn(Mono.error(expected));
+
+        InitiativeStatusService service = new InitiativeStatusServiceImpl(contextMock, repoMock);
+
+        RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
+                () -> service.getInitiativeStatusAndBudgetAvailable("INITIATIVE1").block());
+
+        Assertions.assertSame(expected, thrown);
+    }
+
+    @Test
+    void testSanitizeForLog_SpecialCharacters() throws Exception {
+        var method = InitiativeStatusServiceImpl.class.getDeclaredMethod("sanitizeForLog", String.class);
+        method.setAccessible(true);
+
+        Object result = method.invoke(null, "INITIATIVE:1 / test@status");
+
+        Assertions.assertEquals("INITIATIVE_1___test_status", result);
+    }
+
     private static InitiativeConfig getInitiativeConfigForContextMock() {
         return InitiativeConfig.builder()
                 .initiativeId("INITIATIVE1")
                 .initiativeBudgetCents(1_000_000L)
-                .beneficiaryInitiativeBudgetCents(100_000L)
+                .beneficiaryBudgetFixedCents(100_000L)
                 .status("STATUS1")
                 .build();
     }

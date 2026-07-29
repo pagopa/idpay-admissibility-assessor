@@ -31,7 +31,7 @@ class CriteriaCodesConfigurationTest {
                 "FAMILY", new CriteriaCodeConfig("FAMILY", "INPS","Istituto Nazionale Previdenza Sociale",  "family")
         );
 
-        Mockito.when(criteriaCodesConfigurationMock.getCriteriaCodeConfigs()).thenReturn(expected);
+        Mockito.when(criteriaCodesConfigurationMock.getConfigs()).thenReturn(expected);
 
         //When
         CriteriaCodeConfig criteriaCodeConfig = criteriaCodesService.getCriteriaCodeConfig("BIRTHDATE");

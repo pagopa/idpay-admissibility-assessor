@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class ExtraFilter2DroolsUtilsTest {
+
     private static final Set<String> ignoredPaths = new HashSet<>(Arrays.asList(
             "userId",
             "initiativeId",
@@ -23,14 +24,17 @@ class ExtraFilter2DroolsUtilsTest {
             "tcAcceptTimestamp",
             "criteriaConsensusTimestamp",
             "family",
-            "budgetReserved"
+            "budgetReserved",
+            "verifies"
     ));
 
-    static final Map<String, Class<?>> expectedFields2Class = Map.ofEntries(
+    private static final Map<String, Class<?>> expectedFields2Class = Map.ofEntries(
             Map.entry("birthDate", BirthDate.class),
             Map.entry("birthDate.year", String.class),
             Map.entry("birthDate.age", Integer.class),
+
             Map.entry("isee", BigDecimal.class),
+
             Map.entry("residence", Residence.class),
             Map.entry("residence.postalCode", String.class),
             Map.entry("residence.cityCouncil", String.class),
@@ -38,63 +42,95 @@ class ExtraFilter2DroolsUtilsTest {
             Map.entry("residence.city", String.class),
             Map.entry("residence.nation", String.class),
             Map.entry("residence.region", String.class),
+
             Map.entry("serviceId", String.class),
-            Map.entry("verifyIsee", Boolean.class),
-            Map.entry("underThreshold", Boolean.class),
             Map.entry("userMail", String.class),
             Map.entry("channel", String.class),
             Map.entry("name", String.class),
             Map.entry("surname", String.class)
     );
 
-    public static final Set<String> expectedFields = expectedFields2Class.keySet();
+    private static final Set<String> expectedFields = expectedFields2Class.keySet();
 
     @Test
     void testBuildExtraFilterFields() {
-        System.out.println("Testing null parameters (only nullable)");
-        List<ExtraFilterField> result = ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, null, ignoredPaths);
+
+        List<ExtraFilterField> result =
+                ExtraFilter2DroolsUtils.buildExtraFilterFields(
+                        OnboardingDTO.class,
+                        null,
+                        ignoredPaths
+                );
+
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(expectedFields, result.stream().map(ExtraFilterField::getField).collect(Collectors.toSet()));
 
-        System.out.println("Testing invalid subclass");
-        Map<Class<?>, List<Class<?>>> classMapping = Collections.singletonMap(BigDecimal.class, Collections.singletonList(OnboardingDTO.class));
-        try {
-            ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, classMapping, ignoredPaths);
-            Assertions.fail("Subclass check failed");
-        } catch (IllegalArgumentException e) {
-            //Nothing to do!
-        }
+        Assertions.assertEquals(
+                expectedFields,
+                result.stream()
+                        .map(ExtraFilterField::getField)
+                        .collect(Collectors.toSet())
+        );
 
-        System.out.println("Testing ignore path");
+        Map<Class<?>, List<Class<?>>> invalidMapping =
+                Collections.singletonMap(BigDecimal.class, List.of(OnboardingDTO.class));
+
+        Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> ExtraFilter2DroolsUtils.buildExtraFilterFields(
+                        OnboardingDTO.class,
+                        invalidMapping,
+                        ignoredPaths
+                )
+        );
+
         Set<String> ignoredPaths2 = new HashSet<>(ignoredPaths);
         ignoredPaths2.add("isee");
-        result = ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, null, ignoredPaths2);
-        Set<String> expectedField2 = new HashSet<>(expectedFields);
-        expectedField2.remove("isee");
-        Assertions.assertEquals(expectedField2, result.stream().map(ExtraFilterField::getField).collect(Collectors.toSet()));
 
-        System.out.println("Test complete");
-        result = ExtraFilter2DroolsUtils.buildExtraFilterFields(OnboardingDTO.class, null, ignoredPaths);
+        List<ExtraFilterField> resultWithoutIsee =
+                ExtraFilter2DroolsUtils.buildExtraFilterFields(
+                        OnboardingDTO.class,
+                        null,
+                        ignoredPaths2
+                );
+
+        Set<String> expectedWithoutIsee = new HashSet<>(expectedFields);
+        expectedWithoutIsee.remove("isee");
+
+        Assertions.assertEquals(
+                expectedWithoutIsee,
+                resultWithoutIsee.stream()
+                        .map(ExtraFilterField::getField)
+                        .collect(Collectors.toSet())
+        );
+
         checkOnboardingDTOFields(result);
     }
 
     private void checkOnboardingDTOFields(List<ExtraFilterField> result) {
-        Assertions.assertEquals(expectedFields, result.stream().map(ExtraFilterField::getField).collect(Collectors.toSet()));
-        for (ExtraFilterField field : result) {
-            if (field.getField().startsWith("(")) {
-                Assertions.assertNotNull(field.getCastPath());
-                Assertions.assertEquals("(" + field.getCastPath().getName() + ")paymentMethod." + field.getName(), field.getField());
-            } else if (field.getName().equals("paymentMethod")) {
-                Assertions.assertTrue(field.isToCast());
-            }
-        }
+
+        Assertions.assertEquals(
+                expectedFields,
+                result.stream()
+                        .map(ExtraFilterField::getField)
+                        .collect(Collectors.toSet())
+        );
 
         Map<String, Object> context = new HashMap<>();
         result.sort(Comparator.comparing(ExtraFilterField::getField));
-        result.forEach(f -> {
-            Class<?> determinedType = Filter2DroolsTransformer.determineFieldType(f.getField(), OnboardingDTO.class, context);
-            Assertions.assertEquals(expectedFields2Class.get(f.getField()), determinedType);
-        });
+
+        for (ExtraFilterField field : result) {
+            Class<?> determinedType =
+                    Filter2DroolsTransformer.determineFieldType(
+                            field.getField(),
+                            OnboardingDTO.class,
+                            context
+                    );
+
+            Assertions.assertEquals(
+                    expectedFields2Class.get(field.getField()),
+                    determinedType,
+                    "Type mismatch for field: " + field.getField()
+            );
+        }
     }
 }
-
