@@ -66,6 +66,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
     @BeforeEach
     void init(){
         admissibilityEvaluatorMediatorService = new AdmissibilityEvaluatorMediatorServiceImpl(maxRetry, onboardingContextHolderServiceMock, onboardingCheckServiceMock, onboardingFamilyEvaluationServiceMock, authoritiesDataRetrieverServiceMock, onboardingRequestEvaluatorServiceMock, onboarding2EvaluationMapper, admissibilityErrorNotifierServiceMock, TestUtils.objectMapper, onboardingNotifierServiceMock, rankingNotifierServiceMock, onboardingRepositoryMock);
+        Mockito.lenient().when(onboardingNotifierServiceMock.notifyNotificationRequest(Mockito.any())).thenReturn(true);
     }
 
     @AfterEach
@@ -134,6 +135,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock, onboardingFamilyEvaluationServiceMock);
+        verifyVerificationInProgressNotifications(2);
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
         Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock).evaluate(Mockito.any(), Mockito.any());
@@ -185,6 +187,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock, onboardingFamilyEvaluationServiceMock);
+        verifyVerificationInProgressNotifications(1);
 //        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
 //        Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
 //        Mockito.verify(authoritiesDataRetrieverServiceMock).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
@@ -228,6 +231,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock,onboardingFamilyEvaluationServiceMock);
+        verifyVerificationInProgressNotifications(2);
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
         checkCommits(checkpointers);
     }
@@ -290,6 +294,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verifyNoInteractions(onboardingFamilyEvaluationServiceMock);
         Mockito.verify(admissibilityErrorNotifierServiceMock, Mockito.times(2)).notifyAdmissibilityOutcome(Mockito.any(GenericMessage.class), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any());
         Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibilityOutcome(Mockito.any(GenericMessage.class), Mockito.anyString(), Mockito.anyBoolean(), Mockito.any(IllegalStateException.class));
+        verifyVerificationInProgressNotifications(2);
         Mockito.verify(onboardingNotifierServiceMock, Mockito.times(2)).notify(Mockito.any());
         Mockito.verify(authoritiesDataRetrieverServiceMock, Mockito.times(2)).retrieve(Mockito.any(), Mockito.any(), Mockito.any());
         Mockito.verify(onboardingRequestEvaluatorServiceMock, Mockito.times(2)).evaluate(Mockito.any(), Mockito.any());
@@ -396,6 +401,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verify(admissibilityErrorNotifierServiceMock).notifyAdmissibility(Mockito.any(), Mockito.any(), Mockito.anyBoolean(), Mockito.any());
+        verifyVerificationInProgressNotifications(4);
 
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_first), Mockito.same(initiativeConfig), Mockito.any());
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding_waitingFirst), Mockito.same(initiativeConfig), Mockito.any());
@@ -459,6 +465,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
 
         // Then
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
+        verifyVerificationInProgressNotifications(1);
 
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.eq(onboarding), Mockito.same(initiativeConfig), Mockito.any());
 
@@ -625,7 +632,7 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(onboardingRepositoryMock).findById(Mockito.anyString());
         Mockito.verify(onboardingCheckServiceMock).check(Mockito.any(), Mockito.any(), Mockito.any());
 
-        Mockito.verifyNoInteractions(onboardingNotifierServiceMock);
+        verifyVerificationInProgressNotifications(1);
         checkCommits(List.of(checkpointer));
     }
 
@@ -730,5 +737,13 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
     private static void checkCommits(List<Checkpointer> checkpointers) {
         TestUtils.wait(100, TimeUnit.MILLISECONDS);
         checkpointers.forEach(c -> Mockito.verify(c).success());
+    }
+
+    private void verifyVerificationInProgressNotifications(int expectedTimes) {
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.times(expectedTimes))
+                .notifyNotificationRequest(Mockito.argThat(notification ->
+                        notification != null
+                                && "ONBOARDING".equals(notification.getOperationType())
+                                && ON_EVALUATION.equals(notification.getStatus())));
     }
 }
