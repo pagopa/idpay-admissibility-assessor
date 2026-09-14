@@ -37,6 +37,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -731,6 +732,101 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         admissibilityEvaluatorMediatorService.execute(Flux.just(message));
 
         Mockito.verify(onboardingNotifierServiceMock, Mockito.never()).notifyNotificationRequest(Mockito.any());
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void shouldSkipVerificationInProgressNotificationOnKafkaRetryHeader() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("USER1")
+                .initiativeId(initiativeId)
+                .build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                        .build());
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, "1".getBytes(StandardCharsets.UTF_8))
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(message));
+
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.never()).notifyNotificationRequest(Mockito.any());
+        Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void shouldSkipVerificationInProgressNotificationOnMalformedRetryHeader() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("USER1")
+                .initiativeId(initiativeId)
+                .build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                        .build());
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, "NOT_A_NUMBER")
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(message));
+
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.never()).notifyNotificationRequest(Mockito.any());
+        Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void shouldContinueWhenVerificationInProgressNotificationPublishFails() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("USER1")
+                .initiativeId(initiativeId)
+                .serviceId("SERVICEID")
+                .build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                        .build());
+        Mockito.when(onboardingNotifierServiceMock.notifyNotificationRequest(Mockito.any())).thenReturn(false);
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(message));
+
+        Mockito.verify(onboardingNotifierServiceMock).notifyNotificationRequest(Mockito.any());
+        Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
+        Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
         checkCommits(List.of(checkpointer));
     }
 
