@@ -2,8 +2,10 @@ package it.gov.pagopa.admissibility.service.onboarding;
 
 import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
+import com.azure.messaging.servicebus.ServiceBusMessage;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
+import it.gov.pagopa.admissibility.dto.notification.NotificationQueueDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
 import it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus;
@@ -46,6 +48,7 @@ import static it.gov.pagopa.admissibility.utils.OnboardingConstants.ON_EVALUATIO
 public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityEvaluatorMediatorService {
 
     private static final List<String> REJECTION_REASON_CHECK_DATE_FAIL = List.of(OnboardingConstants.REJECTION_REASON_TC_CONSENSUS_DATETIME_FAIL, OnboardingConstants.REJECTION_REASON_CRITERIA_CONSENSUS_DATETIME_FAIL);
+    private static final String ONBOARDING_NOTIFICATION_OPERATION_TYPE = "ONBOARDING";
 
     private final int maxOnboardingRequestRetry;
 
@@ -169,6 +172,7 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
         Map<String, Object> onboardingContext = new HashMap<>();
         onboardingContext.put(ONBOARDING_CONTEXT_INITIATIVE_KEY, initiativeConfig);
         if (onboardingRequest != null) {
+            notifyVerificationInProgressIfNeeded(message, onboardingRequest);
             EvaluationDTO rejectedRequest = evaluateOnboardingChecks(onboardingRequest, initiativeConfig, onboardingContext); // termini e condizioni , pdnd e  iniziativa valida
             if (rejectedRequest != null) {
                 return checkRejectionType(message, onboardingRequest, initiativeConfig, rejectedRequest);
@@ -264,6 +268,55 @@ public class AdmissibilityEvaluatorMediatorServiceImpl implements AdmissibilityE
             retryHeaderValue = null;
         }
         return retryHeaderValue;
+    }
+
+    private void notifyVerificationInProgressIfNeeded(Message<String> message, OnboardingDTO onboardingRequest) {
+        int deliveryCount = readDeliveryCount(message);
+        boolean retry = isRetry(message);
+        if (deliveryCount > 0 || retry) {
+            log.info("[ONBOARDING_REQUEST] Skipping verification in progress notification for userId {} and initiativeId {} because message is a retry (deliveryCount={}, retryHeader={})",
+                    onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), deliveryCount, readRetryHeader(message));
+            return;
+        }
+
+        NotificationQueueDTO notificationQueueDTO = NotificationQueueDTO.builder()
+                .operationType(ONBOARDING_NOTIFICATION_OPERATION_TYPE)
+                .userId(onboardingRequest.getUserId())
+                .initiativeId(onboardingRequest.getInitiativeId())
+                .serviceId(onboardingRequest.getServiceId())
+                .status(ON_EVALUATION)
+                .build();
+
+        try {
+            if (!onboardingNotifierService.notifyNotificationRequest(notificationQueueDTO)) {
+                throw new IllegalStateException("[ADMISSIBILITY_ONBOARDING_REQUEST] Something gone wrong while notification request publish");
+            }
+        } catch (Exception e) {
+            log.error("[ONBOARDING_REQUEST] Failed to publish verification in progress notification for userId {} and initiativeId {}",
+                    onboardingRequest.getUserId(), onboardingRequest.getInitiativeId(), e);
+        }
+    }
+
+    private static int readDeliveryCount(Message<String> message) {
+        try {
+            ServiceBusMessage serviceBusMessage = new ServiceBusMessage(message.getPayload());
+            Long parsedDeliveryCount = serviceBusMessage.getRawAmqpMessage().getHeader().getDeliveryCount();
+            return parsedDeliveryCount != null ? parsedDeliveryCount.intValue() : 0;
+        } catch (Exception _) {
+            return 0;
+        }
+    }
+
+    private static boolean isRetry(Message<String> message) {
+        String retryHeaderValue = readRetryHeader(message);
+        if (retryHeaderValue == null) {
+            return false;
+        }
+        try {
+            return Integer.parseInt(retryHeaderValue) > 0;
+        } catch (NumberFormatException _) {
+            return true;
+        }
     }
 
     private OnboardingDTO deserializeMessage(Message<String> message) {

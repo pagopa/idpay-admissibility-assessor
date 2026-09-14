@@ -31,7 +31,7 @@ spring:
       servicebus:
         connection-string: ${SERVICEBUS_ONBOARDING_CONNECTION_STRING:}
     function:
-      definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest;consumerCommands
+      definition: admissibilityProcessor;admissibilityProcessorOut;admissibilityDelayProducer;beneficiaryRuleBuilderConsumer;errors;rankingRequest;notificationRequest;consumerCommands
     stream:
       bindings:
         admissibilityProcessor-in-0:
@@ -48,6 +48,10 @@ spring:
           destination: ${KAFKA_RANKING_REQUEST_TOPIC:idpay-onboarding-ranking-request}
           content-type: ${KAFKA_CONTENT_TYPE:application/json}
           binder: kafka-ranking-request
+        notificationRequest-out-0:
+          destination: ${KAFKA_TOPIC_NOTIFICATION:idpay-notification-request}
+          content-type: ${KAFKA_CONTENT_TYPE:application/json}
+          binder: kafka-notification
         admissibilityDelayProducer-out-0:
           destination: ${KAFKA_ONBOARDING_REQUEST_TOPIC:idpay-onboarding-request}
           binder: kafka-onboarding-request
@@ -97,6 +101,13 @@ spring:
             spring.cloud.stream.kafka.binder:
               brokers: ${KAFKA_BENEFICIARY_RULE_BROKER:${KAFKA_BROKER:}}
               configuration.sasl.jaas.config: ${KAFKA_BENEFICIARY_RULE_REQUEST_SASL_JAAS_CONFIG:}
+        kafka-notification:
+          type: kafka
+          environment:
+            spring.cloud.stream.kafka.binder:
+              brokers: ${KAFKA_NOTIFICATION_BROKER:${KAFKA_BROKER:}}
+              configuration:
+                sasl.jaas.config: ${KAFKA_NOTIFICATION_SASL_JAAS_CONFIG:}
         kafka-errors:
           type: kafka
           environment:
@@ -173,6 +184,14 @@ spring:
                 retry.backoff.ms: ${KAFKA_RANKING_REQUEST_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
                 linger.ms: ${KAFKA_RANKING_REQUEST_LINGER_MS:${KAFKA_LINGER_MS:2}}
                 batch.size: ${KAFKA_RANKING_REQUEST_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
+          notificationRequest-out-0:
+            producer:
+              configuration:
+                client.id: admissibilityProcessor-notification
+                connections.max.idle.ms: ${KAFKA_NOTIFICATION_CONNECTION_MAX_IDLE_TIME:180000}
+                retry.backoff.ms: ${KAFKA_NOTIFICATION_KAFKA_RETRY_MS:${KAFKA_RETRY_MS:10000}}
+                linger.ms: ${KAFKA_NOTIFICATION_LINGER_MS:${KAFKA_LINGER_MS:2}}
+                batch.size: ${KAFKA_NOTIFICATION_BATCH_SIZE:${KAFKA_BATCH_SIZE:16384}}
           errors-out-0:
             producer:
               configuration:
