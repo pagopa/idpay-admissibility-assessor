@@ -1,5 +1,6 @@
 package it.gov.pagopa.admissibility.service.onboarding.notifier;
 
+import it.gov.pagopa.admissibility.dto.notification.NotificationQueueDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,11 @@ public class OnboardingNotifierServiceImpl implements OnboardingNotifierService 
         public Supplier<Flux<Message<EvaluationDTO>>> admissibilityProcessorOut() {
             return Flux::empty;
         }
+
+        @Bean
+        public Supplier<Flux<Message<NotificationQueueDTO>>> notificationRequest() {
+            return Flux::empty;
+        }
     }
 
     @Override
@@ -35,7 +41,18 @@ public class OnboardingNotifierServiceImpl implements OnboardingNotifierService 
                 buildMessage(evaluationDTO));
     }
 
+    @Override
+    public boolean notifyNotificationRequest(NotificationQueueDTO notificationQueueDTO) {
+        return streamBridge.send("notificationRequest-out-0",
+                buildMessage(notificationQueueDTO));
+    }
+
     public static Message<EvaluationDTO> buildMessage(EvaluationDTO evaluationDTO){
         return MessageBuilder.withPayload(evaluationDTO).build();
     }
+
+    public static Message<NotificationQueueDTO> buildMessage(NotificationQueueDTO notificationQueueDTO){
+        return MessageBuilder.withPayload(notificationQueueDTO).build();
+    }
+
 }

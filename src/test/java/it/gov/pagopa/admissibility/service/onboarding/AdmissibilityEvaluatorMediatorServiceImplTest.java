@@ -4,6 +4,7 @@ import com.azure.spring.messaging.AzureHeaders;
 import com.azure.spring.messaging.checkpoint.Checkpointer;
 import it.gov.pagopa.admissibility.connector.repository.onboarding.OnboardingRepository;
 import it.gov.pagopa.admissibility.connector.soap.inps.exception.InpsGenericException;
+import it.gov.pagopa.admissibility.dto.notification.NotificationQueueDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.*;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
 import it.gov.pagopa.admissibility.dto.rule.InitiativeGeneralDTO;
@@ -657,6 +658,72 @@ class AdmissibilityEvaluatorMediatorServiceImplTest {
         Mockito.verify(onboardingNotifierServiceMock).notify(Mockito.any());
 
         Mockito.verifyNoInteractions(admissibilityErrorNotifierServiceMock);
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void shouldSendVerificationInProgressNotificationOnFirstAttempt() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("USER1")
+                .initiativeId(initiativeId)
+                .serviceId("SERVICEID")
+                .build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                        .build());
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+        Mockito.when(onboardingNotifierServiceMock.notifyNotificationRequest(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(message));
+
+        ArgumentCaptor<NotificationQueueDTO> captor = ArgumentCaptor.forClass(NotificationQueueDTO.class);
+        Mockito.verify(onboardingNotifierServiceMock).notifyNotificationRequest(captor.capture());
+        Assertions.assertEquals("ONBOARDING", captor.getValue().getOperationType());
+        Assertions.assertEquals(ON_EVALUATION, captor.getValue().getStatus());
+        Assertions.assertEquals(onboarding.getUserId(), captor.getValue().getUserId());
+        Assertions.assertEquals(onboarding.getInitiativeId(), captor.getValue().getInitiativeId());
+        checkCommits(List.of(checkpointer));
+    }
+
+    @Test
+    void shouldSkipVerificationInProgressNotificationOnRetry() {
+        String initiativeId = "INITIATIVEID";
+        OnboardingDTO onboarding = OnboardingDTO.builder()
+                .userId("USER1")
+                .initiativeId(initiativeId)
+                .build();
+        InitiativeConfig initiativeConfig = InitiativeConfig.builder().initiativeId(initiativeId).build();
+
+        Mockito.when(onboardingContextHolderServiceMock.getInitiativeConfig(initiativeId)).thenReturn(Mono.just(initiativeConfig));
+        Mockito.when(onboardingCheckServiceMock.check(Mockito.any(), Mockito.same(initiativeConfig), Mockito.any())).thenReturn(
+                OnboardingRejectionReason.builder()
+                        .type(OnboardingRejectionReason.OnboardingRejectionReasonType.INVALID_REQUEST)
+                        .code(OnboardingConstants.REJECTION_REASON_INVALID_INITIATIVE_ID_FAIL)
+                        .build());
+        Mockito.when(onboardingNotifierServiceMock.notify(Mockito.any())).thenReturn(true);
+
+        Checkpointer checkpointer = Mockito.mock(Checkpointer.class);
+        Mockito.when(checkpointer.success()).thenReturn(Mono.empty());
+        Message<String> message = MessageBuilder.withPayload(TestUtils.jsonSerializer(onboarding))
+                .setHeader(AzureHeaders.CHECKPOINTER, checkpointer)
+                .setHeader(KafkaConstants.ERROR_MSG_HEADER_RETRY, "1")
+                .build();
+
+        admissibilityEvaluatorMediatorService.execute(Flux.just(message));
+
+        Mockito.verify(onboardingNotifierServiceMock, Mockito.never()).notifyNotificationRequest(Mockito.any());
         checkCommits(List.of(checkpointer));
     }
 
