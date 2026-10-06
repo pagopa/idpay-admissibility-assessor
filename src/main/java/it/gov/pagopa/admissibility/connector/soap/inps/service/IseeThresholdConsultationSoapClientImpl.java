@@ -59,7 +59,7 @@ public class IseeThresholdConsultationSoapClientImpl implements IseeThresholdCon
                                 RETRYABLE_OUTCOMES,
                                 EsitoEnum.OK
                         ))
-                        .onErrorResume(IseeUtils::handleError),
+                        .onErrorResume(e -> IseeUtils.handleError(e, "THRESHOLD_ISEE" )),
                 x -> "THRESHOLD_ISEE");
     }
 }

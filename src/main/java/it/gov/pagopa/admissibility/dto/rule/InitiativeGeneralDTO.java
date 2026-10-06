@@ -34,11 +34,8 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("beneficiaryKnown")
   private Boolean beneficiaryKnown;
 
-  @JsonProperty("beneficiaryBudgetCents")
-  private Long beneficiaryBudgetCents;
-
-  @JsonProperty("beneficiaryBudgetMaxCents")
-  private Long beneficiaryBudgetMaxCents;
+  @JsonProperty("beneficiaryBudgetFixedCents")
+  private Long beneficiaryBudgetFixedCents;
 
   @JsonProperty("startDate")
   private LocalDate startDate;

@@ -64,6 +64,7 @@ class RuleEngineServiceImplTest {
         String initiativeId = INITIATIVEID;
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId(initiativeId);
+        onboardingDTO.setVerifies(List.of(new VerifyDTO()));
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(initiativeId);
@@ -96,6 +97,7 @@ class RuleEngineServiceImplTest {
         expected.getOnboardingRejectionReasons().add(OnboardingRejectionReason.builder()
                 .code("REASON1")
                 .build());
+        expected.setVerifies(List.of(new VerifyDTO()));
 
         Assertions.assertEquals(expected, result);
     }
@@ -106,6 +108,7 @@ class RuleEngineServiceImplTest {
         String initiativeId = "NOTKIEINITITATIVEID";
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId(initiativeId);
+        onboardingDTO.setVerifies(List.of(new VerifyDTO()));
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(initiativeId);
@@ -125,6 +128,8 @@ class RuleEngineServiceImplTest {
         String initiativeId = "KIEINITITATIVEID_NOT_IN_CONTAINER";
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId(initiativeId);
+        onboardingDTO.setVerifies(List.of(new VerifyDTO()));
+
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(initiativeId);
@@ -195,6 +200,7 @@ class RuleEngineServiceImplTest {
 
         OnboardingDTO onboardingDTO = new OnboardingDTO();
         onboardingDTO.setInitiativeId(initiativeId);
+        onboardingDTO.setVerifies(List.of(new VerifyDTO()));
 
         InitiativeConfig initiativeConfig = new InitiativeConfig();
         initiativeConfig.setInitiativeId(initiativeId);

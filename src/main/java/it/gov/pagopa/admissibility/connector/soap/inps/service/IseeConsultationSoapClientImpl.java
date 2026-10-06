@@ -50,7 +50,7 @@ public class IseeConsultationSoapClientImpl implements IseeConsultationSoapClien
                                 RETRYABLE_OUTCOMES,
                                 EsitoEnum.OK
                         ))
-                        .onErrorResume(IseeUtils::handleError),
+                        .onErrorResume(e -> IseeUtils.handleError(e, "ISEE")),
                 x -> "[" + iseeType + "]");
     }
 

@@ -102,7 +102,7 @@ public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
     void getIseeUnexpectedResultCode() {
         Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_UNEXPECTED_RESULT_CODE, IseeTypologyEnum.ORDINARIO);
         InpsGenericException exception = Assertions.assertThrows(InpsGenericException.class, mono::block);
-        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
+        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION][ISEE] Something went wrong when invoking INPS service", exception.getMessage());
     }
 
     @Test
@@ -115,7 +115,7 @@ public class IseeConsultationSoapClientImplTest extends BaseWireMockTest {
     void getIseeFaultMessage() {
         Mono<ConsultazioneIndicatoreResponseType> mono = iseeConsultationSoapClient.getIsee(FISCAL_CODE_FAULT_MESSAGE, IseeTypologyEnum.ORDINARIO);
         InpsGenericException exception = Assertions.assertThrows(InpsGenericException.class, mono::block);
-        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION] Something went wrong when invoking INPS service", exception.getMessage());
+        Assertions.assertEquals("[ONBOARDING_REQUEST][INPS_INVOCATION][ISEE] Something went wrong when invoking INPS service", exception.getMessage());
 
     }
 }

@@ -4,4 +4,5 @@ import reactor.core.publisher.Mono;
 
 public interface InitiativeCountersPreallocationsOpsRepository {
     Mono<Boolean> deleteByIdReturningResult(String id);
+    Mono<Boolean> updatePreallocatedAmount(String id, long finalBudget);
 }

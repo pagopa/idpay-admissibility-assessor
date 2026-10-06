@@ -1,6 +1,7 @@
 package it.gov.pagopa.admissibility.connector.repository;
 
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -47,6 +48,29 @@ class InitiativeCountersPreallocationsOpsRepositoryTest {
                 .thenReturn(Mono.just(deleteResult));
 
         StepVerifier.create(repository.deleteByIdReturningResult(TEST_ID))
+                .expectNext(false)
+                .verifyComplete();
+    }
+
+    @Test
+    void testUpdatePreallocatedAmount_Success() {
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(updateResult.getModifiedCount()).thenReturn(1L);
+        when(mongoTemplate.updateFirst(any(), any(), any(Class.class)))
+                .thenReturn(Mono.just(updateResult));
+
+        StepVerifier.create(repository.updatePreallocatedAmount(TEST_ID, 1000L))
+                .expectNext(true)
+                .verifyComplete();
+    }
+
+    @Test
+    void testUpdatePreallocatedAmount_Failure() {
+        UpdateResult updateResult = mock(UpdateResult.class);
+        when(mongoTemplate.updateFirst(any(), any(), any(Class.class)))
+                .thenReturn(Mono.just(updateResult));
+
+        StepVerifier.create(repository.updatePreallocatedAmount(TEST_ID, 1000L))
                 .expectNext(false)
                 .verifyComplete();
     }

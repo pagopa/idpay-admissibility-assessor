@@ -55,7 +55,7 @@ public final class Initiative2BuildDTOFaker {
                         .budgetCents(budget)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
                         .beneficiaryKnown(Boolean.TRUE)
-                        .beneficiaryBudgetCents(BENEFICIARY_BUDGET)
+                        .beneficiaryBudgetFixedCents(BENEFICIARY_BUDGET)
                         .startDate(LocalDate.of(2021, 1, 1))
                         .endDate(LocalDate.of(2025, 12, 1))
                         .rankingEnabled(false)

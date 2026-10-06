@@ -138,7 +138,7 @@ class OnboardingContextHolderServiceImplTest {
         InitiativeConfig initiativeConfig = InitiativeConfig.builder()
                 .initiativeId(initiativeId)
                 .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
-                .beneficiaryInitiativeBudgetCents(100_00L)
+                .beneficiaryBudgetFixedCents(100_00L)
                 .endDate(LocalDate.MAX)
                 .initiativeName("NAME")
                 .initiativeBudgetCents(100_00L)
