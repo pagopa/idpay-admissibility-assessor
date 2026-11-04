@@ -145,7 +145,7 @@ class Initiative2InitiativeConfigMapperTest {
                         .budgetCents(1000_00L)
                         .beneficiaryBudgetFixedCents(1_00L)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
-                        .checkPastOnboardings(true)
+                        .checkPastOnboardingsSeries(true)
                         .build()
         );
 
@@ -209,8 +209,8 @@ class Initiative2InitiativeConfigMapperTest {
                 result.getBeneficiaryType()
         );
         Assertions.assertEquals(
-                dto.getGeneral().getCheckPastOnboardings(),
-                result.getCheckPastOnboardings()
+                dto.getGeneral().getCheckPastOnboardingsSeries(),
+                result.getCheckPastOnboardingsSeries()
         );
     }
 
