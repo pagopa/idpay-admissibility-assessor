@@ -80,6 +80,7 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                 )
                 .beneficiaryType(initiative.getGeneral().getBeneficiaryType())
                 .checkPastOnboardingsSeries(initiative.getGeneral().getCheckPastOnboardingsSeries())
+                .initiativeSeries(initiative.getGeneral().getInitiativeSeries())
                 .build();
     }
 

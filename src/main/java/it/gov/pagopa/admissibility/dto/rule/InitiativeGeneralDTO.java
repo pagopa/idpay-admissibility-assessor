@@ -55,6 +55,9 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("checkPastOnboardingsSeries")
   private Boolean checkPastOnboardingsSeries;
 
+  @JsonProperty("initiativeSeries")
+  private String initiativeSeries;
+
   /**
    * Gets or Sets beneficiaryType
    */
