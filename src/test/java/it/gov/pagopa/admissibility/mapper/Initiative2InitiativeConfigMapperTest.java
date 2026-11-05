@@ -137,7 +137,6 @@ class Initiative2InitiativeConfigMapperTest {
         dto.setOrganizationName("ORGANIZATIONNAME");
         dto.setStatus("STATUS");
         dto.setInitiativeRewardType("REFUND");
-        dto.setCheckPastOnboardings(true);
 
         dto.setGeneral(
                 InitiativeGeneralDTO.builder()
@@ -146,6 +145,8 @@ class Initiative2InitiativeConfigMapperTest {
                         .budgetCents(1000_00L)
                         .beneficiaryBudgetFixedCents(1_00L)
                         .beneficiaryType(InitiativeGeneralDTO.BeneficiaryTypeEnum.PF)
+                        .checkPastOnboardingsSeries(true)
+                        .initiativeSeries("INITIATIVE_SERIES")
                         .build()
         );
 
@@ -208,7 +209,14 @@ class Initiative2InitiativeConfigMapperTest {
                 dto.getGeneral().getBeneficiaryType(),
                 result.getBeneficiaryType()
         );
-        Assertions.assertEquals(dto.getCheckPastOnboardings(), result.getCheckPastOnboardings());
+        Assertions.assertEquals(
+                dto.getGeneral().getCheckPastOnboardingsSeries(),
+                result.getCheckPastOnboardingsSeries()
+        );
+        Assertions.assertEquals(
+                dto.getGeneral().getInitiativeSeries(),
+                result.getInitiativeSeries()
+        );
     }
 
     @Test
