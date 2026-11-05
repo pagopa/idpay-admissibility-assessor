@@ -137,6 +137,7 @@ class Initiative2InitiativeConfigMapperTest {
         dto.setOrganizationName("ORGANIZATIONNAME");
         dto.setStatus("STATUS");
         dto.setInitiativeRewardType("REFUND");
+        dto.setCheckPastOnboardings(true);
 
         dto.setGeneral(
                 InitiativeGeneralDTO.builder()
@@ -207,6 +208,18 @@ class Initiative2InitiativeConfigMapperTest {
                 dto.getGeneral().getBeneficiaryType(),
                 result.getBeneficiaryType()
         );
+        Assertions.assertEquals(dto.getCheckPastOnboardings(), result.getCheckPastOnboardings());
+    }
+
+    @Test
+    void testCheckPastOnboardingsMissing() {
+
+        Initiative2BuildDTO dto = initDto();
+        dto.setCheckPastOnboardings(null);
+
+        InitiativeConfig result = mapper.apply(dto);
+
+        Assertions.assertNull(result.getCheckPastOnboardings());
     }
 
     private SelfCriteriaMultiConsentDTO buildSelfCriteriaMultiConsent(
