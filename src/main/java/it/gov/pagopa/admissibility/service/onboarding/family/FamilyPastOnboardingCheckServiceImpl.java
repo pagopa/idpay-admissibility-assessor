@@ -65,7 +65,7 @@ public class FamilyPastOnboardingCheckServiceImpl implements FamilyPastOnboardin
     private static boolean isCheckEnabled(InitiativeConfig initiativeConfig) {
         return initiativeConfig != null
                 && InitiativeGeneralDTO.BeneficiaryTypeEnum.NF.equals(initiativeConfig.getBeneficiaryType())
-                && Boolean.TRUE.equals(initiativeConfig.getCheckPastOnboardings());
+                && Boolean.TRUE.equals(initiativeConfig.getCheckPastOnboardingsSeries());
     }
 
     private static Set<String> retrieveOtherMembersOnboardingIds(OnboardingDTO onboardingRequest) {

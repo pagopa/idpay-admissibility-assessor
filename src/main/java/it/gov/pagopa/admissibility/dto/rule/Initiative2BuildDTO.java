@@ -19,7 +19,5 @@ public class Initiative2BuildDTO {
     private InitiativeGeneralDTO general;
     private InitiativeAdditionalInfoDTO additionalInfo;
     private String initiativeRewardType;
-    private Boolean checkPastOnboardings;
-
 
 }

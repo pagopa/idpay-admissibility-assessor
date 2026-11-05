@@ -146,7 +146,7 @@ class FamilyPastOnboardingCheckServiceImplTest {
         return InitiativeConfig.builder()
                 .initiativeId(INITIATIVE_ID)
                 .beneficiaryType(beneficiaryType)
-                .checkPastOnboardings(checkPastOnboardings)
+                .checkPastOnboardingsSeries(checkPastOnboardings)
                 .build();
     }
 

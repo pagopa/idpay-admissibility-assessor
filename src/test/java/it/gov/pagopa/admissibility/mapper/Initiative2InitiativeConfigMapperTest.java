@@ -223,11 +223,11 @@ class Initiative2InitiativeConfigMapperTest {
     void testCheckPastOnboardingsMissing() {
 
         Initiative2BuildDTO dto = initDto();
-        dto.setCheckPastOnboardings(null);
+        dto.getGeneral().setCheckPastOnboardingsSeries(null);
 
         InitiativeConfig result = mapper.apply(dto);
 
-        Assertions.assertNull(result.getCheckPastOnboardings());
+        Assertions.assertNull(result.getCheckPastOnboardingsSeries());
     }
 
     private SelfCriteriaMultiConsentDTO buildSelfCriteriaMultiConsent(
