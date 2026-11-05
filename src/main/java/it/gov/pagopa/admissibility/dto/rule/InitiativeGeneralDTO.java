@@ -52,6 +52,12 @@ public class InitiativeGeneralDTO   {
   @JsonProperty("rankingEnabled")
   private boolean rankingEnabled;
 
+  @JsonProperty("checkPastOnboardingsSeries")
+  private Boolean checkPastOnboardingsSeries;
+
+  @JsonProperty("initiativeSeries")
+  private String initiativeSeries;
+
   /**
    * Gets or Sets beneficiaryType
    */
