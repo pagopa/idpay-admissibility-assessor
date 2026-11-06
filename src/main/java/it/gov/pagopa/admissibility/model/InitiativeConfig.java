@@ -42,4 +42,6 @@ public class InitiativeConfig {
     private String initiativeRewardType;
     private Boolean isLogoPresent;
     private InitiativeGeneralDTO.BeneficiaryTypeEnum beneficiaryType;
+    private Boolean checkPastOnboardingsSeries;
+    private String initiativeSeries;
 }
