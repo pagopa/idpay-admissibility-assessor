@@ -26,16 +26,6 @@ public final class OnboardingConstants {
 
     /** Rejection reason for the second family member due to the family not meeting the requirements of the initiative */
     public static final String REJECTION_REASON_FAMILY_CRITERIA_FAIL = "FAMILY_CRITERIA_FAIL";
-
-    /** Rejection reason when an adult family member already used a past edition of the same bonus */
-    public static final String REJECTION_REASON_FAMILY_BONUS_ALREADY_USED = "FAMILY_BONUS_ALREADY_USED";
-    //endregion
-
-    //region onboarding detailKO
-    /** detailKO assigned by the census of citizens who used a past edition of the bonus */
-    public static final String DETAIL_KO_USER_BONUS_ALREADY_USED = "USER_BONUS_ALREADY_USED";
-    /** detailKO assigned when a family member already used a past edition of the bonus */
-    public static final String DETAIL_KO_FAMILY_BONUS_ALREADY_USED = REJECTION_REASON_FAMILY_BONUS_ALREADY_USED;
     //endregion
 
     //region criteria code

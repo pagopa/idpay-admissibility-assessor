@@ -32,18 +32,15 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
     private final FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService;
 
     private final OnboardingRepository onboardingRepository;
-    private final FamilyPastOnboardingCheckService familyPastOnboardingCheckService;
 
     public OnboardingFamilyEvaluationServiceImpl(OnboardingFamiliesRepository onboardingFamiliesRepository,
                                                  ExistentFamilyHandlerService existentFamilyHandlerService,
                                                  FamilyDataRetrieverFacadeService familyDataRetrieverFacadeService,
-                                                 OnboardingRepository onboardingRepository,
-                                                 FamilyPastOnboardingCheckService familyPastOnboardingCheckService) {
+                                                 OnboardingRepository onboardingRepository) {
         this.onboardingFamiliesRepository = onboardingFamiliesRepository;
         this.existentFamilyHandlerService = existentFamilyHandlerService;
         this.familyDataRetrieverFacadeService = familyDataRetrieverFacadeService;
         this.onboardingRepository = onboardingRepository;
-        this.familyPastOnboardingCheckService = familyPastOnboardingCheckService;
     }
 
     @Override
@@ -94,18 +91,8 @@ public class OnboardingFamilyEvaluationServiceImpl implements OnboardingFamilyEv
                                     return Mono.just(ev);
                                 });
                     } else {
-                        return checkFamilyPastOnboardings(onboardingRequest, initiativeConfig, isNewFamily);
+                        return Mono.empty();
                     }
-                });
-    }
-
-    private Mono<EvaluationDTO> checkFamilyPastOnboardings(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig, boolean isNewFamily) {
-        return familyPastOnboardingCheckService.checkFamilyPastOnboardings(onboardingRequest, initiativeConfig)
-                .flatMap(ev -> {
-                    if (isNewFamily) {
-                        return updateOnboardingFamilyOutcome(onboardingRequest.getFamily(), initiativeConfig, ev);
-                    }
-                    return Mono.just(ev);
                 });
     }
 
