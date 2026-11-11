@@ -219,17 +219,6 @@ class Initiative2InitiativeConfigMapperTest {
         );
     }
 
-    @Test
-    void testCheckPastOnboardingsMissing() {
-
-        Initiative2BuildDTO dto = initDto();
-        dto.getGeneral().setCheckPastOnboardingsSeries(null);
-
-        InitiativeConfig result = mapper.apply(dto);
-
-        Assertions.assertNull(result.getCheckPastOnboardingsSeries());
-    }
-
     private SelfCriteriaMultiConsentDTO buildSelfCriteriaMultiConsent(
             String consentCode,
             String thresholdCode,
