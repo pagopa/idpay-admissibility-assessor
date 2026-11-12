@@ -31,7 +31,6 @@ public class OnboardingRejectionReason implements Serializable {
         RESIDENCE_KO,
         BIRTHDATE_KO,
         OUT_OF_RANKING,
-        FAMILY_CRITERIA_KO,
-        FAMILY_BONUS_ALREADY_USED
+        FAMILY_CRITERIA_KO
     }
 }
