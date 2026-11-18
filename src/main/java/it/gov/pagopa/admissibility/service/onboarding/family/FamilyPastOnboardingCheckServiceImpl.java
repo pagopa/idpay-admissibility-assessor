@@ -30,6 +30,8 @@ public class FamilyPastOnboardingCheckServiceImpl implements FamilyPastOnboardin
     @Override
     public Mono<EvaluationDTO> checkFamilyPastOnboardings(OnboardingDTO onboardingRequest, InitiativeConfig initiativeConfig) {
         if (!isCheckEnabled(initiativeConfig)) {
+            log.info("[ONBOARDING_REQUEST] [SKIPPED] Family past onboardings check is skipped for initiativeId {}",
+                    onboardingRequest.getInitiativeId());
             return Mono.empty();
         }
 
