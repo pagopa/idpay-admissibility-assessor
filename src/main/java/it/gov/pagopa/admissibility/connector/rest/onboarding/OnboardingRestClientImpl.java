@@ -1,5 +1,7 @@
 package it.gov.pagopa.admissibility.connector.rest.onboarding;
 
+import it.gov.pagopa.admissibility.dto.onboarding.CheckPastOnboardingsSeriesReqDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.CheckPastOnboardingsSeriesResDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingStatusDTO;
 import it.gov.pagopa.common.reactive.utils.PerformanceLogger;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +23,9 @@ import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOA
 
 @Slf4j
 @Service
-public class OnboardingRestClientImpl implements  OnboardingRestClient{
+public class OnboardingRestClientImpl implements OnboardingRestClient {
     private static final String GET_STATUS_URI = "/idpay/onboarding/{initiativeId}/{userId}/status";
+    private static final String CHECK_PAST_ONBOARDINGS_SERIES_URI = "/idpay/onboarding/{initiativeId}/check-past-onboardings-series";
     private final int idpayOnboardingRetryDelay;
     private final long idpayOnboardingMaxAttempts;
     private final WebClient webClient;
@@ -75,4 +78,48 @@ public class OnboardingRestClientImpl implements  OnboardingRestClient{
                 );
     }
 
+    @Override
+    public Mono<CheckPastOnboardingsSeriesResDTO> checkPastOnboardingsSeries(
+            String initiativeId,
+            CheckPastOnboardingsSeriesReqDTO request) {
+        log.info("Sending check past onboardings series request for initiativeId {}", initiativeId);
+
+        return PerformanceLogger.logTimingOnNext(
+                "CHECK_PAST_ONBOARDINGS_SERIES",
+                webClient
+                        .post()
+                        .uri(CHECK_PAST_ONBOARDINGS_SERIES_URI, Map.of("initiativeId", initiativeId))
+                        .bodyValue(request)
+                        .retrieve()
+                        .onStatus(HttpStatusCode::isError, response ->
+                                response.bodyToMono(String.class)
+                                        .defaultIfEmpty("")
+                                        .flatMap(body -> Mono.error(new IllegalStateException(
+                                                "Check past onboardings series failed: httpStatus=%s, body=%s"
+                                                        .formatted(response.statusCode().value(), body)
+                                        )))
+                        )
+                        .toEntity(CheckPastOnboardingsSeriesResDTO.class),
+                response -> "httpStatus %s".formatted(response.getStatusCode().value())
+        )
+                .flatMap(response -> {
+                    CheckPastOnboardingsSeriesResDTO body = response.getBody();
+                    if (body == null || body.getPastOnboardings() == null) {
+                        return Mono.error(new IllegalStateException(
+                                "Invalid response from checkPastOnboardingsSeries API: missing pastOnboardings"));
+                    }
+                    log.debug("Check past onboardings series response received: {}", body);
+                    return Mono.just(body);
+                })
+                .retryWhen(Retry.fixedDelay(idpayOnboardingMaxAttempts, Duration.ofMillis(idpayOnboardingRetryDelay))
+                        .filter(ex -> {
+                            boolean retry = ex instanceof WebClientResponseException.TooManyRequests;
+                            if (retry) {
+                                log.info("[CHECK_PAST_ONBOARDINGS_SERIES] Retrying invocation due to exception: {}: {}",
+                                        ex.getClass().getSimpleName(), ex.getMessage());
+                            }
+                            return retry;
+                        })
+                );
+    }
 }
