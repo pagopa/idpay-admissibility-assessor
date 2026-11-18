@@ -82,15 +82,26 @@ public class OnboardingRestClientImpl implements OnboardingRestClient {
     public Mono<CheckPastOnboardingsSeriesResDTO> checkPastOnboardingsSeries(
             String initiativeId,
             CheckPastOnboardingsSeriesReqDTO request) {
+        log.info("Sending check past onboardings series request for initiativeId {}", initiativeId);
 
         return PerformanceLogger.logTimingOnNext(
-                        "ONBOARDING_CHECK_PAST_ONBOARDINGS_SERIES_INTEGRATION",
-                        webClient.post()
-                                .uri(CHECK_PAST_ONBOARDINGS_SERIES_URI, Map.of("initiativeId", initiativeId))
-                                .bodyValue(request)
-                                .retrieve()
-                                .toEntity(CheckPastOnboardingsSeriesResDTO.class),
-                        response -> "httpStatus %s".formatted(response.getStatusCode().value()))
+                "CHECK_PAST_ONBOARDINGS_SERIES",
+                webClient
+                        .post()
+                        .uri(CHECK_PAST_ONBOARDINGS_SERIES_URI, Map.of("initiativeId", initiativeId))
+                        .bodyValue(request)
+                        .retrieve()
+                        .onStatus(HttpStatusCode::isError, response ->
+                                response.bodyToMono(String.class)
+                                        .defaultIfEmpty("")
+                                        .flatMap(body -> Mono.error(new IllegalStateException(
+                                                "Check past onboardings series failed: httpStatus=%s, body=%s"
+                                                        .formatted(response.statusCode().value(), body)
+                                        )))
+                        )
+                        .toEntity(CheckPastOnboardingsSeriesResDTO.class),
+                response -> "httpStatus %s".formatted(response.getStatusCode().value())
+        )
                 .flatMap(response -> {
                     CheckPastOnboardingsSeriesResDTO body = response.getBody();
                     if (body == null || body.getPastOnboardings() == null) {
@@ -104,7 +115,7 @@ public class OnboardingRestClientImpl implements OnboardingRestClient {
                         .filter(ex -> {
                             boolean retry = ex instanceof WebClientResponseException.TooManyRequests;
                             if (retry) {
-                                log.info("[IDPAY_ONBOARDING_WORKFLOW_INTEGRATION][CHECK_PAST_ONBOARDINGS_SERIES] Retrying invocation due to exception: {}: {}",
+                                log.info("[CHECK_PAST_ONBOARDINGS_SERIES] Retrying invocation due to exception: {}: {}",
                                         ex.getClass().getSimpleName(), ex.getMessage());
                             }
                             return retry;

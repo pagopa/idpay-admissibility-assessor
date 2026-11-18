@@ -5,6 +5,7 @@ import it.gov.pagopa.admissibility.dto.onboarding.CheckPastOnboardingsSeriesReqD
 import it.gov.pagopa.admissibility.dto.onboarding.CheckPastOnboardingsSeriesResDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.CheckPastOnboardingsSeriesResElemDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.EvaluationCompletedDTO;
+import it.gov.pagopa.admissibility.dto.onboarding.EvaluationDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingDTO;
 import it.gov.pagopa.admissibility.dto.onboarding.OnboardingRejectionReason;
 import it.gov.pagopa.admissibility.dto.onboarding.extra.Family;
@@ -123,8 +124,10 @@ class FamilyPastOnboardingCheckServiceImplTest {
                 new CheckPastOnboardingsSeriesReqDTO(List.of(FAMILY_MEMBER_ID))))
                 .thenReturn(Mono.just(response(result("unexpected-user", false))));
 
-        assertThrows(IllegalStateException.class, () -> service.checkFamilyPastOnboardings(
-                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true)).block());
+        Mono<EvaluationDTO> evaluation = service.checkFamilyPastOnboardings(
+                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true));
+
+        assertThrows(IllegalStateException.class, evaluation::block);
     }
 
     @Test
@@ -137,8 +140,10 @@ class FamilyPastOnboardingCheckServiceImplTest {
                         result(FAMILY_MEMBER_ID, false),
                         result(FAMILY_MEMBER_ID, false))));
 
-        assertThrows(IllegalStateException.class, () -> service.checkFamilyPastOnboardings(
-                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true)).block());
+        Mono<EvaluationDTO> evaluation = service.checkFamilyPastOnboardings(
+                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true));
+
+        assertThrows(IllegalStateException.class, evaluation::block);
     }
 
     @Test
@@ -150,8 +155,10 @@ class FamilyPastOnboardingCheckServiceImplTest {
                 new CheckPastOnboardingsSeriesReqDTO(List.of(FAMILY_MEMBER_ID))))
                 .thenReturn(Mono.error(failure));
 
-        RuntimeException actual = assertThrows(RuntimeException.class, () -> service.checkFamilyPastOnboardings(
-                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true)).block());
+        Mono<EvaluationDTO> evaluation = service.checkFamilyPastOnboardings(
+                request, initiativeConfig(InitiativeGeneralDTO.BeneficiaryTypeEnum.NF, true));
+
+        RuntimeException actual = assertThrows(RuntimeException.class, evaluation::block);
 
         assertEquals(failure, actual);
     }

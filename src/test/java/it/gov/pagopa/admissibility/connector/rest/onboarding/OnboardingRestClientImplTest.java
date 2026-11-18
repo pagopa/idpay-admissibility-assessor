@@ -103,6 +103,7 @@ class OnboardingRestClientImplTest extends BaseWireMockTest {
                 anyMap())).thenReturn(requestBodySpec);
         doReturn(requestHeadersSpec).when(requestBodySpec).bodyValue(any());
         when(requestHeadersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.onStatus(any(), any())).thenReturn(responseSpec);
         when(responseSpec.toEntity(CheckPastOnboardingsSeriesResDTO.class))
                 .thenReturn(Mono.just(ResponseEntity.ok(expectedResponse)));
 
