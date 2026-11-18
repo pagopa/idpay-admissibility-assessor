@@ -79,6 +79,8 @@ public class Initiative2InitiativeConfigMapper implements Function<Initiative2Bu
                                 !StringUtils.isEmpty(additionalInfo.getLogoFileName())
                 )
                 .beneficiaryType(initiative.getGeneral().getBeneficiaryType())
+                .checkPastOnboardingsSeries(initiative.getGeneral().getCheckPastOnboardingsSeries())
+                .initiativeSeries(initiative.getGeneral().getInitiativeSeries())
                 .build();
     }
 
