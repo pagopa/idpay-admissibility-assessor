@@ -26,7 +26,7 @@ import static it.gov.pagopa.admissibility.enums.OnboardingEvaluationStatus.ONBOA
 @Service
 public class OnboardingRestClientImpl implements OnboardingRestClient {
     private static final String GET_STATUS_URI = "/idpay/onboarding/{initiativeId}/{userId}/status";
-    private static final String CHECK_PAST_ONBOARDINGS_SERIES_URI = "/idpay/onboarding/{initiativeId}/check-past-onboardings-series";
+    private static final String CHECK_PAST_ONBOARDINGS_SERIES_URI = "/idpay/onboarding/{initiativeId}/check-past-onboardings-serie";
     private final int idpayOnboardingRetryDelay;
     private final long idpayOnboardingMaxAttempts;
     private final WebClient webClient;
