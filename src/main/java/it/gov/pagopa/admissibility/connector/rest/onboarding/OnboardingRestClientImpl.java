@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
@@ -91,14 +92,7 @@ public class OnboardingRestClientImpl implements OnboardingRestClient {
                         .uri(CHECK_PAST_ONBOARDINGS_SERIES_URI, Map.of("initiativeId", initiativeId))
                         .bodyValue(request)
                         .retrieve()
-                        .onStatus(HttpStatusCode::isError, response ->
-                                response.bodyToMono(String.class)
-                                        .defaultIfEmpty("")
-                                        .flatMap(body -> Mono.error(new IllegalStateException(
-                                                "Check past onboardings series failed: httpStatus=%s, body=%s"
-                                                        .formatted(response.statusCode().value(), body)
-                                        )))
-                        )
+                        .onStatus(HttpStatusCode::isError, ClientResponse::createException)
                         .toEntity(CheckPastOnboardingsSeriesResDTO.class),
                 response -> "httpStatus %s".formatted(response.getStatusCode().value())
         )
