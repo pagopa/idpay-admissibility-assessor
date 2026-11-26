@@ -577,6 +577,7 @@ components:
             - BIRTHDATE_KO
             - OUT_OF_RANKING
             - FAMILY_CRITERIA_KO
+            - FAMILY_BONUS_ALREADY_USED
           example: TECHNICAL_ERROR
           notNull: true
         code:
